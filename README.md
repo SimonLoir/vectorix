@@ -93,11 +93,11 @@ DATABASE_URL=postgresql://postgres:password@localhost:5432/vectorix_test pnpm ex
 La migration initiale construit uniquement le socle sur une base neuve. Pour les évolutions, modifier le schéma, générer et relire une migration de développement avec `pnpm --filter @repo/db migrate:dev`, puis exécuter `pnpm db:migrate` avant de déployer les applications. Ne pas utiliser `db:push` sur une base de production.
 
 ```sh
-docker build -f apps/web/Dockerfile -t vectorix-web .
-docker build -f apps/api/Dockerfile -t vectorix-api .
-docker build -f apps/admin/Dockerfile -t vectorix-admin .
-docker build -f apps/workers/Dockerfile -t vectorix-workers .
-docker build -f packages/db/Dockerfile -t vectorix-migrator .
+docker build -f apps/web/Dockerfile -t pxdv.be/vectorix/web:latest .
+docker build -f apps/api/Dockerfile -t pxdv.be/vectorix/api:latest .
+docker build -f apps/admin/Dockerfile -t pxdv.be/vectorix/admin:latest .
+docker build -f apps/workers/Dockerfile -t pxdv.be/vectorix/workers:latest .
+docker build -f packages/db/Dockerfile -t pxdv.be/vectorix/migrator:latest .
 ```
 
 Injecter la configuration au démarrage des conteneurs et utiliser les noms DNS de PostgreSQL et Redis accessibles depuis leur réseau. Le migrateur est un processus ponctuel exécutant `prisma migrate deploy`. Il ne tourne pas en parallèle avec les applications dans `pnpm dev`.
@@ -115,3 +115,17 @@ bash scripts/test-docker.sh
 ```
 
 Ce test vérifie les migrations, le démarrage, une inscription via l’API, les assets Next.js, la configuration au démarrage, l’exécution d’un job worker et l’absence des outils de build dans les images backend. Il ne publie aucun port sur la machine et nettoie ses conteneurs après exécution. Le workflow GitHub Actions « Docker images » exécute le même test à chaque push sur `main` et sur les pull requests.
+
+### Registre des images
+
+Le registre est `pxdv.be`, avec les dépôts `vectorix/web`, `vectorix/admin`, `vectorix/api`, `vectorix/workers` et `vectorix/migrator`. Après les tests réussis sur `main`, le workflow publie les images qui viennent d’être testées avec les tags `sha-<SHA Git complet>` et `latest`. Les pull requests exécutent uniquement les tests.
+
+Configurer les secrets GitHub Actions `PXDV_REGISTRY_USERNAME` et `PXDV_REGISTRY_PASSWORD` avec un compte autorisé à publier dans ces cinq dépôts. Tant qu’un des secrets manque, les tests restent actifs et la publication est ignorée avec un avertissement. Après leur ajout, relancer le workflow « Docker images » sur `main` ou pousser un nouveau commit pour publier les images.
+
+Pour récupérer une version publiée :
+
+```sh
+docker login pxdv.be
+docker pull pxdv.be/vectorix/web:latest
+# Pour un déploiement reproductible, utiliser le même tag sha-<SHA> pour les cinq services.
+```

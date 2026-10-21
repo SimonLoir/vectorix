@@ -9,6 +9,11 @@ on:
 permissions:
     contents: read
 
+# Serialize main builds so an older run cannot overwrite a newer latest tag.
+concurrency:
+    group: docker-${{ github.workflow }}-${{ github.ref }}
+    cancel-in-progress: false
+
 jobs:
     smoke:
         runs-on: ubuntu-latest
@@ -17,4 +22,58 @@ jobs:
             - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
             - uses: docker/setup-buildx-action@8d2750c68a42422c14e847fe6c8ac0403b4cbd6f # v3
             - name: Build and test the five images
+              id: images
+              env:
+                  KEEP_IMAGES: 'true'
               run: bash scripts/test-docker.sh
+            - name: Check registry credentials
+              id: registry
+              if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
+              env:
+                  REGISTRY_USERNAME: ${{ secrets.PXDV_REGISTRY_USERNAME }}
+                  REGISTRY_PASSWORD: ${{ secrets.PXDV_REGISTRY_PASSWORD }}
+              run: |
+                  if [[ -n "$REGISTRY_USERNAME" && -n "$REGISTRY_PASSWORD" ]]; then
+                      echo 'ready=true' >> "$GITHUB_OUTPUT"
+                  else
+                      echo 'ready=false' >> "$GITHUB_OUTPUT"
+                      echo '::warning::Publication skipped: configure PXDV_REGISTRY_USERNAME and PXDV_REGISTRY_PASSWORD to publish to pxdv.be.'
+                  fi
+            - name: Log in to pxdv.be
+              if: steps.registry.outputs.ready == 'true'
+              uses: docker/login-action@dbcb813823bdd20940b903addbd779551569679f # v4
+              with:
+                  registry: pxdv.be
+                  username: ${{ secrets.PXDV_REGISTRY_USERNAME }}
+                  password: ${{ secrets.PXDV_REGISTRY_PASSWORD }}
+            - name: Publish tested images
+              if: steps.registry.outputs.ready == 'true'
+              env:
+                  IMAGE_PREFIX: ${{ steps.images.outputs.image_prefix }}
+              run: |
+                  for app in web admin api workers migrator; do
+                      image="pxdv.be/vectorix/$app"
+                      docker tag "$IMAGE_PREFIX-$app:test" "$image:sha-$GITHUB_SHA"
+                      docker push "$image:sha-$GITHUB_SHA"
+                  done
+                  main_sha=$(git ls-remote origin refs/heads/main | cut -f1)
+                  if [[ "$main_sha" != "$GITHUB_SHA" ]]; then
+                      echo '::notice::Commit tags published; latest is reserved for the current main commit.'
+                      exit 0
+                  fi
+                  # Update latest only once all five commit tags are available.
+                  for app in web admin api workers migrator; do
+                      image="pxdv.be/vectorix/$app"
+                      docker tag "$image:sha-$GITHUB_SHA" "$image:latest"
+                      docker push "$image:latest"
+                  done
+            - name: Clean up local images
+              if: always() && steps.images.outputs.image_prefix != ''
+              env:
+                  IMAGE_PREFIX: ${{ steps.images.outputs.image_prefix }}
+              run: |
+                  for app in web admin api workers migrator; do
+                      docker image rm "$IMAGE_PREFIX-$app:test" \
+                          "pxdv.be/vectorix/$app:sha-$GITHUB_SHA" \
+                          "pxdv.be/vectorix/$app:latest" >/dev/null 2>&1 || true
+                  done

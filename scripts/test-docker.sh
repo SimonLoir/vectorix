@@ -18,9 +18,13 @@ cleanup() {
         docker rm -f "$container" >/dev/null 2>&1 || true
     done
     docker network rm "$network" >/dev/null 2>&1 || true
-    for image in "${images[@]}"; do
-        docker image rm "$image" >/dev/null 2>&1 || true
-    done
+    # CI publishes the exact images that passed these checks. Failed runs and
+    # ordinary local runs always remove their temporary images.
+    if (( result != 0 )) || [[ "${KEEP_IMAGES:-false}" != true ]]; then
+        for image in "${images[@]}"; do
+            docker image rm "$image" >/dev/null 2>&1 || true
+        done
+    fi
     exit "$result"
 }
 trap cleanup EXIT
@@ -140,3 +144,6 @@ done
 (( completed > 0 ))
 [[ $(docker inspect --format '{{.State.Running}}' "$prefix-workers") == true ]]
 printf 'All five images passed production-runtime checks.\n'
+if [[ -n "${GITHUB_OUTPUT:-}" ]]; then
+    printf 'image_prefix=%s\n' "$prefix" >> "$GITHUB_OUTPUT"
+fi

@@ -29,3 +29,12 @@ Les tests de notification couvrent la persistance, la déduplication, les préf�
 - Instructions de build mises à jour ; test des cinq images disponible avec `pnpm test:docker` et automatisé dans GitHub Actions.
 
 Vérifications locales après restauration : schéma Prisma valide, 34 tâches de types/lint réussies, 21 tests unitaires réussis et quatre builds réussis. Les sorties standalone et les déploiements pnpm ont aussi été copiés hors du dépôt puis démarrés : API prête avec PostgreSQL/Redis, workers prêts, 19 assets web et 13 assets admin servis sans erreur. Les stores de production API/workers ne contiennent ni Next.js, ni TypeScript, ni Vite/Vitest, ni ESLint, ni le CLI Prisma.
+
+## Publication des images
+
+- Registre configuré : `pxdv.be/vectorix`, avec un dépôt par service.
+- Sur `main`, publication des cinq images testées avec les tags `sha-<SHA Git complet>` puis `latest`. Les builds sont sérialisés pour éviter qu’un ancien build remplace le tag `latest` d’un build plus récent.
+- Authentification via les secrets GitHub Actions `PXDV_REGISTRY_USERNAME` et `PXDV_REGISTRY_PASSWORD`. Leur ajout est différé ; en leur absence, les tests s’exécutent et la publication est ignorée avec un avertissement explicite.
+- Les pull requests ne se connectent pas au registre et ne publient pas d’images. Les images temporaires conservées pour la publication sont nettoyées à la fin du job.
+
+Validation locale : workflow validé avec actionlint, syntaxe Bash vérifiée, scénarios de secrets absents/partiels, d’échec de publication et de relance d’un ancien commit vérifiés avec un client Docker simulé. Le nettoyage des images est vérifié en cas de succès et d’échec. Schéma Prisma valide, 38 tâches de types/lint/build réussies et 21 tests unitaires réussis. Aucun push d’image réel n’a été effectué sans les identifiants du registre.
