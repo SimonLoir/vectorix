@@ -19,6 +19,7 @@ WORKDIR /app
 # 2) Dependencies layer
 # -----------------------
 FROM base AS deps
+ENV CI=true
 
 RUN apk add --no-cache python3 make g++
 
@@ -44,7 +45,7 @@ COPY --from=deps --chown=node:node /app/packages/db/node_modules ./packages/db/n
 # Copy the prisma schema and migrations
 COPY packages/db/prisma ./packages/db/prisma
 COPY packages/db/prisma.config.ts ./packages/db/prisma.config.ts
-COPY packages ./packages
+COPY packages/db/package.json ./packages/db/package.json
 
 WORKDIR /app/packages/db
 
