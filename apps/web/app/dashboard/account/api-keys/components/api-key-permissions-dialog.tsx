@@ -37,6 +37,7 @@ export function ApiKeyPermissionsDialog({
     readonly onClose: () => void;
     readonly onCreated?: (key: string) => void;
 }) {
+    const tr = useTranslations('rag');
     const { client } = useORPC();
     const { access, refresh } = useVectorixPermissions();
     const t = useTranslations('permissions');
@@ -78,7 +79,10 @@ export function ApiKeyPermissionsDialog({
                 if (!open && !saving) onClose();
             }}
         >
-            <DialogContent className='sm:max-w-4xl'>
+            <DialogContent
+                className='sm:max-w-4xl'
+                closeLabel={tr('common.close')}
+            >
                 <DialogHeader>
                     <DialogTitle>{t('keyPermissions')}</DialogTitle>
                     <DialogDescription>
@@ -181,8 +185,8 @@ export function ApiKeyPermissionsDialog({
                     {existing && !canEditScopes && (
                         <p className='text-sm text-muted-foreground'>
                             {existing.issuerMemberId
-                                ? 'Seul l’émetteur de cette clé peut modifier ses périmètres de collection.'
-                                : 'Cette ancienne clé n’a pas d’émetteur lié au catalogue. Créez une nouvelle clé pour lui accorder des accès aux collections.'}
+                                ? tr('keys.issuerOnly')
+                                : tr('keys.legacyHint')}
                         </p>
                     )}
                     <fieldset disabled={saving}>

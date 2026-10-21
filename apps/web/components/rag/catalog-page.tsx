@@ -1,4 +1,5 @@
 'use client';
+import { useTranslations } from 'next-intl';
 import type { ReactNode } from 'react';
 import DashboardPage from '@/components/dashboard-page';
 import { useVectorixPermissions } from '@/contexts/vectorix-permissions';
@@ -6,46 +7,45 @@ import { Button } from '@repo/ui/button';
 
 /** Mount business queries only after current organization permissions are known. */
 export function CatalogPage({
-    title,
-    description,
+    titleKey,
+    descriptionKey,
     operation,
     children,
 }: Readonly<{
-    title: string;
-    description: string;
+    titleKey: string;
+    descriptionKey: string;
     operation: string;
     children: ReactNode;
 }>) {
+    const tr = useTranslations('rag');
     const { isPending, isError, canOperation, refresh } =
         useVectorixPermissions();
     return (
         <DashboardPage className='space-y-6'>
             <header>
                 <p className='mb-2 text-xs font-medium uppercase tracking-widest text-muted-foreground'>
-                    Vectorix · Catalogue
+                    {tr('page.eyebrow')}
                 </p>
                 <h1 className='text-3xl font-semibold tracking-tight'>
-                    {title}
+                    {tr(titleKey)}
                 </h1>
                 <p className='mt-2 max-w-3xl text-muted-foreground'>
-                    {description}
+                    {tr(descriptionKey)}
                 </p>
             </header>
             {isError ? (
                 <div role='alert'>
-                    Impossible de vérifier vos permissions.{' '}
+                    {tr('page.permissionFailed')}{' '}
                     <Button variant='outline' onClick={() => void refresh()}>
-                        Réessayer
+                        {tr('common.retry')}
                     </Button>
                 </div>
             ) : isPending ? (
-                <p role='status'>Chargement des permissions…</p>
+                <p role='status'>{tr('page.permissionLoading')}</p>
             ) : canOperation(operation) ? (
                 children
             ) : (
-                <p role='alert'>
-                    Vous n’avez pas accès à cette page dans cette organisation.
-                </p>
+                <p role='alert'>{tr('page.denied')}</p>
             )}
         </DashboardPage>
     );

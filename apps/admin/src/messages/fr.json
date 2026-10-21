@@ -1,0 +1,52 @@
+{
+    "language": {
+        "label": "Langue",
+        "en": "Anglais",
+        "fr": "Français",
+        "nlBE": "Néerlandais (Belgique)"
+    },
+    "admin": {
+        "quota": {
+            "title": "Quotas du catalogue RAG",
+            "overridden": "Limites propres à cette organisation.",
+            "defaults": "Valeurs par défaut de la plateforme. Enregistrer crée une dérogation pour cette organisation.",
+            "saved": "Quotas enregistrés",
+            "loading": "Chargement des quotas…",
+            "retry": "Réessayer",
+            "collections": "Collections",
+            "documents": "Documents",
+            "originalBytes": "Taille maximale d’un fichier (octets)",
+            "storageBytes": "Stockage conservé (octets)",
+            "chunksPerCollection": "Passages par collection",
+            "hint": "1 Mio = 1 048 576 octets. La limite de collections est appliquée dès maintenant. Les limites de stockage et de passages accompagneront l’ingestion. Réduire un quota ne supprime pas les données existantes.",
+            "save": "Enregistrer les quotas",
+            "saving": "Enregistrement…"
+        },
+        "workspace": {
+            "back": "← Organisations",
+            "organization": "Organisation",
+            "rag": "Quotas RAG",
+            "members": "Membres",
+            "features": "Licences et fonctionnalités"
+        },
+        "shell": {
+            "dashboard": "Tableau de bord",
+            "organizations": "Organisations",
+            "users": "Utilisateurs",
+            "features": "Fonctionnalités",
+            "audit": "Journal d’audit",
+            "loading": "Vérification des droits administrateur…",
+            "denied": "Accès refusé",
+            "deniedHint": "Votre compte est authentifié, mais il n’est pas marqué comme super administrateur.",
+            "switchAccount": "Changer de compte",
+            "signOut": "Se déconnecter",
+            "workspace": "Espace de travail",
+            "administration": "Administration",
+            "access": "Accès superadmin"
+        },
+        "metadata": {
+            "title": "Administration Vectorix",
+            "description": "Gestion des organisations et fonctionnalités Vectorix."
+        }
+    }
+}

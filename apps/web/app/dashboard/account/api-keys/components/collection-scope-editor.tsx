@@ -1,4 +1,5 @@
 'use client';
+import { useTranslations } from 'next-intl';
 import { useQuery } from '@tanstack/react-query';
 import type { PermissionSet } from '@repo/auth/permissions';
 import { useORPC } from '@/hooks/use-orpc';
@@ -24,6 +25,7 @@ export function CollectionScopeEditor({
     permissions: PermissionSet;
     readOnly: boolean;
 }>) {
+    const tr = useTranslations('rag');
     const { orpc } = useORPC();
     const page = useCatalogPagination();
     const query = useQuery({
@@ -53,13 +55,8 @@ export function CollectionScopeEditor({
     }
     return (
         <section className='space-y-3 rounded-lg border p-4'>
-            <h3 className='font-medium'>Périmètre des collections</h3>
-            <p className='text-sm text-muted-foreground'>
-                La clé doit aussi posséder les permissions correspondantes
-                ci-dessus. Ses droits restent limités à ceux de son émetteur,
-                réévalués à chaque requête. Sans périmètre explicite, elle
-                n’accède à aucune collection.
-            </p>
+            <h3 className='font-medium'>{tr('keys.title')}</h3>
+            <p className='text-sm text-muted-foreground'>{tr('keys.hint')}</p>
             {value.length > 0 && (
                 <ul className='space-y-2'>
                     {value.map((scope) => (
@@ -70,8 +67,9 @@ export function CollectionScopeEditor({
                             <span className='break-all'>
                                 {scope.collectionId} ·{' '}
                                 {[
-                                    scope.read && 'Lecture',
-                                    scope.manageDocuments && 'Documents',
+                                    scope.read && tr('common.read'),
+                                    scope.manageDocuments &&
+                                        tr('common.documents'),
                                 ]
                                     .filter(Boolean)
                                     .join(' / ')}
@@ -81,7 +79,9 @@ export function CollectionScopeEditor({
                                     type='button'
                                     variant='ghost'
                                     size='sm'
-                                    aria-label={`Retirer le périmètre ${scope.collectionId}`}
+                                    aria-label={tr('keys.removeScope', {
+                                        id: scope.collectionId,
+                                    })}
                                     onClick={() =>
                                         onChange(
                                             value.filter(
@@ -92,7 +92,7 @@ export function CollectionScopeEditor({
                                         )
                                     }
                                 >
-                                    Retirer
+                                    {tr('common.remove')}
                                 </Button>
                             )}
                         </li>
@@ -104,7 +104,7 @@ export function CollectionScopeEditor({
                     <CatalogSearch
                         value={page.query}
                         onChange={page.search}
-                        label='Rechercher une collection à autoriser'
+                        label={tr('keys.search')}
                     />
                     <CatalogQueryState query={query} />
                     {!query.isError && query.data && (
@@ -134,8 +134,12 @@ export function CollectionScopeEditor({
                                                         key={action}
                                                         label={
                                                             action === 'read'
-                                                                ? 'Lecture'
-                                                                : 'Gestion des documents'
+                                                                ? tr(
+                                                                      'common.read'
+                                                                  )
+                                                                : tr(
+                                                                      'keys.manageDocuments'
+                                                                  )
                                                         }
                                                         checked={
                                                             selected?.[

@@ -1,4 +1,5 @@
 'use client';
+import { useTranslations } from 'next-intl';
 import Link from 'next/link';
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
@@ -16,6 +17,7 @@ import { CollectionGrants } from './collection-grants';
 import type { Collection } from '../types';
 
 export function CollectionDetail({ id }: Readonly<{ id: string }>) {
+    const tr = useTranslations('rag');
     const { orpc, client } = useORPC();
     const { canOperation } = useVectorixPermissions();
     const router = useRouter();
@@ -37,7 +39,7 @@ export function CollectionDetail({ id }: Readonly<{ id: string }>) {
                 href='/dashboard/collections'
                 className='text-sm underline underline-offset-4'
             >
-                ← Toutes les collections
+                {tr('collections.back')}
             </Link>
             <section className='rounded-xl border bg-card p-6 space-y-5'>
                 <div className='flex flex-wrap justify-between gap-4'>
@@ -49,12 +51,12 @@ export function CollectionDetail({ id }: Readonly<{ id: string }>) {
                             {item.description}
                         </p>
                     </div>
-                    <Badge variant='secondary'>Configuration uniquement</Badge>
+                    <Badge variant='secondary'>
+                        {tr('collections.configurationOnly')}
+                    </Badge>
                 </div>
                 <p className='rounded-lg bg-muted p-4 text-sm'>
-                    Ce profil est enregistré. L’ajout de documents, l’indexation
-                    et le playground de recherche ne sont pas encore
-                    disponibles.
+                    {tr('collections.unavailable')}
                 </p>
                 <ProfileSummary configuration={item.configuration} />
                 <div className='flex flex-wrap gap-2'>
@@ -64,7 +66,7 @@ export function CollectionDetail({ id }: Readonly<{ id: string }>) {
                                 variant='outline'
                                 onClick={() => setEditing(item)}
                             >
-                                Modifier le profil
+                                {tr('collections.editProfile')}
                             </Button>
                         )}
                     {item.permissions.administer &&
@@ -73,19 +75,17 @@ export function CollectionDetail({ id }: Readonly<{ id: string }>) {
                                 variant='outline'
                                 onClick={() => setDeleting(item)}
                             >
-                                Supprimer la collection
+                                {tr('collections.delete')}
                             </Button>
                         )}
                 </div>
                 <p className='text-xs text-muted-foreground'>
-                    Votre accès explicite : lecture{' '}
-                    {item.permissions.read ? 'autorisée' : 'non accordée'} ·
-                    gestion des documents{' '}
-                    {item.permissions.manageDocuments
-                        ? 'autorisée'
-                        : 'non accordée'}
-                    . Administrer le catalogue ne donne pas automatiquement
-                    accès au contenu.
+                    {tr('collections.accessSummary', {
+                        read: item.permissions.read ? 'allowed' : 'denied',
+                        documents: item.permissions.manageDocuments
+                            ? 'allowed'
+                            : 'denied',
+                    })}
                 </p>
             </section>
             {item.permissions.administer &&
@@ -101,8 +101,10 @@ export function CollectionDetail({ id }: Readonly<{ id: string }>) {
             )}
             {deleting && (
                 <ConfirmCatalogAction
-                    title='Supprimer cette collection ?'
-                    description={`${deleting.name} ne sera plus accessible. Les documents de la bibliothèque restent conservés.`}
+                    title={tr('collections.deleteTitle')}
+                    description={tr('collections.deleteDescription', {
+                        name: deleting.name,
+                    })}
                     onClose={() => setDeleting(null)}
                     action={async () => {
                         await client.admin.rag.collections.delete({

@@ -6,8 +6,8 @@ export default async function CollectionPage({
     const { id } = await params;
     return (
         <CatalogPage
-            title='Collection'
-            description='Configuration, droits et historique du catalogue.'
+            titleKey='collections.detailTitle'
+            descriptionKey='collections.detailDescription'
             operation='admin.rag.collections.get'
         >
             <CollectionDetail key={id} id={id} />

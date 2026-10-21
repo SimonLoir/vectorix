@@ -1,4 +1,5 @@
 'use client';
+import { useTranslations } from 'next-intl';
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useORPC } from '@/hooks/use-orpc';
@@ -19,6 +20,7 @@ export function GroupMembers({
     group,
     onClose,
 }: Readonly<{ group: Group; onClose: () => void }>) {
+    const tr = useTranslations('rag');
     const { orpc, client } = useORPC();
     const { canOperation } = useVectorixPermissions();
     const page = useCatalogPagination();
@@ -41,15 +43,15 @@ export function GroupMembers({
     );
     return (
         <CatalogDialog
-            title={`Membres · ${group.name}`}
-            description='L’ajout à un groupe peut donner accès à ses collections. Vous devez aussi pouvoir gérer les droits de ces collections.'
+            title={tr('groups.membersTitle', { name: group.name })}
+            description={tr('groups.membersHint')}
             busy={mutation.busy}
             onClose={onClose}
         >
             <CatalogSearch
                 value={page.query}
                 onChange={page.search}
-                label='Rechercher dans le groupe'
+                label={tr('groups.searchMembers')}
             />
             <CatalogQueryState query={query} />
             {!query.isError && query.data && (
@@ -70,7 +72,7 @@ export function GroupMembers({
                                         disabled={mutation.busy}
                                         onClick={() => setRemoving(member)}
                                     >
-                                        Retirer du groupe
+                                        {tr('groups.removeMember')}
                                     </Button>
                                 )}
                             </li>
@@ -90,7 +92,9 @@ export function GroupMembers({
                         disabled={mutation.busy}
                         onClick={() => setAdding((value) => !value)}
                     >
-                        {adding ? 'Fermer la sélection' : 'Ajouter un membre'}
+                        {adding
+                            ? tr('groups.closeSelection')
+                            : tr('groups.addMember')}
                     </Button>
                     {adding && (
                         <fieldset
@@ -121,7 +125,7 @@ export function GroupMembers({
                                         );
                                 }}
                             >
-                                Ajouter au groupe
+                                {tr('groups.addToGroup')}
                             </Button>
                         </fieldset>
                     )}
@@ -130,8 +134,10 @@ export function GroupMembers({
             <ActionError error={mutation.error} />
             {removing && (
                 <ConfirmCatalogAction
-                    title='Retirer ce membre ?'
-                    description={`${removing.name} perdra les accès accordés par ce groupe.`}
+                    title={tr('groups.removeTitle')}
+                    description={tr('groups.removeDescription', {
+                        name: removing.name,
+                    })}
                     onClose={() => setRemoving(null)}
                     action={() =>
                         client.admin.rag.groups.removeMember({

@@ -1,4 +1,5 @@
 'use client';
+import { useTranslations } from 'next-intl';
 import Link from 'next/link';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@repo/ui/tabs';
 import { OrganizationRagQuota } from './organization-rag-quota';
@@ -10,18 +11,23 @@ export function OrganizationWorkspace({
 }: {
     readonly organizationId: string;
 }) {
+    const tr = useTranslations('admin');
     return (
         <div className='space-y-6'>
             <Link href='/organizations' className='text-sm text-slate-400'>
-                ← Organisations
+                {tr('workspace.back')}
             </Link>
             <Tabs defaultValue='summary'>
                 <TabsList>
-                    <TabsTrigger value='summary'>Organisation</TabsTrigger>
-                    <TabsTrigger value='rag'>Quotas RAG</TabsTrigger>
-                    <TabsTrigger value='members'>Membres</TabsTrigger>
+                    <TabsTrigger value='summary'>
+                        {tr('workspace.organization')}
+                    </TabsTrigger>
+                    <TabsTrigger value='rag'>{tr('workspace.rag')}</TabsTrigger>
+                    <TabsTrigger value='members'>
+                        {tr('workspace.members')}
+                    </TabsTrigger>
                     <TabsTrigger value='features'>
-                        Licences et fonctionnalités
+                        {tr('workspace.features')}
                     </TabsTrigger>
                 </TabsList>
                 <TabsContent value='summary'>

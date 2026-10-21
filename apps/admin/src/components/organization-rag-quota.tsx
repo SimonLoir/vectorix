@@ -1,4 +1,5 @@
 'use client';
+import { useTranslations } from 'next-intl';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useORPC } from '@/hooks/use-orpc';
 import { Button } from '@repo/ui/button';
@@ -6,21 +7,21 @@ import { Input } from '@repo/ui/input';
 import { Card, CardHeader, CardTitle, CardContent } from '@repo/ui/card';
 import { toast } from 'sonner';
 const fields = [
-    { name: 'collections', label: 'Collections', max: 10_000 },
-    { name: 'documents', label: 'Documents', max: 10_000_000 },
+    { name: 'collections', label: 'quota.collections', max: 10_000 },
+    { name: 'documents', label: 'quota.documents', max: 10_000_000 },
     {
         name: 'originalBytes',
-        label: 'Taille maximale d’un fichier (octets)',
+        label: 'quota.originalBytes',
         max: 10_737_418_240,
     },
     {
         name: 'storageBytes',
-        label: 'Stockage conservé (octets)',
+        label: 'quota.storageBytes',
         max: Number.MAX_SAFE_INTEGER,
     },
     {
         name: 'chunksPerCollection',
-        label: 'Passages par collection',
+        label: 'quota.chunksPerCollection',
         max: 100_000_000,
     },
 ] as const;
@@ -28,6 +29,7 @@ const fields = [
 export function OrganizationRagQuota({
     organizationId,
 }: Readonly<{ organizationId: string }>) {
+    const tr = useTranslations('admin');
     const { orpc } = useORPC();
     const cache = useQueryClient();
     const query = useQuery(
@@ -39,7 +41,7 @@ export function OrganizationRagQuota({
         orpc.superadmin.organizations.setRagQuota.mutationOptions({
             onSuccess: async () => {
                 await cache.invalidateQueries();
-                toast.success('Quotas enregistrés');
+                toast.success(tr('quota.saved'));
             },
         })
     );
@@ -48,21 +50,21 @@ export function OrganizationRagQuota({
             <div role='alert'>
                 {query.error.message}{' '}
                 <Button variant='outline' onClick={() => void query.refetch()}>
-                    Réessayer
+                    {tr('quota.retry')}
                 </Button>
             </div>
         );
-    if (query.isPending) return <p role='status'>Chargement des quotas…</p>;
+    if (query.isPending) return <p role='status'>{tr('quota.loading')}</p>;
     return (
         <Card>
             <CardHeader>
-                <CardTitle>Quotas du catalogue RAG</CardTitle>
+                <CardTitle>{tr('quota.title')}</CardTitle>
             </CardHeader>
             <CardContent className='space-y-5'>
                 <p className='text-sm text-muted-foreground'>
                     {query.data.overridden
-                        ? 'Limites propres à cette organisation.'
-                        : 'Valeurs par défaut de la plateforme. Enregistrer crée une dérogation pour cette organisation.'}
+                        ? tr('quota.overridden')
+                        : tr('quota.defaults')}
                 </p>
                 <form
                     className='space-y-5'
@@ -94,7 +96,7 @@ export function OrganizationRagQuota({
                                 className='space-y-2 text-sm'
                                 key={field.name}
                             >
-                                <span>{field.label}</span>
+                                <span>{tr(field.label)}</span>
                                 <Input
                                     name={field.name}
                                     type='number'
@@ -108,18 +110,15 @@ export function OrganizationRagQuota({
                         ))}
                     </fieldset>
                     <p className='text-sm text-muted-foreground'>
-                        1 Mio = 1 048 576 octets. La limite de collections est
-                        appliquée dès maintenant. Les limites de stockage et de
-                        passages accompagneront l’ingestion. Réduire un quota ne
-                        supprime pas les données existantes.
+                        {tr('quota.hint')}
                     </p>
                     {mutation.isError && (
                         <p role='alert'>{mutation.error.message}</p>
                     )}
                     <Button disabled={mutation.isPending}>
                         {mutation.isPending
-                            ? 'Enregistrement…'
-                            : 'Enregistrer les quotas'}
+                            ? tr('quota.saving')
+                            : tr('quota.save')}
                     </Button>
                 </form>
             </CardContent>

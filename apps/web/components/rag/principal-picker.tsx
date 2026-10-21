@@ -1,4 +1,5 @@
 'use client';
+import { useTranslations } from 'next-intl';
 import { useId } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useORPC } from '@/hooks/use-orpc';
@@ -22,6 +23,7 @@ export function PrincipalPicker({
     selected: Principal | null;
     onSelect: (value: Principal) => void;
 }>) {
+    const tr = useTranslations('rag');
     const { orpc } = useORPC();
     const page = useCatalogPagination();
     const radioName = useId();
@@ -40,7 +42,7 @@ export function PrincipalPicker({
             <CatalogSearch
                 value={page.query}
                 onChange={page.search}
-                label='Rechercher un membre ou un groupe'
+                label={tr('principals.search')}
             />
             <CatalogQueryState query={query} />
             {!query.isError && query.data && (
@@ -77,7 +79,8 @@ export function PrincipalPicker({
             )}
             {selected && (
                 <p className='text-sm'>
-                    Sélection : <strong>{selected.name}</strong>
+                    {tr('principals.selection')}
+                    <strong>{selected.name}</strong>
                 </p>
             )}
         </div>

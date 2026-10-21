@@ -1,4 +1,5 @@
 'use client';
+import { useTranslations } from 'next-intl';
 import { useRouter } from 'next/navigation';
 import { collectionProfile } from '@repo/api-contracts/v1/rag/collections';
 import { useORPC } from '@/hooks/use-orpc';
@@ -13,13 +14,14 @@ export function CollectionForm({
     existing,
     onClose,
 }: Readonly<{ existing?: Collection; onClose: () => void }>) {
+    const tr = useTranslations('rag');
     const { client } = useORPC();
     const router = useRouter();
     const mutation = useCatalogAction();
     return (
         <CatalogDialog
-            title={existing ? 'Modifier la collection' : 'Créer une collection'}
-            description='Enregistrez un profil de configuration. Les documents, l’indexation et la recherche seront disponibles dans les prochaines étapes.'
+            title={existing ? tr('collections.edit') : tr('collections.create')}
+            description={tr('collections.formDescription')}
             busy={mutation.busy}
             onClose={onClose}
         >
@@ -82,14 +84,14 @@ export function CollectionForm({
             >
                 <fieldset disabled={mutation.busy} className='space-y-5'>
                     <TextField
-                        label='Nom de la collection'
+                        label={tr('collections.name')}
                         name='name'
                         required
                         maxLength={200}
                         defaultValue={existing?.name}
                     />
                     <AreaField
-                        label='Description'
+                        label={tr('common.description')}
                         name='description'
                         maxLength={2000}
                         defaultValue={existing?.description ?? ''}
@@ -99,15 +101,12 @@ export function CollectionForm({
                     {!existing && (
                         <CheckField
                             name='grantCreatorRead'
-                            label='M’accorder explicitement la lecture de cette collection'
+                            label={tr('collections.grantSelf')}
                             defaultChecked
                         />
                     )}
                     <p className='text-sm text-muted-foreground'>
-                        Le profil utilise les credentials sélectionnés pour ce
-                        fournisseur, ou ceux de la plateforme en l’absence de
-                        configuration dans l’organisation. Enregistrer une
-                        modification crée une nouvelle révision.
+                        {tr('collections.bindingHint')}
                     </p>
                 </fieldset>
                 <ActionError error={mutation.error} />
@@ -118,10 +117,12 @@ export function CollectionForm({
                         disabled={mutation.busy}
                         onClick={onClose}
                     >
-                        Annuler
+                        {tr('common.cancel')}
                     </Button>
                     <Button disabled={mutation.busy}>
-                        {mutation.busy ? 'Enregistrement…' : 'Enregistrer'}
+                        {mutation.busy
+                            ? tr('common.saving')
+                            : tr('common.save')}
                     </Button>
                 </div>
             </form>

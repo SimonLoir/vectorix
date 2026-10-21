@@ -1,4 +1,5 @@
 'use client';
+import { useTranslations } from 'next-intl';
 import { useState } from 'react';
 import { Input } from '@repo/ui/input';
 import { Button } from '@repo/ui/button';
@@ -20,17 +21,18 @@ export function useCatalogPagination() {
 export function CatalogSearch({
     value,
     onChange,
-    label = 'Rechercher',
+    label,
 }: Readonly<{
     value: string;
     onChange: (value: string) => void;
     label?: string;
 }>) {
+    const tr = useTranslations('rag');
     return (
         <Input
             type='search'
-            aria-label={label}
-            placeholder={label}
+            aria-label={label ?? tr('common.search')}
+            placeholder={label ?? tr('common.search')}
             maxLength={200}
             value={value}
             onChange={(event) => onChange(event.target.value)}
@@ -49,12 +51,17 @@ export function CatalogPagination({
     onChange: (offset: number) => void;
     limit?: number;
 }>) {
+    const tr = useTranslations('rag');
     return (
         <div className='flex flex-wrap items-center justify-between gap-3 text-sm'>
             <span className='text-muted-foreground'>
                 {total === 0
-                    ? 'Aucun résultat'
-                    : `${Math.min(offset + 1, total)}–${Math.min(offset + limit, total)} sur ${total}`}
+                    ? tr('common.empty')
+                    : tr('common.range', {
+                          from: Math.min(offset + 1, total),
+                          to: Math.min(offset + limit, total),
+                          total,
+                      })}
             </span>
             <div className='flex gap-2'>
                 <Button
@@ -64,7 +71,7 @@ export function CatalogPagination({
                     disabled={offset === 0}
                     onClick={() => onChange(Math.max(0, offset - limit))}
                 >
-                    Précédent
+                    {tr('common.previous')}
                 </Button>
                 <Button
                     type='button'
@@ -73,7 +80,7 @@ export function CatalogPagination({
                     disabled={offset + limit >= total}
                     onClick={() => onChange(offset + limit)}
                 >
-                    Suivant
+                    {tr('common.next')}
                 </Button>
             </div>
         </div>
@@ -89,26 +96,24 @@ export function CatalogQueryState({
         refetch: () => unknown;
     };
 }>) {
+    const tr = useTranslations('rag');
     if (query.isError)
         return (
             <div
                 role='alert'
                 className='rounded-lg border border-destructive/40 p-4'
             >
-                <p>
-                    {query.error?.message ??
-                        'Impossible de charger ces données.'}
-                </p>
+                <p>{query.error?.message ?? tr('common.loadFailed')}</p>
                 <Button
                     type='button'
                     className='mt-3'
                     variant='outline'
                     onClick={() => void query.refetch()}
                 >
-                    Réessayer
+                    {tr('common.retry')}
                 </Button>
             </div>
         );
-    if (query.isPending) return <p role='status'>Chargement…</p>;
+    if (query.isPending) return <p role='status'>{tr('common.loading')}</p>;
     return null;
 }

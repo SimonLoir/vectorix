@@ -1,10 +1,12 @@
 'use client';
+import { useTranslations } from 'next-intl';
 import { useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 
 /** Invalidate every affected organization query, including permissions, scopes, quotas and audit. */
 export function useCatalogAction() {
+    const tr = useTranslations('rag');
     const cache = useQueryClient();
     const [busy, setBusy] = useState(false);
     const [error, setError] = useState<string | null>(null);
@@ -14,13 +16,11 @@ export function useCatalogAction() {
         try {
             await action();
             await cache.invalidateQueries();
-            toast.success('Modification enregistrée');
+            toast.success(tr('common.saved'));
             done?.();
         } catch (cause) {
             setError(
-                cause instanceof Error
-                    ? cause.message
-                    : 'La modification a échoué.'
+                cause instanceof Error ? cause.message : tr('common.failed')
             );
         } finally {
             setBusy(false);

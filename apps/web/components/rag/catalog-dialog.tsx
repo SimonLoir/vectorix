@@ -1,4 +1,5 @@
 'use client';
+import { useTranslations } from 'next-intl';
 import type { ReactNode } from 'react';
 import {
     Dialog,
@@ -23,6 +24,7 @@ export function CatalogDialog({
     onClose: () => void;
     children: ReactNode;
 }>) {
+    const tr = useTranslations('rag');
     return (
         <Dialog
             open
@@ -33,6 +35,7 @@ export function CatalogDialog({
             <DialogContent
                 className='sm:max-w-2xl'
                 showCloseButton={!busy}
+                closeLabel={tr('common.close')}
                 onEscapeKeyDown={(event) => {
                     if (busy) event.preventDefault();
                 }}
@@ -60,6 +63,7 @@ export function ConfirmCatalogAction({
     action: () => Promise<unknown>;
     onClose: () => void;
 }>) {
+    const tr = useTranslations('rag');
     const mutation = useCatalogAction();
     return (
         <CatalogDialog
@@ -75,14 +79,16 @@ export function ConfirmCatalogAction({
                     disabled={mutation.busy}
                     onClick={onClose}
                 >
-                    Annuler
+                    {tr('common.cancel')}
                 </Button>
                 <Button
                     variant='destructive'
                     disabled={mutation.busy}
                     onClick={() => void mutation.run(action, onClose)}
                 >
-                    {mutation.busy ? 'En cours…' : 'Confirmer'}
+                    {mutation.busy
+                        ? tr('common.working')
+                        : tr('common.confirm')}
                 </Button>
             </div>
         </CatalogDialog>

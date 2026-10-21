@@ -1,4 +1,5 @@
 'use client';
+import { useTranslations } from 'next-intl';
 import { useState } from 'react';
 import { TextField, SelectField, CheckField, AreaField } from '../form-fields';
 import type { Collection } from '../types';
@@ -6,6 +7,7 @@ import type { Collection } from '../types';
 export function ProfileFields({
     configuration,
 }: Readonly<{ configuration?: Collection['configuration'] }>) {
+    const tr = useTranslations('rag');
     const [strategy, setStrategy] = useState(
         configuration?.chunkingStrategy ?? 'DOCUMENT_STRUCTURE'
     );
@@ -14,7 +16,7 @@ export function ProfileFields({
         <div className='space-y-5'>
             <div className='grid gap-4 sm:grid-cols-2'>
                 <SelectField
-                    label='Fournisseur d’embeddings'
+                    label={tr('profile.provider')}
                     name='provider'
                     defaultValue={configuration?.provider ?? 'OLLAMA'}
                 >
@@ -23,17 +25,17 @@ export function ProfileFields({
                     <option value='VOYAGE'>Voyage</option>
                 </SelectField>
                 <TextField
-                    label='Modèle'
+                    label={tr('profile.model')}
                     name='model'
                     required
                     maxLength={200}
                     defaultValue={configuration?.model}
-                    placeholder='Nom du modèle déployé'
+                    placeholder={tr('profile.modelPlaceholder')}
                 />
             </div>
             <div className='grid gap-4 sm:grid-cols-2'>
                 <TextField
-                    label='Dimensions des vecteurs'
+                    label={tr('profile.dimensions')}
                     name='dimensions'
                     type='number'
                     required
@@ -42,7 +44,7 @@ export function ProfileFields({
                     defaultValue={configuration?.dimensions}
                 />
                 <SelectField
-                    label='Index vectoriel'
+                    label={tr('profile.index')}
                     name='indexType'
                     defaultValue={configuration?.indexType ?? 'DISKANN'}
                 >
@@ -51,19 +53,17 @@ export function ProfileFields({
                 </SelectField>
             </div>
             <p className='text-sm text-muted-foreground'>
-                PostgreSQL de la plateforme · Similarité cosinus · Float32. HNSW
-                accepte au maximum 2 000 dimensions. La compatibilité du modèle
-                sera vérifiée lors de l’indexation.
+                {tr('profile.indexHint')}
             </p>
             <AreaField
-                label='Instructions de préparation du texte'
+                label={tr('profile.preparation')}
                 name='preparation'
                 maxLength={4000}
                 defaultValue={configuration?.preparation ?? ''}
                 rows={3}
             />
             <SelectField
-                label='Technique de découpage'
+                label={tr('profile.chunking')}
                 name='chunkingStrategy'
                 value={strategy}
                 onChange={(event) => {
@@ -77,14 +77,14 @@ export function ProfileFields({
                 }}
             >
                 <option value='DOCUMENT_STRUCTURE'>
-                    Structure du document
+                    {tr('profile.structure')}
                 </option>
-                <option value='TOKEN_WINDOW'>Fenêtre de tokens</option>
-                <option value='SEMANTIC'>Similarité sémantique</option>
+                <option value='TOKEN_WINDOW'>{tr('profile.tokens')}</option>
+                <option value='SEMANTIC'>{tr('profile.semantic')}</option>
             </SelectField>
             <div className='grid gap-4 sm:grid-cols-2'>
                 <TextField
-                    label='Taille cible (tokens)'
+                    label={tr('profile.target')}
                     name='targetTokens'
                     type='number'
                     required
@@ -93,7 +93,7 @@ export function ProfileFields({
                     defaultValue={configuration?.chunking.targetTokens ?? 512}
                 />
                 <TextField
-                    label='Chevauchement (tokens)'
+                    label={tr('profile.overlap')}
                     name='overlapTokens'
                     type='number'
                     required
@@ -102,7 +102,7 @@ export function ProfileFields({
                     defaultValue={configuration?.chunking.overlapTokens ?? 64}
                 />
                 <TextField
-                    label='Taille minimale (tokens)'
+                    label={tr('profile.minimum')}
                     name='minTokens'
                     type='number'
                     required
@@ -111,7 +111,7 @@ export function ProfileFields({
                     defaultValue={configuration?.chunking.minTokens ?? 128}
                 />
                 <TextField
-                    label='Taille maximale (tokens)'
+                    label={tr('profile.maximum')}
                     name='maxTokens'
                     type='number'
                     required
@@ -121,7 +121,7 @@ export function ProfileFields({
                 />
             </div>
             <TextField
-                label='Seuil sémantique (percentile)'
+                label={tr('profile.percentile')}
                 name='semanticPercentile'
                 type='number'
                 required
@@ -131,13 +131,13 @@ export function ProfileFields({
                 readOnly={strategy !== 'SEMANTIC'}
             />
             <CheckField
-                label='Rechercher dans les passages enfants et restituer le contexte parent'
+                label={tr('profile.parentChild')}
                 name='parentChild'
                 checked={parent}
                 onChange={(event) => setParent(event.target.checked)}
             />
             <TextField
-                label='Taille maximale du parent (tokens)'
+                label={tr('profile.parentMaximum')}
                 name='parentMaxTokens'
                 type='number'
                 required

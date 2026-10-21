@@ -1,4 +1,5 @@
 'use client';
+import { useTranslations } from 'next-intl';
 import { TextField, CheckField } from '../form-fields';
 import type { Credential } from '../types';
 
@@ -10,12 +11,13 @@ export function CredentialProviderFields({
     provider: Credential['provider'];
     existing?: Credential;
 }>) {
+    const tr = useTranslations('rag');
     const current = existing?.data;
     return provider === 'S3' ? (
         <div className='space-y-4'>
             <div className='grid gap-4 sm:grid-cols-2'>
                 <TextField
-                    label='Région S3'
+                    label={tr('credentials.region')}
                     name='region'
                     required
                     maxLength={64}
@@ -26,7 +28,7 @@ export function CredentialProviderFields({
                     }
                 />
                 <TextField
-                    label='Bucket privé'
+                    label={tr('credentials.bucket')}
                     name='bucket'
                     required
                     minLength={3}
@@ -37,47 +39,49 @@ export function CredentialProviderFields({
                 />
             </div>
             <CheckField
-                label='Utiliser les chemins de type path-style (RustFS)'
+                label={tr('credentials.pathStyle')}
                 name='forcePathStyle'
                 defaultChecked={
                     current?.provider === 'S3' ? current.forcePathStyle : true
                 }
             />
             <TextField
-                label='Identifiant d’accès S3'
+                label={tr('credentials.accessKey')}
                 name='accessKeyId'
                 type='password'
                 autoComplete='new-password'
                 required={!existing}
                 maxLength={8192}
-                placeholder={existing ? 'Laisser vide pour conserver' : ''}
+                placeholder={existing ? tr('credentials.keepSecret') : ''}
             />
             <TextField
-                label='Secret S3'
+                label={tr('credentials.secretKey')}
                 name='secretAccessKey'
                 type='password'
                 autoComplete='new-password'
                 required={!existing}
                 maxLength={8192}
-                placeholder={existing ? 'Laisser vide pour conserver' : ''}
+                placeholder={existing ? tr('credentials.keepSecret') : ''}
             />
         </div>
     ) : (
         <div className='space-y-3'>
             <TextField
                 label={
-                    provider === 'OLLAMA' ? 'Clé API (facultative)' : 'Clé API'
+                    provider === 'OLLAMA'
+                        ? tr('credentials.optionalKey')
+                        : tr('credentials.apiKey')
                 }
                 name='apiKey'
                 type='password'
                 autoComplete='new-password'
                 required={!existing && provider !== 'OLLAMA'}
                 maxLength={8192}
-                placeholder={existing ? 'Laisser vide pour conserver' : ''}
+                placeholder={existing ? tr('credentials.keepSecret') : ''}
             />
             {provider === 'OLLAMA' && existing && (
                 <CheckField
-                    label='Supprimer la clé API actuelle'
+                    label={tr('credentials.removeKey')}
                     name='removeKey'
                 />
             )}

@@ -3,8 +3,8 @@ import { GroupsManager } from '@/components/rag/groups/groups-manager';
 export default function GroupsPage() {
     return (
         <CatalogPage
-            title='Groupes'
-            description='Regroupez les membres et accordez des accès aux collections.'
+            titleKey='groups.title'
+            descriptionKey='groups.description'
             operation='admin.rag.groups.list'
         >
             <GroupsManager />

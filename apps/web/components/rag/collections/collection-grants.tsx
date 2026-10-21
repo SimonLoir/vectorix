@@ -1,4 +1,5 @@
 'use client';
+import { useTranslations } from 'next-intl';
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useORPC } from '@/hooks/use-orpc';
@@ -14,6 +15,7 @@ import { GrantForm } from './grant-form';
 import type { Grant } from '../types';
 
 export function CollectionGrants({ id }: Readonly<{ id: string }>) {
+    const tr = useTranslations('rag');
     const { orpc, client } = useORPC();
     const page = useCatalogPagination();
     const [editing, setEditing] = useState<Grant | 'new' | null>(null);
@@ -31,15 +33,15 @@ export function CollectionGrants({ id }: Readonly<{ id: string }>) {
     return (
         <section className='rounded-xl border p-5 space-y-4'>
             <div className='flex flex-wrap items-center justify-between gap-3'>
-                <h2 className='text-lg font-semibold'>Accès à la collection</h2>
+                <h2 className='text-lg font-semibold'>{tr('access.title')}</h2>
                 <Button variant='outline' onClick={() => setEditing('new')}>
-                    Accorder un accès
+                    {tr('access.grant')}
                 </Button>
             </div>
             <CatalogSearch
                 value={page.query}
                 onChange={page.search}
-                label='Rechercher un accès'
+                label={tr('access.search')}
             />
             <CatalogQueryState query={query} />
             {!query.isError && query.data && (
@@ -56,21 +58,21 @@ export function CollectionGrants({ id }: Readonly<{ id: string }>) {
                                         <span className='text-sm text-muted-foreground'>
                                             ·{' '}
                                             {item.target.type === 'group'
-                                                ? 'Groupe'
-                                                : 'Membre'}
+                                                ? tr('common.group')
+                                                : tr('common.member')}
                                         </span>
                                     </p>
                                     <p className='text-sm text-muted-foreground'>
                                         {[
-                                            item.permissions.read && 'Lecture',
+                                            item.permissions.read &&
+                                                tr('common.read'),
                                             item.permissions.manageDocuments &&
-                                                'Documents',
+                                                tr('common.documents'),
                                             item.permissions.administer &&
-                                                'Administration',
+                                                tr('common.administer'),
                                         ]
                                             .filter(Boolean)
-                                            .join(' · ') ||
-                                            'Aucun droit accordé'}
+                                            .join(' · ') || tr('access.none')}
                                     </p>
                                 </div>
                                 <div className='flex gap-2'>
@@ -79,14 +81,14 @@ export function CollectionGrants({ id }: Readonly<{ id: string }>) {
                                         size='sm'
                                         onClick={() => setEditing(item)}
                                     >
-                                        Modifier l’accès
+                                        {tr('access.editAction')}
                                     </Button>
                                     <Button
                                         variant='ghost'
                                         size='sm'
                                         onClick={() => setRemoving(item)}
                                     >
-                                        Retirer l’accès
+                                        {tr('access.remove')}
                                     </Button>
                                 </div>
                             </li>
@@ -108,8 +110,10 @@ export function CollectionGrants({ id }: Readonly<{ id: string }>) {
             )}
             {removing && (
                 <ConfirmCatalogAction
-                    title='Retirer cet accès ?'
-                    description={`Le droit direct de ${removing.name} sera retiré. D’autres appartenances à des groupes peuvent encore donner accès à la collection.`}
+                    title={tr('access.removeTitle')}
+                    description={tr('access.removeDescription', {
+                        name: removing.name,
+                    })}
                     action={() =>
                         client.admin.rag.collections.removeGrant({
                             id,

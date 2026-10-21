@@ -1,4 +1,5 @@
 'use client';
+import { useTranslations } from 'next-intl';
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Button } from '@repo/ui/button';
@@ -16,6 +17,7 @@ import { CredentialForm } from './credential-form';
 import type { Credential } from '../types';
 
 export function CredentialsManager() {
+    const tr = useTranslations('rag');
     const { orpc, client } = useORPC();
     const { canOperation } = useVectorixPermissions();
     const page = useCatalogPagination();
@@ -36,30 +38,21 @@ export function CredentialsManager() {
     return (
         <div className='space-y-5'>
             <div className='rounded-xl border bg-muted/30 p-4 text-sm space-y-2'>
-                <p>
-                    La configuration de l’organisation est prioritaire. En son
-                    absence, les valeurs de la plateforme sont utilisées si
-                    elles sont disponibles.
-                </p>
-                <p>
-                    Une configuration invalide ne déclenche aucun repli. Les
-                    collections existantes conservent leur liaison enregistrée,
-                    même si vous activez d’autres credentials.
-                </p>
+                <p>{tr('credentials.priority')}</p>
+                <p>{tr('credentials.fallback')}</p>
                 <p className='text-muted-foreground'>
-                    Configuration uniquement · Les connexions et modèles ne sont
-                    pas encore vérifiés en direct.
+                    {tr('credentials.unverified')}
                 </p>
             </div>
             <div className='flex flex-wrap justify-between gap-3'>
                 <CatalogSearch
                     value={page.query}
                     onChange={page.search}
-                    label='Rechercher des credentials'
+                    label={tr('credentials.search')}
                 />
                 {canOperation('admin.rag.credentials.create') && (
                     <Button onClick={() => setEditing('new')}>
-                        Ajouter des credentials
+                        {tr('credentials.create')}
                     </Button>
                 )}
             </div>
@@ -78,8 +71,10 @@ export function CredentialsManager() {
                                             {item.name}
                                         </h2>
                                         <p className='text-sm text-muted-foreground'>
-                                            {item.provider} · Révision{' '}
-                                            {item.revision}
+                                            {tr('credentials.revision', {
+                                                provider: item.provider,
+                                                revision: item.revision,
+                                            })}
                                         </p>
                                     </div>
                                     <Badge
@@ -90,8 +85,8 @@ export function CredentialsManager() {
                                         }
                                     >
                                         {item.active
-                                            ? 'Sélectionné'
-                                            : 'Non sélectionné'}
+                                            ? tr('credentials.selected')
+                                            : tr('credentials.notSelected')}
                                     </Badge>
                                 </div>
                                 <p className='break-all text-sm'>
@@ -99,12 +94,14 @@ export function CredentialsManager() {
                                 </p>
                                 {item.data.provider === 'S3' && (
                                     <p className='text-sm'>
-                                        Bucket : {item.data.bucket} ·{' '}
-                                        {item.data.region}
+                                        {tr('credentials.bucketSummary', {
+                                            bucket: item.data.bucket,
+                                            region: item.data.region,
+                                        })}
                                     </p>
                                 )}
                                 <p className='text-xs text-muted-foreground'>
-                                    Secrets masqués · Connexion non vérifiée
+                                    {tr('credentials.masked')}
                                 </p>
                                 <div className='flex flex-wrap gap-2'>
                                     {canOperation(
@@ -114,7 +111,7 @@ export function CredentialsManager() {
                                             variant='outline'
                                             onClick={() => setEditing(item)}
                                         >
-                                            Modifier / renouveler
+                                            {tr('credentials.renew')}
                                         </Button>
                                     )}
                                     {!item.active &&
@@ -130,7 +127,7 @@ export function CredentialsManager() {
                                                     })
                                                 }
                                             >
-                                                Sélectionner
+                                                {tr('credentials.select')}
                                             </Button>
                                         )}
                                     {canOperation(
@@ -145,7 +142,7 @@ export function CredentialsManager() {
                                                 })
                                             }
                                         >
-                                            Supprimer
+                                            {tr('common.delete')}
                                         </Button>
                                     )}
                                 </div>
@@ -154,7 +151,7 @@ export function CredentialsManager() {
                     </div>
                     {query.data.total === 0 && (
                         <p className='rounded-xl border border-dashed p-8 text-center text-muted-foreground'>
-                            Aucun credential à afficher.
+                            {tr('credentials.empty')}
                         </p>
                     )}
                     <CatalogPagination
@@ -174,13 +171,17 @@ export function CredentialsManager() {
                 <ConfirmCatalogAction
                     title={
                         confirm.activate
-                            ? 'Sélectionner ces credentials ?'
-                            : 'Supprimer ces credentials ?'
+                            ? tr('credentials.selectTitle')
+                            : tr('credentials.deleteTitle')
                     }
                     description={
                         confirm.activate
-                            ? `${confirm.item.name} sera utilisé pour les nouvelles configurations de ce fournisseur. Les collections existantes restent inchangées.`
-                            : `${confirm.item.name} sera supprimé si aucune collection ou destination de stockage ne le référence.`
+                            ? tr('credentials.selectDescription', {
+                                  name: confirm.item.name,
+                              })
+                            : tr('credentials.deleteDescription', {
+                                  name: confirm.item.name,
+                              })
                     }
                     onClose={() => setConfirm(null)}
                     action={() =>

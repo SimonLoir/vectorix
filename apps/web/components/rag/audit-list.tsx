@@ -1,4 +1,5 @@
 'use client';
+import { useTranslations } from 'next-intl';
 import { useQuery } from '@tanstack/react-query';
 import { useORPC } from '@/hooks/use-orpc';
 import LocalizedDate from '@/components/localized-date';
@@ -10,6 +11,7 @@ import {
 } from './catalog-controls';
 
 export function RagAuditList() {
+    const tr = useTranslations('rag');
     const { orpc } = useORPC();
     const page = useCatalogPagination();
     const query = useQuery(
@@ -26,7 +28,7 @@ export function RagAuditList() {
             <CatalogSearch
                 value={page.query}
                 onChange={page.search}
-                label='Rechercher une action'
+                label={tr('audit.search')}
             />
             <CatalogQueryState query={query} />
             {!query.isError && query.data && (
@@ -46,11 +48,16 @@ export function RagAuditList() {
                                     </span>
                                 </div>
                                 <p className='text-sm break-all'>
-                                    Acteur : {item.actorType} · {item.actorId}
+                                    {tr('audit.actor', {
+                                        type: item.actorType,
+                                        id: item.actorId,
+                                    })}
                                 </p>
                                 {item.targetId && (
                                     <p className='text-sm text-muted-foreground break-all'>
-                                        Cible : {item.targetId}
+                                        {tr('audit.target', {
+                                            id: item.targetId,
+                                        })}
                                     </p>
                                 )}
                                 {item.details && (
@@ -74,7 +81,7 @@ export function RagAuditList() {
                         ))}
                         {query.data.total === 0 && (
                             <li className='p-8 text-center text-muted-foreground'>
-                                Aucune action à afficher.
+                                {tr('audit.empty')}
                             </li>
                         )}
                     </ol>

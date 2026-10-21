@@ -31,58 +31,58 @@ import { useAuth } from '@repo/dashboard-core/hooks/use-auth';
 import { LanguageSwitcher } from '@/components/language-switcher';
 import { useVectorixPermissions } from '@/contexts/vectorix-permissions';
 const navigation = [
-    { href: '/dashboard', label: 'Accueil', icon: Home },
+    { href: '/dashboard', label: 'home', icon: Home },
     {
         href: '/dashboard/collections',
-        label: 'Collections',
+        label: 'collections',
         icon: Database,
         operation: 'admin.rag.collections.list',
     },
     {
         href: '/dashboard/settings/integrations',
-        label: 'Intégrations',
+        label: 'integrations',
         icon: Plug,
         operation: 'admin.rag.credentials.list',
     },
     {
         href: '/dashboard/settings/groups',
-        label: 'Groupes',
+        label: 'groups',
         icon: UsersRound,
         operation: 'admin.rag.groups.list',
     },
     {
         href: '/dashboard/settings/usage',
-        label: 'Usage et quotas',
+        label: 'usage',
         icon: Gauge,
         operation: 'admin.rag.quota',
     },
     {
         href: '/dashboard/settings/audit',
-        label: 'Journal du catalogue',
+        label: 'audit',
         icon: ScrollText,
         operation: 'admin.rag.audit',
     },
-    { href: '/dashboard/account', label: 'Mon compte', icon: UserRound },
-    { href: '/dashboard/notifications', label: 'Notifications', icon: Bell },
+    { href: '/dashboard/account', label: 'account', icon: UserRound },
+    { href: '/dashboard/notifications', label: 'notifications', icon: Bell },
     {
         href: '/dashboard/settings/members',
-        label: 'Membres',
+        label: 'members',
         icon: Users,
         operation: 'admin.members.get',
     },
     {
         href: '/dashboard/settings/roles',
-        label: 'Rôles et permissions',
+        label: 'roles',
         icon: Shield,
         permission: { ac: ['read'] },
     },
     {
         href: '/dashboard/account/api-keys',
-        label: 'Clés API',
+        label: 'apiKeys',
         icon: KeyRound,
         operation: 'admin.organization.apiKeys.list',
     },
-    { href: '/dashboard/settings/licenses', label: 'Licences', icon: Layers },
+    { href: '/dashboard/settings/licenses', label: 'licenses', icon: Layers },
 ];
 export function AppSidebar({
     allowOrganizationCreation,
@@ -92,6 +92,7 @@ export function AppSidebar({
     const { data: session } = useAuth().useSession();
     const pathname = usePathname();
     const t = useTranslations('navUser');
+    const nav = useTranslations('dashboard.navigation');
     const { canOperation, can } = useVectorixPermissions();
     return (
         <Sidebar>
@@ -129,7 +130,7 @@ export function AppSidebar({
                                 >
                                     <Link href={item.href}>
                                         <item.icon />
-                                        <span>{item.label}</span>
+                                        <span>{nav(item.label)}</span>
                                     </Link>
                                 </SidebarMenuButton>
                             </SidebarMenuItem>

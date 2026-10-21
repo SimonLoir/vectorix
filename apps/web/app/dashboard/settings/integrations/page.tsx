@@ -3,8 +3,8 @@ import { CredentialsManager } from '@/components/rag/credentials/credentials-man
 export default function IntegrationsPage() {
     return (
         <CatalogPage
-            title='Intégrations'
-            description='Configurez le stockage et les fournisseurs d’embeddings de votre organisation.'
+            titleKey='credentials.title'
+            descriptionKey='credentials.description'
             operation='admin.rag.credentials.list'
         >
             <CredentialsManager />

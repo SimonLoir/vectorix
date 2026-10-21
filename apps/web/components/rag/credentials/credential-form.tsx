@@ -1,4 +1,5 @@
 'use client';
+import { useTranslations } from 'next-intl';
 import { useState } from 'react';
 import {
     credentialData,
@@ -18,18 +19,15 @@ export function CredentialForm({
     existing,
     onClose,
 }: Readonly<{ existing?: Credential; onClose: () => void }>) {
+    const tr = useTranslations('rag');
     const { client } = useORPC();
     const mutation = useCatalogAction();
     const [provider, setProvider] = useState(existing?.provider ?? 'OLLAMA');
     const current = existing?.data;
     return (
         <CatalogDialog
-            title={
-                existing
-                    ? 'Modifier les credentials'
-                    : 'Ajouter des credentials'
-            }
-            description='Les secrets restent masqués. Enregistrer ne teste pas la connexion au fournisseur.'
+            title={existing ? tr('credentials.edit') : tr('credentials.create')}
+            description={tr('credentials.formDescription')}
             busy={mutation.busy}
             onClose={onClose}
         >
@@ -62,7 +60,7 @@ export function CredentialForm({
             >
                 <fieldset disabled={mutation.busy} className='space-y-4'>
                     <TextField
-                        label='Nom des credentials'
+                        label={tr('credentials.name')}
                         name='name'
                         required
                         maxLength={100}
@@ -70,7 +68,7 @@ export function CredentialForm({
                         autoComplete='off'
                     />
                     <SelectField
-                        label='Fournisseur'
+                        label={tr('profile.providerLabel')}
                         value={provider}
                         disabled={Boolean(existing)}
                         onChange={(event) => {
@@ -79,13 +77,13 @@ export function CredentialForm({
                             );
                         }}
                     >
-                        <option value='S3'>S3 compatible</option>
+                        <option value='S3'>{tr('credentials.s3')}</option>
                         <option value='OLLAMA'>Ollama</option>
                         <option value='COHERE'>Cohere</option>
                         <option value='VOYAGE'>Voyage</option>
                     </SelectField>
                     <TextField
-                        label='URL du service'
+                        label={tr('credentials.endpoint')}
                         name='endpoint'
                         type='url'
                         required
@@ -99,14 +97,12 @@ export function CredentialForm({
                     />
                     {existing ? (
                         <p className='text-sm text-muted-foreground'>
-                            Vous pouvez renouveler les secrets. Une destination
-                            utilisée par une collection ou un fichier ne peut
-                            plus être modifiée : créez de nouveaux credentials.
+                            {tr('credentials.referencedHint')}
                         </p>
                     ) : (
                         <CheckField
                             name='activate'
-                            label='Utiliser pour les nouvelles configurations de cette organisation'
+                            label={tr('credentials.activate')}
                             defaultChecked
                         />
                     )}
@@ -119,10 +115,12 @@ export function CredentialForm({
                         disabled={mutation.busy}
                         onClick={onClose}
                     >
-                        Annuler
+                        {tr('common.cancel')}
                     </Button>
                     <Button disabled={mutation.busy}>
-                        {mutation.busy ? 'Enregistrement…' : 'Enregistrer'}
+                        {mutation.busy
+                            ? tr('common.saving')
+                            : tr('common.save')}
                     </Button>
                 </div>
             </form>

@@ -1,4 +1,5 @@
 'use client';
+import { useTranslations } from 'next-intl';
 
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
@@ -18,14 +19,15 @@ import { useAuth } from '@repo/dashboard-core/hooks/use-auth';
 import { Button } from '@repo/ui/button';
 import { cn } from '@repo/ui/utils';
 import { useORPC } from '@/hooks/use-orpc';
+import { LanguageSwitcher } from './language-switcher';
 import { LoadingState } from './loading-state';
 
 const navigation = [
-    { href: '/', label: 'Tableau de bord', icon: LayoutDashboard },
-    { href: '/organizations', label: 'Organisations', icon: Building2 },
-    { href: '/users', label: 'Utilisateurs', icon: Users },
-    { href: '/features', label: 'Fonctionnalités', icon: SlidersHorizontal },
-    { href: '/audit', label: 'Journal d’audit', icon: ScrollText },
+    { href: '/', label: 'shell.dashboard', icon: LayoutDashboard },
+    { href: '/organizations', label: 'shell.organizations', icon: Building2 },
+    { href: '/users', label: 'shell.users', icon: Users },
+    { href: '/features', label: 'shell.features', icon: SlidersHorizontal },
+    { href: '/audit', label: 'shell.audit', icon: ScrollText },
 ] as const;
 
 export function AdminShell({
@@ -33,6 +35,7 @@ export function AdminShell({
 }: {
     readonly children: React.ReactNode;
 }) {
+    const tr = useTranslations('admin');
     const pathname = usePathname();
     const router = useRouter();
     const auth = useAuth();
@@ -40,7 +43,7 @@ export function AdminShell({
     const meQuery = useQuery(orpc.superadmin.me.queryOptions({}));
 
     if (meQuery.isPending) {
-        return <LoadingState label='Vérification des droits administrateur…' />;
+        return <LoadingState label={tr('shell.loading')} />;
     }
 
     if (meQuery.isError || !meQuery.data?.user.isSuperAdmin) {
@@ -48,10 +51,11 @@ export function AdminShell({
             <main className='flex min-h-screen items-center justify-center p-6'>
                 <div className='max-w-md rounded-2xl border border-white/10 bg-[#101827] p-8 text-center shadow-2xl'>
                     <Orbit className='mx-auto h-10 w-10 text-red-600' />
-                    <h1 className='mt-4 text-xl font-semibold'>Accès refusé</h1>
+                    <h1 className='mt-4 text-xl font-semibold'>
+                        {tr('shell.denied')}
+                    </h1>
                     <p className='mt-2 text-sm text-muted-foreground'>
-                        Votre compte est authentifié, mais il n’est pas marqué
-                        comme super administrateur.
+                        {tr('shell.deniedHint')}
                     </p>
                     <Button
                         className='mt-6'
@@ -61,7 +65,7 @@ export function AdminShell({
                             router.replace('/sign-in');
                         }}
                     >
-                        Changer de compte
+                        {tr('shell.switchAccount')}
                     </Button>
                 </div>
             </main>
@@ -95,7 +99,7 @@ export function AdminShell({
                         className='ml-auto border-white/10 bg-white/5 text-slate-200 hover:bg-white/10 lg:hidden'
                         size='icon'
                         variant='outline'
-                        title='Se déconnecter'
+                        title={tr('shell.signOut')}
                         onClick={async () => {
                             await auth.signOut();
                             router.replace('/sign-in');
@@ -104,9 +108,12 @@ export function AdminShell({
                         <LogOut className='h-4 w-4' />
                     </Button>
                 </div>
+                <div className='relative px-5 py-2'>
+                    <LanguageSwitcher />
+                </div>
                 <nav className='relative flex gap-2 overflow-x-auto p-3 lg:flex-col lg:p-4 lg:pt-7'>
                     <p className='mb-2 hidden px-3 text-[10px] font-semibold uppercase tracking-[0.2em] text-slate-500 lg:block'>
-                        Espace de travail
+                        {tr('shell.workspace')}
                     </p>
                     {navigation.map((item) => {
                         const active =
@@ -135,7 +142,7 @@ export function AdminShell({
                                 >
                                     <Icon className='h-4 w-4' />
                                 </span>
-                                {item.label}
+                                {tr(item.label)}
                                 {active ? (
                                     <ChevronRight className='ml-auto hidden h-4 w-4 text-slate-400 lg:block' />
                                 ) : null}
@@ -161,7 +168,7 @@ export function AdminShell({
                                 className='h-8 w-8 text-slate-500 hover:bg-white/10 hover:text-white'
                                 size='icon'
                                 variant='ghost'
-                                title='Se déconnecter'
+                                title={tr('shell.signOut')}
                                 onClick={async () => {
                                     await auth.signOut();
                                     router.replace('/sign-in');
@@ -177,16 +184,18 @@ export function AdminShell({
                 <header className='hidden h-[76px] items-center justify-between border-b border-white/8 bg-[#0b111e]/80 px-8 backdrop-blur-xl lg:flex xl:px-10'>
                     <div>
                         <p className='text-xs font-medium text-slate-400'>
-                            Administration
+                            {tr('shell.administration')}
                         </p>
                         <p className='text-sm font-semibold text-slate-200'>
-                            {currentNavigation?.label ?? 'Organisation'}
+                            {currentNavigation
+                                ? tr(currentNavigation.label)
+                                : tr('workspace.organization')}
                         </p>
                     </div>
                     <div className='flex items-center gap-3'>
                         <div className='flex items-center gap-2 rounded-full border border-emerald-400/15 bg-emerald-400/8 px-3 py-1.5 text-xs font-medium text-emerald-300'>
                             <ShieldCheck className='h-3.5 w-3.5' />
-                            Accès superadmin
+                            {tr('shell.access')}
                         </div>
                     </div>
                 </header>

@@ -3,8 +3,8 @@ import { CollectionsManager } from '@/components/rag/collections/collections-man
 export default function CollectionsPage() {
     return (
         <CatalogPage
-            title='Collections'
-            description='Organisez vos profils de recherche et leurs droits d’accès.'
+            titleKey='collections.title'
+            descriptionKey='collections.description'
             operation='admin.rag.collections.list'
         >
             <CollectionsManager />

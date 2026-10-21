@@ -1,4 +1,5 @@
 'use client';
+import { useTranslations } from 'next-intl';
 import Link from 'next/link';
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
@@ -16,6 +17,7 @@ import {
 import { CollectionForm } from './collection-form';
 
 export function CollectionsManager() {
+    const tr = useTranslations('rag');
     const { orpc } = useORPC();
     const { canOperation } = useVectorixPermissions();
     const page = useCatalogPagination();
@@ -35,11 +37,11 @@ export function CollectionsManager() {
                 <CatalogSearch
                     value={page.query}
                     onChange={page.search}
-                    label='Rechercher une collection'
+                    label={tr('collections.search')}
                 />
                 {canOperation('admin.rag.collections.create') && (
                     <Button onClick={() => setCreating(true)}>
-                        Créer une collection
+                        {tr('collections.create')}
                     </Button>
                 )}
             </div>
@@ -61,7 +63,8 @@ export function CollectionsManager() {
                                     {item.name}
                                 </h2>
                                 <p className='text-sm text-muted-foreground line-clamp-2'>
-                                    {item.description || 'Aucune description'}
+                                    {item.description ||
+                                        tr('collections.noDescription')}
                                 </p>
                                 <div className='text-sm'>
                                     <p>
@@ -69,13 +72,16 @@ export function CollectionsManager() {
                                         {item.configuration.model}
                                     </p>
                                     <p className='text-muted-foreground'>
-                                        {item.configuration.dimensions}{' '}
-                                        dimensions · Révision{' '}
-                                        {item.configurationRevision}
+                                        {tr('collections.dimensionsRevision', {
+                                            dimensions:
+                                                item.configuration.dimensions,
+                                            revision:
+                                                item.configurationRevision,
+                                        })}
                                     </p>
                                 </div>
                                 <Badge variant='secondary'>
-                                    Configuration uniquement
+                                    {tr('collections.configurationOnly')}
                                 </Badge>
                             </Link>
                         ))}
@@ -83,11 +89,10 @@ export function CollectionsManager() {
                     {query.data.total === 0 && (
                         <div className='rounded-xl border border-dashed p-10 text-center'>
                             <h2 className='font-medium'>
-                                Aucune collection à afficher
+                                {tr('collections.empty')}
                             </h2>
                             <p className='mt-2 text-sm text-muted-foreground'>
-                                Créez un premier profil ou demandez un accès à
-                                votre administrateur.
+                                {tr('collections.emptyHint')}
                             </p>
                         </div>
                     )}

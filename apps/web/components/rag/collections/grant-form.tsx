@@ -1,4 +1,5 @@
 'use client';
+import { useTranslations } from 'next-intl';
 import { useState } from 'react';
 import { useORPC } from '@/hooks/use-orpc';
 import { Button } from '@repo/ui/button';
@@ -13,6 +14,7 @@ export function GrantForm({
     existing,
     onClose,
 }: Readonly<{ id: string; existing?: Grant; onClose: () => void }>) {
+    const tr = useTranslations('rag');
     const { client } = useORPC();
     const mutation = useCatalogAction();
     const [type, setType] = useState<'member' | 'group'>(
@@ -23,8 +25,8 @@ export function GrantForm({
     );
     return (
         <CatalogDialog
-            title={existing ? 'Modifier un accès' : 'Accorder un accès'}
-            description='Ces droits complètent les permissions de l’organisation. Un lecteur doit disposer explicitement du droit de lecture.'
+            title={existing ? tr('access.edit') : tr('access.grant')}
+            description={tr('access.description')}
             busy={mutation.busy}
             onClose={onClose}
         >
@@ -54,12 +56,14 @@ export function GrantForm({
                     {existing ? (
                         <p className='font-medium'>
                             {existing.name} ·{' '}
-                            {type === 'group' ? 'Groupe' : 'Membre'}
+                            {type === 'group'
+                                ? tr('common.group')
+                                : tr('common.member')}
                         </p>
                     ) : (
                         <>
                             <SelectField
-                                label='Type de bénéficiaire'
+                                label={tr('access.target')}
                                 value={type}
                                 onChange={(event) => {
                                     setType(
@@ -70,8 +74,12 @@ export function GrantForm({
                                     setSelected(null);
                                 }}
                             >
-                                <option value='member'>Membre</option>
-                                <option value='group'>Groupe</option>
+                                <option value='member'>
+                                    {tr('common.member')}
+                                </option>
+                                <option value='group'>
+                                    {tr('common.group')}
+                                </option>
                             </SelectField>
                             <PrincipalPicker
                                 key={type}
@@ -82,19 +90,19 @@ export function GrantForm({
                         </>
                     )}
                     <CheckField
-                        label='Lire et rechercher dans la collection'
+                        label={tr('access.read')}
                         name='read'
                         defaultChecked={existing?.permissions.read ?? true}
                     />
                     <CheckField
-                        label='Gérer les documents de la collection'
+                        label={tr('access.manageDocuments')}
                         name='manageDocuments'
                         defaultChecked={
                             existing?.permissions.manageDocuments ?? false
                         }
                     />
                     <CheckField
-                        label='Administrer la collection'
+                        label={tr('access.administer')}
                         name='administer'
                         defaultChecked={
                             existing?.permissions.administer ?? false
@@ -109,10 +117,10 @@ export function GrantForm({
                         disabled={mutation.busy}
                         onClick={onClose}
                     >
-                        Annuler
+                        {tr('common.cancel')}
                     </Button>
                     <Button disabled={mutation.busy || !selected}>
-                        Enregistrer l’accès
+                        {tr('access.save')}
                     </Button>
                 </div>
             </form>

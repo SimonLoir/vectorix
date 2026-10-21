@@ -1,4 +1,5 @@
 'use client';
+import { useTranslations } from 'next-intl';
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useORPC } from '@/hooks/use-orpc';
@@ -16,6 +17,7 @@ import { GroupMembers } from './group-members';
 import type { Group } from '../types';
 
 export function GroupsManager() {
+    const tr = useTranslations('rag');
     const { orpc, client } = useORPC();
     const { canOperation } = useVectorixPermissions();
     const page = useCatalogPagination();
@@ -37,11 +39,11 @@ export function GroupsManager() {
                 <CatalogSearch
                     value={page.query}
                     onChange={page.search}
-                    label='Rechercher un groupe'
+                    label={tr('groups.search')}
                 />
                 {canOperation('admin.rag.groups.create') && (
                     <Button onClick={() => setEditing('new')}>
-                        Créer un groupe
+                        {tr('groups.create')}
                     </Button>
                 )}
             </div>
@@ -59,7 +61,9 @@ export function GroupsManager() {
                                         {group.name}
                                     </h2>
                                     <p className='text-sm text-muted-foreground'>
-                                        {group.memberCount} membre(s)
+                                        {tr('groups.memberCount', {
+                                            count: group.memberCount,
+                                        })}
                                     </p>
                                 </div>
                                 <div className='flex flex-wrap gap-2'>
@@ -67,7 +71,7 @@ export function GroupsManager() {
                                         variant='outline'
                                         onClick={() => setMembers(group)}
                                     >
-                                        Voir les membres
+                                        {tr('groups.members')}
                                     </Button>
                                     {canOperation(
                                         'admin.rag.groups.rename'
@@ -76,7 +80,7 @@ export function GroupsManager() {
                                             variant='outline'
                                             onClick={() => setEditing(group)}
                                         >
-                                            Renommer
+                                            {tr('common.rename')}
                                         </Button>
                                     )}
                                     {canOperation(
@@ -86,7 +90,7 @@ export function GroupsManager() {
                                             variant='ghost'
                                             onClick={() => setDeleting(group)}
                                         >
-                                            Supprimer
+                                            {tr('common.delete')}
                                         </Button>
                                     )}
                                 </div>
@@ -94,7 +98,7 @@ export function GroupsManager() {
                         ))}
                         {query.data.total === 0 && (
                             <p className='p-8 text-center text-muted-foreground'>
-                                Aucun groupe à afficher.
+                                {tr('groups.empty')}
                             </p>
                         )}
                     </div>
@@ -119,8 +123,10 @@ export function GroupsManager() {
             )}
             {deleting && (
                 <ConfirmCatalogAction
-                    title='Supprimer ce groupe ?'
-                    description={`${deleting.name} sera supprimé avec ses appartenances et ses droits sur les collections.`}
+                    title={tr('groups.deleteTitle')}
+                    description={tr('groups.deleteDescription', {
+                        name: deleting.name,
+                    })}
                     onClose={() => setDeleting(null)}
                     action={() =>
                         client.admin.rag.groups.delete({ id: deleting.id })

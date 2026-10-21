@@ -1,34 +1,37 @@
 'use client';
+import { useFormatter, useTranslations } from 'next-intl';
 import { useQuery } from '@tanstack/react-query';
 import { useORPC } from '@/hooks/use-orpc';
 import { CatalogQueryState } from './catalog-controls';
 
 export function QuotaOverview() {
+    const tr = useTranslations('rag');
+    const format = useFormatter();
     const { orpc } = useORPC();
     const query = useQuery(orpc.admin.rag.quota.queryOptions({ input: {} }));
     if (query.isPending || query.isError)
         return <CatalogQueryState query={query} />;
     const { limits, usage } = query.data;
     const bytes = (value: number) =>
-        `${new Intl.NumberFormat('fr', { maximumFractionDigits: 2 }).format(value / 1024 ** 2)} Mio`;
+        tr('common.mebibytes', { value: value / 1024 ** 2 });
     return (
         <div className='space-y-6'>
             <div className='grid gap-4 md:grid-cols-3'>
                 {[
                     {
-                        title: 'Collections',
-                        value: `${usage.collections} / ${limits.collections}`,
-                        note: 'Limite appliquée lors de la création',
+                        title: tr('collections.title'),
+                        value: `${format.number(usage.collections)} / ${format.number(limits.collections)}`,
+                        note: tr('usage.collectionsHint'),
                     },
                     {
-                        title: 'Documents enregistrés',
-                        value: `${usage.documents} / ${limits.documents}`,
-                        note: 'Upload disponible dans une prochaine étape',
+                        title: tr('usage.documents'),
+                        value: `${format.number(usage.documents)} / ${format.number(limits.documents)}`,
+                        note: tr('usage.documentsHint'),
                     },
                     {
-                        title: 'Stockage enregistré',
+                        title: tr('usage.storage'),
                         value: `${bytes(usage.storageBytes)} / ${bytes(limits.storageBytes)}`,
-                        note: 'Originaux et extractions conservés',
+                        note: tr('usage.storageHint'),
                     },
                 ].map((item) => (
                     <article
@@ -48,28 +51,23 @@ export function QuotaOverview() {
                 ))}
             </div>
             <section className='rounded-xl border p-6 space-y-4'>
-                <h2 className='font-semibold'>Politiques enregistrées</h2>
+                <h2 className='font-semibold'>{tr('usage.policies')}</h2>
                 <dl className='grid gap-4 sm:grid-cols-2'>
                     <div>
                         <dt className='text-sm text-muted-foreground'>
-                            Taille maximale d’un fichier
+                            {tr('usage.fileMaximum')}
                         </dt>
                         <dd>{bytes(limits.originalBytes)}</dd>
                     </div>
                     <div>
                         <dt className='text-sm text-muted-foreground'>
-                            Passages par collection
+                            {tr('usage.chunks')}
                         </dt>
-                        <dd>
-                            {limits.chunksPerCollection.toLocaleString('fr')}
-                        </dd>
+                        <dd>{format.number(limits.chunksPerCollection)}</dd>
                     </div>
                 </dl>
                 <p className='text-sm text-muted-foreground'>
-                    Les réservations de stockage et les limites de passages
-                    seront appliquées avec l’ingestion. Ces valeurs ne
-                    signifient pas qu’un upload ou un index existe déjà. Seul un
-                    administrateur de plateforme peut modifier les quotas.
+                    {tr('usage.policyHint')}
                 </p>
             </section>
         </div>
