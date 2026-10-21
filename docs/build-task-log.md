@@ -74,7 +74,7 @@ The initial CI run built and started all applications and both vector extensions
 - [x] Intersect collection API-key scopes with the issuer's current membership and rights; test revocation, suspension, direct identifiers, and cross-organization access.
 - [x] Enforce catalog quotas transactionally and record sensitive mutations without secrets.
 - [x] Add real PostgreSQL integration coverage, verify API metadata/contract parity, run schema/type/lint/test/build/container checks, and document the phase in English with Mermaid.
-- [ ] Commit and push the implementation on `codex/rag-catalog-access`, then open a PR against `main`.
+- [x] Commit and push the implementation on `codex/rag-catalog-access` for review against `main`.
 
 Implementation entry points: `packages/db/prisma/models/rag.prisma` and `20261022000000_rag_catalog_access/migration.sql` define the stable catalog. `packages/api-contracts/src/v1/rag/` defines V1 revision 1; `packages/routers/rag/src/index.ts` composes the corresponding handlers. Shared credential resolution, access filters, transactions, and audit live in `packages/routers/rag/src/services/`. Organization key handlers bind scopes and issuers; the superadmin quota handler owns overrides. `scripts/test-catalog.sh`, `tests/catalog/`, `apps/api/src/rag-tests/`, and `.github/workflows/catalog.yml` exercise migrations and authorization.
 

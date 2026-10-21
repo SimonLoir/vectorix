@@ -69,6 +69,6 @@ Sensitive writes append `RagAuditLog` records using whitelisted identifiers, rev
 - [x] Exercise two organizations, distinct groups, direct identifiers, API-key delegation/revocation, library filtering, secret masking, credential fallback/rotation, concurrent quotas, and transactional audit over real PostgreSQL and HTTP transports.
 - [x] Validate the Prisma schema, contract/runtime parity and version metadata, types, lint, backend tests, builds, and all six Docker images.
 - [x] Validate English documentation, local links, formatting, and Mermaid syntax.
-- [ ] Commit and publish the PR.
+- [x] Commit and push the review branch.
 
 The reproducible acceptance command is `pnpm test:catalog` (see `scripts/test-catalog.sh`). It creates fresh PostgreSQL/Redis containers on random loopback ports, uses only `_test` databases, deploys migrations twice for both fresh and upgrade paths, checks migration/schema parity, and runs the core and catalog API suites before cleanup. `tests/catalog/upgrade-seed.sql` and `upgrade-check.sql` verify existing data and the absence of implicit grants. `apps/api/src/rag-tests/` exercises authorization and catalog behavior through the same HTTP transports as clients. `.github/workflows/catalog.yml` runs these checks on PRs and main.
