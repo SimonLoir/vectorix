@@ -21,6 +21,7 @@ WORKDIR /app
 #    - install workspace deps with caching
 # -----------------------
 FROM base AS deps
+ENV CI=true
 
 # Build toolchain for native modules (not in final image)
 RUN apk add --no-cache python3 make g++
@@ -29,7 +30,10 @@ RUN apk add --no-cache python3 make g++
 COPY pnpm-lock.yaml pnpm-workspace.yaml package.json turbo.json ./
 
 # Copy workspace manifests used by the API and its internal deps
+COPY apps/web/package.json ./apps/web/package.json
+COPY apps/admin/package.json ./apps/admin/package.json
 COPY apps/api/package.json ./apps/api/package.json
+COPY apps/workers/package.json ./apps/workers/package.json
 COPY packages ./packages
 
 # Install dependencies (workspace-aware) using lockfile

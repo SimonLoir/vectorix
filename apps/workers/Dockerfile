@@ -9,10 +9,14 @@ RUN npm install --global pnpm@11.25.0
 WORKDIR /app
 
 FROM base AS deps
+ENV CI=true
 
 RUN apk add --no-cache python3 make g++
 
 COPY pnpm-lock.yaml pnpm-workspace.yaml package.json turbo.json ./
+COPY apps/web/package.json ./apps/web/package.json
+COPY apps/admin/package.json ./apps/admin/package.json
+COPY apps/api/package.json ./apps/api/package.json
 COPY apps/workers/package.json ./apps/workers/package.json
 COPY packages ./packages
 
