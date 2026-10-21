@@ -17,7 +17,8 @@
         "db:migrate": "dotenvx run -f .env -- pnpm --filter @repo/db migrate:deploy",
         "admin:grant": "dotenvx run -f .env -- pnpm --filter api exec tsx src/scripts/grant-admin.ts",
         "format": "prettier --write .",
-        "setup:env": "node scripts/setup-env.mjs"
+        "setup:env": "node scripts/setup-env.mjs",
+        "test:docker": "bash scripts/test-docker.sh"
     },
     "devDependencies": {
         "@dotenvx/dotenvx": "^2.30.0",

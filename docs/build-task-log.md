@@ -19,3 +19,13 @@ Validation effectuée le 21 octobre 2026 :
 - Connexion, dashboard, compte, équipe, rôles, clés API, licences et administration vérifiés en mode production dans le navigateur.
 
 Les tests de notification couvrent la persistance, la déduplication, les préférences, l’isolation et la reprise en cas d’échec. Aucun e-mail ni push réel n’a été envoyé. Les images Docker sont fournies ; leur construction n’a pas été exécutée dans cet environnement sans Docker.
+
+## Images de production
+
+- Dockerfiles dédiés restaurés pour web, admin, API, workers et migrateur.
+- Sortie Next.js standalone avec une racine de traçage explicite pour le monorepo.
+- Dépendances backend isolées avec le lockfile via pnpm 11, sans dépendances de développement ni dépendances optionnelles.
+- Suppression de l’ancien Dockerfile générique, des valeurs d’environnement de build et du contournement des erreurs de génération Prisma.
+- Instructions de build mises à jour ; test des cinq images disponible avec `pnpm test:docker` et automatisé dans GitHub Actions.
+
+Vérifications locales après restauration : schéma Prisma valide, 34 tâches de types/lint réussies, 21 tests unitaires réussis et quatre builds réussis. Les sorties standalone et les déploiements pnpm ont aussi été copiés hors du dépôt puis démarrés : API prête avec PostgreSQL/Redis, workers prêts, 19 assets web et 13 assets admin servis sans erreur. Les stores de production API/workers ne contiennent ni Next.js, ni TypeScript, ni Vite/Vitest, ni ESLint, ni le CLI Prisma.

@@ -93,11 +93,25 @@ DATABASE_URL=postgresql://postgres:password@localhost:5432/vectorix_test pnpm ex
 La migration initiale construit uniquement le socle sur une base neuve. Pour les évolutions, modifier le schéma, générer et relire une migration de développement avec `pnpm --filter @repo/db migrate:dev`, puis exécuter `pnpm db:migrate` avant de déployer les applications. Ne pas utiliser `db:push` sur une base de production.
 
 ```sh
-docker build --build-arg APP=web -t vectorix-web .
-docker build --build-arg APP=api -t vectorix-api .
-docker build --build-arg APP=admin -t vectorix-admin .
-docker build --build-arg APP=workers -t vectorix-workers .
+docker build -f apps/web/Dockerfile -t vectorix-web .
+docker build -f apps/api/Dockerfile -t vectorix-api .
+docker build -f apps/admin/Dockerfile -t vectorix-admin .
+docker build -f apps/workers/Dockerfile -t vectorix-workers .
 docker build -f packages/db/Dockerfile -t vectorix-migrator .
 ```
 
 Injecter la configuration au démarrage des conteneurs et utiliser les noms DNS de PostgreSQL et Redis accessibles depuis leur réseau. Le migrateur est un processus ponctuel exécutant `prisma migrate deploy`. Il ne tourne pas en parallèle avec les applications dans `pnpm dev`.
+
+Chaque application possède son Dockerfile, avec la racine du dépôt comme contexte de construction. Web et admin exécutent le serveur Next.js standalone et embarquent ses fichiers tracés, les assets statiques et, pour web, le dossier public. L’API et les workers embarquent leur bundle et les dépendances de production isolées par `pnpm deploy`, à partir du lockfile. Les dépendances optionnelles sont exclues de ces deux images pour éviter les pairs Next.js/TypeScript et les accélérateurs natifs inutilisés ; PostgreSQL et BullMQ utilisent leurs implémentations JavaScript.
+
+Les cinq images utilisent Node.js 24 Alpine et un utilisateur non privilégié. pnpm et les outils de compilation restent dans les étapes de construction. La génération Prisma est obligatoire : une erreur arrête le build. Aucune configuration privée n’est copiée dans les images.
+
+Pour construire et tester les cinq images avec PostgreSQL et Redis temporaires :
+
+```sh
+pnpm test:docker
+# Ou, avec uniquement Bash et Docker installés :
+bash scripts/test-docker.sh
+```
+
+Ce test vérifie les migrations, le démarrage, une inscription via l’API, les assets Next.js, la configuration au démarrage, l’exécution d’un job worker et l’absence des outils de build dans les images backend. Il ne publie aucun port sur la machine et nettoie ses conteneurs après exécution. Le workflow GitHub Actions « Docker images » exécute le même test à chaque push sur `main` et sur les pull requests.

@@ -2,3 +2,12 @@ packages:
     - 'apps/*'
     - 'packages/*'
     - 'packages/routers/*'
+# Explicit build-script decisions for reproducible non-interactive installs.
+allowBuilds:
+    '@parcel/watcher': true
+    '@pixeldrive/prisma-zod-generator': true
+    '@prisma/engines': true
+    '@swc/core': true
+    esbuild: true
+    msgpackr-extract: true
+    prisma: true

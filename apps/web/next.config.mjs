@@ -1,9 +1,12 @@
+import { fileURLToPath } from 'node:url';
 import createNextIntlPlugin from 'next-intl/plugin';
 
 const withNextIntl = createNextIntlPlugin('./i18n/request.ts');
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+    output: 'standalone',
+    outputFileTracingRoot: fileURLToPath(new URL('../..', import.meta.url)),
     transpilePackages: [
         '@repo/api',
         '@repo/db',
