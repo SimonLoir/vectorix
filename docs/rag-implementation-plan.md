@@ -1,6 +1,6 @@
 # RAG implementation plan — V1
 
-Prepared on October 21, 2026. This document records the agreed scope and implementation sequence. [Phase 1 infrastructure](rag-infrastructure.md) and the [phase 2 catalog and access APIs](rag-catalog-access.md) are implemented. Uploads, ingestion, embedding adapters, vector indexing, retrieval, and the web playground remain planned. The proposed initial limits below are configurable and must be validated on the selected infrastructure.
+Prepared on October 21, 2026; delivery sequence revised to require a usable dashboard journey at every product milestone. [Phase 1 infrastructure](rag-infrastructure.md) and the [original phase 2 catalog and access APIs](rag-catalog-access.md) are implemented as technical foundations. The catalog milestone is **not complete from a user's perspective**: its dashboard is the immediate next delivery. Uploads, ingestion, embedding adapters, vector indexing, retrieval, and the web playground remain planned. The proposed initial limits below are configurable and must be validated on the selected infrastructure.
 
 ## 1. Agreed scope
 
@@ -23,7 +23,11 @@ Original files, extracted content, chunks, source positions, and versions remain
 
 ```mermaid
 flowchart LR
-    U["User or API client"] --> API["API: identity, organization, permissions"]
+    U["Organization member"] --> WEB["Web dashboard: configure, upload, inspect, search"]
+    OP["Platform operator"] --> ADMIN["Admin dashboard: quotas and service operations"]
+    WEB --> API["API: identity, organization, permissions"]
+    ADMIN --> API
+    CLIENT["API client"] --> API
     API --> APP["Platform PostgreSQL: catalog, versions, chunks, ACLs, lexical index"]
     API --> S3["S3: originals and structured extractions"]
     API --> QUEUE["Redis and BullMQ"]
@@ -194,26 +198,75 @@ Token limits depend on the selected model. The adapter provides exact tokenizati
 
 The lexical index uses explicit FR/EN configurations and a `simple` path for identifiers and mixed-language documents. Analyze queries with the required configurations and merge lexical candidates before hybrid fusion. Validate this behavior with bilingual queries and documents.
 
-## 9. Implementation work packages and acceptance criteria
+## 9. Dashboard-testable delivery milestones
 
-| Work package                     | Work                                                                                                                                                                                          | Acceptance criteria                                                                                                                   |
-| -------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------- |
-| 1 — Infrastructure               | PostgreSQL image with pgvector and pgvectorscale, pinned and tested versions; development S3; separate connection configuration; image publication to `pxdv.be` through the existing workflow | Migrations, extensions, table creation, insertion, and search work in CI on the selected PostgreSQL version                           |
-| 2 — Catalog and access           | Prisma models, reviewed migrations, credentials, groups, collection grants, API key scopes, quotas, and audit                                                                                 | Two organizations and multiple groups cannot read or modify each other's unauthorized data, including through direct identifiers      |
-| 3 — Library                      | Uploads, versions, extraction of all four formats, S3 retention, statuses, previews, and authorized downloads                                                                                 | Documents remain usable independently of vectors and retrievable after changing the S3 configuration for new files                    |
-| 4 — Embeddings and chunking      | Native adapters, versioned profiles, capability catalog, three strategies and parent/child mode, chunk preview                                                                                | Reproducible FR/EN cases, bounded sizes, distinct query/document inputs, provider errors handled without silently changing models     |
-| 5 — Indexing                     | Dynamic tables, pgvector/pgvectorscale indexes, durable tasks, updates, deletions, and rebuilding                                                                                             | Retries produce no duplicates; deleted documents never reappear; consistent switching between generations without interrupting search |
-| 6 — Hybrid search                | Filtered lexical and vector retrieval, RRF, hydration, parent context, documented API                                                                                                         | Results include sources; no leaks through filters, previews, downloads, or parents; consistent bilingual behavior and versions        |
-| 7 — Interface and administration | Library, collections, integrations, groups and permissions, configuration, task status, chunk previews, and search playground                                                                 | Complete flow: create a collection, add documents, track indexing, inspect results, and change configuration                          |
-| 8 — Operations                   | Latency and usage metrics, quotas, load tests, backup/restore, documentation, and Docker tests                                                                                                | Reference corpus evaluated, failure recovery verified, data restorable, and all five services start with the new dependencies         |
+The milestones below replace the former backend-first work packages. References to phases 1 and 2 in the infrastructure and catalog documentation describe the existing foundations, not completion of these new product milestones. There is no separate late-stage interface milestone: every feature ships with its dashboard entry point, API, persistence, necessary worker processing, permission checks, and visible result.
 
-Work packages follow this dependency order. A minimal interface accompanies packages 3–6; package 7 completes the user journeys. The first vertical slice uses one native adapter, followed by validation of the other two before V1 is considered complete.
+### Completion rule for every milestone
 
-Proposed monorepo ownership: `packages/db` for the catalog; `packages/api-contracts` and dedicated routers for documents, collections, groups, and integrations; separate shared modules for document storage, extraction/chunking, embeddings, vector access, and result fusion; `packages/queues` and `apps/workers` for ingestion; `apps/web` for user journeys; `apps/admin` for platform limits and monitoring. Heavy parsers remain in the workers.
+- A member or platform administrator can exercise the delivered capability from the appropriate dashboard after normal deployment setup, without SQL edits, curl, or API documentation as the primary user interface.
+- Forms, lists, details, and actions use the real API and persisted data. Reloading, switching organizations, and opening direct URLs preserve the correct state and permissions.
+- Include empty, loading, success, forbidden, validation-error, and operational-failure states. Background work exposes durable progress and safe retry actions when applicable. Do not display a placeholder as a completed operation.
+- Implement authorization, audit, quotas, idempotency, and cleanup alongside the operation that needs them. The final operations milestone does not defer these protections.
+- Document a reproducible browser acceptance scenario, its prerequisites, expected results, and the checks actually run in the PR and [build log](build-task-log.md). Browser verification complements automated API and isolation tests; it does not replace them.
+- Keep each implementation PR focused on a complete user action. If a milestone needs several PRs, split by usable actions or supported formats/providers, each with its interface, rather than delivering all backend work before the screens. Technical prerequisites are explicitly labeled as foundations and do not close a product milestone.
 
-## 10. Validation and delivery milestone
+### Delivery order
 
-The delivery milestone is a complete journey using two organizations and FR/EN documents: upload, attach a document to two differently configured collections, index, run hybrid search with sources and parent context, grant group access, revoke access, replace a document, and reindex without downtime.
+All milestones in this table remain planned. M1 completes the user-facing portion missing from the existing catalog backend. The staged delivery of formats, providers, and chunking options does not remove any agreed V1 capability.
+
+| Milestone                                         | Complete scope                                                                                                                                                                                                                                                                                 | Dashboard acceptance scenario                                                                                                                                                                                                                                                       |
+| ------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **M1 — Catalog dashboard (next)**                 | Organization integrations, collection profiles, groups and grants, API-key collection scopes, quota/usage and audit views; platform quota editing in the admin dashboard. Reuse the existing catalog APIs.                                                                                     | Configure masked credentials, create and reopen a collection, edit its profile, grant and revoke group access, configure a scoped key, and change an organization quota as a platform administrator. Verify persistence and a second member's denied access.                        |
+| **M2a — TXT/Markdown library**                    | Private S3 upload, quota reservation, durable extraction tasks, document versions, previews, downloads, replacement/deletion, and association with collections. Documents work independently of vectors.                                                                                       | Upload FR/EN files, reload and track processing, inspect extracted text, download the original, attach one document to two collections, replace it, and delete it. Readers see only permitted documents; a failed extraction has an actionable error and safe retry.                |
+| **M2b — PDF/DOCX library**                        | Add text-based PDF and DOCX through the same upload, extraction, version, and preview journey; retain page or section/position provenance and parser resource limits.                                                                                                                          | Upload each format and follow its source references in the preview. A scanned PDF reports that OCR is unavailable; unusable text is never reported as successful extraction. Each format can be a separate complete PR.                                                             |
+| **M3 — First searchable collection**              | Ollama native adapter, model/dimension validation, document-structure chunking, chunk preview, durable indexing, dynamic PostgreSQL vector tables, lexical indexing, filtered hybrid API, and the dashboard playground. Include publication, update, deletion, retries, and quota enforcement. | Choose an available Ollama model, attach library documents, start indexing, inspect progress/chunks, then ask FR/EN questions with filters and open authorized sources. Replacing or deleting a document updates searchable content without exposing unpublished or stale versions. |
+| **M4 — Change a profile and rebuild**             | Configuration comparison and confirmation, new generation/table, update/deletion catch-up, atomic activation, old-generation cleanup, and visible rebuild progress/failure/retry.                                                                                                              | Change model or dimensions in the collection settings, launch a rebuild, and keep searching the previous generation in the playground. Observe the successful switch; a failed rebuild leaves the old generation usable.                                                            |
+| **M5a/M5b — Cohere and Voyage**                   | One complete delivery per provider: native calls, capabilities, query/document input semantics, credential resolution, validated profile controls, indexing/rebuilding, and search through the existing dashboard.                                                                             | Configure each provider, create or change a collection profile, index/rebuild, then retrieve passages and sources in the playground. Invalid organization credentials produce an explicit failure, without platform fallback.                                                       |
+| **M6a/M6b/M6c — Additional chunking and context** | Token-window chunking, semantic chunking, then parent/child mode, each with validated settings, chunk preview, usage accounting, indexing/rebuilding, and result inspection. Document-structure chunking already ships in M3.                                                                  | Change each strategy, inspect bounded chunks, rebuild, and compare search results. With parent/child enabled, inspect the matching child, deduplicated parent context, and precise authorized source. Test its combination with every supported strategy.                           |
+| **M7 — Operational readiness**                    | Extend organization/admin dashboards with ingestion/search usage, latency, failures, and operational controls; evaluate the reference corpus, load, recovery, backup/restore, and all six container images.                                                                                    | Inspect real usage and failures, adjust a quota in admin and observe its enforcement in web, and retry eligible failed work. After an operator restores a backup and rebuilds derived indexes, verify documents and search from the dashboard.                                      |
+
+```mermaid
+flowchart TD
+    BASE["Existing infrastructure and catalog APIs"] --> M1["M1: configure catalog and access in the dashboard"]
+    M1 --> M2A["M2a: upload and inspect TXT / Markdown"]
+    M2A --> M2B["M2b: upload and inspect PDF / DOCX"]
+    M2B --> M3["M3: index and search with Ollama"]
+    M3 --> M4["M4: change profile and rebuild while searching"]
+    M4 --> M5["M5a / M5b: use Cohere, then Voyage"]
+    M5 --> M6["M6a / M6b / M6c: compare chunking and parent context"]
+    M6 --> M7["M7: operate, recover, and validate V1"]
+```
+
+M1 records configuration, not provider connectivity or search readiness: saved credentials must not be labeled as live-verified, and a collection without an index must not be labeled searchable. Before M4, reject profile changes to an indexed collection in both API and UI; users can create another collection instead. Catalog profiles already stored for capabilities not yet implemented remain inspectable, but indexing must explicitly reject them and the UI must explain availability. Only offer an executable action once its complete path exists.
+
+### M1: immediate dashboard completion
+
+The following screens close the current catalog gap. Split implementation into focused components and usable actions while retaining this acceptance checklist:
+
+- **Integrations:** list, create, edit, select, rotate, and delete S3/Ollama/Cohere/Voyage credentials where permitted. Mask secrets, explain organization/environment resolution, show retained-reference restrictions, and distinguish saved configuration from live verification.
+- **Collections:** list, create, inspect, revise, and delete catalog entries; display the selected provider/model/dimensions, chunking profile, platform vector destination, and immutable revision history. Show that document ingestion and search are unavailable until their milestones ship.
+- **Groups and access:** manage organization groups and their members, then edit explicit member/group collection grants. Catalog administration must not imply content-reading access.
+- **API keys:** extend the existing key screens with collection scopes intersected with the issuer's current rights. Explain why historical unbound keys need replacement. The dashboard manages scopes; automated API tests verify actual key use and revocation.
+- **Usage and audit:** display enforced collection limits, stored quota policies, recorded usage, and safe audit entries. Do not present future upload/chunk enforcement as active. Platform administrators can edit organization quota overrides in the admin interface.
+
+Browser recipe: use two organizations and two members with distinct permissions. In the first organization, configure credentials, create a collection, save a revised profile, create a group, and assign/revoke a grant. Reload between actions and verify saved state, masked values, and the resulting audit entries. Configure a key's scopes without granting permissions the issuer lacks. Change the collection quota in admin and trigger its limit through web creation. Switch to the second member and organization to verify filtered navigation, list contents, forbidden actions, and direct URL handling. Document the actual result of each step; the existing API suite alone does not complete this checklist.
+
+### Integration entry points and data flow
+
+Existing entry points to reuse:
+
+- `apps/web/components/app-sidebar.tsx` and `apps/web/app/dashboard/` provide navigation and page shells. Proposed new routes are `dashboard/collections`, `dashboard/documents`, `dashboard/settings/integrations`, and `dashboard/settings/groups`; these are planned paths, not existing screens.
+- `apps/web/app/dashboard/account/api-keys/page.tsx` and its `components/api-key-permissions-dialog.tsx` own key configuration; reuse the existing member/role settings when selecting principals and checking organization permissions.
+- `apps/web/contexts/orpc.tsx` supplies the authenticated versioned client. Forms call contracts in `packages/api-contracts/src/v1/rag/` and the existing key contracts in `packages/api-contracts/src/v1/organizations/access.ts`; handlers in `packages/routers/rag/` enforce access, persist catalog changes, and write audit records transactionally before the UI refreshes affected queries.
+- `apps/admin/src/app/(dashboard)/organizations/[id]/page.tsx` and `apps/admin/src/components/organization-workspace.tsx` are the organization administration entry points. Quota changes use `packages/routers/superadmin/src/set-rag-quota.ts`.
+- `packages/ui` and `packages/dashboard-core` supply shared accessible components. Later ingestion actions persist tasks/outbox events in `packages/db`, enqueue identifiers through `packages/queues`, and run processing in `apps/workers`; dashboard status reads authoritative persisted state through the API.
+
+Keep shared storage, extraction/chunking, embedding, vector, and retrieval logic in focused modules reused by API and workers. Heavy parsers remain in the workers. Remote database configuration and OCR remain outside V1; when scheduled, each must include its own complete dashboard journey.
+
+## 10. Validation throughout delivery and final V1 acceptance
+
+Run the applicable browser journey and backend checks at **each milestone**, adding coverage as its capabilities ship. The final V1 scenario is a regression across those delivered journeys, not the first opportunity to test them from the dashboard: use two organizations and FR/EN documents, upload, attach a document to two differently configured collections, index, run hybrid search with sources and parent context, grant group access, revoke access, replace a document, and reindex without downtime.
 
 Required validation:
 
@@ -221,9 +274,9 @@ Required validation:
 - Negative authorization tests for every access path: search, listing, original file, extracted content, parent context, version history, API keys, and job management.
 - Worker termination at each stage; Redis/S3/vector database outages; provider 429 responses, invalid vectors, and partial responses. Verify retries and the absence of inconsistent publication.
 - Reindexing during uploads, replacements, filter changes, and deletions. Verify that text and vectors belong to the reported generation.
-- Mock providers for deterministic CI, plus optional live contract tests with dedicated credentials before delivering adapters. Do not claim a provider has been validated live when its credentials are unavailable.
+- Mock providers for deterministic CI, plus live dashboard/contract checks with an available local Ollama model and dedicated Cohere/Voyage credentials when available. Record simulated and live results separately. If credentials are unavailable, report live verification as pending; never claim that mocked responses prove a working live provider journey.
 - An initial evaluation set of 40 annotated queries, half French and half English, covering exact keywords, paraphrases, filters, and parent context. Compare lexical, vector, and hybrid retrieval, then tune settings against these results.
 - Initial load benchmark: 100,000 chunks in one collection, 10 concurrent searches distributed across organizations, and concurrent ingestion. Target to measure: internal search p95 below 1 second, excluding query embedding; also report total latency with each provider. These are validation targets, not achieved results.
 - Back up and restore the catalog and objects, then rebuild indexes; verify deletions and cleanup of obsolete generations.
 
-Hardware sizing, enabled models, and costs depend on hosting and available credentials. They can be decided during work package 1 without changing the agreed functional scope.
+Hardware sizing, enabled models, and costs depend on hosting and available credentials. Confirm a usable local Ollama model before M3 and arrange provider credentials before the corresponding M5 live acceptance checks. These deployment prerequisites do not change the agreed functional scope.

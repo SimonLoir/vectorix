@@ -65,7 +65,9 @@ Local validation: workflow checked with actionlint; Bash syntax verified; missin
 
 The initial CI run built and started all applications and both vector extensions, then exposed an unstable HNSW fixture with almost collinear vectors and an isolated target. A local pgvector-only diagnostic reproduced the miss. The revised spatially distributed fixture with explicit search limits passed 20 local HNSW rebuilds; the complete HNSW/DiskANN and role checks remain enforced by CI. These are infrastructure smoke checks, not production recall benchmarks.
 
-## RAG phase 2 — catalog and access
+## RAG original phase 2 — catalog and access backend
+
+The backend checklist below is complete. The user-facing catalog milestone remains incomplete until the dashboard checklist in [catalog and access](rag-catalog-access.md#dashboard-completion-still-required) passes. The revised implementation plan prioritizes that work as M1.
 
 - [x] Verify merged phase 1 and the updated VM with the isolated infrastructure suite: HNSW/DiskANN, role boundaries, catalog migrations, private S3 operations, and restart persistence passed locally.
 - [x] Add organization-scoped catalog models for credentials, storage locations, documents, collection configuration revisions, vector connections, groups, grants, key scopes, quotas, and audit. The user approved schema generation; the additive migration was tested against fresh and upgraded isolated databases.
@@ -81,3 +83,14 @@ Implementation entry points: `packages/db/prisma/models/rag.prisma` and `2026102
 The migration test verifies preservation of existing users, organizations, memberships, settings, and keys; no old key receives RAG privileges. Retention constraints are deferred until commit so organization cascades complete while referenced destinations remain protected. The integration suite covers empty-permission filtering as well as positive grants. Credential tests validate encryption and resolution using fixture values, without contacting embedding providers. No frontend journey or upload/search implementation is added in this phase.
 
 Final local validation: frozen-lockfile installation and Prisma validation passed; all 18 type-check and 18 lint tasks passed (existing non-blocking warnings remain), as did 22 backend tests, 20 integration tests, and four application builds. The final six-image Docker suite passed startup/assets, pruned runtime dependencies, migration replay, worker execution, HNSW/DiskANN, database role boundaries, private S3 operations, and persistence after restart on the upgraded VM. Upstream pgvector/pgvectorscale emitted a non-failing TupleDesc warning; the PostgreSQL adapter emitted a non-failing pg query-concurrency deprecation warning. All test containers were removed. Six Mermaid diagrams, 14 local documentation links, changed-file Prettier formatting, shell syntax, and whitespace checks passed. No application database was migrated and no host application server was started.
+
+## RAG delivery plan revision — dashboard journeys
+
+- [x] Replace the backend-first work packages with complete dashboard-testable milestones in `docs/rag-implementation-plan.md`, including acceptance scenarios and a delivery-flow Mermaid diagram.
+- [x] Make the missing catalog dashboard the immediate next milestone; record concrete web/admin integration entry points and distinguish saved configuration from live indexing/search capabilities.
+- [x] Preserve the agreed V1 formats, providers, chunking strategies, parent context, permissions, and reindexing scope; stage each additional capability through a complete interface-to-processing-to-result journey.
+- [x] Add the delivery and browser acceptance conventions to `AGENTS.md`; align status in `README.md`, `docs/rag-catalog-access.md`, `docs/rag-infrastructure.md`, and `packages/routers/rag/README.md`.
+- [x] Validate changed-file Prettier formatting, 19 local Markdown links and their referenced anchors, concrete integration entry points, all eight Mermaid diagrams in the touched documents, and `git diff --check`.
+- [ ] Implement and verify the M1 catalog dashboard. This plan revision does not add screens or change runtime behavior.
+
+Touched files are the six documents named above and this build log. The plan maps dashboard actions through `apps/web/contexts/orpc.tsx`, versioned contracts, catalog handlers, transactional persistence/audit, and query refresh; it also identifies the admin quota entry point and future worker status flow. Application tests, builds, and browser checks are not required for this prose-only revision and have not been rerun.

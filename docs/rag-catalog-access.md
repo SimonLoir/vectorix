@@ -1,6 +1,6 @@
-# RAG catalog and access — phase 2
+# RAG catalog and access — backend foundation
 
-This work implements the stable catalog, provider configuration, access control, and quota policy APIs. Uploads, extraction, embedding calls, vector provisioning, indexing, and the web playground remain later work packages.
+The original phase 2 implements the stable catalog, provider configuration, access control, and quota policy APIs. Its dashboard has not been implemented, so the user-facing catalog milestone is incomplete. [Milestone M1 in the revised plan](rag-implementation-plan.md#9-dashboard-testable-delivery-milestones) makes that dashboard the immediate next delivery. Uploads, extraction, embedding calls, vector provisioning, indexing, and the playground will each ship with their interface in subsequent milestones.
 
 ## Schema review
 
@@ -61,7 +61,18 @@ Collection creation enforces the collection quota transactionally, including con
 
 Sensitive writes append `RagAuditLog` records using whitelisted identifiers, revisions, and scalar permissions. Secrets, ciphertext, request bodies, and provider responses never enter these records.
 
-## Validation checklist
+## Dashboard completion still required
+
+- [ ] Manage masked credentials and active selections from the organization dashboard, without implying live provider validation.
+- [ ] Create, inspect, revise, and delete collection catalog entries; display configuration history and explicit unavailable indexing/search states.
+- [ ] Manage groups, membership, and member/group collection grants, including revocation.
+- [ ] Configure collection scopes in the existing API-key interface while respecting issuer permissions.
+- [ ] Display quota policies, recorded usage, and safe audit entries; edit organization quota overrides in platform administration.
+- [ ] Complete the M1 browser recipe with two organizations, distinct member permissions, reloads, direct URLs, and quota enforcement; retain automated API isolation coverage.
+
+These unchecked items are product acceptance work, separate from the completed backend checks below. Later document, provider, and search capabilities must extend the dashboard in the same delivery as their processing paths.
+
+## Backend validation checklist
 
 - [x] The merged phase 1 infrastructure suite passes on the upgraded local VM, including HNSW/DiskANN, database role boundaries, private S3 operations, and restart persistence.
 - [x] Review schema changes, then generate and inspect the additive migration.

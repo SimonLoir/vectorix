@@ -29,7 +29,7 @@ pnpm dev
 | RustFS S3 API                     | http://localhost:9000 |
 | RustFS console                    | http://localhost:9001 |
 
-The vector database uses PostgreSQL 18.6 with pgvector 0.8.7 and pgvectorscale 0.9.1. RustFS 1.0.3 provides a private document bucket initialized by the one-off `s3-init` service. Each database and object store has its own named volume. Existing `.env` files need the new vector/S3 settings from `.env.example`; `setup:env` preserves existing files. See [RAG infrastructure](docs/rag-infrastructure.md) for connection roles, setup, and upgrade behavior. The catalog and access APIs are implemented in [phase 2](docs/rag-catalog-access.md); uploads, ingestion, vector indexing, search, and their web interfaces remain planned.
+The vector database uses PostgreSQL 18.6 with pgvector 0.8.7 and pgvectorscale 0.9.1. RustFS 1.0.3 provides a private document bucket initialized by the one-off `s3-init` service. Each database and object store has its own named volume. Existing `.env` files need the new vector/S3 settings from `.env.example`; `setup:env` preserves existing files. See [RAG infrastructure](docs/rag-infrastructure.md) for connection roles, setup, and upgrade behavior. The [catalog and access APIs](docs/rag-catalog-access.md) are implemented, but their dashboard is still missing and is the next priority. Uploads, ingestion, vector indexing, and search remain planned; each will ship as a complete dashboard-testable journey.
 
 Create an account through the dashboard, then create an organization. To grant administration access to an existing account:
 
@@ -150,7 +150,7 @@ Implement changes on a dedicated `codex/*` branch and open a pull request agains
 ## Documentation
 
 - [Repository conventions](AGENTS.md): architecture, authorization, API compatibility, development, and validation rules.
-- [RAG catalog and access](docs/rag-catalog-access.md): phase 2 schema, credentials, authorization, quotas, and validation.
+- [RAG catalog and access](docs/rag-catalog-access.md): implemented backend foundation, schema, credentials, authorization, quotas, validation, and outstanding dashboard checklist.
 - [RAG infrastructure](docs/rag-infrastructure.md): phase 1 services, connection settings, role boundaries, and isolated acceptance tests.
-- [RAG implementation plan](docs/rag-implementation-plan.md): agreed V1 scope, architecture diagrams, proposed defaults, work packages, and acceptance criteria. Phases 1 and 2 are implemented; later work packages remain planned.
+- [RAG implementation plan](docs/rag-implementation-plan.md): agreed V1 scope, architecture diagrams, proposed defaults, and milestones with dashboard acceptance scenarios. Infrastructure and catalog APIs are implemented; the catalog dashboard is the first outstanding product milestone.
 - [Build and validation log](docs/build-task-log.md): completed template work and recorded checks.
