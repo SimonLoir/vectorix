@@ -6,6 +6,8 @@ enum CredentialProvider {
   OLLAMA
   COHERE
   VOYAGE
+  OPENAI
+  MISTRAL
 }
 
 enum ChunkingStrategy {
@@ -35,6 +37,8 @@ model Credentials {
   ollama         OllamaCredentials?
   cohere         CohereCredentials?
   voyage         VoyageCredentials?
+  openai         OpenAICredentials?
+  mistral        MistralCredentials?
   selections     CredentialSelection[]
   locations      StorageLocation[]
   configurations CollectionConfigRevision[]
@@ -72,6 +76,20 @@ model CohereCredentials {
 }
 
 model VoyageCredentials {
+  id       String      @id
+  base     Credentials @relation(fields: [id], references: [id], onDelete: Cascade)
+  endpoint String
+  apiKey   String
+}
+
+model OpenAICredentials {
+  id       String      @id
+  base     Credentials @relation(fields: [id], references: [id], onDelete: Cascade)
+  endpoint String
+  apiKey   String
+}
+
+model MistralCredentials {
   id       String      @id
   base     Credentials @relation(fields: [id], references: [id], onDelete: Cascade)
   endpoint String

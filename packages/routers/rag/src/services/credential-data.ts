@@ -12,6 +12,8 @@ export const credentialInclude = {
     ollama: true,
     cohere: true,
     voyage: true,
+    openai: true,
+    mistral: true,
     selections: true,
 } as const;
 export type StoredCredential = Prisma.CredentialsGetPayload<{
@@ -83,6 +85,28 @@ export function credentialDto(value: StoredCredential) {
                     },
                 });
             break;
+        case 'OPENAI':
+            if (value.openai)
+                return credentialView.parse({
+                    ...common,
+                    data: {
+                        provider: 'OPENAI',
+                        endpoint: value.openai.endpoint,
+                        apiKey: masked,
+                    },
+                });
+            break;
+        case 'MISTRAL':
+            if (value.mistral)
+                return credentialView.parse({
+                    ...common,
+                    data: {
+                        provider: 'MISTRAL',
+                        endpoint: value.mistral.endpoint,
+                        apiKey: masked,
+                    },
+                });
+            break;
     }
     throw new ORPCError('CONFLICT', {
         message: 'Credential provider configuration is incomplete.',
@@ -131,6 +155,22 @@ export function decryptCredential(value: StoredCredential) {
                         apiKey: decrypt(value.voyage.apiKey),
                     });
                 break;
+            case 'OPENAI':
+                if (value.openai)
+                    return credentialData.parse({
+                        provider: 'OPENAI',
+                        endpoint: value.openai.endpoint,
+                        apiKey: decrypt(value.openai.apiKey),
+                    });
+                break;
+            case 'MISTRAL':
+                if (value.mistral)
+                    return credentialData.parse({
+                        provider: 'MISTRAL',
+                        endpoint: value.mistral.endpoint,
+                        apiKey: decrypt(value.mistral.apiKey),
+                    });
+                break;
         }
     } catch {
         /* Never expose parser input, ciphertext, or crypto diagnostics. */
@@ -144,7 +184,10 @@ export function decryptCredential(value: StoredCredential) {
 export async function encryptedProviderData(
     input: typeof credentialData._output
 ): Promise<
-    Pick<Prisma.CredentialsCreateInput, 's3' | 'ollama' | 'cohere' | 'voyage'>
+    Pick<
+        Prisma.CredentialsCreateInput,
+        's3' | 'ollama' | 'cohere' | 'voyage' | 'openai' | 'mistral'
+    >
 > {
     switch (input.provider) {
         case 'S3':
@@ -183,6 +226,24 @@ export async function encryptedProviderData(
         case 'VOYAGE':
             return {
                 voyage: {
+                    create: {
+                        endpoint: input.endpoint,
+                        apiKey: await encrypt(input.apiKey),
+                    },
+                },
+            };
+        case 'OPENAI':
+            return {
+                openai: {
+                    create: {
+                        endpoint: input.endpoint,
+                        apiKey: await encrypt(input.apiKey),
+                    },
+                },
+            };
+        case 'MISTRAL':
+            return {
+                mistral: {
                     create: {
                         endpoint: input.endpoint,
                         apiKey: await encrypt(input.apiKey),

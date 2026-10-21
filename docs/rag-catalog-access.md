@@ -10,6 +10,8 @@ The schema is in `packages/db/prisma/models/rag.prisma`, with inverse relations 
 erDiagram
     Organization ||--o{ Credentials : owns
     Credentials ||--o{ CredentialSelection : selects
+    Credentials ||--o| OpenAICredentials : details
+    Credentials ||--o| MistralCredentials : details
     Credentials ||--o{ StorageLocation : authenticates
     Organization ||--o{ Document : owns
     Document ||--o{ DocumentVersion : versions
@@ -87,3 +89,9 @@ The reproducible acceptance command is `pnpm test:catalog` (see `scripts/test-ca
 ## Compatible dashboard API additions (1.2.0)
 
 Revision 1.2.0 adds paginated collection configuration history, authorized member/group candidates, safe grant display names, and a superadmin read of effective organization quotas. Candidate selection remains session-only. Configuration DTOs explicitly project public fields, excluding Prisma relations and secrets. Metadata access recognizes explicit collection administration or document-management grants; it never grants content reading implicitly. REST query coercion uses the Zod 4 adapter, preserving numeric pagination and bounded validation for the handwritten V1 contracts. No database migration is required.
+
+## OpenAI and Mistral catalog providers (1.3.0)
+
+The reviewed schema expansion adds `OPENAI` and `MISTRAL` to `CredentialProvider` and two optional one-to-one credential detail tables, `OpenAICredentials` and `MistralCredentials`. Each has the existing credential ID as its primary key and cascading foreign key, an endpoint, and an encrypted API key. Existing credentials, selections, and collection revisions remain unchanged. No existing field or table is removed. The approved additive migration is `20261023000000_openai_mistral_credentials`; deployment precedes the application update. Verification uses disposable `_test` databases only.
+
+Both providers follow the existing organization-first resolution and saved collection binding rules. Catalog support means credentials and profiles can be saved and inspected; native embedding calls and model capability validation remain in the indexing milestones. Standard API base endpoints are `https://api.openai.com/v1` and `https://api.mistral.ai/v1`. Future adapters must use provider-specific dimension parameters rather than assuming their APIs are interchangeable. See the [OpenAI embedding guide](https://developers.openai.com/api/docs/guides/embeddings) and [Mistral embedding API](https://docs.mistral.ai/api/endpoint/embeddings).

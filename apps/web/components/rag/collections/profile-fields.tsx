@@ -23,6 +23,8 @@ export function ProfileFields({
                     <option value='OLLAMA'>Ollama</option>
                     <option value='COHERE'>Cohere</option>
                     <option value='VOYAGE'>Voyage</option>
+                    <option value='OPENAI'>OpenAI</option>
+                    <option value='MISTRAL'>Mistral</option>
                 </SelectField>
                 <TextField
                     label={tr('profile.model')}

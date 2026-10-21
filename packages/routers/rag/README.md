@@ -26,3 +26,9 @@ flowchart LR
 Collections use a platform connection created on first collection creation. Connection listing exposes only the resulting reference, not database URLs or provisioning credentials. Document metadata contains no object keys or storage credentials. Collection deletion retains shared documents and historical revisions; physical retention cleanup belongs to the later ingestion lifecycle.
 
 See [catalog and access](../../../docs/rag-catalog-access.md) for schema, permission rules, and configuration; [implementation plan](../../../docs/rag-implementation-plan.md) for later work; and [the isolated test runner](../../../scripts/test-catalog.sh) for migration and authorization validation. Provider tests use local credential fixtures and make no live provider calls.
+
+## Embedding provider catalog
+
+Credential and collection contracts accept Ollama, Cohere, Voyage, OpenAI, and Mistral. OpenAI/Mistral each store a required encrypted API key and an explicit API base endpoint in their provider-specific child table. Apply `20261023000000_openai_mistral_credentials` before running the updated application. `credential-data.ts` masks and encrypts/decrypts them; `credential-update.ts` preserves omitted keys during updates. The existing resolver uses `VECTORIX_DEFAULT_OPENAI_{ENDPOINT,API_KEY}` or `VECTORIX_DEFAULT_MISTRAL_{ENDPOINT,API_KEY}` only when organization configuration is absent.
+
+The dashboard exposes both in integration and collection-profile selectors. This is catalog configuration support; native embedding execution, model capability checks, and indexing remain planned. `apps/api/src/rag-tests/embedding-providers.ts` covers real database/HTTP persistence, masking, rotation, organization isolation, saved bindings, and failure without fallback using synthetic credentials.

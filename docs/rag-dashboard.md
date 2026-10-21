@@ -4,15 +4,15 @@ M1 exposes the existing RAG catalog as usable web and administration workflows. 
 
 ## Entry points
 
-| Surface | Route                                                      | Workflow                                                                                                                                                |
-| ------- | ---------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Web     | `/dashboard/settings/integrations`                         | Create and edit S3, Ollama, Cohere, or Voyage credentials; select an active configuration; retain blank edit secrets; delete only unreferenced entries. |
-| Web     | `/dashboard/collections` and `/dashboard/collections/{id}` | Create, inspect, revise, or delete a collection; inspect saved profiles and history; manage member/group grants.                                        |
-| Web     | `/dashboard/settings/groups`                               | Create, rename, or delete groups; add and remove organization members.                                                                                  |
-| Web     | `/dashboard/account/api-keys`                              | Configure explicit collection scopes intersected with the key permissions and issuer's effective access.                                                |
-| Web     | `/dashboard/settings/usage`                                | Read recorded usage and effective quota policies.                                                                                                       |
-| Web     | `/dashboard/settings/audit`                                | Inspect filtered, paginated catalog events without secrets.                                                                                             |
-| Admin   | `/organizations/{id}`, **RAG quotas** tab                  | Read deployment defaults or organization overrides and edit all five quota limits.                                                                      |
+| Surface | Route                                                      | Workflow                                                                                                                                                                 |
+| ------- | ---------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Web     | `/dashboard/settings/integrations`                         | Create and edit S3, Ollama, Cohere, Voyage, OpenAI, or Mistral credentials; select an active configuration; retain blank edit secrets; delete only unreferenced entries. |
+| Web     | `/dashboard/collections` and `/dashboard/collections/{id}` | Create, inspect, revise, or delete a collection; inspect saved profiles and history; manage member/group grants.                                                         |
+| Web     | `/dashboard/settings/groups`                               | Create, rename, or delete groups; add and remove organization members.                                                                                                   |
+| Web     | `/dashboard/account/api-keys`                              | Configure explicit collection scopes intersected with the key permissions and issuer's effective access.                                                                 |
+| Web     | `/dashboard/settings/usage`                                | Read recorded usage and effective quota policies.                                                                                                                        |
+| Web     | `/dashboard/settings/audit`                                | Inspect filtered, paginated catalog events without secrets.                                                                                                              |
+| Admin   | `/organizations/{id}`, **RAG quotas** tab                  | Read deployment defaults or organization overrides and edit all five quota limits.                                                                                       |
 
 Use the normal account/organization setup in [README](../README.md#local-development). A superadmin account is required for the admin panel. Creating a collection requires an available organization or environment configuration for its embedding provider. Saving configuration does not verify provider connectivity or model availability.
 
@@ -32,7 +32,7 @@ Only collection creation currently enforces its resource quota. Document/storage
 flowchart LR
     WEB["Web catalog forms and lists"] --> CLIENT["Versioned authenticated oRPC client"]
     ADMIN["Admin quota editor"] --> CLIENT
-    CLIENT --> CONTRACT["V1 contracts: revision 1.2.0"]
+    CLIENT --> CONTRACT["V1 contracts: revision 1.3.0"]
     CONTRACT --> ACCESS["Session, organization and operation checks"]
     ACCESS --> SERVICE["Catalog services and collection grants"]
     SERVICE --> TX["PostgreSQL transaction: catalog and audit"]
@@ -46,7 +46,7 @@ flowchart LR
 
 - `apps/web/components/rag/catalog-page.tsx`, `catalog-controls.tsx`, `catalog-action.tsx`, `catalog-dialog.tsx`, and `principal-picker.tsx` provide shared access/loading/error, pagination, mutations, dialogs, and principal selection. Feature components are split under `collections/`, `credentials/`, and `groups/` and mounted by the page shells under `apps/web/app/dashboard/`.
 - `apps/web/app/dashboard/account/api-keys/components/collection-scope-editor.tsx` extends the existing key-permission dialog. `apps/admin/src/components/organization-rag-quota.tsx` extends the organization workspace.
-- `packages/api-contracts/src/v1/rag/` adds bounded history and principal reads; `v1/superadmin/rag-quota.ts` adds effective quota reads. `packages/api/src/versioning.ts` advertises compatible revision 1.2.0 through the existing global major registry.
+- `packages/api-contracts/src/v1/rag/` adds bounded history and principal reads; `v1/superadmin/rag-quota.ts` adds effective quota reads. `packages/api/src/versioning.ts` advertises compatible revision 1.3.0 through the existing global major registry.
 - `packages/routers/rag/src/services/principals.ts`, `collection-view.ts`, and `access.ts` own scoped selection, public profile projection, and metadata/content access. Individual handler files remain composed in the router index.
 - `packages/routers/superadmin/src/get-rag-quota.ts` and `set-rag-quota.ts` share effective policy resolution through `@routers/rag/quotas`.
 - `apps/api/src/api-versioning/runtime.ts` uses oRPC's Zod 4 coercion adapter for REST query parameters. RPC still uses the typed contract. Numeric REST pagination and invalid bounds are covered by catalog integration tests.
@@ -66,8 +66,10 @@ Executed on October 21, 2026 using production application builds, disposable Pos
 | Set collection quota to one in admin, inspect web usage, attempt a second collection | Admin showed an organization override; web showed 1/1 and rejected creation without losing the form.                               |
 | Inspect catalog audit and try deleting referenced credentials                        | Audit included configuration, group, scope, and quota events; credential deletion was rejected with its retained-reference reason. |
 
-Automated validation also passes types, lint (existing warnings), 22 backend tests, four application builds, and 24 catalog/core HTTP tests. The isolated catalog command verifies fresh migrations, upgrade preservation, repeat deployment, and schema parity. `apps/api/src/rag-tests/dashboard.ts` covers sanitized history, bounded same-organization principals, session restrictions, grant-only metadata access, and superadmin quota reads. No migration is added by M1. The final production build also verifies translated RAG permission labels and the key dialog: it fits within a 720-pixel-high viewport, scrolls internally, and closes with Escape.
+Automated validation also passes types, lint (existing warnings), 22 backend tests, four application builds, and 24 catalog/core HTTP tests. The isolated catalog command verifies fresh migrations, upgrade preservation, repeat deployment, and schema parity. `apps/api/src/rag-tests/dashboard.ts` covers sanitized history, bounded same-organization principals, session restrictions, grant-only metadata access, and superadmin quota reads. The original M1 dashboard did not require a migration; the subsequent OpenAI/Mistral provider expansion adds credential tables and enum values. The final production build also verifies translated RAG permission labels and the key dialog: it fits within a 720-pixel-high viewport, scrolls internally, and closes with Escape.
 
-These checks do not demonstrate live S3, Ollama, Cohere, or Voyage connectivity. The six-image Docker suite remains configured for PR CI and was not rerun locally for this UI/API change. Future milestones must extend this browser recipe with their real document and processing flows.
+These checks do not demonstrate live S3, Ollama, Cohere, Voyage, OpenAI, or Mistral connectivity. The six-image Docker suite remains configured for PR CI and was not rerun locally for this UI/API change. Future milestones must extend this browser recipe with their real document and processing flows.
 
 The localization follow-up was verified in English, French, and Belgian Dutch on standalone web/admin builds against a fresh disposable database. Switching language updates navigation, page headings, form labels, confirmations, and notifications; numbers, dates, and group plurals follow the selected locale. Collection creation and admin quota updates persist after reload, as does the language preference. Credential and API-key scope dialogs were also inspected. Neither browser console reported warnings or errors. Types, lint, 22 backend tests, all four builds, message-key parity, and ICU formatting were rerun successfully for this follow-up; the catalog integration and Docker suites were not repeated because backend behavior and containers are unchanged.
+
+The OpenAI/Mistral follow-up adds both providers to integration and profile selectors. Browser acceptance created both integrations with synthetic keys and their standard base endpoints, reloaded the list, renamed OpenAI without replacing its secret, and saved collections using `text-embedding-3-small` with 1,536 dimensions and `mistral-embed` with 1,024 dimensions. Both profiles retained organization credential bindings; the Mistral detail survived reload. The browser console was clear. The updated integration suite passes 26 tests, including encryption, rotation, isolation, fallback, retained bindings, and the 1.3.0 contract metadata. These checks establish catalog configuration only; they do not validate the keys or call live embedding APIs.
