@@ -7,18 +7,21 @@ CREATE TABLE vector_collections.collection_smoke (
 );
 INSERT INTO vector_collections.collection_smoke
 SELECT n, 'document-' || n,
-    CASE WHEN n = 1 THEN '[1,0,0]'::public.vector
-         ELSE ('[0,' || n || ',1]')::public.vector END
-FROM generate_series(1, 1024) n;
+    ARRAY[cos(2*pi()*(n-1)/256), sin(2*pi()*(n-1)/256),
+          0.25*sin(4*pi()*(n-1)/256)]::public.vector
+FROM generate_series(1, 256) n;
 CREATE INDEX collection_smoke_hnsw ON vector_collections.collection_smoke
     USING hnsw (embedding public.vector_cosine_ops);
 SET enable_seqscan = off;
+-- Exercise index functionality with a bounded, well-spread fixture. Recall and
+-- latency benchmarks will tune production search parameters in later phases.
+SET hnsw.ef_search = 256;
 DO $$
 DECLARE first_id integer; plan_line text; index_used boolean := false;
 BEGIN
     SELECT id INTO first_id FROM vector_collections.collection_smoke
     ORDER BY embedding <=> '[1,0,0]' LIMIT 1;
-    IF first_id IS DISTINCT FROM 1 THEN RAISE EXCEPTION 'Incorrect HNSW nearest neighbor'; END IF;
+    IF first_id IS DISTINCT FROM 1 THEN RAISE EXCEPTION 'Incorrect HNSW nearest neighbor: %', first_id; END IF;
     FOR plan_line IN EXECUTE 'EXPLAIN SELECT id FROM vector_collections.collection_smoke ORDER BY embedding <=> ''[1,0,0]'' LIMIT 1' LOOP
         index_used := index_used OR position('collection_smoke_hnsw' IN plan_line) > 0;
     END LOOP;
@@ -27,12 +30,14 @@ END $$;
 DROP INDEX vector_collections.collection_smoke_hnsw;
 CREATE INDEX collection_smoke_diskann ON vector_collections.collection_smoke
     USING diskann (embedding public.vector_cosine_ops);
+SET diskann.query_search_list_size = 256;
+SET diskann.query_rescore = 256;
 DO $$
 DECLARE first_id integer; plan_line text; index_used boolean := false;
 BEGIN
     SELECT id INTO first_id FROM vector_collections.collection_smoke
     ORDER BY embedding <=> '[1,0,0]' LIMIT 1;
-    IF first_id IS DISTINCT FROM 1 THEN RAISE EXCEPTION 'Incorrect DiskANN nearest neighbor'; END IF;
+    IF first_id IS DISTINCT FROM 1 THEN RAISE EXCEPTION 'Incorrect DiskANN nearest neighbor: %', first_id; END IF;
     FOR plan_line IN EXECUTE 'EXPLAIN SELECT id FROM vector_collections.collection_smoke ORDER BY embedding <=> ''[1,0,0]'' LIMIT 1' LOOP
         index_used := index_used OR position('collection_smoke_diskann' IN plan_line) > 0;
     END LOOP;

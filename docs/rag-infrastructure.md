@@ -108,4 +108,6 @@ Checks cover:
 - Vector persistence and query access after restarting the vector database.
 - Cleanup of the isolated containers, network, and volumes on both success and failure.
 
+The index smoke tests use 256 spatially distributed vectors and explicit search candidate limits. They validate extension functionality and actual index access, not production recall or latency; representative corpus evaluation and tuning remain part of later work packages.
+
 `test:docker` retains its five application runtime checks and then runs the infrastructure suite using the same tested migrator. The existing GitHub Actions workflow validates all six built images on PRs. After merge to `main`, successful checks can publish `pxdv.be/vectorix/postgres-vector` alongside the five application images with shared `sha-<commit>` and `latest` tags. Publication remains skipped when registry credentials are absent. RustFS and the AWS CLI initializer use their pinned upstream images; they are not rebuilt or republished.

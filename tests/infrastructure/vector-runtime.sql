@@ -1,6 +1,8 @@
 \set ON_ERROR_STOP on
 -- Run through a real runtime-role TCP connection, including after a restart.
 SET enable_seqscan = off;
+SET diskann.query_search_list_size = 256;
+SET diskann.query_rescore = 256;
 DO $$
 DECLARE first_id integer;
 BEGIN
