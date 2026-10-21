@@ -1,7 +1,7 @@
-# Authentification et permissions
+# Authentication and permissions
 
-Better Auth conserve les mots de passe hachés, les sessions, les organisations, les rôles dynamiques, les clés API, les passkeys et la double authentification TOTP. Les clés et opérations administratives vérifient les permissions actuelles et l’organisation active. Les opérations privées absentes du catalogue sont refusées.
+Better Auth stores hashed passwords, sessions, organizations, dynamic roles, API keys, passkeys, and TOTP two-factor authentication. API key and administrative operations check current permissions and the active organization. Private operations absent from the permission catalog are denied.
 
-Une session utilisateur est obligatoire pour les notifications et l’administration globale. Les clés API ne peuvent pas créer d’autres clés, gérer les membres, modifier les rôles ou accéder aux routes superadmin. L’initialisation des permissions ne donne aucun privilège automatique aux clés existantes.
+A user session is required for notifications and global administration. API keys cannot create other keys, manage members, change roles, or access superadmin routes. Permission initialization grants no automatic privileges to existing keys.
 
-Configurer `BETTER_AUTH_SECRET`, `BETTER_AUTH_URL`, `TRUSTED_ORIGINS`, `PASSKEY_RP_ID` et `PASSKEY_ORIGINS`. Les secrets de double authentification et codes de secours sont chiffrés. Une notification de connexion est créée uniquement après une authentification réussie, sans bloquer la connexion si son enregistrement échoue.
+Configure `BETTER_AUTH_SECRET`, `BETTER_AUTH_URL`, `TRUSTED_ORIGINS`, `PASSKEY_RP_ID`, and `PASSKEY_ORIGINS`. Two-factor secrets and recovery codes are encrypted. A sign-in notification is created only after successful authentication; failure to record it does not block sign-in.

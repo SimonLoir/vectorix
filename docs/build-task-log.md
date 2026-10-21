@@ -1,40 +1,52 @@
-# Validation du template
+# Template validation
 
-- [x] Copier la branche demandée dans un nouveau dépôt Git.
-- [x] Conserver web, API, administration, workers et migrateur.
-- [x] Réduire modèles, contrats, permissions et routeurs aux services du socle.
-- [x] Remplacer identité visuelle, configuration, exemples et documentation.
-- [x] Générer une migration initiale et la déployer sur une base neuve.
-- [x] Vérifier les types, le lint, les tests et les builds.
-- [x] Vérifier le démarrage et les écrans dans un navigateur.
+- [x] Copy the requested branch into a new Git repository.
+- [x] Keep web, API, administration, workers, and migrator.
+- [x] Reduce models, contracts, permissions, and routers to foundation services.
+- [x] Replace visual identity, configuration, examples, and documentation.
+- [x] Generate an initial migration and deploy it to a fresh database.
+- [x] Check types, lint, tests, and builds.
+- [x] Verify startup and screens in a browser.
 
-Validation effectuée le 21 octobre 2026 :
+Validation performed on October 21, 2026:
 
-- `pnpm check-types` et `pnpm lint` : succès (avertissements non bloquants).
-- `pnpm test` : 10 tests Node et 11 tests du fournisseur de licences réussis.
-- `pnpm --filter api test:integration` sur une base PostgreSQL distincte : 6 parcours et leur suite réussis. Comptes, organisations, isolation, superadmin, clés API, licences, notifications et suspension sont couverts.
-- `pnpm build` : succès pour les quatre applications.
-- Migration initiale appliquée ; second déploiement sans migration en attente ; aucune différence entre le schéma et la base.
-- API `/health`, `/ready` et schéma OpenAPI vérifiés avec PostgreSQL et Redis locaux.
-- Connexion, dashboard, compte, équipe, rôles, clés API, licences et administration vérifiés en mode production dans le navigateur.
+- `pnpm check-types` and `pnpm lint`: passed, with non-blocking warnings.
+- `pnpm test`: 10 Node tests and 11 license provider tests passed.
+- `pnpm --filter api test:integration` against a separate PostgreSQL database: 6 scenarios and their suite passed. Coverage includes accounts, organizations, isolation, superadmin, API keys, licenses, notifications, and suspension.
+- `pnpm build`: all four applications built successfully.
+- Initial migration applied; a second deployment had no pending migrations; no difference between the schema and database.
+- API `/health`, `/ready`, and OpenAPI schema verified with local PostgreSQL and Redis.
+- Sign-in, dashboard, account, team, roles, API keys, licenses, and administration verified in production mode in the browser.
 
-Les tests de notification couvrent la persistance, la déduplication, les préférences, l’isolation et la reprise en cas d’échec. Aucun e-mail ni push réel n’a été envoyé. Les images Docker sont fournies ; leur construction n’a pas été exécutée dans cet environnement sans Docker.
+Notification tests cover persistence, deduplication, preferences, isolation, and failure recovery. No real email or push notification was sent. Docker images are provided; they were not built in this local environment because Docker is unavailable.
 
-## Images de production
+## Production images
 
-- Dockerfiles dédiés restaurés pour web, admin, API, workers et migrateur.
-- Sortie Next.js standalone avec une racine de traçage explicite pour le monorepo.
-- Dépendances backend isolées avec le lockfile via pnpm 11, sans dépendances de développement ni dépendances optionnelles.
-- Suppression de l’ancien Dockerfile générique, des valeurs d’environnement de build et du contournement des erreurs de génération Prisma.
-- Instructions de build mises à jour ; test des cinq images disponible avec `pnpm test:docker` et automatisé dans GitHub Actions.
+- Dedicated Dockerfiles restored for web, admin, API, workers, and migrator.
+- Next.js standalone output with an explicit tracing root for the monorepo.
+- Backend dependencies isolated from the lockfile through pnpm 11, excluding development and optional dependencies.
+- Removed the former generic Dockerfile, build-time environment defaults, and suppression of Prisma generation failures.
+- Updated build instructions; all five images can be tested with `pnpm test:docker`, also automated in GitHub Actions.
 
-Vérifications locales après restauration : schéma Prisma valide, 34 tâches de types/lint réussies, 21 tests unitaires réussis et quatre builds réussis. Les sorties standalone et les déploiements pnpm ont aussi été copiés hors du dépôt puis démarrés : API prête avec PostgreSQL/Redis, workers prêts, 19 assets web et 13 assets admin servis sans erreur. Les stores de production API/workers ne contiennent ni Next.js, ni TypeScript, ni Vite/Vitest, ni ESLint, ni le CLI Prisma.
+Local checks after restoration: valid Prisma schema, 34 successful type/lint tasks, 21 passing unit tests, and four successful builds. Standalone outputs and pnpm deployments were also copied outside the repository and started: API ready with PostgreSQL/Redis, workers ready, 19 web assets and 13 admin assets served without errors. API/worker production stores contain no Next.js, TypeScript, Vite/Vitest, ESLint, or Prisma CLI.
 
-## Publication des images
+## Image publication
 
-- Registre configuré : `pxdv.be/vectorix`, avec un dépôt par service.
-- Sur `main`, publication des cinq images testées avec les tags `sha-<SHA Git complet>` puis `latest`. Les builds sont sérialisés pour éviter qu’un ancien build remplace le tag `latest` d’un build plus récent.
-- Authentification via les secrets GitHub Actions `PXDV_REGISTRY_USERNAME` et `PXDV_REGISTRY_PASSWORD`. Leur ajout est différé ; en leur absence, les tests s’exécutent et la publication est ignorée avec un avertissement explicite.
-- Les pull requests ne se connectent pas au registre et ne publient pas d’images. Les images temporaires conservées pour la publication sont nettoyées à la fin du job.
+- Configured registry: `pxdv.be/vectorix`, with one repository per service.
+- On `main`, publish the five tested images with `sha-<full Git SHA>` tags, followed by `latest`. Builds are serialized to prevent an older build from overwriting the `latest` tag of a newer build.
+- Authentication uses the GitHub Actions secrets `PXDV_REGISTRY_USERNAME` and `PXDV_REGISTRY_PASSWORD`. Adding them is deferred; while they are missing, tests run and publication is skipped with an explicit warning.
+- Pull requests do not authenticate to the registry or publish images. Temporary images retained for publication are removed at the end of the job.
 
-Validation locale : workflow validé avec actionlint, syntaxe Bash vérifiée, scénarios de secrets absents/partiels, d’échec de publication et de relance d’un ancien commit vérifiés avec un client Docker simulé. Le nettoyage des images est vérifié en cas de succès et d’échec. Schéma Prisma valide, 38 tâches de types/lint/build réussies et 21 tests unitaires réussis. Aucun push d’image réel n’a été effectué sans les identifiants du registre.
+Local validation: workflow checked with actionlint; Bash syntax verified; missing/partial secret, publication failure, and old-commit rerun scenarios checked with a simulated Docker client. Image cleanup verified on success and failure. Valid Prisma schema, 38 successful type/lint/build tasks, and 21 passing unit tests. No actual image push was performed without registry credentials.
+
+## RAG planning and documentation
+
+- Recorded the agreed V1 scope, architecture, initial limits, implementation work packages, and acceptance criteria in [the RAG implementation plan](rag-implementation-plan.md). These features remain planned, not implemented.
+- Standardized repository documentation and Mermaid labels in English, and recorded this convention in `AGENTS.md`.
+- Documentation validation: Prettier formatting, local Markdown links, whitespace checks, and syntax parsing of all four Mermaid diagrams passed.
+
+## Repository conventions
+
+- [x] Expand `AGENTS.md` with applicable conventions for focused files, organization isolation, credentials, Prisma, versioned API contracts, frontend configuration, workers, and Docker. Verify paths and names against the current repository.
+- [x] Keep `README.md`, package READMEs, the validation log, and the RAG plan in English; link the repository guide from the root README.
+- [x] Validate documentation formatting, local links, whitespace, and all four Mermaid diagrams before committing. This change affects documentation only.

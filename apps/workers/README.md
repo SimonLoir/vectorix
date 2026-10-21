@@ -1,7 +1,7 @@
-# Workers de notifications
+# Notification workers
 
-Le worker BullMQ `notifications` programme une inspection des reçus PostgreSQL toutes les dix secondes. Chaque reçu est réservé par un jeton et une échéance ; les réservations expirées sont récupérées. L’appartenance à l’organisation et les préférences sont revérifiées avant chaque envoi.
+The `notifications` BullMQ worker schedules an inspection of PostgreSQL delivery receipts every ten seconds. Each receipt is reserved with a token and an expiry time; expired reservations are reclaimed. Organization membership and preferences are rechecked before each delivery.
 
-Les erreurs de transport sont réessayées cinq fois avec temporisation croissante, puis conservées comme `FAILED`. Une préférence désactivée ou un abonnement push indisponible produit `SKIPPED`. Les erreurs stockées ne contiennent ni secret ni réponse brute du fournisseur. La livraison e-mail/push est au moins une fois : une interruption après l’envoi mais avant l’enregistrement peut produire un doublon.
+Transport errors are retried up to five times with increasing backoff, then retained as `FAILED`. A disabled preference or unavailable push subscription produces `SKIPPED`. Stored errors contain neither secrets nor raw provider responses. Email/push delivery is at least once: an interruption after sending but before recording success may produce a duplicate.
 
-Démarrage isolé depuis la racine : `pnpm exec dotenvx run -f .env -- pnpm --filter workers dev`. Voir `.env.example` pour Redis, les transports e-mail, le chiffrement et VAPID.
+To start workers independently from the repository root: `pnpm exec dotenvx run -f .env -- pnpm --filter workers dev`. See `.env.example` for Redis, email transports, encryption, and VAPID configuration.
