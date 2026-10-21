@@ -1,0 +1,16 @@
+{
+    "mode": "custom",
+    "pureModels": true,
+    "strictMode": {
+        "enabled": false
+    },
+    "decimalMode": "number",
+    "emit": {
+        "enums": true,
+        "objects": false,
+        "crud": false,
+        "results": false,
+        "pureModels": true,
+        "variants": true
+    }
+}

@@ -1,0 +1,118 @@
+/* The body scope includes Radix portals and disappears with dashboard navigation. */
+body:has([data-vectorix-dashboard]) {
+    --background: #ffffff;
+    --foreground: #172337;
+    --card-foreground: #172337;
+    --popover-foreground: #172337;
+    --primary: #203b60;
+    --primary-foreground: #ffffff;
+    --secondary: #eef2f7;
+    --secondary-foreground: #203b60;
+    --muted: #f1f4f8;
+    --muted-foreground: #5d6b7e;
+    --accent: #eaf1fb;
+    --accent-foreground: #1d5eae;
+    --border: #dfe5ee;
+    --input: #8494aa;
+    --ring: #3578c3;
+    --sidebar: #f8fafc;
+    --sidebar-foreground: #34445a;
+    --sidebar-primary: #1d5eae;
+    --sidebar-primary-foreground: #ffffff;
+    --sidebar-accent: #eaf1fb;
+    --sidebar-accent-foreground: #1d5eae;
+    --sidebar-border: #dfe5ee;
+    --sidebar-ring: #3578c3;
+}
+
+/*
+ * Dark palette: the historical neutral `.dark` surfaces, text and borders from
+ * globals.css, repeated here because the light block above sets them on body,
+ * plus a royal blue accent (white text on buttons, a lighter tint for the
+ * active sidebar entry) and vivid semantic tones.
+ */
+.dark body:has([data-vectorix-dashboard]) {
+    --background: oklch(0.145 0 0);
+    --foreground: oklch(0.985 0 0);
+    --card: oklch(0.205 0 0);
+    --card-foreground: oklch(0.985 0 0);
+    --popover: oklch(0.205 0 0);
+    --popover-foreground: oklch(0.985 0 0);
+    --primary: #2f6fed;
+    --primary-foreground: #ffffff;
+    --secondary: oklch(0.269 0 0);
+    --secondary-foreground: oklch(0.985 0 0);
+    --muted: oklch(0.269 0 0);
+    --muted-foreground: oklch(0.708 0 0);
+    --accent: #172447;
+    --accent-foreground: #a8c4ff;
+    --border: oklch(1 0 0 / 10%);
+    --input: oklch(1 0 0 / 15%);
+    --ring: #2f6fed;
+    --info: #38bdf8;
+    --success: #34d399;
+    --warning: #fbbf24;
+    --danger: #fb7185;
+    --sidebar: oklch(0.205 0 0);
+    --sidebar-foreground: oklch(0.985 0 0);
+    --sidebar-primary: #8fb4ff;
+    --sidebar-primary-foreground: #0d1d38;
+    --sidebar-accent: #172447;
+    --sidebar-accent-foreground: #a8c4ff;
+    --sidebar-border: oklch(1 0 0 / 10%);
+    --sidebar-ring: #2f6fed;
+}
+
+/* Keep component changes local to Vectorix rather than altering shared UI packages. */
+body:has([data-vectorix-dashboard]) [data-vectorix-page] h1 {
+    font-weight: 700;
+    line-height: 1.2;
+    letter-spacing: -0.035em;
+}
+
+body:has([data-vectorix-dashboard]) [data-slot='card-title'] {
+    font-weight: 650;
+    line-height: 1.35;
+}
+
+body:has([data-vectorix-dashboard]) [data-slot='button'] {
+    font-weight: 600;
+}
+
+body:has([data-vectorix-dashboard])
+    [data-slot='sidebar-menu-button'][data-active='true'] {
+    background: var(--sidebar-accent);
+    color: var(--sidebar-primary);
+    font-weight: 650;
+    box-shadow: inset 3px 0 0 var(--sidebar-primary);
+}
+
+body:has([data-vectorix-dashboard])
+    [data-slot='tabs-trigger'][data-state='active'] {
+    border-color: color-mix(in srgb, var(--info) 25%, transparent);
+    background: var(--card);
+    color: var(--info);
+    font-weight: 650;
+}
+
+@media (min-width: 1280px) {
+    body:has([data-vectorix-dashboard])
+        [data-responsive-table='true']
+        [data-slot='table-header'] {
+        background: var(--muted);
+    }
+
+    body:has([data-vectorix-dashboard])
+        [data-responsive-table='true']
+        [data-slot='table-head'] {
+        color: var(--muted-foreground);
+        font-size: 0.75rem;
+        font-weight: 650;
+    }
+
+    body:has([data-vectorix-dashboard])
+        [data-responsive-table='true']
+        [data-slot='table-row'][data-state='selected'] {
+        background: var(--accent);
+    }
+}

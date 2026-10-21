@@ -1,0 +1,37 @@
+model VectorixFeatureDefinition {
+  id             String  @id @default(cuid(2))
+  key            String  @unique
+  name           String
+  description    String?
+  category       String  @default("general")
+  defaultEnabled Boolean @default(true)
+  isPaywalled    Boolean @default(false)
+  isActive       Boolean @default(true)
+  externalKey    String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  organizationOverrides VectorixOrganizationFeatureOverride[]
+
+  @@index([category, isActive])
+}
+
+model VectorixOrganizationFeatureOverride {
+  id             String    @id @default(cuid(2))
+  organizationId String
+  featureId      String
+  enabled        Boolean
+  reason         String?
+  expiresAt      DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  organization Organization              @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  feature      VectorixFeatureDefinition @relation(fields: [featureId], references: [id], onDelete: Cascade)
+
+  @@unique([organizationId, featureId])
+  @@index([featureId])
+  @@index([organizationId, expiresAt])
+}

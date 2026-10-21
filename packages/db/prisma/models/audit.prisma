@@ -1,0 +1,15 @@
+model SuperAdminAuditLog {
+  id        String  @id @default(cuid(2))
+  userId    String
+  action    String
+  targetId  String?
+  details   Json?
+  ipAddress String?
+
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id])
+
+  @@index([userId, createdAt(sort: Desc)])
+  @@index([targetId])
+}

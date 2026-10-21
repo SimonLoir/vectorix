@@ -1,0 +1,28 @@
+{
+    "name": "vectorix",
+    "private": true,
+    "version": "0.1.0",
+    "packageManager": "pnpm@11.25.0",
+    "engines": {
+        "node": ">=24 <25"
+    },
+    "scripts": {
+        "dev": "dotenvx run -f .env -- turbo run dev --env-mode=loose",
+        "build": "turbo run build",
+        "check-types": "turbo run check-types",
+        "lint": "turbo run lint",
+        "test": "pnpm --filter api test && pnpm --filter @routers/utils test",
+        "db:generate": "pnpm --filter @repo/db generate",
+        "db:push": "dotenvx run -f .env -- pnpm --filter @repo/db db:push",
+        "db:migrate": "dotenvx run -f .env -- pnpm --filter @repo/db migrate:deploy",
+        "admin:grant": "dotenvx run -f .env -- pnpm --filter api exec tsx src/scripts/grant-admin.ts",
+        "format": "prettier --write .",
+        "setup:env": "node scripts/setup-env.mjs"
+    },
+    "devDependencies": {
+        "@dotenvx/dotenvx": "^2.30.0",
+        "turbo": "^2.11.3",
+        "prettier": "^3.9.8",
+        "typescript": "npm:@typescript/typescript6@6.0.2"
+    }
+}

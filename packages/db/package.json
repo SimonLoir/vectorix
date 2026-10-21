@@ -1,0 +1,46 @@
+{
+    "name": "@repo/db",
+    "version": "0.1.0",
+    "private": true,
+    "type": "module",
+    "main": "src/index.ts",
+    "types": "src/index.ts",
+    "exports": {
+        ".": "./src/index.ts",
+        "./schemas": "./src/generated/schemas/variants/pure/index.ts",
+        "./zod": "./src/generated/schemas/index.ts",
+        "./enums": "./src/generated/schemas/enums/index.ts"
+    },
+    "files": [
+        "dist",
+        "prisma/schema.prisma"
+    ],
+    "scripts": {
+        "generate": "prisma generate",
+        "db:push": "prisma db push",
+        "migrate:dev": "prisma migrate dev",
+        "migrate:deploy": "prisma migrate deploy",
+        "check-types": "tsc6 --noEmit",
+        "studio": "prisma studio",
+        "lint": "eslint src/index.ts src/client.ts"
+    },
+    "dependencies": {
+        "@prisma/adapter-pg": "^7.10.0",
+        "@prisma/client": "^7.10.0",
+        "pg": "^8.23.0",
+        "zod": "^4.6.5"
+    },
+    "devDependencies": {
+        "@pixeldrive/prisma-zod-generator": "^2.1.4",
+        "@repo/eslint-config": "workspace:*",
+        "@repo/typescript-config": "workspace:*",
+        "@types/node": "^26.6.2",
+        "@types/pg": "^8.23.1",
+        "eslint": "^10.11.0",
+        "prisma": "7.10.0",
+        "typescript": "npm:@typescript/typescript6@6.0.2"
+    },
+    "engines": {
+        "node": ">=18"
+    }
+}

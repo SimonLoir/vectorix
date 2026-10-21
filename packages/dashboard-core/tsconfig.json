@@ -1,0 +1,16 @@
+{
+    "extends": "@repo/typescript-config/base.json",
+    "compilerOptions": {
+        "outDir": "dist",
+        "rootDir": "src",
+        "declaration": false,
+        "declarationMap": false,
+        "composite": false,
+        "tsBuildInfoFile": "dist/.tsbuildinfo",
+        "module": "ESNext",
+        "moduleResolution": "Bundler",
+        "jsx": "react-jsx",
+        "types": ["node", "react"]
+    },
+    "include": ["src"]
+}

@@ -1,0 +1,46 @@
+{
+    "name": "workers",
+    "version": "0.1.0",
+    "private": true,
+    "type": "module",
+    "main": "dist/index.mjs",
+    "scripts": {
+        "build": "vite build",
+        "check-types": "tsc6 -p tsconfig.json --noEmit",
+        "dev": "tsx watch src/index.ts",
+        "start": "node dist/index.mjs",
+        "lint": "eslint"
+    },
+    "dependencies": {
+        "@dotenvx/dotenvx": "^2.30.0",
+        "@repo/db": "workspace:*",
+        "@repo/emails": "workspace:*",
+        "@repo/queues": "workspace:*",
+        "@routers/utils": "workspace:*",
+        "bullmq": "^5.81.5",
+        "web-push": "3.6.7",
+        "@orpc/server": "^1.15.3",
+        "pino": "^10.3.1",
+        "zod": "^4.6.5",
+        "@prisma/adapter-pg": "^7.10.0",
+        "@prisma/client": "^7.10.0",
+        "pg": "^8.23.0",
+        "@better-auth/api-key": "1.6.33",
+        "@better-auth/passkey": "1.6.33",
+        "better-auth": "1.6.33",
+        "nodemailer": "^10.0.10",
+        "react": "19.3.0",
+        "resend": "^6.28.1"
+    },
+    "devDependencies": {
+        "@repo/eslint-config": "workspace:*",
+        "@repo/typescript-config": "workspace:*",
+        "@types/node": "^26.6.2",
+        "@types/web-push": "3.6.4",
+        "eslint": "^10.11.0",
+        "tsx": "^4.23.15",
+        "typescript": "npm:@typescript/typescript6@6.0.2",
+        "vite": "^8.3.0",
+        "vitest": "^5.0.1"
+    }
+}

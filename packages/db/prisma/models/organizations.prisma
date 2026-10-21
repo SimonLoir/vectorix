@@ -1,0 +1,78 @@
+model Organization {
+  id   String @id
+  name String
+  slug String
+
+  logo     String?
+  isActive Boolean @default(true)
+
+  vectorixLegacyAccess     Boolean                               @default(false)
+  createdAt                DateTime
+  metadata                 String?
+  members                  Member[]
+  organizationRoles        OrganizationRole[]
+  invitations              Invitation[]
+  settings                 OrganizationSetting[]
+  vectorixFeatureOverrides VectorixOrganizationFeatureOverride[]
+  notificationRecipients   VectorixNotificationRecipient[]
+  notifications            VectorixNotification[]
+  notificationPreferences  VectorixNotificationPreference[]
+  notificationDeliveries   VectorixNotificationDelivery[]
+  pushSubscriptions        VectorixPushSubscription[]
+
+  @@unique([slug])
+  @@map("organization")
+}
+
+model OrganizationSetting {
+  id             String       @id @default(cuid(2))
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  organizationId String
+  key            String
+  value          String
+  group          String       @default("general")
+
+  @@unique([organizationId, key])
+}
+
+enum VectorixMemberAvatarColor {
+  BLUE
+  EMERALD
+  AMBER
+  VIOLET
+  ROSE
+  CYAN
+}
+
+model Member {
+  id                    String                         @id
+  organizationId        String
+  organization          Organization                   @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  userId                String
+  user                  User                           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  role                  String
+  createdAt             DateTime
+  avatarColor           VectorixMemberAvatarColor?
+  menuPins              Json                           @default("[]")
+  menuPinsVersion       Int                            @default(0)
+  notificationRecipient VectorixNotificationRecipient? @relation("VectorixNotificationRecipientMember")
+  actedNotifications    VectorixNotification[]         @relation("VectorixNotificationActor")
+
+  @@unique([organizationId, id])
+  @@map("member")
+}
+
+model Invitation {
+  id             String       @id
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  email          String
+  role           String?
+  status         String       @default("pending")
+  expiresAt      DateTime
+  createdAt      DateTime     @default(now())
+  inviterId      String
+  user           User         @relation(fields: [inviterId], references: [id], onDelete: Cascade)
+
+  @@map("invitation")
+}

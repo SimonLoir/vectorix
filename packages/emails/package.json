@@ -1,0 +1,32 @@
+{
+    "name": "@repo/emails",
+    "version": "0.1.0",
+    "private": true,
+    "type": "module",
+    "main": "src/index.ts",
+    "types": "src/index.ts",
+    "exports": {
+        ".": "./src/index.ts",
+        "./mail-service": "./src/MailService.ts"
+    },
+    "files": [
+        "dist"
+    ],
+    "scripts": {
+        "check-types": "tsc6 -p tsconfig.json --noEmit",
+        "lint": "eslint"
+    },
+    "devDependencies": {
+        "@repo/eslint-config": "workspace:*",
+        "@repo/typescript-config": "workspace:*",
+        "@types/node": "^26.6.2",
+        "eslint": "^10.11.0",
+        "typescript": "npm:@typescript/typescript6@6.0.2",
+        "@types/react": "19.3.0"
+    },
+    "dependencies": {
+        "nodemailer": "^10.0.10",
+        "react": "19.3.0",
+        "resend": "^6.28.1"
+    }
+}

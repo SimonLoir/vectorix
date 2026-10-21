@@ -1,0 +1,153 @@
+enum VectorixNotificationRecipientKind {
+  MEMBER
+}
+
+enum VectorixNotificationChannel {
+  IN_APP
+  PUSH
+  EMAIL
+}
+
+enum VectorixNotificationDeliveryStatus {
+  PENDING
+  PROCESSING
+  SENT
+  SKIPPED
+  FAILED
+}
+
+model VectorixNotificationRecipient {
+  id             String                            @id @default(cuid(2))
+  organizationId String
+  kind           VectorixNotificationRecipientKind
+
+  memberOrganizationId String?
+  memberId             String?
+
+  lastSequence Int @default(0)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  member       Member?      @relation("VectorixNotificationRecipientMember", fields: [memberOrganizationId, memberId], references: [organizationId, id], onDelete: Cascade)
+
+  notifications     VectorixNotification[]
+  preferences       VectorixNotificationPreference[]
+  pushSubscriptions VectorixPushSubscription[]
+
+  @@unique([organizationId, id])
+  @@unique([organizationId, memberId])
+  @@unique([memberOrganizationId, memberId])
+  @@index([memberOrganizationId, memberId])
+}
+
+model VectorixNotification {
+  id             String @id @default(cuid(2))
+  organizationId String
+  recipientId    String
+
+  sequence   Int
+  eventKey   String
+  eventType  String
+  occurredAt DateTime
+
+  actorMemberOrganizationId String?
+  actorMemberId             String?
+  sourceKind                String
+  sourceId                  String
+  sourceVersion             Int
+
+  title         String
+  body          String @db.Text
+  actionKind    String
+  actionVersion Int    @default(1)
+  actionData    Json
+
+  readAt    DateTime?
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+
+  organization Organization                   @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  recipient    VectorixNotificationRecipient  @relation(fields: [organizationId, recipientId], references: [organizationId, id], onDelete: Cascade)
+  actorMember  Member?                        @relation("VectorixNotificationActor", fields: [actorMemberOrganizationId, actorMemberId], references: [organizationId, id], onDelete: SetNull)
+  deliveries   VectorixNotificationDelivery[]
+
+  @@unique([organizationId, eventKey, recipientId])
+  @@unique([organizationId, recipientId, sequence])
+  @@unique([organizationId, id])
+  @@index([organizationId, recipientId, readAt, sequence(sort: Desc)])
+  @@index([organizationId, sourceKind, sourceId])
+  @@index([actorMemberOrganizationId, actorMemberId])
+}
+
+model VectorixNotificationPreference {
+  id             String                      @id @default(cuid(2))
+  organizationId String
+  recipientId    String
+  eventType      String
+  channel        VectorixNotificationChannel
+  enabled        Boolean
+
+  version   Int      @default(1)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  organization Organization                  @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  recipient    VectorixNotificationRecipient @relation(fields: [organizationId, recipientId], references: [organizationId, id], onDelete: Cascade)
+
+  @@unique([organizationId, recipientId, eventType, channel])
+  @@index([organizationId, recipientId])
+}
+
+model VectorixNotificationDelivery {
+  id             String                             @id @default(cuid(2))
+  organizationId String
+  notificationId String
+  channel        VectorixNotificationChannel
+  status         VectorixNotificationDeliveryStatus @default(PENDING)
+
+  attempts    Int       @default(0)
+  availableAt DateTime  @default(now())
+  leaseToken  String?
+  leasedUntil DateTime?
+  sentAt      DateTime?
+  skippedAt   DateTime?
+  failedAt    DateTime?
+  lastError   String?   @db.Text
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  organization Organization         @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  notification VectorixNotification @relation(fields: [organizationId, notificationId], references: [organizationId, id], onDelete: Cascade)
+
+  @@unique([organizationId, notificationId, channel])
+  @@index([status, availableAt, leasedUntil])
+  @@index([organizationId, channel, status])
+}
+
+model VectorixPushSubscription {
+  id                    String @id @default(cuid(2))
+  organizationId        String
+  recipientId           String
+  application           String
+  deviceKey             String
+  endpointHash          String
+  subscriptionEncrypted String @db.Text
+
+  version        Int       @default(1)
+  revokedAt      DateTime?
+  lastUsedAt     DateTime?
+  expirationTime DateTime?
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  organization Organization                  @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  recipient    VectorixNotificationRecipient @relation(fields: [organizationId, recipientId], references: [organizationId, id], onDelete: Cascade)
+
+  @@unique([organizationId, recipientId, application, endpointHash], map: "VectorixPushSubscription_recipient_application_endpoint_key")
+  @@unique([organizationId, recipientId, application, deviceKey], map: "VectorixPushSubscription_recipient_application_device_key")
+  @@index([organizationId, recipientId, application, revokedAt])
+  @@index([endpointHash])
+}

@@ -1,0 +1,33 @@
+{
+    "name": "@repo/api",
+    "version": "0.1.0",
+    "private": true,
+    "type": "module",
+    "main": "src/index.ts",
+    "types": "src/index.ts",
+    "exports": {
+        ".": "./src/index.ts",
+        "./versioning": "./src/versioning.ts"
+    },
+    "scripts": {
+        "check-types": "tsc6 -p tsconfig.json --noEmit",
+        "lint": "eslint"
+    },
+    "devDependencies": {
+        "@repo/eslint-config": "workspace:*",
+        "@repo/typescript-config": "workspace:*",
+        "eslint": "^10.11.0",
+        "typescript": "npm:@typescript/typescript6@6.0.2",
+        "tsx": "^4.23.15",
+        "@types/node": "^26.6.2"
+    },
+    "dependencies": {
+        "@orpc/server": "^1.15.3",
+        "@repo/api-contracts": "workspace:*",
+        "@routers/members": "workspace:*",
+        "@routers/notifications": "workspace:*",
+        "@routers/organizations": "workspace:*",
+        "@routers/superadmin": "workspace:*",
+        "@routers/utils": "workspace:*"
+    }
+}

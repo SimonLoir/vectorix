@@ -1,0 +1,31 @@
+{
+    "$schema": "https://turborepo.dev/schema.json",
+    "ui": "stream",
+    "globalEnv": [
+        "DATABASE_URL",
+        "API_URL",
+        "BETTER_AUTH_URL",
+        "BETTER_AUTH_SECRET",
+        "ALLOW_ACCOUNT_CREATION",
+        "ALLOW_ORGANIZATION_CREATION",
+        "VECTORIX_*",
+        "PASSKEY_*",
+        "TRUSTED_ORIGINS",
+        "REDIS_URL"
+    ],
+    "tasks": {
+        "build": {
+            "dependsOn": ["^build"],
+            "outputs": [".next/**", "!.next/cache/**", "dist/**"]
+        },
+        "check-types": {
+            "dependsOn": ["^check-types"]
+        },
+        "lint": {},
+        "test": {},
+        "dev": {
+            "cache": false,
+            "persistent": true
+        }
+    }
+}
