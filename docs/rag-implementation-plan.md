@@ -1,6 +1,6 @@
 # RAG implementation plan — V1
 
-Prepared on October 21, 2026. This document records the agreed scope and planned work; the features described here have not been implemented yet. The proposed initial limits below are configurable and must be validated on the selected infrastructure.
+Prepared on October 21, 2026. This document records the agreed scope and implementation sequence. [Phase 1 infrastructure](rag-infrastructure.md) and the [phase 2 catalog and access APIs](rag-catalog-access.md) are implemented. Uploads, ingestion, embedding adapters, vector indexing, retrieval, and the web playground remain planned. The proposed initial limits below are configurable and must be validated on the selected infrastructure.
 
 ## 1. Agreed scope
 

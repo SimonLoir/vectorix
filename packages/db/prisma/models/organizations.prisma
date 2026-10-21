@@ -20,6 +20,15 @@ model Organization {
   notificationDeliveries   VectorixNotificationDelivery[]
   pushSubscriptions        VectorixPushSubscription[]
 
+  credentials     Credentials[]
+  storageLocations StorageLocation[]
+  vectorConnections VectorConnection[]
+  collections Collection[]
+  groups OrganizationGroup[]
+  ragQuota OrganizationQuota?
+  ragAuditLogs RagAuditLog[]
+  documents Document[]
+
   @@unique([slug])
   @@map("organization")
 }
@@ -57,6 +66,10 @@ model Member {
   menuPinsVersion       Int                            @default(0)
   notificationRecipient VectorixNotificationRecipient? @relation("VectorixNotificationRecipientMember")
   actedNotifications    VectorixNotification[]         @relation("VectorixNotificationActor")
+
+  groups GroupMember[]
+  collectionGrants CollectionMemberGrant[]
+  apiKeyPrincipals ApiKeyPrincipal[]
 
   @@unique([organizationId, id])
   @@map("member")

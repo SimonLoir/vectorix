@@ -15,6 +15,18 @@ export const listScopedApiKeys = adminOrganizationsV1.apiKeys.list.handler(
                 expiresAt: true,
                 enabled: true,
                 permissions: true,
+                ragPrincipal: {
+                    select: {
+                        memberId: true,
+                        scopes: {
+                            select: {
+                                collectionId: true,
+                                read: true,
+                                manageDocuments: true,
+                            },
+                        },
+                    },
+                },
                 vectorixLegacyFullAccess: true,
             },
             orderBy: { createdAt: 'desc' },
@@ -24,10 +36,13 @@ export const listScopedApiKeys = adminOrganizationsV1.apiKeys.list.handler(
                 ({
                     vectorixLegacyFullAccess,
                     permissions,
+                    ragPrincipal,
                     enabled,
                     ...key
                 }) => ({
                     ...key,
+                    issuerMemberId: ragPrincipal?.memberId ?? null,
+                    collectionScopes: ragPrincipal?.scopes ?? [],
                     enabled: enabled ?? true,
                     legacyFullAccess: vectorixLegacyFullAccess,
                     permissions: permissions

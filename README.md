@@ -29,7 +29,7 @@ pnpm dev
 | RustFS S3 API                     | http://localhost:9000 |
 | RustFS console                    | http://localhost:9001 |
 
-The vector database uses PostgreSQL 18.6 with pgvector 0.8.7 and pgvectorscale 0.9.1. RustFS 1.0.3 provides a private document bucket initialized by the one-off `s3-init` service. Each database and object store has its own named volume. Existing `.env` files need the new vector/S3 settings from `.env.example`; `setup:env` preserves existing files. See [RAG infrastructure](docs/rag-infrastructure.md) for connection roles, setup, and upgrade behavior. Collection and document APIs are planned for subsequent phases.
+The vector database uses PostgreSQL 18.6 with pgvector 0.8.7 and pgvectorscale 0.9.1. RustFS 1.0.3 provides a private document bucket initialized by the one-off `s3-init` service. Each database and object store has its own named volume. Existing `.env` files need the new vector/S3 settings from `.env.example`; `setup:env` preserves existing files. See [RAG infrastructure](docs/rag-infrastructure.md) for connection roles, setup, and upgrade behavior. The catalog and access APIs are implemented in [phase 2](docs/rag-catalog-access.md); uploads, ingestion, vector indexing, search, and their web interfaces remain planned.
 
 Create an account through the dashboard, then create an organization. To grant administration access to an existing account:
 
@@ -45,26 +45,27 @@ pnpm admin:grant your-email@example.com
 - A licensed feature catalog, an optional external provider, and explicit manual grants by a super administrator. Provider outages or expired entitlements never grant feature access.
 - User and organization administration, organization suspension, permission management, and audit logging.
 - Shared UI components, light/dark themes, and authentication flows translated into French, English, and Dutch.
+- RAG catalog APIs: encrypted S3/Ollama/Cohere/Voyage credentials, groups, collection profiles and grants, scoped API keys, document metadata, quotas, and transactional audit.
 
-The initial feature catalog is empty. No business domain or demo data is installed. Models, contracts, permissions, and migrations cover only the application foundation.
+The initial feature catalog is empty. No business domain or demo data is installed. The catalog migration adds empty RAG tables without granting existing API keys access.
 
 ## Repository structure
 
-| Directory                                | Responsibility                                                       |
-| ---------------------------------------- | -------------------------------------------------------------------- |
-| `apps/web`                               | Dashboard, accounts, team, and notifications                         |
-| `apps/api`                               | HTTP transport, authentication, and OpenAPI documentation            |
-| `apps/admin`                             | Global administration protected by a superadmin session              |
-| `apps/workers`                           | Asynchronous notification delivery                                   |
-| `packages/db`                            | Schema, generated client, and migrator image                         |
-| `packages/auth`                          | Better Auth and authorization policy                                 |
-| `packages/api-contracts`                 | Versioned oRPC/Zod contracts                                         |
-| `packages/api`                           | Router composition                                                   |
-| `packages/routers`                       | Organizations, members, notifications, administration, and utilities |
-| `packages/queues`, `packages/emails`     | Redis/BullMQ and email transports                                    |
-| `packages/ui`, `packages/dashboard-core` | Shared components                                                    |
+| Directory                                | Responsibility                                                                    |
+| ---------------------------------------- | --------------------------------------------------------------------------------- |
+| `apps/web`                               | Dashboard, accounts, team, and notifications                                      |
+| `apps/api`                               | HTTP transport, authentication, and OpenAPI documentation                         |
+| `apps/admin`                             | Global administration protected by a superadmin session                           |
+| `apps/workers`                           | Asynchronous notification delivery                                                |
+| `packages/db`                            | Schema, generated client, and migrator image                                      |
+| `packages/auth`                          | Better Auth and authorization policy                                              |
+| `packages/api-contracts`                 | Versioned oRPC/Zod contracts                                                      |
+| `packages/api`                           | Router composition                                                                |
+| `packages/routers`                       | Organizations, members, RAG catalog, notifications, administration, and utilities |
+| `packages/queues`, `packages/emails`     | Redis/BullMQ and email transports                                                 |
+| `packages/ui`, `packages/dashboard-core` | Shared components                                                                 |
 
-The API uses `/rpc/v1` and `/api/v1`. The initial contract version is `1.0.0`. The OpenAPI schema is available at `/spec/v1.json` and `/spec.json`, and the version registry at `/api-versions.json`. `/health` checks the process; `/ready` checks PostgreSQL and Redis.
+The API uses `/rpc/v1` and `/api/v1`. The current compatible contract revision is `1.1.0`. The OpenAPI schema is available at `/spec/v1.json` and `/spec.json`, and the version registry at `/api-versions.json`. `/health` checks the process; `/ready` checks PostgreSQL and Redis.
 
 ## Configuration
 
@@ -76,6 +77,8 @@ Email requires Resend or SMTP. Without a provider, notifications remain pending 
 
 A license provider receives `GET {VECTORIX_FEATURE_PROVIDER_URL}/organizations/{id}/features` with an optional server token. It returns `{"features":{"reporting":true},"expiresAt":null}`. Cache duration and HTTP timeout are configurable. Manual mode, named `legacy` in the contract, requires explicit activation and grants in the administration interface.
 
+RAG credentials resolve a complete organization configuration before the environment fallback. Configure `VECTORIX_DEFAULT_{S3,OLLAMA,COHERE,VOYAGE}_*` as needed; an invalid organization configuration never falls back. Collection revisions retain their selected provider binding and destination. Embedding calls are not implemented yet. Defaults are 20 collections, 5,000 documents, 25 MiB per original, 10 GiB retained storage, and 100,000 chunks per collection. `VECTORIX_DEFAULT_RAG_*` changes deployment defaults; `/api/v1/superadmin/organizations/{organizationId}/rag-quota` sets an organization override. Only collection limits are enforced by the catalog phase; byte reservations and chunk enforcement accompany ingestion.
+
 ## Validation
 
 ```sh
@@ -85,7 +88,9 @@ pnpm test
 pnpm build
 ```
 
-Integration tests require a separate database whose name ends in `_test`. They create and remove their own accounts and organizations without deleting other data. External providers are disabled in these tests.
+`pnpm test:catalog` starts disposable PostgreSQL and Redis containers on random loopback ports, tests a fresh install and upgrade from the initial schema, repeats deployment, checks schema parity and existing records, runs the core and RAG API journeys, then removes its containers and volumes. It does not load `.env` or start application servers. The “Catalog checks” GitHub Actions workflow runs it on pull requests and `main`, alongside schema, type, lint, and unit checks.
+
+To run the integration suites manually, they require a separate database whose name ends in `_test`. They create and remove their own accounts and organizations without deleting other data. External providers are disabled in these tests.
 
 ```sh
 docker compose exec postgres createdb -U postgres vectorix_test
@@ -95,7 +100,7 @@ DATABASE_URL=postgresql://postgres:password@localhost:5432/vectorix_test pnpm ex
 
 ## Deployment and migrations
 
-The initial migration creates only the application foundation in a fresh database. For subsequent changes, edit the schema, generate and review a development migration with `pnpm --filter @repo/db migrate:dev`, then run `pnpm db:migrate` before deploying the applications. Do not use `db:push` against a production database.
+The initial migration creates the application foundation; the second adds the RAG catalog. For subsequent changes, edit the schema, generate and review a development migration with `pnpm --filter @repo/db migrate:dev`, then run `pnpm db:migrate` before deploying the applications. Do not use `db:push` against a production database.
 
 ```sh
 docker build -f apps/web/Dockerfile -t pxdv.be/vectorix/web:latest .
@@ -145,6 +150,7 @@ Implement changes on a dedicated `codex/*` branch and open a pull request agains
 ## Documentation
 
 - [Repository conventions](AGENTS.md): architecture, authorization, API compatibility, development, and validation rules.
+- [RAG catalog and access](docs/rag-catalog-access.md): phase 2 schema, credentials, authorization, quotas, and validation.
 - [RAG infrastructure](docs/rag-infrastructure.md): phase 1 services, connection settings, role boundaries, and isolated acceptance tests.
-- [RAG implementation plan](docs/rag-implementation-plan.md): agreed V1 scope, architecture diagrams, proposed defaults, work packages, and acceptance criteria. These features are planned, not yet implemented.
+- [RAG implementation plan](docs/rag-implementation-plan.md): agreed V1 scope, architecture diagrams, proposed defaults, work packages, and acceptance criteria. Phases 1 and 2 are implemented; later work packages remain planned.
 - [Build and validation log](docs/build-task-log.md): completed template work and recorded checks.

@@ -1,0 +1,13 @@
+import { after, test } from 'node:test';
+import { setup, cleanup } from './rag-tests/fixtures';
+import { credentialTests } from './rag-tests/credentials';
+import { accessTests } from './rag-tests/access';
+import { lifecycleTests } from './rag-tests/lifecycle';
+
+after(cleanup);
+void test('RAG catalog with real PostgreSQL and HTTP transports', async (t) => {
+    await setup();
+    await credentialTests(t);
+    await accessTests(t);
+    await lifecycleTests(t);
+});

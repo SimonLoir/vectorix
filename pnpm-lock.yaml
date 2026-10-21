@@ -137,6 +137,9 @@ importers:
             '@repo/queues':
                 specifier: workspace:*
                 version: link:../../packages/queues
+            '@routers/rag':
+                specifier: workspace:*
+                version: link:../../packages/routers/rag
             '@routers/utils':
                 specifier: workspace:*
                 version: link:../../packages/routers/utils
@@ -398,6 +401,9 @@ importers:
             '@routers/organizations':
                 specifier: workspace:*
                 version: link:../routers/organizations
+            '@routers/rag':
+                specifier: workspace:*
+                version: link:../routers/rag
             '@routers/superadmin':
                 specifier: workspace:*
                 version: link:../routers/superadmin
@@ -762,9 +768,49 @@ importers:
             '@repo/auth':
                 specifier: workspace:*
                 version: link:../../auth
+            '@routers/rag':
+                specifier: workspace:*
+                version: link:../rag
             '@routers/utils':
                 specifier: workspace:*
                 version: link:../utils
+        devDependencies:
+            '@repo/eslint-config':
+                specifier: workspace:*
+                version: link:../../eslint-config
+            '@repo/typescript-config':
+                specifier: workspace:*
+                version: link:../../typescript-config
+            '@types/node':
+                specifier: ^26.6.2
+                version: 26.6.5
+            eslint:
+                specifier: ^10.11.0
+                version: 10.13.0(jiti@2.7.0)
+            typescript:
+                specifier: npm:@typescript/typescript6@6.0.2
+                version: '@typescript/typescript6@6.0.2'
+
+    packages/routers/rag:
+        dependencies:
+            '@orpc/server':
+                specifier: ^1.15.3
+                version: 1.15.7
+            '@repo/api-contracts':
+                specifier: workspace:*
+                version: link:../../api-contracts
+            '@repo/auth':
+                specifier: workspace:*
+                version: link:../../auth
+            '@repo/db':
+                specifier: workspace:*
+                version: link:../../db
+            '@routers/utils':
+                specifier: workspace:*
+                version: link:../utils
+            zod:
+                specifier: ^4.6.5
+                version: 4.6.7
         devDependencies:
             '@repo/eslint-config':
                 specifier: workspace:*

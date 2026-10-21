@@ -1,3 +1,4 @@
+import { ragStatements, ragMemberStatements } from './rag';
 import {
     createAccessControl,
     role,
@@ -18,6 +19,7 @@ import {
 export const statements = {
     ...defaultStatements,
     ...businessStatements,
+    ...ragStatements,
     member: ['read', ...defaultStatements.member],
     invitation: ['read', ...defaultStatements.invitation],
     apiKey: ['create', 'read', 'update', 'delete'],
@@ -31,6 +33,7 @@ export const roles = {
     owner: accessControl.newRole({
         ...businessStatements,
         ...ownerAc.statements,
+        ...ragStatements,
         member: statements.member,
         invitation: statements.invitation,
         apiKey: statements.apiKey,
@@ -38,18 +41,21 @@ export const roles = {
     admin: accessControl.newRole({
         ...businessStatements,
         ...adminAc.statements,
+        ...ragStatements,
         member: statements.member,
         invitation: statements.invitation,
     }),
     member: accessControl.newRole({
         ...businessStatements,
         ...memberAc.statements,
+        ...ragMemberStatements,
         member: ['read'],
         invitation: ['read'],
     }),
 };
 
 export { businessStatements, copyPermissions } from './catalogue';
+
 export type { PermissionSet } from './catalogue';
 
 /** Checks AND semantics using Better Auth's access-control primitive. */
@@ -101,6 +107,10 @@ export function validatePermissions(
             'team',
             'ac',
             'apiKey',
+            'ragCredentials',
+            'ragGroups',
+            'ragAudit',
+            'ragQuota',
         ];
         const business = Object.fromEntries(
             Object.entries(businessStatements).filter(
@@ -110,6 +120,10 @@ export function validatePermissions(
         if (
             !Object.keys(result).length ||
             forbidden.some((key) => result[key]?.length) ||
+            (result.ragCollection ?? []).some(
+                (action) => !['read', 'manageDocuments'].includes(action)
+            ) ||
+            (result.ragLibrary ?? []).some((action) => action !== 'read') ||
             permits(result, copyPermissions(business))
         ) {
             throw new Error(
