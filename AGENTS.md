@@ -4,8 +4,10 @@ Vectorix is a multi-tenant application foundation. Preserve its reusable authent
 
 ## Workspace and architecture
 
+- Implement changes on a dedicated `codex/*` branch and deliver them through a pull request. Do not commit or push implementation work directly to `main`, and do not merge a PR without an explicit request.
 - Use pnpm and Turborepo. The root `package.json` pins the supported Node.js and pnpm versions; install with `pnpm install --frozen-lockfile`.
 - Runtime services are `apps/web`, `apps/api`, `apps/admin`, `apps/workers`, and the database migrator in `packages/db`.
+- Local infrastructure is defined in `docker-compose.yml`: application PostgreSQL, Redis, a separate PostgreSQL vector store, and RustFS with a private bucket initializer. See `docs/rag-infrastructure.md` for configuration, role boundaries, and validation.
 - Put reusable logic in focused packages. `packages/routers/*` owns route implementations, `packages/api` composes routers, and `apps/api` wires HTTP transport, authentication, and request context.
 - Keep one endpoint per route file. Router `index.ts` files should import and compose handlers rather than contain business logic.
 - Split features into schemas, services, handlers, queue processors, page shells, forms, lists, dialogs, and shared types as needed. Avoid placing an entire workflow in one large file.
@@ -60,7 +62,7 @@ Vectorix is a multi-tenant application foundation. Preserve its reusable authent
 - Keep a dedicated Dockerfile for each of the five services, using the repository root as build context. Web and admin use Next.js standalone output; API and workers contain their bundles and isolated production dependencies.
 - Preserve the locked BuildKit pnpm cache at `/pnpm/store`, the current cache identifier, and `--store-dir=/pnpm/store`. Include all workspace manifests needed to resolve the frozen lockfile.
 - Keep build tools out of runtime images, run as an unprivileged user, and fail builds on Prisma generation errors. Exclude local `.env` files from Docker contexts and inject configuration at startup.
-- Publish through the existing workflow to `pxdv.be/vectorix/{web,admin,api,workers,migrator}`. Preserve testing of all five images before publication and common commit tags across services; registry credentials belong in GitHub Actions secrets.
+- Publish through the existing workflow to `pxdv.be/vectorix/{web,admin,api,workers,migrator,postgres-vector}`. Preserve testing of all six images before publication and common commit tags across services; registry credentials belong in GitHub Actions secrets. Pull requests run checks without publishing images.
 
 ## Validation and documentation
 

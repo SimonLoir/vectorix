@@ -1,26 +1,87 @@
 services:
-  postgres:
-    image: postgres:18-alpine
-    environment:
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: password
-      POSTGRES_DB: vectorix
-    ports: ["127.0.0.1:5432:5432"]
-    volumes: ["postgres-data:/var/lib/postgresql"]
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres -d vectorix"]
-      interval: 5s
-      timeout: 5s
-      retries: 10
-  redis:
-    image: redis:8-alpine
-    ports: ["127.0.0.1:6379:6379"]
-    volumes: ["redis-data:/data"]
-    healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
-      interval: 5s
-      timeout: 5s
-      retries: 10
+    postgres:
+        image: postgres:18-alpine
+        environment:
+            POSTGRES_USER: postgres
+            POSTGRES_PASSWORD: password
+            POSTGRES_DB: vectorix
+        ports: ['127.0.0.1:5432:5432']
+        volumes: ['postgres-data:/var/lib/postgresql']
+        healthcheck:
+            test:
+                ['CMD-SHELL', 'pg_isready -h 127.0.0.1 -U postgres -d vectorix']
+            interval: 5s
+            timeout: 5s
+            retries: 10
+    redis:
+        image: redis:8-alpine
+        ports: ['127.0.0.1:6379:6379']
+        volumes: ['redis-data:/data']
+        healthcheck:
+            test: ['CMD', 'redis-cli', 'ping']
+            interval: 5s
+            timeout: 5s
+            retries: 10
+    postgres-vector:
+        image: ${VECTOR_POSTGRES_IMAGE:-pxdv.be/vectorix/postgres-vector:local}
+        build:
+            context: .
+            dockerfile: infra/postgres-vector/Dockerfile
+        environment:
+            POSTGRES_USER: postgres
+            POSTGRES_PASSWORD: ${VECTOR_POSTGRES_PASSWORD:-vectorix-local-admin}
+            POSTGRES_DB: vectorix_vectors
+            VECTOR_PROVISIONER_PASSWORD: ${VECTOR_PROVISIONER_PASSWORD:-vectorix-local-indexer}
+            VECTOR_RUNTIME_PASSWORD: ${VECTOR_RUNTIME_PASSWORD:-vectorix-local-runtime}
+        ports: ['127.0.0.1:5433:5432']
+        volumes: ['vector-data:/var/lib/postgresql']
+        healthcheck:
+            test:
+                [
+                    'CMD-SHELL',
+                    'pg_isready -h 127.0.0.1 -U postgres -d vectorix_vectors',
+                ]
+            interval: 5s
+            timeout: 5s
+            retries: 20
+    rustfs:
+        image: rustfs/rustfs:1.0.3@sha256:9ca9559533b537d10482fe923288b676ad08f92a7069d9a17327fbae3cab688b
+        environment:
+            RUSTFS_VOLUMES: /data
+            RUSTFS_ADDRESS: 0.0.0.0:9000
+            RUSTFS_CONSOLE_ADDRESS: 0.0.0.0:9001
+            RUSTFS_CONSOLE_ENABLE: 'true'
+            RUSTFS_CONSOLE_CORS_ALLOWED_ORIGINS: http://localhost:9001,http://127.0.0.1:9001
+            RUSTFS_ACCESS_KEY: ${VECTORIX_DEFAULT_S3_ACCESS_KEY_ID:-vectorix-local}
+            RUSTFS_SECRET_KEY: ${VECTORIX_DEFAULT_S3_SECRET_ACCESS_KEY:-vectorix-local-s3-secret}
+            RUSTFS_REGION: ${VECTORIX_DEFAULT_S3_REGION:-us-east-1}
+            RUSTFS_OBS_LOG_DIRECTORY: /logs
+        ports: ['127.0.0.1:9000:9000', '127.0.0.1:9001:9001']
+        volumes: ['rustfs-data:/data', 'rustfs-logs:/logs']
+        healthcheck:
+            test: ['CMD', 'curl', '-fsS', 'http://127.0.0.1:9000/health']
+            interval: 5s
+            timeout: 5s
+            retries: 30
+            start_period: 20s
+    s3-init:
+        image: amazon/aws-cli:2.31.22@sha256:bf253be91e12d49ba1bd6dc939a76ea9777901772032692b14639e643118e1c1
+        depends_on:
+            rustfs:
+                condition: service_healthy
+        environment:
+            AWS_ACCESS_KEY_ID: ${VECTORIX_DEFAULT_S3_ACCESS_KEY_ID:-vectorix-local}
+            AWS_SECRET_ACCESS_KEY: ${VECTORIX_DEFAULT_S3_SECRET_ACCESS_KEY:-vectorix-local-s3-secret}
+            AWS_DEFAULT_REGION: ${VECTORIX_DEFAULT_S3_REGION:-us-east-1}
+            AWS_ENDPOINT_URL: http://rustfs:9000
+            AWS_EC2_METADATA_DISABLED: 'true'
+            S3_BUCKET: ${VECTORIX_DEFAULT_S3_BUCKET:-vectorix-documents}
+        entrypoint: ['/bin/sh', '/scripts/init-bucket.sh']
+        volumes: ['./infra/s3:/scripts:ro']
+        restart: 'no'
 volumes:
-  postgres-data:
-  redis-data:
+    vector-data:
+    rustfs-data:
+    rustfs-logs:
+    postgres-data:
+    redis-data:

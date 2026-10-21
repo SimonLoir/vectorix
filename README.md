@@ -4,13 +4,13 @@ A multi-organization application foundation written in TypeScript. It includes a
 
 ## Local development
 
-Requirements: Node.js 24, pnpm 11.25, and Docker Compose for PostgreSQL and Redis.
+Requirements: Node.js 24, pnpm 11.25, and Docker Compose 2.24.4 or later for PostgreSQL, Redis, the vector database, and RustFS. The vector database requires AVX2 and FMA on x86 hosts (including VMs), or NEON on ARM.
 
 ```sh
 pnpm install --frozen-lockfile
 pnpm setup:env
 # Adjust .env if the default ports are already in use.
-docker compose up -d
+docker compose up --build -d
 pnpm db:generate
 pnpm db:migrate
 pnpm dev
@@ -25,6 +25,11 @@ pnpm dev
 | Administration                    | http://localhost:3006 |
 | PostgreSQL                        | localhost:5432        |
 | Redis                             | localhost:6379        |
+| Vector PostgreSQL                 | localhost:5433        |
+| RustFS S3 API                     | http://localhost:9000 |
+| RustFS console                    | http://localhost:9001 |
+
+The vector database uses PostgreSQL 18.6 with pgvector 0.8.7 and pgvectorscale 0.9.1. RustFS 1.0.3 provides a private document bucket initialized by the one-off `s3-init` service. Each database and object store has its own named volume. Existing `.env` files need the new vector/S3 settings from `.env.example`; `setup:env` preserves existing files. See [RAG infrastructure](docs/rag-infrastructure.md) for connection roles, setup, and upgrade behavior. Collection and document APIs are planned for subsequent phases.
 
 Create an account through the dashboard, then create an organization. To grant administration access to an existing account:
 
@@ -98,40 +103,48 @@ docker build -f apps/api/Dockerfile -t pxdv.be/vectorix/api:latest .
 docker build -f apps/admin/Dockerfile -t pxdv.be/vectorix/admin:latest .
 docker build -f apps/workers/Dockerfile -t pxdv.be/vectorix/workers:latest .
 docker build -f packages/db/Dockerfile -t pxdv.be/vectorix/migrator:latest .
+docker build -f infra/postgres-vector/Dockerfile -t pxdv.be/vectorix/postgres-vector:latest .
 ```
 
 Inject configuration when containers start and use PostgreSQL and Redis DNS names reachable from their network. The migrator is a one-off process that runs `prisma migrate deploy`. It does not run alongside the applications in `pnpm dev`.
 
 Each application has its own Dockerfile, with the repository root as the build context. Web and admin run the Next.js standalone server and include its traced files, static assets, and, for web, the public directory. The API and workers include their bundles and production dependencies isolated by `pnpm deploy` from the lockfile. Optional dependencies are excluded from these two images to avoid Next.js/TypeScript peers and unused native accelerators; PostgreSQL and BullMQ use their JavaScript implementations.
 
-All five images use Node.js 24 Alpine and an unprivileged user. pnpm and compilation tools remain in build stages. Prisma generation is required: any failure stops the build. No private configuration is copied into the images.
+All five application images use Node.js 24 Alpine and an unprivileged user. pnpm and compilation tools remain in build stages. Prisma generation is required: any failure stops the build. No private configuration is copied into the images.
 
-To build and test all five images with temporary PostgreSQL and Redis services:
+To build and test all five application images and the vector image with isolated PostgreSQL, Redis, and RustFS services:
 
 ```sh
 pnpm test:docker
 # Alternatively, with only Bash and Docker installed:
 bash scripts/test-docker.sh
+# Run only infrastructure checks (also builds the migrator when needed):
+pnpm test:infra
 ```
 
-This test checks migrations, startup, API registration, Next.js assets, runtime configuration, worker job execution, and the absence of build tools in backend images. It publishes no host ports and cleans up its containers afterward. The GitHub Actions “Docker images” workflow runs the same test on every push to `main` and on pull requests.
+This test checks migrations, startup, API registration, Next.js assets, runtime configuration, worker job execution, and the absence of build tools in backend images. It also verifies real vector indexes, database role boundaries, private S3 object operations, and persistence after restart. It publishes no host ports and cleans up its test resources afterward. The GitHub Actions “Docker images” workflow runs the same test on every push to `main` and on pull requests.
 
 ### Image registry
 
-The registry is `pxdv.be`, with repositories `vectorix/web`, `vectorix/admin`, `vectorix/api`, `vectorix/workers`, and `vectorix/migrator`. After successful tests on `main`, the workflow publishes the exact images just tested with `sha-<full Git SHA>` and `latest` tags. Pull requests run tests only.
+The registry is `pxdv.be`, with repositories `vectorix/web`, `vectorix/admin`, `vectorix/api`, `vectorix/workers`, `vectorix/migrator`, and `vectorix/postgres-vector`. After successful tests on `main`, the workflow publishes the exact images just tested with `sha-<full Git SHA>` and `latest` tags. Pull requests run tests only.
 
-Configure the GitHub Actions secrets `PXDV_REGISTRY_USERNAME` and `PXDV_REGISTRY_PASSWORD` with an account authorized to publish to all five repositories. While either secret is missing, tests remain enabled and publication is skipped with a warning. Once the secrets are configured, rerun the “Docker images” workflow on `main` or push a new commit to publish images.
+Configure the GitHub Actions secrets `PXDV_REGISTRY_USERNAME` and `PXDV_REGISTRY_PASSWORD` with an account authorized to publish to all six repositories. While either secret is missing, tests remain enabled and publication is skipped with a warning. Once the secrets are configured, rerun the “Docker images” workflow on `main` or push a new commit to publish images.
 
 To retrieve a published version:
 
 ```sh
 docker login pxdv.be
 docker pull pxdv.be/vectorix/web:latest
-# For a reproducible deployment, use the same sha-<SHA> tag for all five services.
+# For a reproducible deployment, use the same sha-<SHA> tag for all six built images.
 ```
+
+## Contributing
+
+Implement changes on a dedicated `codex/*` branch and open a pull request against `main`. Do not push implementation commits directly to `main`. Merge only after review and an explicit approval to merge.
 
 ## Documentation
 
 - [Repository conventions](AGENTS.md): architecture, authorization, API compatibility, development, and validation rules.
+- [RAG infrastructure](docs/rag-infrastructure.md): phase 1 services, connection settings, role boundaries, and isolated acceptance tests.
 - [RAG implementation plan](docs/rag-implementation-plan.md): agreed V1 scope, architecture diagrams, proposed defaults, work packages, and acceptance criteria. These features are planned, not yet implemented.
 - [Build and validation log](docs/build-task-log.md): completed template work and recorded checks.

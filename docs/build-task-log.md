@@ -50,3 +50,15 @@ Local validation: workflow checked with actionlint; Bash syntax verified; missin
 - [x] Expand `AGENTS.md` with applicable conventions for focused files, organization isolation, credentials, Prisma, versioned API contracts, frontend configuration, workers, and Docker. Verify paths and names against the current repository.
 - [x] Keep `README.md`, package READMEs, the validation log, and the RAG plan in English; link the repository guide from the root README.
 - [x] Validate documentation formatting, local links, whitespace, and all four Mermaid diagrams before committing. This change affects documentation only.
+
+## RAG phase 1 — infrastructure
+
+- [x] Add `infra/postgres-vector/Dockerfile` with pinned PostgreSQL/extension versions and checksum verification; bootstrap a dedicated schema and separate provisioning/runtime roles.
+- [x] Extend `docker-compose.yml` and `.env.example` with independent vector storage and RustFS S3 storage, persistent volumes, health checks, and an idempotent private bucket initializer.
+- [x] Add `scripts/test-infrastructure.sh` and `tests/infrastructure/` for actual migrations, vector indexes, role restrictions, private object operations, restarts, and isolated cleanup.
+- [x] Extend `scripts/test-docker.sh` and `.github/workflows/docker.yml` to test and publish the vector image together with the five application images.
+- [x] Document setup, data boundaries, and configuration in `README.md` and `docs/rag-infrastructure.md`; require branches and PRs in `AGENTS.md`.
+- [x] Validate the Prisma schema, 17 type-check tasks, 17 lint tasks, 21 backend tests, and four application builds. Lint retains existing non-blocking warnings.
+- [x] Build the vector image locally; verify the unsupported-CPU guard. Verify private RustFS upload, binary download, deletion, repeated initialization, and persistence after restart using isolated Docker resources.
+- [x] Check workflow and shell syntax, documentation formatting, local links, whitespace, and all five Mermaid diagrams.
+- [ ] Complete the six-image Docker acceptance suite on GitHub Actions. The local VM has neither AVX2 nor FMA, so it cannot execute pgvectorscale; this is an explicit upstream requirement, including source builds.

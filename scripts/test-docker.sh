@@ -15,7 +15,7 @@ cleanup() {
         done
     fi
     for container in "${containers[@]}"; do
-        docker rm -f "$container" >/dev/null 2>&1 || true
+        docker rm -fv "$container" >/dev/null 2>&1 || true
     done
     docker network rm "$network" >/dev/null 2>&1 || true
     # CI publishes the exact images that passed these checks. Failed runs and
@@ -143,7 +143,11 @@ for attempt in {1..45}; do
 done
 (( completed > 0 ))
 [[ $(docker inspect --format '{{.State.Running}}' "$prefix-workers") == true ]]
-printf 'All five images passed production-runtime checks.\n'
+# The vector image joins the same tested-image set published by CI.
+images+=("$prefix-postgres-vector:test")
+IMAGE_PREFIX="$prefix" MIGRATOR_IMAGE="$prefix-migrator:test" KEEP_IMAGES=true \
+    bash scripts/test-infrastructure.sh
+printf 'All six images and infrastructure passed production-runtime checks.\n'
 if [[ -n "${GITHUB_OUTPUT:-}" ]]; then
     printf 'image_prefix=%s\n' "$prefix" >> "$GITHUB_OUTPUT"
 fi
