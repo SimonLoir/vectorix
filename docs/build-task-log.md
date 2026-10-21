@@ -67,7 +67,7 @@ The initial CI run built and started all applications and both vector extensions
 
 ## RAG original phase 2 — catalog and access backend
 
-The backend checklist below is complete. The user-facing catalog milestone remains incomplete until the dashboard checklist in [catalog and access](rag-catalog-access.md#dashboard-completion-still-required) passes. The revised implementation plan prioritizes that work as M1.
+The backend checklist below is complete. M1 subsequently completes the [catalog dashboard checklist](rag-catalog-access.md#dashboard-completion); its implementation and validation are recorded below.
 
 - [x] Verify merged phase 1 and the updated VM with the isolated infrastructure suite: HNSW/DiskANN, role boundaries, catalog migrations, private S3 operations, and restart persistence passed locally.
 - [x] Add organization-scoped catalog models for credentials, storage locations, documents, collection configuration revisions, vector connections, groups, grants, key scopes, quotas, and audit. The user approved schema generation; the additive migration was tested against fresh and upgraded isolated databases.
@@ -94,3 +94,42 @@ Final local validation: frozen-lockfile installation and Prisma validation passe
 - [ ] Implement and verify the M1 catalog dashboard. This plan revision does not add screens or change runtime behavior.
 
 Touched files are the six documents named above and this build log. The plan maps dashboard actions through `apps/web/contexts/orpc.tsx`, versioned contracts, catalog handlers, transactional persistence/audit, and query refresh; it also identifies the admin quota entry point and future worker status flow. Application tests, builds, and browser checks are not required for this prose-only revision and have not been rerun.
+
+## M1 — Catalog dashboard
+
+- [x] Add collection/profile/history, credential, group/member/grant, usage, and audit screens with permission gates and server-filtered pagination.
+- [x] Extend API-key dialogs with explicit collection scopes and the admin organization workspace with effective quota editing.
+- [x] Add bounded principal/history and superadmin quota reads to API revision 1.2.0; keep metadata administration independent of content reading. No schema or migration change.
+- [x] Validate types, lint, backend/integration tests, and application builds.
+- [x] Verify the dashboard recipe with two organizations and distinct member permissions in a disposable environment.
+- [x] Document actual browser results in `docs/rag-dashboard.md` and prepare the dedicated `codex/rag-catalog-dashboard` review branch.
+
+Implementation entry points: `apps/web/components/rag/` contains focused catalog views and forms mounted under `apps/web/app/dashboard/collections/` and `settings/`. Existing API-key components now configure scopes. `apps/admin/src/components/organization-rag-quota.tsx` manages platform quota overrides. Versioned contracts call `packages/routers/rag/` and `packages/routers/superadmin/`, sharing catalog access checks, safe DTOs, and quota resolution. `apps/api/src/rag-tests/dashboard.ts` covers the additional read paths. Validation: 18 type-check tasks and 18 lint tasks passed (existing warnings remain), 22 backend tests passed, all four applications built, and `pnpm test:catalog` passed 24 core/RAG HTTP tests plus fresh/upgrade/repeat migration and schema-parity checks. Browser acceptance used production builds, isolated PostgreSQL/Redis, two fixture organizations and an owner/reader pair: configuration persistence, masked credentials and protected deletion, revision history, groups/grants/revocation, scoped key creation, cross-organization/direct-URL denial, audit, and admin quota enforcement passed. Browser review also found missing RAG permission labels, now added in all three existing locales. No application database or schema was changed; uploads and search remain planned. The six-image Docker suite was not rerun for this change; CI retains it. No live embedding or S3 provider check is claimed.
+
+Final browser corrections were rechecked with web types, lint, and a standalone production rebuild: translated permission labels render correctly, the key dialog stays within the viewport with internal scrolling and closes with Escape, and the shared retry control cannot submit its surrounding form. The catalog suite was repeated after adding document-manager metadata coverage and again passed all 24 tests. Eight Mermaid diagrams, local file links in seven documents, formatting, and `git diff --check` passed.
+
+## M1 follow-up — Localized catalog UI
+
+- [x] Replace hardcoded catalog text with English, French, and Belgian Dutch `next-intl` messages, including dialogs, page headings, scoped-key controls, confirmations, plural counts, and number formatting.
+- [x] Translate web dashboard navigation and home cards; keep page headings reactive to language changes.
+- [x] Add an admin locale provider, a language selector, translated navigation/workspace tabs, and localized quota controls. Share cookie/header locale resolution through `packages/dashboard-core/src/i18n/locale.ts`.
+- [x] Add an optional localized close label to the shared dialog primitive and use it in the catalog and key dialogs.
+- [x] Run final types, lint, backend tests, builds, translation/ICU validation, and browser checks in all three locales.
+- [x] Prepare the localization correction for the existing PR #3.
+
+The changed UI uses `apps/web/messages/{en,fr,nl-BE}.json` and `apps/admin/src/messages/{en,fr,nl-BE}.json`. `CatalogPage` accepts message keys so client-side language switches update page headings as well as forms. The admin root reads the shared locale cookie and browser preference on the server; its language selector persists the cookie and refreshes the server tree. No schema or API contract change is required. Existing admin screens outside the catalog workflow and API-supplied diagnostic messages retain their previous language behavior.
+
+Validation: frozen-lockfile installation, 18 type-check tasks, 18 lint tasks (existing warnings), 22 backend tests, and all four application builds passed. Message parity and ICU formatting passed for 211 web and 38 admin keys in each locale; seven locale-resolution cases passed. Browser checks against production standalone web/admin builds and disposable PostgreSQL/Redis covered reactive headings/navigation, collection profile forms and persistence, localized numbers/dates/ordinals, group zero/one-member plurals, credential and key-scope dialogs, quota editing, and language persistence after reload. Both browser consoles had no warnings or errors. Backend catalog integration and six-image Docker tests were not repeated for this translation-only follow-up; their prior results remain recorded above.
+
+## M1 follow-up — OpenAI and Mistral provider catalog
+
+- [x] Review and generate the additive provider enum and credential-table migration after explicit approval.
+- [x] Extend V1 contracts to revision 1.3.0, encrypted credential persistence/update/DTO mapping, and existing organization-first resolution.
+- [x] Expose both providers in dashboard integration and collection selectors, with provider endpoint examples and unchanged translated field labels.
+- [x] Document environment configuration, migration deployment, native-adapter milestones, and the distinction between saved profiles and executed embeddings.
+- [x] Validate schema, types, lint, tests, builds, upgrade preservation, contracts, and browser journeys.
+- [x] Prepare the validated update for the existing PR.
+
+Entry points: `packages/db/prisma/models/rag.prisma` and `20261023000000_openai_mistral_credentials/migration.sql`; `packages/api-contracts/src/v1/rag/{common,credentials}.ts`; credential services in `packages/routers/rag/src/services/`; dashboard selectors in `apps/web/components/rag/credentials/credential-form.tsx` and `collections/profile-fields.tsx`. `apps/api/src/rag-tests/embedding-providers.ts` covers provider persistence and retained bindings; `tests/catalog/provider-upgrade-{seed,check}.sql` extends the disposable migration workflow to preserve existing credentials and selection. No live provider request is made by this milestone.
+
+Validation: Prisma generation and validation, 18 type-check tasks, 18 lint tasks (existing warnings only), 22 backend tests, and all four builds passed. `pnpm test:catalog` passed 26 core/RAG HTTP tests, fresh/repeat deployment, schema parity, and preservation of pre-catalog data plus existing encrypted credential records and selections during upgrade. The first run exposed a stale local generated client; regeneration resolved it and the full suite passed. Browser acceptance on standalone web/API builds with a disposable database created and reloaded both integrations, preserved a blank OpenAI edit secret, and saved `text-embedding-3-small`/1,536 and `mistral-embed`/1,024 profiles with organization credential bindings. These are synthetic credential/configuration checks, not live model validation. The browser console had no warnings/errors. Seven Mermaid diagrams, local documentation links, shell syntax, formatting, and whitespace checks passed. The six-image Docker suite was not rerun; PR CI retains it.

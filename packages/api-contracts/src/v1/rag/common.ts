@@ -11,8 +11,25 @@ export const page = z
     .strict()
     .default({ offset: 0, limit: 25, query: '' });
 export const success = z.object({ success: z.literal(true) });
-export const provider = z.enum(['S3', 'OLLAMA', 'COHERE', 'VOYAGE']);
-export const embeddingProvider = z.enum(['OLLAMA', 'COHERE', 'VOYAGE']);
+export const principalPage = z.object({
+    items: z.array(z.object({ id, name: z.string() })),
+    total: z.number().int(),
+});
+export const provider = z.enum([
+    'S3',
+    'OLLAMA',
+    'COHERE',
+    'VOYAGE',
+    'OPENAI',
+    'MISTRAL',
+]);
+export const embeddingProvider = z.enum([
+    'OLLAMA',
+    'COHERE',
+    'VOYAGE',
+    'OPENAI',
+    'MISTRAL',
+]);
 export const grantPermissions = z
     .object({
         read: z.boolean(),

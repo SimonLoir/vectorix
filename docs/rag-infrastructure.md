@@ -1,6 +1,6 @@
 # RAG infrastructure — phase 1
 
-This original phase 1 supplies the development infrastructure and its automated acceptance checks. Collection and credential APIs now exist in the [catalog backend foundation](rag-catalog-access.md); completing their dashboard is the next priority. Document uploads, indexing, and search remain planned as complete dashboard journeys in the revised [implementation plan](rag-implementation-plan.md).
+This original phase 1 supplies the development infrastructure and its automated acceptance checks. Collection and credential APIs exist in the [catalog backend foundation](rag-catalog-access.md), with an implemented [catalog dashboard](rag-dashboard.md). Document uploads, indexing, and search remain planned as complete dashboard journeys in the revised [implementation plan](rag-implementation-plan.md).
 
 ## Services and data boundaries
 

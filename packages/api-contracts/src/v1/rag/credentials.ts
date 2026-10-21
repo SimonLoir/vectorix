@@ -51,11 +51,19 @@ const cohere = z
 const voyage = z
     .object({ provider: z.literal('VOYAGE'), endpoint, apiKey: secret })
     .strict();
+const openai = z
+    .object({ provider: z.literal('OPENAI'), endpoint, apiKey: secret })
+    .strict();
+const mistral = z
+    .object({ provider: z.literal('MISTRAL'), endpoint, apiKey: secret })
+    .strict();
 export const credentialData = z.discriminatedUnion('provider', [
     s3,
     ollama,
     cohere,
     voyage,
+    openai,
+    mistral,
 ]);
 export const credentialUpdateData = z.discriminatedUnion('provider', [
     s3.extend({
@@ -65,6 +73,8 @@ export const credentialUpdateData = z.discriminatedUnion('provider', [
     ollama.extend({ apiKey: secret.nullable().optional() }),
     cohere.extend({ apiKey: secret.optional() }),
     voyage.extend({ apiKey: secret.optional() }),
+    openai.extend({ apiKey: secret.optional() }),
+    mistral.extend({ apiKey: secret.optional() }),
 ]);
 const masked = z.literal('********');
 export const credentialView = z.object({
@@ -80,6 +90,8 @@ export const credentialView = z.object({
         ollama.extend({ apiKey: masked.nullable() }),
         cohere.extend({ apiKey: masked }),
         voyage.extend({ apiKey: masked }),
+        openai.extend({ apiKey: masked }),
+        mistral.extend({ apiKey: masked }),
     ]),
 });
 export const credentialsContract = {

@@ -24,6 +24,9 @@ import { getDocument } from './documents/get';
 import { listConnections } from './connections';
 import { getQuota } from './quota';
 import { listAudit } from './audit';
+import { listRevisions } from './collections/revisions';
+import { listGrantCandidates } from './collections/grantCandidates';
+import { listMemberCandidates } from './groups/memberCandidates';
 
 export const ragRouter = authorized
     .prefix('/rag')
@@ -37,6 +40,7 @@ export const ragRouter = authorized
             delete: deleteCredentialHandler,
         },
         groups: {
+            memberCandidates: listMemberCandidates,
             list: listGroups,
             create: createGroupHandler,
             rename: renameGroupHandler,
@@ -46,6 +50,8 @@ export const ragRouter = authorized
             removeMember: removeMemberGroupHandler,
         },
         collections: {
+            revisions: listRevisions,
+            grantCandidates: listGrantCandidates,
             list: listCollections,
             get: getCollection,
             create: createCollectionHandler,

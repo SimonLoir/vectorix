@@ -24,12 +24,16 @@ redis_port=$(docker port "$prefix-redis" 6379/tcp | cut -d: -f2)
 sql() { docker exec -i "$prefix-postgres" psql -U postgres -d "$1" -v ON_ERROR_STOP=1; }
 sql postgres <<< 'CREATE DATABASE vectorix_upgrade_test; CREATE DATABASE vectorix_catalog_test;'
 
-# Start with phase 1, preserve existing data, then apply the approved additive migration.
+# Preserve pre-catalog and catalog data through the approved additive migrations.
 sql vectorix_upgrade_test < packages/db/prisma/migrations/20261021000000_initial/migration.sql
 sql vectorix_upgrade_test < tests/catalog/upgrade-seed.sql
 export DATABASE_URL="postgresql://postgres:catalog-test-password@127.0.0.1:$pg_port/vectorix_upgrade_test"
 pnpm --filter @repo/db exec prisma migrate resolve --applied 20261021000000_initial
+sql vectorix_upgrade_test < packages/db/prisma/migrations/20261022000000_rag_catalog_access/migration.sql
+pnpm --filter @repo/db exec prisma migrate resolve --applied 20261022000000_rag_catalog_access
+sql vectorix_upgrade_test < tests/catalog/provider-upgrade-seed.sql
 for attempt in 1 2; do pnpm --filter @repo/db migrate:deploy; done
+sql vectorix_upgrade_test < tests/catalog/provider-upgrade-check.sql
 sql vectorix_upgrade_test < tests/catalog/upgrade-check.sql
 pnpm --filter @repo/db exec prisma migrate diff --from-config-datasource --to-schema prisma --exit-code
 

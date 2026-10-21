@@ -1,0 +1,52 @@
+{
+    "language": {
+        "label": "Language",
+        "en": "English",
+        "fr": "French",
+        "nlBE": "Dutch (Belgium)"
+    },
+    "admin": {
+        "quota": {
+            "title": "RAG catalog quotas",
+            "overridden": "Organization-specific limits.",
+            "defaults": "Platform defaults. Saving creates an override for this organization.",
+            "saved": "Quotas saved",
+            "loading": "Loading quotas…",
+            "retry": "Retry",
+            "collections": "Collections",
+            "documents": "Documents",
+            "originalBytes": "Maximum file size (bytes)",
+            "storageBytes": "Retained storage (bytes)",
+            "chunksPerCollection": "Passages per collection",
+            "hint": "1 MiB = 1,048,576 bytes. The collection limit is enforced now. Storage and passage limits will accompany ingestion. Reducing a quota does not delete existing data.",
+            "save": "Save quotas",
+            "saving": "Saving…"
+        },
+        "workspace": {
+            "back": "← Organizations",
+            "organization": "Organization",
+            "rag": "RAG quotas",
+            "members": "Members",
+            "features": "Licenses and features"
+        },
+        "shell": {
+            "dashboard": "Dashboard",
+            "organizations": "Organizations",
+            "users": "Users",
+            "features": "Features",
+            "audit": "Audit log",
+            "loading": "Checking administrator permissions…",
+            "denied": "Access denied",
+            "deniedHint": "Your account is signed in, but it is not a super administrator.",
+            "switchAccount": "Switch account",
+            "signOut": "Sign out",
+            "workspace": "Workspace",
+            "administration": "Administration",
+            "access": "Superadmin access"
+        },
+        "metadata": {
+            "title": "Vectorix administration",
+            "description": "Manage Vectorix organizations and features."
+        }
+    }
+}

@@ -1,0 +1,52 @@
+{
+    "language": {
+        "label": "Taal",
+        "en": "Engels",
+        "fr": "Frans",
+        "nlBE": "Nederlands (België)"
+    },
+    "admin": {
+        "quota": {
+            "title": "Quota voor de RAG-catalogus",
+            "overridden": "Organisatiespecifieke limieten.",
+            "defaults": "Platformstandaarden. Opslaan maakt een afwijkende instelling voor deze organisatie.",
+            "saved": "Quota opgeslagen",
+            "loading": "Quota laden…",
+            "retry": "Opnieuw proberen",
+            "collections": "Collecties",
+            "documents": "Documenten",
+            "originalBytes": "Maximale bestandsgrootte (bytes)",
+            "storageBytes": "Bewaarde opslag (bytes)",
+            "chunksPerCollection": "Passages per collectie",
+            "hint": "1 MiB = 1.048.576 bytes. De collectielimiet wordt nu toegepast. Opslag- en passagelimieten worden bij ingestie ingevoerd. Een quota verlagen verwijdert geen bestaande gegevens.",
+            "save": "Quota opslaan",
+            "saving": "Opslaan…"
+        },
+        "workspace": {
+            "back": "← Organisaties",
+            "organization": "Organisatie",
+            "rag": "RAG-quota",
+            "members": "Leden",
+            "features": "Licenties en functies"
+        },
+        "shell": {
+            "dashboard": "Dashboard",
+            "organizations": "Organisaties",
+            "users": "Gebruikers",
+            "features": "Functies",
+            "audit": "Auditlogboek",
+            "loading": "Beheerdersrechten controleren…",
+            "denied": "Toegang geweigerd",
+            "deniedHint": "Je bent aangemeld, maar je account is geen superbeheerder.",
+            "switchAccount": "Account wisselen",
+            "signOut": "Afmelden",
+            "workspace": "Werkruimte",
+            "administration": "Beheer",
+            "access": "Toegang als superbeheerder"
+        },
+        "metadata": {
+            "title": "Vectorix-beheer",
+            "description": "Beheer Vectorix-organisaties en -functies."
+        }
+    }
+}

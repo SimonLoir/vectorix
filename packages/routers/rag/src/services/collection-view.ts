@@ -1,4 +1,4 @@
-import type { Prisma, Collection } from '@repo/db';
+import type { Prisma, Collection, CollectionConfigRevision } from '@repo/db';
 import { ORPCError } from '@orpc/server';
 import { permits } from '@repo/auth/permissions';
 import { collectionView } from '@repo/api-contracts/v1/rag/collections';
@@ -24,9 +24,15 @@ export async function collectionDto(
             message: 'Collection configuration is missing.',
         });
     const has = async (action: 'read' | 'manageDocuments' | 'administer') => {
-        const required = action === 'administer' ? 'update' : action;
+        const allowed =
+            action === 'administer'
+                ? !actor.keyId &&
+                  ['update', 'delete', 'manageGrants'].some((required) =>
+                      permits(actor.permissions, { ragCollection: [required] })
+                  )
+                : permits(actor.permissions, { ragCollection: [action] });
         return (
-            permits(actor.permissions, { ragCollection: [required] }) &&
+            allowed &&
             Boolean(
                 await db.collection.findFirst({
                     where: {
@@ -42,6 +48,24 @@ export async function collectionDto(
         has('manageDocuments'),
         has('administer'),
     ]);
+    return collectionView.parse({
+        ...collection,
+        permissions: {
+            read,
+            manageDocuments,
+            administer:
+                administer ||
+                (!actor.keyId &&
+                    permits(actor.permissions, {
+                        ragCollection: ['manageAll'],
+                    })),
+        },
+        configuration: configurationDto(configuration),
+    });
+}
+
+/** Project only public profile fields; never serialize the provider endpoint or internal record IDs. */
+export function configurationDto(configuration: CollectionConfigRevision) {
     const {
         provider,
         model,
@@ -57,32 +81,19 @@ export async function collectionDto(
         credentialId,
         credentialRevision,
     } = configuration;
-    return collectionView.parse({
-        ...collection,
-        permissions: {
-            read,
-            manageDocuments,
-            administer:
-                administer ||
-                (!actor.keyId &&
-                    permits(actor.permissions, {
-                        ragCollection: ['manageAll'],
-                    })),
-        },
-        configuration: {
-            provider,
-            model,
-            dimensions,
-            metric,
-            indexType,
-            numericType,
-            preparation,
-            chunkingStrategy,
-            chunking,
-            parentChild,
-            vectorConnectionId,
-            credentialId,
-            credentialRevision,
-        },
+    return collectionView.shape.configuration.parse({
+        provider,
+        model,
+        dimensions,
+        metric,
+        indexType,
+        numericType,
+        preparation,
+        chunkingStrategy,
+        chunking,
+        parentChild,
+        vectorConnectionId,
+        credentialId,
+        credentialRevision,
     });
 }

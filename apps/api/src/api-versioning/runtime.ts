@@ -1,7 +1,7 @@
 import { OpenAPIHandler } from '@orpc/openapi/fetch';
 import { ORPCError, ValidationError } from '@orpc/server';
 import { RPCHandler } from '@orpc/server/fetch';
-import { ZodSmartCoercionPlugin } from '@orpc/zod';
+import { experimental_ZodSmartCoercionPlugin as ZodSmartCoercionPlugin } from '@orpc/zod/zod4';
 import { logger } from '../lib/logger';
 import { API_VERSION_REGISTRY } from './registry';
 

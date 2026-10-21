@@ -29,7 +29,7 @@ pnpm dev
 | RustFS S3 API                     | http://localhost:9000 |
 | RustFS console                    | http://localhost:9001 |
 
-The vector database uses PostgreSQL 18.6 with pgvector 0.8.7 and pgvectorscale 0.9.1. RustFS 1.0.3 provides a private document bucket initialized by the one-off `s3-init` service. Each database and object store has its own named volume. Existing `.env` files need the new vector/S3 settings from `.env.example`; `setup:env` preserves existing files. See [RAG infrastructure](docs/rag-infrastructure.md) for connection roles, setup, and upgrade behavior. The [catalog and access APIs](docs/rag-catalog-access.md) are implemented, but their dashboard is still missing and is the next priority. Uploads, ingestion, vector indexing, and search remain planned; each will ship as a complete dashboard-testable journey.
+The vector database uses PostgreSQL 18.6 with pgvector 0.8.7 and pgvectorscale 0.9.1. RustFS 1.0.3 provides a private document bucket initialized by the one-off `s3-init` service. Each database and object store has its own named volume. Existing `.env` files need the new vector/S3 settings from `.env.example`; `setup:env` preserves existing files. See [RAG infrastructure](docs/rag-infrastructure.md) for connection roles, setup, and upgrade behavior. The [catalog and access APIs](docs/rag-catalog-access.md) and [catalog dashboard](docs/rag-dashboard.md) are implemented. Configure integrations, collection profiles, groups, grants, and scoped keys from the dashboard; inspect usage and audit there, and edit organization quotas in the admin panel. Uploads, ingestion, vector indexing, and search remain planned; each will ship as a complete dashboard-testable journey.
 
 Create an account through the dashboard, then create an organization. To grant administration access to an existing account:
 
@@ -45,7 +45,7 @@ pnpm admin:grant your-email@example.com
 - A licensed feature catalog, an optional external provider, and explicit manual grants by a super administrator. Provider outages or expired entitlements never grant feature access.
 - User and organization administration, organization suspension, permission management, and audit logging.
 - Shared UI components, light/dark themes, and authentication flows translated into French, English, and Dutch.
-- RAG catalog APIs: encrypted S3/Ollama/Cohere/Voyage credentials, groups, collection profiles and grants, scoped API keys, document metadata, quotas, and transactional audit.
+- RAG catalog dashboard and APIs: encrypted S3/Ollama/Cohere/Voyage/OpenAI/Mistral credentials, groups, collection profiles with revision history and grants, scoped API keys, quota/usage views, and transactional audit. The admin panel edits organization quota overrides; document metadata currently has API access only.
 
 The initial feature catalog is empty. No business domain or demo data is installed. The catalog migration adds empty RAG tables without granting existing API keys access.
 
@@ -65,7 +65,7 @@ The initial feature catalog is empty. No business domain or demo data is install
 | `packages/queues`, `packages/emails`     | Redis/BullMQ and email transports                                                 |
 | `packages/ui`, `packages/dashboard-core` | Shared components                                                                 |
 
-The API uses `/rpc/v1` and `/api/v1`. The current compatible contract revision is `1.1.0`. The OpenAPI schema is available at `/spec/v1.json` and `/spec.json`, and the version registry at `/api-versions.json`. `/health` checks the process; `/ready` checks PostgreSQL and Redis.
+The API uses `/rpc/v1` and `/api/v1`. The current compatible contract revision is `1.3.0`. The OpenAPI schema is available at `/spec/v1.json` and `/spec.json`, and the version registry at `/api-versions.json`. `/health` checks the process; `/ready` checks PostgreSQL and Redis.
 
 ## Configuration
 
@@ -77,7 +77,7 @@ Email requires Resend or SMTP. Without a provider, notifications remain pending 
 
 A license provider receives `GET {VECTORIX_FEATURE_PROVIDER_URL}/organizations/{id}/features` with an optional server token. It returns `{"features":{"reporting":true},"expiresAt":null}`. Cache duration and HTTP timeout are configurable. Manual mode, named `legacy` in the contract, requires explicit activation and grants in the administration interface.
 
-RAG credentials resolve a complete organization configuration before the environment fallback. Configure `VECTORIX_DEFAULT_{S3,OLLAMA,COHERE,VOYAGE}_*` as needed; an invalid organization configuration never falls back. Collection revisions retain their selected provider binding and destination. Embedding calls are not implemented yet. Defaults are 20 collections, 5,000 documents, 25 MiB per original, 10 GiB retained storage, and 100,000 chunks per collection. `VECTORIX_DEFAULT_RAG_*` changes deployment defaults; `/api/v1/superadmin/organizations/{organizationId}/rag-quota` sets an organization override. Only collection limits are enforced by the catalog phase; byte reservations and chunk enforcement accompany ingestion.
+RAG credentials resolve a complete organization configuration before the environment fallback. Configure `VECTORIX_DEFAULT_{S3,OLLAMA,COHERE,VOYAGE,OPENAI,MISTRAL}_*` as needed; an invalid organization configuration never falls back. Collection revisions retain their selected provider binding and destination. For OpenAI and Mistral, set `VECTORIX_DEFAULT_OPENAI_API_KEY` or `VECTORIX_DEFAULT_MISTRAL_API_KEY` with the matching `_ENDPOINT` base URL (`https://api.openai.com/v1` or `https://api.mistral.ai/v1`), or save an organization integration from the dashboard. Both require a non-empty API key. Embedding calls are not implemented yet. Defaults are 20 collections, 5,000 documents, 25 MiB per original, 10 GiB retained storage, and 100,000 chunks per collection. `VECTORIX_DEFAULT_RAG_*` changes deployment defaults; `/api/v1/superadmin/organizations/{organizationId}/rag-quota` sets an organization override. The admin organization workspace exposes these effective quotas and overrides under **RAG quotas**. Only collection limits are enforced by the catalog milestone; byte reservations and chunk enforcement accompany ingestion.
 
 ## Validation
 

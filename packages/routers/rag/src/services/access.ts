@@ -149,8 +149,13 @@ export function collectionMetadataWhere(
         ...(permits(actor.permissions, { ragCollection: ['read'] })
             ? [grantWhere(actor, 'read')]
             : []),
+        ...(permits(actor.permissions, { ragCollection: ['manageDocuments'] })
+            ? [grantWhere(actor, 'manageDocuments')]
+            : []),
         ...(!actor.keyId &&
-        permits(actor.permissions, { ragCollection: ['update'] })
+        ['update', 'delete', 'manageGrants'].some((action) =>
+            permits(actor.permissions, { ragCollection: [action] })
+        )
             ? [grantWhere(actor, 'administer')]
             : []),
     ];

@@ -39,6 +39,11 @@ export const listCollectionGrants = ragV1.collections.grants.handler(
                       orderBy: { memberId: 'asc' },
                       skip: input.offset,
                       take: input.limit,
+                      include: {
+                          member: {
+                              select: { user: { select: { name: true } } },
+                          },
+                      },
                   })
                 : [];
         const groups =
@@ -48,19 +53,34 @@ export const listCollectionGrants = ragV1.collections.grants.handler(
                       orderBy: { groupId: 'asc' },
                       skip: Math.max(0, input.offset - memberCount),
                       take: input.limit - members.length,
+                      include: { group: { select: { name: true } } },
                   })
                 : [];
         return {
             items: [
                 ...members.map(
-                    ({ memberId, read, manageDocuments, administer }) => ({
+                    ({
+                        memberId,
+                        member,
+                        read,
+                        manageDocuments,
+                        administer,
+                    }) => ({
                         target: { type: 'member' as const, id: memberId },
+                        name: member.user.name,
                         permissions: { read, manageDocuments, administer },
                     })
                 ),
                 ...groups.map(
-                    ({ groupId, read, manageDocuments, administer }) => ({
+                    ({
+                        groupId,
+                        group,
+                        read,
+                        manageDocuments,
+                        administer,
+                    }) => ({
                         target: { type: 'group' as const, id: groupId },
+                        name: group.name,
                         permissions: { read, manageDocuments, administer },
                     })
                 ),

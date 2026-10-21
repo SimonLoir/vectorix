@@ -30,6 +30,7 @@ export default function ApiKeyLine({
 }: {
     readonly apiKey: ListedApiKey;
 }) {
+    const tr = useTranslations('rag');
     const auth = useAuth();
     const { can, refresh } = useVectorixPermissions();
     const t = useTranslations('permissions');
@@ -55,6 +56,13 @@ export default function ApiKeyLine({
                 </TableCell>
                 <TableCell>
                     {apiKey.legacyFullAccess ? t('legacyKey') : t('limitedKey')}
+                    <p className='mt-1 text-xs text-muted-foreground'>
+                        {apiKey.issuerMemberId
+                            ? tr('keys.count', {
+                                  count: apiKey.collectionScopes.length,
+                              })
+                            : tr('keys.legacy')}
+                    </p>
                 </TableCell>
                 <TableCell className='flex gap-2'>
                     {can({ apiKey: ['update'] }) && (

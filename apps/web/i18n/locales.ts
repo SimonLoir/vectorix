@@ -1,2 +1,4 @@
-export const supportedLocales = ['en', 'fr', 'nl-BE'] as const;
-export type Locale = (typeof supportedLocales)[number];
+export {
+    supportedLocales,
+    type Locale,
+} from '@repo/dashboard-core/i18n/locale';

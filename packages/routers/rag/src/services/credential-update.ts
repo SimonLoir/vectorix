@@ -71,5 +71,27 @@ export async function updateProviderData(
                 },
             });
             break;
+        case 'OPENAI':
+            await db.openAICredentials.update({
+                where: { id: current.id },
+                data: {
+                    endpoint: inputData.endpoint,
+                    ...(inputData.apiKey === undefined
+                        ? {}
+                        : { apiKey: await encrypt(inputData.apiKey) }),
+                },
+            });
+            break;
+        case 'MISTRAL':
+            await db.mistralCredentials.update({
+                where: { id: current.id },
+                data: {
+                    endpoint: inputData.endpoint,
+                    ...(inputData.apiKey === undefined
+                        ? {}
+                        : { apiKey: await encrypt(inputData.apiKey) }),
+                },
+            });
+            break;
     }
 }

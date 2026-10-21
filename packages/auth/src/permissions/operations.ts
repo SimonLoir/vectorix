@@ -8,6 +8,7 @@ export const operationPermissions: Record<string, PermissionSet> = {
     'admin.rag.credentials.delete': { ragCredentials: ['manage'] },
     'admin.rag.groups.list': { ragGroups: ['read'] },
     'admin.rag.groups.members': { ragGroups: ['read'] },
+    'admin.rag.groups.memberCandidates': { ragGroups: ['manage'] },
     'admin.rag.groups.create': { ragGroups: ['manage'] },
     'admin.rag.groups.rename': { ragGroups: ['manage'] },
     'admin.rag.groups.delete': { ragGroups: ['manage'] },
@@ -15,6 +16,10 @@ export const operationPermissions: Record<string, PermissionSet> = {
     'admin.rag.groups.removeMember': { ragGroups: ['manage'] },
     'admin.rag.collections.list': {},
     'admin.rag.collections.get': {},
+    'admin.rag.collections.revisions': {},
+    'admin.rag.collections.grantCandidates': {
+        ragCollection: ['manageGrants'],
+    },
     'admin.rag.collections.create': { ragCollection: ['create'] },
     'admin.rag.collections.update': { ragCollection: ['update'] },
     'admin.rag.collections.delete': { ragCollection: ['delete'] },

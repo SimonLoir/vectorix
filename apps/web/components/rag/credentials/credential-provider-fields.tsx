@@ -1,0 +1,90 @@
+'use client';
+import { useTranslations } from 'next-intl';
+import { TextField, CheckField } from '../form-fields';
+import type { Credential } from '../types';
+
+/** Provider-specific inputs never prefill secrets returned by the masked catalog DTO. */
+export function CredentialProviderFields({
+    provider,
+    existing,
+}: Readonly<{
+    provider: Credential['provider'];
+    existing?: Credential;
+}>) {
+    const tr = useTranslations('rag');
+    const current = existing?.data;
+    return provider === 'S3' ? (
+        <div className='space-y-4'>
+            <div className='grid gap-4 sm:grid-cols-2'>
+                <TextField
+                    label={tr('credentials.region')}
+                    name='region'
+                    required
+                    maxLength={64}
+                    defaultValue={
+                        current?.provider === 'S3'
+                            ? current.region
+                            : 'us-east-1'
+                    }
+                />
+                <TextField
+                    label={tr('credentials.bucket')}
+                    name='bucket'
+                    required
+                    minLength={3}
+                    maxLength={63}
+                    defaultValue={
+                        current?.provider === 'S3' ? current.bucket : ''
+                    }
+                />
+            </div>
+            <CheckField
+                label={tr('credentials.pathStyle')}
+                name='forcePathStyle'
+                defaultChecked={
+                    current?.provider === 'S3' ? current.forcePathStyle : true
+                }
+            />
+            <TextField
+                label={tr('credentials.accessKey')}
+                name='accessKeyId'
+                type='password'
+                autoComplete='new-password'
+                required={!existing}
+                maxLength={8192}
+                placeholder={existing ? tr('credentials.keepSecret') : ''}
+            />
+            <TextField
+                label={tr('credentials.secretKey')}
+                name='secretAccessKey'
+                type='password'
+                autoComplete='new-password'
+                required={!existing}
+                maxLength={8192}
+                placeholder={existing ? tr('credentials.keepSecret') : ''}
+            />
+        </div>
+    ) : (
+        <div className='space-y-3'>
+            <TextField
+                label={
+                    provider === 'OLLAMA'
+                        ? tr('credentials.optionalKey')
+                        : tr('credentials.apiKey')
+                }
+                name='apiKey'
+                type='password'
+                autoComplete='new-password'
+                required={!existing && provider !== 'OLLAMA'}
+                maxLength={8192}
+                placeholder={existing ? tr('credentials.keepSecret') : ''}
+            />
+            {provider === 'OLLAMA' && existing && (
+                <CheckField
+                    label={tr('credentials.removeKey')}
+                    name='removeKey'
+                />
+            )}
+        </div>
+    );
+}

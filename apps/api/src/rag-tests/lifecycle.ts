@@ -101,6 +101,11 @@ export async function lifecycleTests(t: TestContext) {
                 organizationId: f.org,
                 limits,
             });
+            const effective =
+                await f.owner.client.superadmin.organizations.getRagQuota({
+                    organizationId: f.org,
+                });
+            assert.deepEqual(effective, { limits, overridden: true });
             const before = await prisma.ragAuditLog.count({
                 where: { organizationId: f.org, action: 'collection.create' },
             });
@@ -201,21 +206,37 @@ export async function lifecycleTests(t: TestContext) {
                 { headers: f.owner.headers() }
             );
             assert.equal(response.status, 200);
-            assert.equal(response.headers.get('Vectorix-API-Revision'), '1');
+            assert.equal(response.headers.get('Vectorix-API-Revision'), '3');
             assert.equal(
                 (await response.json()).total,
                 (await f.owner.rag.collections.list({})).total
             );
             const spec = await (await app.request('/spec/v1.json')).json();
             const alias = await (await app.request('/spec.json')).json();
-            assert.equal(spec.info.version, '1.1.0');
+            assert.equal(spec.info.version, '1.3.0');
             assert.deepEqual(alias, spec);
+            for (const provider of ['OPENAI', 'MISTRAL'])
+                assert.ok(
+                    JSON.stringify(spec).includes(JSON.stringify(provider))
+                );
             assert.ok(spec.paths['/admin/rag/credentials'].post);
+            assert.ok(spec.paths['/admin/rag/collections/{id}/revisions'].get);
+            assert.ok(
+                spec.paths['/admin/rag/collections/{id}/grant-candidates'].get
+            );
+            assert.ok(
+                spec.paths['/admin/rag/groups/{id}/member-candidates'].get
+            );
+            assert.ok(
+                spec.paths[
+                    '/superadmin/organizations/{organizationId}/rag-quota'
+                ].get
+            );
             assert.ok(spec.paths['/admin/rag/collections/{id}/grants'].put);
             const discovery = await (
                 await app.request('/api-versions.json')
             ).json();
-            assert.ok(JSON.stringify(discovery).includes('"revision":1'));
+            assert.ok(JSON.stringify(discovery).includes('"revision":3'));
             assert.equal(
                 (await app.request('/api/v1/admin/rag/collections')).status,
                 401
