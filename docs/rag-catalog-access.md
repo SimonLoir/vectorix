@@ -1,6 +1,6 @@
 # RAG catalog and access — backend foundation
 
-The original phase 2 implements the stable catalog, provider configuration, access control, and quota policy APIs. Its dashboard has not been implemented, so the user-facing catalog milestone is incomplete. [Milestone M1 in the revised plan](rag-implementation-plan.md#9-dashboard-testable-delivery-milestones) makes that dashboard the immediate next delivery. Uploads, extraction, embedding calls, vector provisioning, indexing, and the playground will each ship with their interface in subsequent milestones.
+The original phase 2 implements the stable catalog, provider configuration, access control, and quota policy APIs. The [M1 catalog dashboard](rag-dashboard.md) now completes the user-facing configuration and access milestone. Uploads, extraction, embedding calls, vector provisioning, indexing, and the playground will each ship with their interface in subsequent milestones.
 
 ## Schema review
 
@@ -61,16 +61,16 @@ Collection creation enforces the collection quota transactionally, including con
 
 Sensitive writes append `RagAuditLog` records using whitelisted identifiers, revisions, and scalar permissions. Secrets, ciphertext, request bodies, and provider responses never enter these records.
 
-## Dashboard completion still required
+## Dashboard completion
 
-- [ ] Manage masked credentials and active selections from the organization dashboard, without implying live provider validation.
-- [ ] Create, inspect, revise, and delete collection catalog entries; display configuration history and explicit unavailable indexing/search states.
-- [ ] Manage groups, membership, and member/group collection grants, including revocation.
-- [ ] Configure collection scopes in the existing API-key interface while respecting issuer permissions.
-- [ ] Display quota policies, recorded usage, and safe audit entries; edit organization quota overrides in platform administration.
-- [ ] Complete the M1 browser recipe with two organizations, distinct member permissions, reloads, direct URLs, and quota enforcement; retain automated API isolation coverage.
+- [x] Manage masked credentials and active selections from the organization dashboard, without implying live provider validation.
+- [x] Create, inspect, revise, and delete collection catalog entries; display configuration history and explicit unavailable indexing/search states.
+- [x] Manage groups, membership, and member/group collection grants, including revocation.
+- [x] Configure collection scopes in the existing API-key interface while respecting issuer permissions.
+- [x] Display quota policies, recorded usage, and safe audit entries; edit organization quota overrides in platform administration.
+- [x] Complete the M1 browser recipe with two organizations, distinct member permissions, reloads, direct URLs, and quota enforcement; retain automated API isolation coverage.
 
-These unchecked items are product acceptance work, separate from the completed backend checks below. Later document, provider, and search capabilities must extend the dashboard in the same delivery as their processing paths.
+The [dashboard recipe and verification results](rag-dashboard.md#browser-acceptance) record the M1 product acceptance work separately from the original backend checks below. Later document, provider, and search capabilities must extend the dashboard in the same delivery as their processing paths.
 
 ## Backend validation checklist
 
@@ -83,3 +83,7 @@ These unchecked items are product acceptance work, separate from the completed b
 - [x] Commit and push the review branch.
 
 The reproducible acceptance command is `pnpm test:catalog` (see `scripts/test-catalog.sh`). It creates fresh PostgreSQL/Redis containers on random loopback ports, uses only `_test` databases, deploys migrations twice for both fresh and upgrade paths, checks migration/schema parity, and runs the core and catalog API suites before cleanup. `tests/catalog/upgrade-seed.sql` and `upgrade-check.sql` verify existing data and the absence of implicit grants. `apps/api/src/rag-tests/` exercises authorization and catalog behavior through the same HTTP transports as clients. `.github/workflows/catalog.yml` runs these checks on PRs and main.
+
+## Compatible dashboard API additions (1.2.0)
+
+Revision 1.2.0 adds paginated collection configuration history, authorized member/group candidates, safe grant display names, and a superadmin read of effective organization quotas. Candidate selection remains session-only. Configuration DTOs explicitly project public fields, excluding Prisma relations and secrets. Metadata access recognizes explicit collection administration or document-management grants; it never grants content reading implicitly. REST query coercion uses the Zod 4 adapter, preserving numeric pagination and bounded validation for the handwritten V1 contracts. No database migration is required.

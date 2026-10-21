@@ -1,6 +1,7 @@
 'use client';
 import Link from 'next/link';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@repo/ui/tabs';
+import { OrganizationRagQuota } from './organization-rag-quota';
 import { OrganizationSummary } from './organization-summary';
 import { OrganizationMembers } from './organization-members';
 import { OrganizationFeatures } from './organization-features';
@@ -17,6 +18,7 @@ export function OrganizationWorkspace({
             <Tabs defaultValue='summary'>
                 <TabsList>
                     <TabsTrigger value='summary'>Organisation</TabsTrigger>
+                    <TabsTrigger value='rag'>Quotas RAG</TabsTrigger>
                     <TabsTrigger value='members'>Membres</TabsTrigger>
                     <TabsTrigger value='features'>
                         Licences et fonctionnalités
@@ -24,6 +26,9 @@ export function OrganizationWorkspace({
                 </TabsList>
                 <TabsContent value='summary'>
                     <OrganizationSummary organizationId={organizationId} />
+                </TabsContent>
+                <TabsContent value='rag'>
+                    <OrganizationRagQuota organizationId={organizationId} />
                 </TabsContent>
                 <TabsContent value='members'>
                     <OrganizationMembers organizationId={organizationId} />

@@ -1,7 +1,13 @@
 import Link from 'next/link';
-import { UserRound, Bell, Users, Layers } from 'lucide-react';
+import { UserRound, Bell, Users, Layers, Database } from 'lucide-react';
 import DashboardPage from '@/components/dashboard-page';
 const cards = [
+    {
+        title: 'Collections',
+        description: 'Profils de recherche, configuration et droits d’accès.',
+        href: '/dashboard/collections',
+        icon: Database,
+    },
     {
         title: 'Mon compte',
         description: 'Profil, mot de passe, passkeys et sécurité.',

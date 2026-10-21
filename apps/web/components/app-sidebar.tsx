@@ -4,6 +4,11 @@ import { usePathname } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 import {
     Home,
+    Database,
+    Plug,
+    UsersRound,
+    Gauge,
+    ScrollText,
     Users,
     Shield,
     Bell,
@@ -27,6 +32,36 @@ import { LanguageSwitcher } from '@/components/language-switcher';
 import { useVectorixPermissions } from '@/contexts/vectorix-permissions';
 const navigation = [
     { href: '/dashboard', label: 'Accueil', icon: Home },
+    {
+        href: '/dashboard/collections',
+        label: 'Collections',
+        icon: Database,
+        operation: 'admin.rag.collections.list',
+    },
+    {
+        href: '/dashboard/settings/integrations',
+        label: 'Intégrations',
+        icon: Plug,
+        operation: 'admin.rag.credentials.list',
+    },
+    {
+        href: '/dashboard/settings/groups',
+        label: 'Groupes',
+        icon: UsersRound,
+        operation: 'admin.rag.groups.list',
+    },
+    {
+        href: '/dashboard/settings/usage',
+        label: 'Usage et quotas',
+        icon: Gauge,
+        operation: 'admin.rag.quota',
+    },
+    {
+        href: '/dashboard/settings/audit',
+        label: 'Journal du catalogue',
+        icon: ScrollText,
+        operation: 'admin.rag.audit',
+    },
     { href: '/dashboard/account', label: 'Mon compte', icon: UserRound },
     { href: '/dashboard/notifications', label: 'Notifications', icon: Bell },
     {
@@ -84,7 +119,13 @@ export function AppSidebar({
                             <SidebarMenuItem key={item.href}>
                                 <SidebarMenuButton
                                     asChild
-                                    isActive={pathname === item.href}
+                                    isActive={
+                                        pathname === item.href ||
+                                        (item.href !== '/dashboard' &&
+                                            pathname.startsWith(
+                                                `${item.href}/`
+                                            ))
+                                    }
                                 >
                                     <Link href={item.href}>
                                         <item.icon />

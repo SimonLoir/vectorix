@@ -67,7 +67,7 @@ The initial CI run built and started all applications and both vector extensions
 
 ## RAG original phase 2 — catalog and access backend
 
-The backend checklist below is complete. The user-facing catalog milestone remains incomplete until the dashboard checklist in [catalog and access](rag-catalog-access.md#dashboard-completion-still-required) passes. The revised implementation plan prioritizes that work as M1.
+The backend checklist below is complete. M1 subsequently completes the [catalog dashboard checklist](rag-catalog-access.md#dashboard-completion); its implementation and validation are recorded below.
 
 - [x] Verify merged phase 1 and the updated VM with the isolated infrastructure suite: HNSW/DiskANN, role boundaries, catalog migrations, private S3 operations, and restart persistence passed locally.
 - [x] Add organization-scoped catalog models for credentials, storage locations, documents, collection configuration revisions, vector connections, groups, grants, key scopes, quotas, and audit. The user approved schema generation; the additive migration was tested against fresh and upgraded isolated databases.
@@ -94,3 +94,16 @@ Final local validation: frozen-lockfile installation and Prisma validation passe
 - [ ] Implement and verify the M1 catalog dashboard. This plan revision does not add screens or change runtime behavior.
 
 Touched files are the six documents named above and this build log. The plan maps dashboard actions through `apps/web/contexts/orpc.tsx`, versioned contracts, catalog handlers, transactional persistence/audit, and query refresh; it also identifies the admin quota entry point and future worker status flow. Application tests, builds, and browser checks are not required for this prose-only revision and have not been rerun.
+
+## M1 — Catalog dashboard
+
+- [x] Add collection/profile/history, credential, group/member/grant, usage, and audit screens with permission gates and server-filtered pagination.
+- [x] Extend API-key dialogs with explicit collection scopes and the admin organization workspace with effective quota editing.
+- [x] Add bounded principal/history and superadmin quota reads to API revision 1.2.0; keep metadata administration independent of content reading. No schema or migration change.
+- [x] Validate types, lint, backend/integration tests, and application builds.
+- [x] Verify the dashboard recipe with two organizations and distinct member permissions in a disposable environment.
+- [x] Document actual browser results in `docs/rag-dashboard.md` and prepare the dedicated `codex/rag-catalog-dashboard` review branch.
+
+Implementation entry points: `apps/web/components/rag/` contains focused catalog views and forms mounted under `apps/web/app/dashboard/collections/` and `settings/`. Existing API-key components now configure scopes. `apps/admin/src/components/organization-rag-quota.tsx` manages platform quota overrides. Versioned contracts call `packages/routers/rag/` and `packages/routers/superadmin/`, sharing catalog access checks, safe DTOs, and quota resolution. `apps/api/src/rag-tests/dashboard.ts` covers the additional read paths. Validation: 18 type-check tasks and 18 lint tasks passed (existing warnings remain), 22 backend tests passed, all four applications built, and `pnpm test:catalog` passed 24 core/RAG HTTP tests plus fresh/upgrade/repeat migration and schema-parity checks. Browser acceptance used production builds, isolated PostgreSQL/Redis, two fixture organizations and an owner/reader pair: configuration persistence, masked credentials and protected deletion, revision history, groups/grants/revocation, scoped key creation, cross-organization/direct-URL denial, audit, and admin quota enforcement passed. Browser review also found missing RAG permission labels, now added in all three existing locales. No application database or schema was changed; uploads and search remain planned. The six-image Docker suite was not rerun for this change; CI retains it. No live embedding or S3 provider check is claimed.
+
+Final browser corrections were rechecked with web types, lint, and a standalone production rebuild: translated permission labels render correctly, the key dialog stays within the viewport with internal scrolling and closes with Escape, and the shared retry control cannot submit its surrounding form. The catalog suite was repeated after adding document-manager metadata coverage and again passed all 24 tests. Eight Mermaid diagrams, local file links in seven documents, formatting, and `git diff --check` passed.

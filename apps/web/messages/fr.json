@@ -177,13 +177,25 @@
             "invitation": "Invitations",
             "team": "Équipes",
             "ac": "Rôles",
-            "apiKey": "Clés d’API"
+            "apiKey": "Clés d’API",
+            "ragCredentials": "Intégrations RAG",
+            "ragGroups": "Groupes RAG",
+            "ragCollection": "Collections",
+            "ragLibrary": "Bibliothèque de documents",
+            "ragAudit": "Journal du catalogue",
+            "ragQuota": "Usage et quotas"
         },
         "actions": {
             "read": "Consulter",
             "create": "Créer",
             "update": "Modifier",
-            "delete": "Supprimer"
+            "delete": "Supprimer",
+            "manage": "Gérer",
+            "manageDocuments": "Gérer les documents",
+            "manageGrants": "Gérer les accès",
+            "manageAll": "Administrer toutes les collections",
+            "readAll": "Lire toute la bibliothèque",
+            "write": "Ajouter et modifier"
         }
     },
     "account": {

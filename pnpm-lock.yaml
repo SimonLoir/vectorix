@@ -839,6 +839,9 @@ importers:
             '@repo/db':
                 specifier: workspace:*
                 version: link:../../db
+            '@routers/rag':
+                specifier: workspace:*
+                version: link:../rag
             '@routers/utils':
                 specifier: workspace:*
                 version: link:../utils

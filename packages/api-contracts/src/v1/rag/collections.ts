@@ -6,6 +6,7 @@ import {
     embeddingProvider,
     grantPermissions,
     success,
+    principalPage,
 } from './common';
 export const collectionProfile = z
     .object({
@@ -82,6 +83,29 @@ const grantTarget = z.discriminatedUnion('type', [
     z.object({ type: z.literal('group'), id }).strict(),
 ]);
 export const collectionsContract = {
+    revisions: oc
+        .route({ method: 'GET', path: '/collections/{id}/revisions' })
+        .input(page.removeDefault().extend({ id }))
+        .output(
+            z.object({
+                items: z.array(
+                    z.object({
+                        revision: z.number().int(),
+                        createdAt: z.date(),
+                        configuration: collectionView.shape.configuration,
+                    })
+                ),
+                total: z.number().int(),
+            })
+        ),
+    grantCandidates: oc
+        .route({ method: 'GET', path: '/collections/{id}/grant-candidates' })
+        .input(
+            page
+                .removeDefault()
+                .extend({ id, type: z.enum(['member', 'group']) })
+        )
+        .output(principalPage),
     list: oc
         .route({ method: 'GET', path: '/collections' })
         .input(page)
@@ -138,6 +162,7 @@ export const collectionsContract = {
                 items: z.array(
                     z.object({
                         target: grantTarget,
+                        name: z.string(),
                         permissions: grantPermissions,
                     })
                 ),

@@ -13,6 +13,7 @@
         "lint": "eslint"
     },
     "dependencies": {
+        "@routers/rag": "workspace:*",
         "@orpc/server": "^1.15.3",
         "@repo/api-contracts": "workspace:*",
         "@repo/db": "workspace:*",

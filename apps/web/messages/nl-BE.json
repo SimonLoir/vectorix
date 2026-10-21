@@ -177,13 +177,25 @@
             "invitation": "Uitnodigingen",
             "team": "Teams",
             "ac": "Rollen",
-            "apiKey": "API-sleutels"
+            "apiKey": "API-sleutels",
+            "ragCredentials": "RAG-integraties",
+            "ragGroups": "RAG-groepen",
+            "ragCollection": "Collecties",
+            "ragLibrary": "Documentbibliotheek",
+            "ragAudit": "Cataloguslogboek",
+            "ragQuota": "Gebruik en quota"
         },
         "actions": {
             "read": "Bekijken",
             "create": "Aanmaken",
             "update": "Wijzigen",
-            "delete": "Verwijderen"
+            "delete": "Verwijderen",
+            "manage": "Beheren",
+            "manageDocuments": "Documenten beheren",
+            "manageGrants": "Toegang beheren",
+            "manageAll": "Alle collecties beheren",
+            "readAll": "De hele bibliotheek lezen",
+            "write": "Toevoegen en bewerken"
         }
     },
     "account": {

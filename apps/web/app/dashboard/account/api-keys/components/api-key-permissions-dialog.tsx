@@ -24,6 +24,7 @@ import {
 import { Input } from '@repo/ui/input';
 import { Label } from '@repo/ui/label';
 import { Button } from '@repo/ui/button';
+import { CollectionScopeEditor } from './collection-scope-editor';
 import type { ListedApiKey } from './api-key-line';
 
 /** Creates limited keys or explicitly replaces a legacy key's full-access grant. */
@@ -45,6 +46,16 @@ export function ApiKeyPermissionsDialog({
         existing?.legacyFullAccess ? {} : (existing?.permissions ?? {})
     );
     const [saving, setSaving] = useState(false);
+    const [collectionScopes, setCollectionScopes] = useState(
+        existing?.collectionScopes ?? []
+    );
+    const canEditScopes =
+        !existing ||
+        Boolean(
+            existing.issuerMemberId &&
+            existing.issuerMemberId === access?.memberId
+        );
+    const [saveError, setSaveError] = useState<string | null>(null);
     const selectablePermissions = getSelectablePermissions(
         access?.permissions ?? {},
         true
@@ -87,21 +98,33 @@ export function ApiKeyPermissionsDialog({
                             return;
                         }
                         setSaving(true);
+                        setSaveError(null);
                         try {
                             if (existing)
                                 await client.admin.organization.apiKeys.updatePermissions(
-                                    { keyId: existing.id, permissions }
+                                    {
+                                        keyId: existing.id,
+                                        permissions,
+                                        ...(canEditScopes
+                                            ? { collectionScopes }
+                                            : {}),
+                                    }
                                 );
                             else {
                                 const key =
                                     await client.admin.organization.apiKeys.create(
-                                        { name, permissions }
+                                        { name, permissions, collectionScopes }
                                     );
                                 onCreated?.(key.key);
                             }
                             await refresh();
                             onClose();
                         } catch (error) {
+                            setSaveError(
+                                error instanceof Error
+                                    ? error.message
+                                    : t('failed')
+                            );
                             toast.error(
                                 error instanceof Error
                                     ? error.message
@@ -155,6 +178,22 @@ export function ApiKeyPermissionsDialog({
                         apiKey
                         readOnly={saving}
                     />
+                    {existing && !canEditScopes && (
+                        <p className='text-sm text-muted-foreground'>
+                            {existing.issuerMemberId
+                                ? 'Seul l’émetteur de cette clé peut modifier ses périmètres de collection.'
+                                : 'Cette ancienne clé n’a pas d’émetteur lié au catalogue. Créez une nouvelle clé pour lui accorder des accès aux collections.'}
+                        </p>
+                    )}
+                    <fieldset disabled={saving}>
+                        <CollectionScopeEditor
+                            value={collectionScopes}
+                            onChange={setCollectionScopes}
+                            permissions={permissions}
+                            readOnly={!canEditScopes}
+                        />
+                    </fieldset>
+                    {saveError && <p role='alert'>{saveError}</p>}
                     <DialogFooter>
                         <Button
                             type='button'

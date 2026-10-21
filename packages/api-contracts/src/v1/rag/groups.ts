@@ -1,6 +1,6 @@
 import { oc } from '@orpc/contract';
 import { z } from 'zod';
-import { id, page, success } from './common';
+import { id, page, success, principalPage } from './common';
 const name = z.string().trim().min(1).max(100);
 const group = z.object({
     id,
@@ -10,6 +10,10 @@ const group = z.object({
     memberCount: z.number().int(),
 });
 export const groupsContract = {
+    memberCandidates: oc
+        .route({ method: 'GET', path: '/groups/{id}/member-candidates' })
+        .input(page.removeDefault().extend({ id }))
+        .output(principalPage),
     list: oc
         .route({ method: 'GET', path: '/groups' })
         .input(page)

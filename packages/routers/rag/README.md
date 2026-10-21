@@ -2,7 +2,7 @@
 
 `@routers/rag` implements the V1 catalog contracts in `packages/api-contracts/src/v1/rag/`. `src/index.ts` composes one handler per endpoint. `packages/api/src/index.ts` mounts it below `admin.rag`; `apps/api` provides authenticated HTTP transport at `/rpc/v1` and `/api/v1`.
 
-The public API currently covers credentials, groups, collection configuration and grants, document metadata, platform connection references, quotas, and audit. The catalog dashboard is still pending and is the next product milestone. The API does not upload files, call embedding providers, provision vector tables, or perform searches yet; each later capability must ship with its dashboard journey.
+The public API currently covers credentials, groups, collection configuration and grants, document metadata, platform connection references, quotas, and audit. The [catalog dashboard](../../../docs/rag-dashboard.md) exposes configuration, access, quota, and audit workflows. Bounded revision history and principal candidates support these screens; candidates require a session and the corresponding grant/group management permission. The `@routers/rag/quotas` export shares effective quota resolution with superadmin. The API does not upload files, call embedding providers, provision vector tables, or perform searches yet; each later capability must ship with its dashboard journey.
 
 ## Integration entry points
 
