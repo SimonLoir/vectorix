@@ -31,12 +31,12 @@ export type SerializableTransactionOptions = Readonly<{
 /**
  * Runs an interactive Prisma transaction with serializable isolation.
  *
- * PostgreSQL may abort a serializable transaction when concurrent booking or
- * payment writes conflict. Prisma reports that case as P2034, so the complete
+ * PostgreSQL may abort a serializable transaction when concurrent writes
+ * conflict. Prisma reports that case as P2034, so the complete
  * callback is retried with a fresh transaction. Commit-time pg adapter 40001
  * errors are also retried. Callbacks must only contain
  * database work and other safely repeatable operations; external side effects
- * such as payment-provider calls and emails must run after this function.
+ * such as provider calls and emails must run after this function.
  */
 export async function runSerializableTransaction<T>(
     db: PrismaClient,

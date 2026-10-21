@@ -1,5 +1,6 @@
 import { oc } from '@orpc/contract';
 import { z } from 'zod';
+import { collectionScopes } from '../rag/common';
 
 // Explicit V1 DTOs, independent of both Prisma and the mutable permission catalogue.
 const PermissionsV1Schema = z.record(z.string(), z.array(z.string()));
@@ -48,6 +49,8 @@ export const organizationAccessV1Contract = {
                             enabled: z.boolean(),
                             legacyFullAccess: z.boolean(),
                             permissions: PermissionsV1Schema,
+                            collectionScopes,
+                            issuerMemberId: z.string().nullable(),
                         })
                     ),
                 })
@@ -63,6 +66,7 @@ export const organizationAccessV1Contract = {
                 z.object({
                     name: z.string().trim().min(1).max(64),
                     permissions: PermissionsV1Schema,
+                    collectionScopes: collectionScopes.optional(),
                 })
             )
             .output(z.object({ id: z.string(), key: z.string() })),
@@ -77,6 +81,7 @@ export const organizationAccessV1Contract = {
                 z.object({
                     keyId: z.string(),
                     permissions: PermissionsV1Schema,
+                    collectionScopes: collectionScopes.optional(),
                 })
             )
             .output(z.object({ success: z.boolean() })),

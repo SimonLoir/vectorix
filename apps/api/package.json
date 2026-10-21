@@ -12,7 +12,7 @@
         "start": "node dist/index.mjs",
         "lint": "eslint",
         "test": "tsx --test ../../packages/auth/tests/passkey-options.test.ts ../../packages/auth/tests/two-factor.test.ts src/template.test.ts",
-        "test:integration": "tsx --test src/integration.test.ts"
+        "test:integration": "tsx --test --test-concurrency=1 src/integration.test.ts src/rag.integration.test.ts"
     },
     "dependencies": {
         "@dotenvx/dotenvx": "^2.30.0",
@@ -40,7 +40,8 @@
         "nodemailer": "^10.0.10",
         "react": "19.3.0",
         "resend": "^6.28.1",
-        "@orpc/client": "^1.15.3"
+        "@orpc/client": "^1.15.3",
+        "@routers/rag": "workspace:*"
     },
     "devDependencies": {
         "@repo/eslint-config": "workspace:*",

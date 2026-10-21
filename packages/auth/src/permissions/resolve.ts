@@ -1,9 +1,12 @@
-import { prisma } from '@repo/db';
+import { prisma, type Prisma } from '@repo/db';
 import { copyPermissions, roles, type PermissionSet } from './access-control';
 
 /** Resolves current role definitions per request; revocation never depends on session claims. */
-export async function getOrganizationRoles(organizationId: string) {
-    const dynamic = await prisma.organizationRole.findMany({
+export async function getOrganizationRoles(
+    organizationId: string,
+    db: Prisma.TransactionClient = prisma
+) {
+    const dynamic = await db.organizationRole.findMany({
         where: { organizationId },
     });
     return [
@@ -45,13 +48,14 @@ export function resolvePermissions(
 /** Reads membership from the database, including after a session's membership has been removed. */
 export async function getMemberPermissions(
     organizationId: string,
-    userId: string
+    userId: string,
+    db: Prisma.TransactionClient = prisma
 ) {
-    const member = await prisma.member.findFirst({
+    const member = await db.member.findFirst({
         where: { organizationId, userId },
     });
     if (!member) return null;
-    const definitions = await getOrganizationRoles(organizationId);
+    const definitions = await getOrganizationRoles(organizationId, db);
     return {
         member,
         definitions,

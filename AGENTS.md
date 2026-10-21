@@ -5,6 +5,7 @@ Vectorix is a multi-tenant application foundation. Preserve its reusable authent
 ## Workspace and architecture
 
 - Implement changes on a dedicated `codex/*` branch and deliver them through a pull request. Do not commit or push implementation work directly to `main`, and do not merge a PR without an explicit request.
+- Deliver product features as complete dashboard-testable journeys: include the relevant web/admin interface, API, persistence, background work, and permission/error states in the same milestone. Split PRs by usable actions rather than deferring the interface to a later phase. Backend-only foundations must be labeled as such and do not complete a product milestone.
 - Use pnpm and Turborepo. The root `package.json` pins the supported Node.js and pnpm versions; install with `pnpm install --frozen-lockfile`.
 - Runtime services are `apps/web`, `apps/api`, `apps/admin`, `apps/workers`, and the database migrator in `packages/db`.
 - Local infrastructure is defined in `docker-compose.yml`: application PostgreSQL, Redis, a separate PostgreSQL vector store, and RustFS with a private bucket initializer. See `docs/rag-infrastructure.md` for configuration, role boundaries, and validation.
@@ -23,7 +24,8 @@ Vectorix is a multi-tenant application foundation. Preserve its reusable authent
 - Preserve organization suspension checks, member removal behavior, explicit feature grants, and audit records. Licensing provider failure or expiration must not grant access.
 - Keep `credentials: 'include'` in the web oRPC fetch link at `apps/web/contexts/orpc.tsx`.
 - Never log secrets, raw credentials, session tokens, or unsanitized provider responses. Reuse `encrypt()` and `decrypt()` in `packages/routers/utils/src/utils/encryption.ts` for recoverable provider secrets, with `ENCRYPTION_SECRET` configured on the server.
-- When adding the planned provider integrations, resolve organization credentials before environment defaults. Fall back only when organization configuration is absent; invalid configured credentials must produce an explicit error. Keep provider configuration together rather than mixing keys and endpoints from different sources.
+- Resolve credentials through `@routers/rag/credentials`: organization configuration precedes environment defaults, and existing collection revisions retain their saved binding. Fall back only when organization configuration is absent; invalid configured credentials must produce an explicit error. Keep provider configuration together rather than mixing keys and endpoints from different sources.
+- Reuse `@routers/rag/access` for collection and library authorization. Check current membership, organization permissions, member/group grants, and API-key issuer/scopes before accessing content. Global catalog administration does not implicitly grant collection reading. Keep audit writes and catalog mutations in the same transaction.
 
 ## Database and schemas
 
@@ -69,7 +71,9 @@ Vectorix is a multi-tenant application foundation. Preserve its reusable authent
 - Finish a cohesive change before running one appropriate validation pass. Repeat or broaden checks when a failure or subsequent change warrants it.
 - For implementation changes, validate the Prisma schema when relevant, run type checks, lint, relevant backend tests, and builds before committing. Root commands are `pnpm check-types`, `pnpm lint`, `pnpm test`, and `pnpm build`; use workspace filters for scoped work.
 - Use the isolated `_test` database convention for integration tests. Cover organization isolation, direct identifiers, permissions, transactions, and retries where affected; never run destructive tests against application data.
+- `pnpm test:catalog` owns disposable PostgreSQL/Redis containers and verifies fresh migrations, upgrades, repeat deployments, schema parity, and core/RAG API journeys. It does not read the local `.env` or use application databases.
 - Use browser verification for affected user journeys. For container changes, run `pnpm test:docker` where Docker is available and report any verification that could not run.
+- Record each product milestone's dashboard acceptance recipe, prerequisites, expected outcome, and actual browser verification in its PR and build log. API tests or mocked providers alone do not establish a working dashboard or live provider journey.
 - For documentation-only changes, review accuracy and local links, check formatting and `git diff --check`, and parse changed Mermaid diagrams. Application builds and tests are not required for prose-only edits.
 - Write all documentation in English, including Mermaid labels. Include Mermaid diagrams when they clarify architecture, data flow, or workflows.
 - Update documentation in the same change as the behavior it describes. Keep runtime configuration and setup in `README.md` and `.env.example`, and package-specific usage in the relevant package README.

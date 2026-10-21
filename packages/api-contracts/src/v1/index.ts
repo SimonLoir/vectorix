@@ -8,6 +8,7 @@ import { superAdminV1Contract } from './superadmin';
 import { adminOrganizationsV1Contract } from './organizations/admin';
 import { adminMembersV1Contract } from './members/admin';
 import { adminNotificationsV1Contract } from './notifications';
+import { ragContract } from './rag';
 export const v1Contract = {
     ...systemV1Contract,
     superadmin: oc
@@ -24,6 +25,7 @@ export const v1Contract = {
                 .router(superAdminV1Contract.features),
         }),
     admin: oc.prefix('/admin').router({
+        rag: oc.prefix('/rag').tag('RAG catalog').router(ragContract),
         organization: oc
             .prefix('/organization')
             .tag('Organizations')

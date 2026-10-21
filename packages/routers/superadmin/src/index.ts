@@ -1,3 +1,4 @@
+import { setRagQuota } from './set-rag-quota';
 import { superAdmin } from '@routers/utils/super-admin';
 import { getCurrentSuperAdmin } from './get-current-user';
 import { getSuperAdminDashboard } from './get-dashboard';
@@ -23,7 +24,7 @@ import { setOrganizationLegacyFeatures } from './set-organization-legacy-feature
 
 export const superAdminRouter = superAdmin
     .prefix('/superadmin')
-    .tag('Super Admin')
+    .tag('Administration')
     .router({
         me: getCurrentSuperAdmin,
         users: superAdmin.prefix('/users').router({
@@ -34,6 +35,7 @@ export const superAdminRouter = superAdmin
         dashboard: getSuperAdminDashboard,
         audit: superAdmin.router({ list: listSuperAdminAuditLogs }),
         organizations: superAdmin.prefix('/organizations').router({
+            setRagQuota,
             create: createOrganization,
             list: listOrganizations,
             get: getOrganization,

@@ -23,6 +23,7 @@
         "@orpc/server": "^1.15.3",
         "@repo/api-contracts": "workspace:*",
         "@repo/auth": "workspace:*",
-        "@routers/utils": "workspace:*"
+        "@routers/utils": "workspace:*",
+        "@routers/rag": "workspace:*"
     }
 }

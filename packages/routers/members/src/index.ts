@@ -3,4 +3,5 @@ import { getMembers } from './private/get-members';
 import { getCurrentMember } from './private/get-current-member';
 export const adminMembersRouter = authorized
     .prefix('/members')
+    .tag('Members')
     .router({ get: getMembers, me: getCurrentMember });

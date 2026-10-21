@@ -1,0 +1,336 @@
+// Stable catalog only. Vector tables are provisioned outside Prisma in later phases.
+// NoAction retention FKs are DEFERRABLE INITIALLY DEFERRED in the reviewed SQL
+// migration, which Prisma cannot express. Preserve this when recreating those FKs.
+enum CredentialProvider {
+  S3
+  OLLAMA
+  COHERE
+  VOYAGE
+}
+
+enum ChunkingStrategy {
+  TOKEN_WINDOW
+  DOCUMENT_STRUCTURE
+  SEMANTIC
+}
+
+enum DocumentStatus {
+  PENDING
+  PROCESSING
+  READY
+  FAILED
+  DELETED
+}
+
+model Credentials {
+  id             String             @id @default(uuid())
+  organizationId String
+  organization   Organization       @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  name           String
+  provider       CredentialProvider
+  revision       Int                @default(1)
+  createdAt      DateTime           @default(now())
+  updatedAt      DateTime           @updatedAt
+  s3             S3Credentials?
+  ollama         OllamaCredentials?
+  cohere         CohereCredentials?
+  voyage         VoyageCredentials?
+  selections     CredentialSelection[]
+  locations      StorageLocation[]
+  configurations CollectionConfigRevision[]
+
+  @@unique([organizationId, id])
+  @@unique([organizationId, id, provider])
+  @@unique([organizationId, provider, name])
+  @@index([organizationId, createdAt, id])
+}
+
+// Secret fields store AES-256-GCM ciphertext; no response schema exposes it.
+model S3Credentials {
+  id              String      @id
+  base            Credentials @relation(fields: [id], references: [id], onDelete: Cascade)
+  endpoint        String
+  region          String
+  bucket          String
+  forcePathStyle  Boolean     @default(true)
+  accessKeyId     String
+  secretAccessKey String
+}
+
+model OllamaCredentials {
+  id       String      @id
+  base     Credentials @relation(fields: [id], references: [id], onDelete: Cascade)
+  endpoint String
+  apiKey   String?
+}
+
+model CohereCredentials {
+  id       String      @id
+  base     Credentials @relation(fields: [id], references: [id], onDelete: Cascade)
+  endpoint String
+  apiKey   String
+}
+
+model VoyageCredentials {
+  id       String      @id
+  base     Credentials @relation(fields: [id], references: [id], onDelete: Cascade)
+  endpoint String
+  apiKey   String
+}
+
+model CredentialSelection {
+  organizationId String
+  provider       CredentialProvider
+  credentialId   String
+  credential     Credentials @relation(fields: [organizationId, credentialId, provider], references: [organizationId, id, provider], onDelete: Cascade)
+
+  @@id([organizationId, provider])
+}
+
+model StorageLocation {
+  id             String       @id @default(uuid())
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  credentialId   String?
+  credential     Credentials? @relation(fields: [organizationId, credentialId], references: [organizationId, id], onDelete: NoAction)
+  fingerprint    String
+  endpoint       String
+  bucket         String
+  region         String
+  forcePathStyle Boolean
+  createdAt      DateTime     @default(now())
+  versions       DocumentVersion[]
+  extractions    DocumentExtraction[]
+
+  @@unique([organizationId, id])
+  @@unique([organizationId, fingerprint])
+}
+
+model VectorConnection {
+  id             String       @id @default(uuid())
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  key            String       @default("platform")
+  name           String       @default("Platform PostgreSQL")
+  schema         String       @default("vector_collections")
+  createdAt      DateTime     @default(now())
+  configurations CollectionConfigRevision[]
+
+  @@unique([organizationId, id])
+  @@unique([organizationId, key])
+}
+
+model Collection {
+  id                    String       @id @default(uuid())
+  organizationId        String
+  organization          Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  name                  String
+  description           String       @default("")
+  configurationRevision Int          @default(1)
+  createdAt             DateTime     @default(now())
+  updatedAt             DateTime     @updatedAt
+  deletedAt             DateTime?
+  configurations        CollectionConfigRevision[]
+  documents             CollectionDocument[]
+  memberGrants          CollectionMemberGrant[]
+  groupGrants           CollectionGroupGrant[]
+  keyScopes             ApiKeyCollectionScope[]
+
+  @@unique([organizationId, id])
+  @@index([organizationId, deletedAt, createdAt, id])
+}
+
+model CollectionConfigRevision {
+  id                   String             @id @default(uuid())
+  organizationId       String
+  collectionId         String
+  collection           Collection         @relation(fields: [organizationId, collectionId], references: [organizationId, id], onDelete: Cascade)
+  revision             Int
+  vectorConnectionId   String
+  vectorConnection     VectorConnection   @relation(fields: [organizationId, vectorConnectionId], references: [organizationId, id], onDelete: NoAction)
+  credentialId         String?
+  credential           Credentials?       @relation(fields: [organizationId, credentialId], references: [organizationId, id], onDelete: NoAction)
+  credentialRevision   Int?
+  provider             CredentialProvider
+  model                String
+  dimensions           Int
+  metric               String             @default("cosine")
+  indexType            String             @default("DISKANN")
+  numericType          String             @default("float32")
+  endpoint             String
+  preparation          String             @default("")
+  chunkingStrategy     ChunkingStrategy   @default(DOCUMENT_STRUCTURE)
+  chunking             Json
+  parentChild          Boolean            @default(false)
+  createdAt            DateTime           @default(now())
+
+  @@unique([organizationId, collectionId, revision])
+}
+
+model OrganizationGroup {
+  id             String       @id @default(uuid())
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  name           String
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+  members        GroupMember[]
+  grants         CollectionGroupGrant[]
+
+  @@unique([organizationId, id])
+  @@unique([organizationId, name])
+}
+
+model GroupMember {
+  organizationId String
+  groupId        String
+  memberId       String
+  group          OrganizationGroup @relation(fields: [organizationId, groupId], references: [organizationId, id], onDelete: Cascade)
+  member         Member            @relation(fields: [organizationId, memberId], references: [organizationId, id], onDelete: Cascade)
+
+  @@id([groupId, memberId])
+  @@index([organizationId, memberId])
+}
+
+// Separate grant tables make an invalid mixed member/group principal impossible.
+model CollectionMemberGrant {
+  organizationId  String
+  collectionId    String
+  memberId        String
+  collection      Collection @relation(fields: [organizationId, collectionId], references: [organizationId, id], onDelete: Cascade)
+  member          Member     @relation(fields: [organizationId, memberId], references: [organizationId, id], onDelete: Cascade)
+  read            Boolean    @default(false)
+  manageDocuments Boolean    @default(false)
+  administer      Boolean    @default(false)
+
+  @@id([collectionId, memberId])
+  @@index([organizationId, memberId])
+}
+
+model CollectionGroupGrant {
+  organizationId  String
+  collectionId    String
+  groupId         String
+  collection      Collection        @relation(fields: [organizationId, collectionId], references: [organizationId, id], onDelete: Cascade)
+  group           OrganizationGroup @relation(fields: [organizationId, groupId], references: [organizationId, id], onDelete: Cascade)
+  read            Boolean           @default(false)
+  manageDocuments Boolean           @default(false)
+  administer      Boolean           @default(false)
+
+  @@id([collectionId, groupId])
+  @@index([organizationId, groupId])
+}
+
+model ApiKeyPrincipal {
+  keyId          String @id
+  key            Apikey @relation(fields: [keyId], references: [id], onDelete: Cascade)
+  organizationId String
+  memberId       String
+  member         Member @relation(fields: [organizationId, memberId], references: [organizationId, id], onDelete: Cascade)
+  scopes         ApiKeyCollectionScope[]
+
+  @@unique([organizationId, keyId])
+}
+
+model ApiKeyCollectionScope {
+  organizationId  String
+  keyId           String
+  collectionId    String
+  key             ApiKeyPrincipal @relation(fields: [organizationId, keyId], references: [organizationId, keyId], onDelete: Cascade)
+  collection      Collection      @relation(fields: [organizationId, collectionId], references: [organizationId, id], onDelete: Cascade)
+  read            Boolean         @default(false)
+  manageDocuments Boolean         @default(false)
+
+  @@id([keyId, collectionId])
+}
+
+model OrganizationQuota {
+  organizationId     String       @id
+  organization       Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  collections        Int          @default(20)
+  documents          Int          @default(5000)
+  originalBytes      BigInt
+  storageBytes       BigInt
+  chunksPerCollection Int         @default(100000)
+  updatedAt          DateTime     @updatedAt
+}
+
+model RagAuditLog {
+  id             String       @id @default(uuid())
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  actorType      String
+  actorId        String
+  action         String
+  targetId       String?
+  details        Json?
+  createdAt      DateTime     @default(now())
+
+  @@index([organizationId, createdAt, id])
+}
+
+model Document {
+  id             String       @id @default(uuid())
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  name           String
+  status         DocumentStatus @default(PENDING)
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+  deletedAt      DateTime?
+  versions       DocumentVersion[]
+  collections    CollectionDocument[]
+
+  @@unique([organizationId, id])
+  @@index([organizationId, deletedAt, createdAt, id])
+}
+
+model DocumentVersion {
+  id                String          @id @default(uuid())
+  organizationId    String
+  documentId        String
+  document          Document        @relation(fields: [organizationId, documentId], references: [organizationId, id], onDelete: Cascade)
+  version           Int
+  storageLocationId String
+  storageLocation   StorageLocation @relation(fields: [organizationId, storageLocationId], references: [organizationId, id], onDelete: NoAction)
+  objectKey         String
+  sha256            String
+  byteSize          BigInt
+  mediaType         String
+  status            DocumentStatus @default(PENDING)
+  createdAt         DateTime        @default(now())
+  extraction        DocumentExtraction?
+
+  @@unique([organizationId, id])
+  @@unique([organizationId, documentId, version])
+  @@unique([storageLocationId, objectKey])
+}
+
+model DocumentExtraction {
+  id                String          @id @default(uuid())
+  organizationId    String
+  versionId         String          @unique
+  version           DocumentVersion @relation(fields: [organizationId, versionId], references: [organizationId, id], onDelete: Cascade)
+  storageLocationId String
+  storageLocation   StorageLocation @relation(fields: [organizationId, storageLocationId], references: [organizationId, id], onDelete: NoAction)
+  objectKey         String
+  byteSize          BigInt
+  extractorVersion  String
+  language          String
+  createdAt         DateTime        @default(now())
+
+  @@unique([organizationId, versionId])
+  @@unique([storageLocationId, objectKey])
+}
+
+model CollectionDocument {
+  organizationId String
+  collectionId   String
+  documentId     String
+  collection     Collection @relation(fields: [organizationId, collectionId], references: [organizationId, id], onDelete: Cascade)
+  document       Document   @relation(fields: [organizationId, documentId], references: [organizationId, id], onDelete: Cascade)
+  createdAt      DateTime   @default(now())
+
+  @@id([collectionId, documentId])
+  @@index([organizationId, documentId])
+}

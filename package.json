@@ -19,7 +19,8 @@
         "format": "prettier --write .",
         "setup:env": "node scripts/setup-env.mjs",
         "test:docker": "bash scripts/test-docker.sh",
-        "test:infra": "bash scripts/test-infrastructure.sh"
+        "test:infra": "bash scripts/test-infrastructure.sh",
+        "test:catalog": "bash scripts/test-catalog.sh"
     },
     "devDependencies": {
         "@dotenvx/dotenvx": "^2.30.0",

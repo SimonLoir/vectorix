@@ -131,6 +131,8 @@ model Apikey {
   metadata                 String?
   vectorixLegacyFullAccess Boolean   @default(false)
 
+  ragPrincipal ApiKeyPrincipal?
+
   @@index([configId])
   @@index([referenceId])
   @@index([key])

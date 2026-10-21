@@ -4,7 +4,12 @@ export function compoundPermissions(
     _operation: string,
     _input: unknown
 ): PermissionSet {
-    void _operation;
-    void _input;
+    if (
+        _operation === 'admin.rag.collections.create' &&
+        typeof _input === 'object' &&
+        _input !== null &&
+        (!('grantCreatorRead' in _input) || _input.grantCreatorRead !== false)
+    )
+        return { ragCollection: ['read'] };
     return {};
 }

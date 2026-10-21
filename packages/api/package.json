@@ -28,6 +28,7 @@
         "@routers/notifications": "workspace:*",
         "@routers/organizations": "workspace:*",
         "@routers/superadmin": "workspace:*",
-        "@routers/utils": "workspace:*"
+        "@routers/utils": "workspace:*",
+        "@routers/rag": "workspace:*"
     }
 }

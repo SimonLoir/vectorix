@@ -9,7 +9,7 @@ function logOrpcError(error: unknown) {
     if (error instanceof ORPCError && error.status < 500) return;
     if (error instanceof ORPCError && error.cause instanceof ValidationError) {
         logger.error(
-            { issues: error.cause.issues, data: error.cause.data },
+            { issueCount: error.cause.issues.length },
             'oRPC output validation failed'
         );
         return;
