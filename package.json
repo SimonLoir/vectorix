@@ -18,7 +18,8 @@
         "admin:grant": "dotenvx run -f .env -- pnpm --filter api exec tsx src/scripts/grant-admin.ts",
         "format": "prettier --write .",
         "setup:env": "node scripts/setup-env.mjs",
-        "test:docker": "bash scripts/test-docker.sh"
+        "test:docker": "bash scripts/test-docker.sh",
+        "test:infra": "bash scripts/test-infrastructure.sh"
     },
     "devDependencies": {
         "@dotenvx/dotenvx": "^2.30.0",

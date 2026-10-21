@@ -1,0 +1,21 @@
+# Isolated project volumes and no published ports. Requires Compose 2.24.4+.
+services:
+    postgres:
+        ports: !reset []
+        environment:
+            POSTGRES_DB: vectorix_test
+        healthcheck:
+            test:
+                [
+                    'CMD-SHELL',
+                    'pg_isready -h 127.0.0.1 -U postgres -d vectorix_test',
+                ]
+    postgres-vector:
+        ports: !reset []
+    redis:
+        ports: !reset []
+    rustfs:
+        ports: !reset []
+    s3-init:
+        volumes:
+            - ./tests/infrastructure:/checks:ro

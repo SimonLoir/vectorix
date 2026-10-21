@@ -17,11 +17,11 @@ concurrency:
 jobs:
     smoke:
         runs-on: ubuntu-latest
-        timeout-minutes: 30
+        timeout-minutes: 45
         steps:
             - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
             - uses: docker/setup-buildx-action@8d2750c68a42422c14e847fe6c8ac0403b4cbd6f # v3
-            - name: Build and test the five images
+            - name: Build and test application and vector images
               id: images
               env:
                   KEEP_IMAGES: 'true'
@@ -51,7 +51,7 @@ jobs:
               env:
                   IMAGE_PREFIX: ${{ steps.images.outputs.image_prefix }}
               run: |
-                  for app in web admin api workers migrator; do
+                  for app in web admin api workers migrator postgres-vector; do
                       image="pxdv.be/vectorix/$app"
                       docker tag "$IMAGE_PREFIX-$app:test" "$image:sha-$GITHUB_SHA"
                       docker push "$image:sha-$GITHUB_SHA"
@@ -61,8 +61,8 @@ jobs:
                       echo '::notice::Commit tags published; latest is reserved for the current main commit.'
                       exit 0
                   fi
-                  # Update latest only once all five commit tags are available.
-                  for app in web admin api workers migrator; do
+                  # Update latest only once all six commit tags are available.
+                  for app in web admin api workers migrator postgres-vector; do
                       image="pxdv.be/vectorix/$app"
                       docker tag "$image:sha-$GITHUB_SHA" "$image:latest"
                       docker push "$image:latest"
@@ -72,7 +72,7 @@ jobs:
               env:
                   IMAGE_PREFIX: ${{ steps.images.outputs.image_prefix }}
               run: |
-                  for app in web admin api workers migrator; do
+                  for app in web admin api workers migrator postgres-vector; do
                       docker image rm "$IMAGE_PREFIX-$app:test" \
                           "pxdv.be/vectorix/$app:sha-$GITHUB_SHA" \
                           "pxdv.be/vectorix/$app:latest" >/dev/null 2>&1 || true
