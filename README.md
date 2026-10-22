@@ -80,6 +80,8 @@ Account registration and organization creation are enabled in the local example.
 
 Email requires Resend or SMTP. Without a provider, notifications remain pending and fail after five attempts; users can still sign in. Web Push is disabled by default and requires a VAPID key pair and `ENCRYPTION_SECRET` for encrypted subscriptions. These transports are not simulated in production.
 
+Redis URL usernames and passwords must be percent-encoded once per component. The API and workers decode them once before connecting; a standalone `REDIS_PASSWORD` is a raw fallback only when the URL has no non-empty password. Invalid URL/credential encoding fails with a sanitized configuration error. See [Redis connections](docs/redis-connections.md) for precedence, examples and disposable authentication tests.
+
 Password-reset links require a valid server-configured `VECTORIX_WEB_URL` (legacy `WEB_URL`/`APP_URL` remain lower-priority fallbacks when the preceding variables are empty). Set an explicit HTTP(S) base, with an optional served path prefix and no credentials, query or fragment. Missing or invalid selected configuration returns a sanitized 503 before account lookup or token creation; request headers and implicit localhost cannot choose a destination. Other sign-in flows remain available. See [Canonical password-reset links](docs/password-reset-links.md) for configuration, native reset boundaries and validation.
 
 A license provider receives `GET {VECTORIX_FEATURE_PROVIDER_URL}/organizations/{id}/features` with an optional server token. It returns `{"features":{"reporting":true},"expiresAt":null}`. Cache duration and HTTP timeout are configurable. Manual mode, named `legacy` in the contract, requires explicit activation and grants in the administration interface.
@@ -132,6 +134,8 @@ pnpm build
 ```
 
 `pnpm test:catalog` starts disposable application/vector PostgreSQL, Redis and private RustFS containers on random loopback ports, tests a fresh install and upgrade from the initial schema, repeats deployment, checks schema parity and existing records, runs the core and RAG API journeys, then removes its containers and volumes. It does not load `.env` or start application servers. The “Catalog checks” GitHub Actions workflow runs it on pull requests and `main`, alongside schema, type, lint, and unit checks.
+
+`pnpm test:queues` owns a separate loopback Redis with authentication, verifies all three queues/workers and their schedulers using encoded ACL credentials and a raw standalone password, then removes its container. It does not read `.env`; the catalog workflow runs it before the database journeys. Its live connection is plaintext loopback, while `rediss:` options are covered by unit tests.
 
 To run the integration suites manually, they require a separate database whose name ends in `_test`. The runner owns and destroys its complete disposable databases and private bucket; retained fixtures are not fabricated as physically cleaned. Native embedding HTTP fixtures are controlled test servers, not live external provider validation. Build the vector image first with `docker build -f infra/postgres-vector/Dockerfile -t pxdv.be/vectorix/postgres-vector:local .`, or set `VECTOR_POSTGRES_IMAGE` to an already built test image.
 
@@ -193,6 +197,7 @@ Implement changes on a dedicated `codex/*` branch and open a pull request agains
 ## Documentation
 
 - [Repository conventions](AGENTS.md): architecture, authorization, API compatibility, development, and validation rules.
+- [Redis connections](docs/redis-connections.md): encoded URL credentials, raw fallback precedence and isolated queue/worker acceptance.
 - [Canonical password-reset links](docs/password-reset-links.md): server-only destinations, strict configuration precedence and reset-request acceptance.
 - [HTTP request limits](docs/http-request-limits.md): pre-parser body budgets, upload exceptions, actual-byte counting and acceptance.
 - [API-key authorization](docs/api-key-authorization.md): current issuer permissions, key/session separation, historical key reissue and role-revocation acceptance.

@@ -33,6 +33,8 @@ jobs:
                   pnpm test
                   pnpm test:documents
                   pnpm test:rag-primitives
+            - name: Test Redis authentication with real queues and workers
+              run: pnpm test:queues
             - name: Build isolated vector-test image
               run: docker build -f infra/postgres-vector/Dockerfile -t pxdv.be/vectorix/postgres-vector:local .
             - name: Test native vector adapter
