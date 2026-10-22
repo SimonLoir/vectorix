@@ -1,3 +1,4 @@
+import { extractionReservation } from '@repo/documents';
 import { ORPCError } from '@orpc/server';
 import type { AuthorizedContext } from '@routers/utils/authorized';
 import { mutate, audit } from '../mutation';
@@ -22,11 +23,15 @@ export function retryDocument(context: AuthorizedContext, id: string) {
                 message:
                     'This upload cannot be retried. Upload the file again if its original is missing.',
             });
+        const reservation = extractionReservation(
+            version.mediaType,
+            version.byteSize
+        );
         const limits = await quotaLimits(db, actor.organizationId);
         const usage = await quotaUsage(db, actor.organizationId);
         if (
             usage.storageBytes +
-                Number(version.byteSize - version.ingestion.reservedBytes) >
+                Number(reservation - version.ingestion.reservedBytes) >
             limits.storageBytes
         )
             throw new ORPCError('CONFLICT', {
@@ -39,7 +44,7 @@ export function retryDocument(context: AuthorizedContext, id: string) {
                 requestedBy: actor.userId,
                 attempts: 0,
                 errorCode: null,
-                reservedBytes: version.byteSize,
+                reservedBytes: reservation,
                 availableAt: new Date(),
                 leaseToken: null,
                 leasedUntil: new Date(0),

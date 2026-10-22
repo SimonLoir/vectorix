@@ -61,6 +61,7 @@ Vectorix is a multi-tenant application foundation. Preserve its reusable authent
 
 ## Workers and containers
 
+- Keep extraction artifacts and parser diagnostics in `@repo/documents`; heavy PDF/DOCX parsers remain workers-only and are injected into shared ingestion. Preserve legacy plain-text reads, immutable source offsets and full rich-artifact reservations. Never dereference document relationships.
 - Keep heavy background processing in `apps/workers` and shared queue definitions in `packages/queues`. Queue messages should contain identifiers rather than secrets or full files.
 - Design processors for retries, duplicate delivery, and interrupted execution. Recheck current organization access and delivery preferences before external notification sends; bound retries and sanitize stored errors.
 - Keep a dedicated Dockerfile for each of the five services, using the repository root as build context. Web and admin use Next.js standalone output; API and workers contain their bundles and isolated production dependencies.

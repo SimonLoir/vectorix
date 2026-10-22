@@ -300,7 +300,7 @@ export async function documentLibraryTests(t: TestContext) {
                 );
                 assert.equal(
                     response.headers.get('Vectorix-API-Revision'),
-                    '5'
+                    '6'
                 );
             }
         );
@@ -330,7 +330,7 @@ export async function documentLibraryTests(t: TestContext) {
                 await assert.rejects(
                     f.owner.rag.documents.upload({
                         requestId: randomUUID(),
-                        file: new File(['pdf'], 'file.pdf'),
+                        file: new File(['pdf'], 'file.rtf'),
                     }),
                     { code: 'BAD_REQUEST' }
                 );

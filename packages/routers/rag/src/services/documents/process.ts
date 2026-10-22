@@ -1,3 +1,9 @@
+import {
+    isRichDocument,
+    encodeStructuredExtraction,
+    DocumentParserError,
+    type RichDocumentParser,
+} from '@repo/documents';
 import { randomUUID } from 'node:crypto';
 import type { PrismaClient } from '@repo/db';
 import { getMemberPermissions } from '@repo/auth/permissions/resolve';
@@ -22,7 +28,10 @@ import { reconcileUnpublishedWrite } from './retention';
 
 const LEASE_MS = 180_000;
 /** PostgreSQL owns claims and retries; Redis messages contain no document content or secrets. */
-export async function processDocumentIngestions(db: PrismaClient) {
+export async function processDocumentIngestions(
+    db: PrismaClient,
+    parser?: RichDocumentParser
+) {
     const now = new Date();
     const eligible = {
         availableAt: { lte: now },
@@ -56,7 +65,8 @@ export async function processDocumentIngestions(db: PrismaClient) {
                 attempts: { increment: 1 },
             },
         });
-        if (claimed.count) await processClaim(db, task.versionId, token);
+        if (claimed.count)
+            await processClaim(db, task.versionId, token, parser);
     }
 }
 
@@ -64,7 +74,8 @@ export async function processDocumentIngestions(db: PrismaClient) {
 async function processClaim(
     db: PrismaClient,
     versionId: string,
-    token: string
+    token: string,
+    parser?: RichDocumentParser
 ) {
     const task = await db.documentIngestion.findUniqueOrThrow({
         where: { versionId },
@@ -139,25 +150,43 @@ async function processClaim(
             version.objectKey,
             MAX_DOCUMENT_BYTES
         );
-        const text = extractText(original, version.sha256);
-        if (text.length > Number(task.reservedBytes))
-            throw new TextExtractionError('TEXT_INVALID');
-        const key = `${task.organizationId}/${version.documentId}/${versionId}/text.txt`;
+        if (contentHash(original) !== version.sha256)
+            throw new TextExtractionError('UPLOAD_INCOMPLETE');
+        const rich = isRichDocument(version.mediaType);
+        let bytes: Uint8Array, extractorVersion: string;
+        if (rich) {
+            if (!parser) throw new DocumentParserError('PARSER_UNAVAILABLE');
+            const result = await parser(original, version.mediaType);
+            bytes = encodeStructuredExtraction(result);
+            extractorVersion =
+                result.format === 'PDF'
+                    ? 'pdf-structured-v1'
+                    : 'docx-structured-v1';
+        } else {
+            bytes = extractText(original, version.sha256);
+            extractorVersion = 'utf8-text-v1';
+        }
+        if (bytes.byteLength > Number(task.reservedBytes))
+            throw new DocumentParserError('PARSER_LIMIT');
+        const key = `${task.organizationId}/${version.documentId}/${versionId}/${rich ? 'extraction.json' : 'text.txt'}`;
         if (!(await ingestionMayWrite(db, versionId, token))) return;
         // Even a failed response may represent a completed remote PUT.
         wrote = true;
         await putObject(
             config,
             key,
-            text,
-            contentHash(text),
-            'text/plain; charset=utf-8'
+            bytes,
+            contentHash(bytes),
+            rich
+                ? 'application/json; charset=utf-8'
+                : 'text/plain; charset=utf-8'
         );
         published = await publishExtraction(db, {
             versionId,
             token,
             key,
-            byteSize: text.length,
+            byteSize: bytes.byteLength,
+            extractorVersion,
         });
         if (!published)
             await recordIngestionFailure(db, {
@@ -169,7 +198,8 @@ async function processClaim(
             });
     } catch (error) {
         const code =
-            error instanceof TextExtractionError
+            error instanceof TextExtractionError ||
+            error instanceof DocumentParserError
                 ? error.code
                 : error instanceof StorageError
                   ? 'STORAGE_UNAVAILABLE'
@@ -179,7 +209,10 @@ async function processClaim(
             token,
             code,
             terminal:
-                error instanceof TextExtractionError || task.attempts >= 5,
+                error instanceof TextExtractionError ||
+                (error instanceof DocumentParserError &&
+                    error.code !== 'PARSER_UNAVAILABLE') ||
+                task.attempts >= 5,
             delay: new Date(
                 Date.now() + Math.min(300_000, 10_000 * 2 ** task.attempts)
             ),

@@ -572,10 +572,10 @@
             "search": "Documenten zoeken",
             "upload": "Document uploaden",
             "empty": "Geen documenten gevonden",
-            "emptyHint": "Upload een TXT- of Markdown-bestand, of vraag een beheerder om documenten toe te voegen aan een toegestane collectie.",
-            "uploadHint": "Kies een UTF-8 TXT- of Markdown-bestand van maximaal 25 MiB. De extractie gebeurt op de achtergrond.",
+            "emptyHint": "Upload een TXT-, Markdown-, PDF- of DOCX-bestand, of vraag een beheerder om documenten toe te voegen aan een toegestane collectie.",
+            "uploadHint": "Kies UTF-8 TXT/Markdown, een PDF met tekst of een DOCX-bestand van maximaal 25 MiB. De extractie gebeurt op de achtergrond. OCR is niet beschikbaar.",
             "file": "Documentbestand",
-            "invalidFile": "Kies een niet-leeg TXT- of Markdown-bestand van maximaal 25 MiB.",
+            "invalidFile": "Kies een niet-leeg TXT-, Markdown-, PDF- of DOCX-bestand van maximaal 25 MiB.",
             "uploadFailed": "Upload mislukt. Controleer je opslaginstellingen, rechten en beschikbare quota en probeer opnieuw.",
             "uploading": "Bezig met uploaden…",
             "loadFailed": "Deze documentgegevens konden niet worden geladen. Controleer je toegang en probeer opnieuw.",
@@ -626,7 +626,7 @@
                 "deletedTitle": "Verwijderd document",
                 "deletedDescription": "Bekijk de bewaarde versiemetadata en volg het opruimen van privébestanden.",
                 "replace": "Document vervangen",
-                "replaceHint": "Upload een nieuw TXT- of Markdown-bestand in UTF-8 van maximaal 25 MiB. Het gepubliceerde origineel blijft beschikbaar tot de vervanging klaar is. Collectiekoppelingen blijven behouden.",
+                "replaceHint": "Upload UTF-8 TXT/Markdown, een PDF met tekst of een DOCX-bestand van maximaal 25 MiB. Het gepubliceerde origineel blijft beschikbaar tot de vervanging klaar is. Collectiekoppelingen blijven behouden.",
                 "confirmReplace": "Vervanging uploaden",
                 "replaceFailed": "De vervanging kon niet worden ingediend. Herlaad om de laatste versie, je rechten, de opslag en de beschikbare quota te controleren en probeer opnieuw.",
                 "retentionLabel": "Bewaartermijn voor bestanden in dagen",
@@ -655,6 +655,43 @@
                 "cleanupErrors": {
                     "STORAGE_UNAVAILABLE": "Privéopslag is niet beschikbaar. Controleer de opgeslagen toegangsgegevens en het toegestane adres en probeer het opruimen opnieuw.",
                     "CLEANUP_FAILED": "Het opruimen van bestanden is mislukt. Probeer opnieuw of neem contact op met een beheerder."
+                }
+            },
+            "extractionBudgetHint": "PDF- en DOCX-bestanden reserveren tijdens de verwerking 10 MiB extra voor extractie. Het opslaggebruik wordt aangepast zodra de extractie klaar is.",
+            "diagnostics": {
+                "PDF_OCR_UNAVAILABLE": "Er is geen bruikbare tekst gevonden in deze PDF. Gescande documenten vereisen OCR, dat niet beschikbaar is.",
+                "PDF_ENCRYPTED": "Deze PDF is versleuteld. Upload een niet-versleutelde kopie om de tekst te extraheren.",
+                "FILE_INVALID": "Het bestand is beschadigd of komt niet overeen met het formaat. Exporteer een geldige kopie en upload die opnieuw.",
+                "PARSER_LIMIT": "Dit document overschrijdt de extractielimieten voor pagina’s, paragrafen of geëxtraheerde gegevens. Splits of vereenvoudig het en upload het opnieuw.",
+                "PARSER_TIMEOUT": "De extractie duurde te lang en is gestopt. Probeer een kleiner document of neem contact op met een beheerder.",
+                "PARSER_UNAVAILABLE": "De documentextractor is niet beschikbaar. Vraag een beheerder om de worker te controleren en probeer de extractie opnieuw."
+            },
+            "sources": {
+                "title": "Bronvoorbeeld",
+                "hint": "Blader door PDF-pagina’s of DOCX-secties, paragrafen, kopteksten, voetteksten en noten. De tekst wordt als gewone tekst getoond, in segmenten van maximaal 20.000 tekens.",
+                "navigation": "Navigatie door documentbronnen",
+                "position": "Bron {current, number} van {total, number}",
+                "pdfPage": "PDF-pagina {page, number}",
+                "docxSectionParagraph": "Sectie {section, number} · Paragraaf {paragraph, number}",
+                "docxParagraph": "Paragraaf {paragraph, number}",
+                "heading": "Kop: {heading}",
+                "previous": "Vorige bron",
+                "next": "Volgende bron",
+                "jumpLabel": "Bronnummer",
+                "jump": "Naar bron",
+                "jumpHint": "Voer een geheel getal in van 1 tot {total, number}.",
+                "textNavigation": "Tekstsegmenten in deze bron",
+                "previousText": "Vorig tekstsegment",
+                "nextText": "Volgend tekstsegment",
+                "changedVersion": "Het gepubliceerde document is gewijzigd. Herlaad de details om de huidige bron te bekijken.",
+                "warnings": "{count, plural, one {# bron heeft geen extraheerbare tekst.} other {# bronnen hebben geen extraheerbare tekst.}}",
+                "emptyPage": "Er is geen extraheerbare tekst gevonden op deze PDF-pagina. Ze is mogelijk leeg of bevat alleen afbeeldingen. OCR is niet beschikbaar.",
+                "emptyParagraph": "Er is geen extraheerbare tekst gevonden in deze DOCX-paragraaf.",
+                "parts": {
+                    "header": "Koptekst · Paragraaf {paragraph, number} · Deel {part, number}",
+                    "footer": "Voettekst · Paragraaf {paragraph, number} · Deel {part, number}",
+                    "footnote": "Voetnoten · Paragraaf {paragraph, number} · Deel {part, number}",
+                    "endnote": "Eindnoten · Paragraaf {paragraph, number} · Deel {part, number}"
                 }
             }
         }

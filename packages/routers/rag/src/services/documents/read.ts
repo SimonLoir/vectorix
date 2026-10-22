@@ -1,3 +1,4 @@
+import { decodeStoredExtraction, publicIngestionTask } from '@repo/documents';
 import { ORPCError } from '@orpc/server';
 import { permits } from '@repo/auth/permissions';
 import type { AuthorizedContext } from '@routers/utils/authorized';
@@ -52,13 +53,7 @@ export async function getDocumentDetails(
                   previewAvailable: Boolean(
                       version.extraction && version.status === 'READY'
                   ),
-                  task: version.ingestion
-                      ? {
-                            status: version.ingestion.status,
-                            attempts: version.ingestion.attempts,
-                            errorCode: version.ingestion.errorCode,
-                        }
-                      : null,
+                  task: publicIngestionTask(version.ingestion),
               }
             : null,
     });
@@ -111,7 +106,10 @@ export async function previewDocument(
         version.extraction.objectKey,
         MAX_DOCUMENT_BYTES
     );
-    const text = new TextDecoder('utf-8', { fatal: true }).decode(bytes);
+    const { text } = decodeStoredExtraction(
+        bytes,
+        version.extraction.extractorVersion
+    );
     await contentDocument(context, input.id);
     if (input.offset > 0 && /[\uDC00-\uDFFF]/.test(text.charAt(input.offset)))
         throw new ORPCError('BAD_REQUEST');
@@ -123,5 +121,61 @@ export async function previewDocument(
         nextOffset: end < text.length ? end : null,
         totalCharacters: text.length,
         version: version.version,
+    };
+}
+
+/** Resolve only the currently published, authorized extraction; citations are bounded within one retained source. */
+export async function previewDocumentSource(
+    context: AuthorizedContext,
+    input: { id: string; sourceIndex: number; offset: number }
+) {
+    const { actor, version } = await contentDocument(context, input.id);
+    if (!version.extraction || version.status !== 'READY')
+        throw new ORPCError('CONFLICT', {
+            message: 'The extracted text is not ready.',
+        });
+    const bytes = await readObject(
+        await boundStorage(
+            context.db,
+            actor.organizationId,
+            version.extraction.storageLocationId
+        ),
+        version.extraction.objectKey,
+        MAX_DOCUMENT_BYTES
+    );
+    const extraction = decodeStoredExtraction(
+        bytes,
+        version.extraction.extractorVersion
+    );
+    const source = extraction.sources[input.sourceIndex];
+    if (!source || input.offset > source.end - source.start)
+        throw new ORPCError('BAD_REQUEST');
+    const fullText = extraction.text.slice(source.start, source.end);
+    if (
+        input.offset > 0 &&
+        /[\uDC00-\uDFFF]/.test(fullText.charAt(input.offset))
+    )
+        throw new ORPCError('BAD_REQUEST');
+    let end = Math.min(fullText.length, input.offset + 20_000);
+    if (
+        end < fullText.length &&
+        /[\uD800-\uDBFF]/.test(fullText.charAt(end - 1))
+    )
+        end--;
+    await contentDocument(context, input.id);
+    return {
+        format:
+            version.mediaType === 'text/markdown'
+                ? ('MARKDOWN' as const)
+                : extraction.format,
+        version: version.version,
+        source,
+        totalSources: extraction.sources.length,
+        text: fullText.slice(input.offset, end),
+        nextOffset: end < fullText.length ? end : null,
+        totalCharacters: fullText.length,
+        warnings: extraction.warnings.filter(
+            (warning) => warning.sourceIndex === source.index
+        ),
     };
 }

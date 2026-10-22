@@ -1,3 +1,4 @@
+import { mediaTypeForFile, extractionReservation } from '@repo/documents';
 import { randomUUID } from 'node:crypto';
 import { ORPCError } from '@orpc/server';
 import type { AuthorizedContext } from '@routers/utils/authorized';
@@ -16,6 +17,8 @@ export async function uploadDocument(
     validateDocumentFile(file);
     const bytes = new Uint8Array(await file.arrayBuffer());
     const sha256 = contentHash(bytes);
+    const mediaType = mediaTypeForFile(file.name)!;
+    const reservation = extractionReservation(mediaType, bytes.length);
     const documentId = randomUUID(),
         versionId = randomUUID(),
         token = randomUUID();
@@ -52,7 +55,8 @@ export async function uploadDocument(
         if (
             bytes.length > limits.originalBytes ||
             usage.documents >= limits.documents ||
-            usage.storageBytes + 2 * bytes.length > limits.storageBytes
+            BigInt(usage.storageBytes) + BigInt(bytes.length) + reservation >
+                BigInt(limits.storageBytes)
         )
             throw new ORPCError('CONFLICT', {
                 message: 'The document or storage quota is exceeded.',
@@ -77,9 +81,7 @@ export async function uploadDocument(
                 sha256,
                 byteSize: BigInt(bytes.length),
                 fileName: file.name,
-                mediaType: /\.txt$/i.test(file.name)
-                    ? 'text/plain'
-                    : 'text/markdown',
+                mediaType,
             },
         });
         await db.documentIngestion.create({
@@ -88,7 +90,7 @@ export async function uploadDocument(
                 organizationId: actor.organizationId,
                 requestId: input.requestId,
                 requestedBy: actor.userId,
-                reservedBytes: BigInt(bytes.length),
+                reservedBytes: reservation,
                 leaseToken: token,
                 leasedUntil: new Date(Date.now() + 300_000),
             },

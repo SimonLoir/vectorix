@@ -1,3 +1,4 @@
+import { publicIngestionTask } from '@repo/documents';
 import { ORPCError } from '@orpc/server';
 import type { AuthorizedContext } from '@routers/utils/authorized';
 import { documentLifecycle } from '@repo/api-contracts/v1/rag/documents';
@@ -48,7 +49,7 @@ export async function getDocumentLifecycle(
             ...version,
             fileName: version.fileName ?? document.name,
             byteSize: Number(version.byteSize),
-            task: version.ingestion,
+            task: publicIngestionTask(version.ingestion),
             cleanup: version.cleanup,
         })),
         total,

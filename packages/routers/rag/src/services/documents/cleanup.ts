@@ -111,6 +111,10 @@ async function cleanVersion(
         await deleteObject(config, version.objectKey);
         const textKey = `${task.organizationId}/${version.documentId}/${versionId}/text.txt`;
         await deleteObject(config, textKey);
+        await deleteObject(
+            config,
+            `${task.organizationId}/${version.documentId}/${versionId}/extraction.json`
+        );
         if (
             version.extraction &&
             (version.extraction.objectKey !== textKey ||

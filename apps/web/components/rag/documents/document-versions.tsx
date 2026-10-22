@@ -63,9 +63,15 @@ export function DocumentVersions({ data }: Readonly<{ data: Lifecycle }>) {
                         )}
                     {!data.deletedAt &&
                         version.id === data.latestVersionId &&
-                        version.task?.errorCode && (
+                        (version.task?.diagnostic ??
+                            version.task?.errorCode) && (
                             <p role='alert' className='text-sm'>
-                                {tr(`errors.${version.task.errorCode}`)}
+                                {version.task.diagnostic
+                                    ? tr(
+                                          `diagnostics.${version.task.diagnostic}`
+                                      )
+                                    : version.task.errorCode &&
+                                      tr(`errors.${version.task.errorCode}`)}
                             </p>
                         )}
                     {version.cleanup && (

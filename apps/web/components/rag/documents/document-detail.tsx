@@ -10,6 +10,7 @@ import { ActionError, useCatalogAction } from '../catalog-action';
 import { DocumentQueryState } from './query-state';
 import { DocumentCollections } from './document-collections';
 import { DocumentPreview } from './document-preview';
+import { DocumentSources } from './document-sources';
 import { DocumentLifecycle } from './document-lifecycle';
 
 export function DocumentDetail({ id }: Readonly<{ id: string }>) {
@@ -73,9 +74,15 @@ export function DocumentDetail({ id }: Readonly<{ id: string }>) {
                                 })}
                             </p>
                         )}
-                        {version?.task?.errorCode && (
+                        {(version?.task?.diagnostic ??
+                            version?.task?.errorCode) && (
                             <p role='alert' className='text-sm'>
-                                {tr(`errors.${version.task.errorCode}`)}
+                                {version.task.diagnostic
+                                    ? tr(
+                                          `diagnostics.${version.task.diagnostic}`
+                                      )
+                                    : version.task.errorCode &&
+                                      tr(`errors.${version.task.errorCode}`)}
                             </p>
                         )}
                         <ActionError
@@ -93,9 +100,20 @@ export function DocumentDetail({ id }: Readonly<{ id: string }>) {
                             )}
                         </div>
                     </section>
-                    {version?.previewAvailable && (
-                        <DocumentPreview key={version.id} id={id} />
-                    )}
+                    {version?.previewAvailable &&
+                        ([
+                            'application/pdf',
+                            'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+                        ].includes(version.mediaType) ? (
+                            <DocumentSources
+                                key={version.id}
+                                id={id}
+                                expectedVersion={version.version}
+                                onRefresh={() => void query.refetch()}
+                            />
+                        ) : (
+                            <DocumentPreview key={version.id} id={id} />
+                        ))}
                     {data.canManage &&
                         canOperation('admin.rag.documents.lifecycle') && (
                             <DocumentLifecycle id={id} />

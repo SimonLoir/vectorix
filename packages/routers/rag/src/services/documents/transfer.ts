@@ -1,6 +1,7 @@
 import { ORPCError } from '@orpc/server';
 import type { AuthorizedContext } from '@routers/utils/authorized';
 import { putObject, type S3Configuration } from '@repo/storage';
+import { mediaTypeForFile } from '@repo/documents';
 import { MAX_DOCUMENT_BYTES } from '@repo/api-contracts/v1/rag/documents';
 import { mutate, audit } from '../mutation';
 import { libraryWrite } from './access';
@@ -10,7 +11,7 @@ import { reconcileUnpublishedWrite } from './retention';
 /** Reject unsupported or unsafe names before reserving quota or creating storage objects. */
 export function validateDocumentFile(file: File) {
     if (
-        !/\.(txt|md|markdown)$/i.test(file.name) ||
+        !mediaTypeForFile(file.name) ||
         [...file.name].some(
             (c) =>
                 c.codePointAt(0)! < 32 ||
@@ -24,7 +25,7 @@ export function validateDocumentFile(file: File) {
     )
         throw new ORPCError('BAD_REQUEST', {
             message:
-                'Upload a non-empty TXT or Markdown file of at most 25 MiB with a valid filename.',
+                'Upload a non-empty TXT, Markdown, PDF or DOCX file of at most 25 MiB with a valid filename.',
         });
 }
 

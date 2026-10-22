@@ -1,3 +1,4 @@
+import { sourcePreviewDocumentHandler } from './documents/sourcePreview';
 import { replaceDocumentHandler } from './documents/replace';
 import { deleteDocumentHandler } from './documents/delete';
 import { lifecycleDocumentHandler } from './documents/lifecycle';
@@ -74,6 +75,7 @@ export const ragRouter = authorized
             removeGrant: removeGrantHandler,
         },
         documents: {
+            sourcePreview: sourcePreviewDocumentHandler,
             replace: replaceDocumentHandler,
             delete: deleteDocumentHandler,
             lifecycle: lifecycleDocumentHandler,

@@ -572,10 +572,10 @@
             "search": "Rechercher des documents",
             "upload": "Importer un document",
             "empty": "Aucun document trouvé",
-            "emptyHint": "Importez un fichier TXT ou Markdown, ou demandez à un gestionnaire d’ajouter des documents à une collection autorisée.",
-            "uploadHint": "Choisissez un fichier TXT ou Markdown en UTF-8, de 25 Mio maximum. L’extraction s’exécute en arrière-plan.",
+            "emptyHint": "Importez un fichier TXT, Markdown, PDF ou DOCX, ou demandez à un gestionnaire d’ajouter des documents à une collection autorisée.",
+            "uploadHint": "Choisissez un fichier TXT/Markdown UTF-8, un PDF avec du texte ou un fichier DOCX, de 25 Mio maximum. L’extraction s’exécute en arrière-plan. L’OCR n’est pas disponible.",
             "file": "Fichier du document",
-            "invalidFile": "Choisissez un fichier TXT ou Markdown non vide de 25 Mio maximum.",
+            "invalidFile": "Choisissez un fichier TXT, Markdown, PDF ou DOCX non vide de 25 Mio maximum.",
             "uploadFailed": "Échec de l’import. Vérifiez le stockage, vos droits et le quota disponible, puis réessayez.",
             "uploading": "Import en cours…",
             "loadFailed": "Impossible de charger ces données. Vérifiez vos droits et réessayez.",
@@ -626,7 +626,7 @@
                 "deletedTitle": "Document supprimé",
                 "deletedDescription": "Consultez les métadonnées des versions conservées et suivez le nettoyage des fichiers privés.",
                 "replace": "Remplacer le document",
-                "replaceHint": "Importez un nouveau fichier TXT ou Markdown UTF-8 de 25 Mio maximum. L’original publié reste disponible jusqu’à ce que le remplacement soit prêt. Les liens aux collections sont conservés.",
+                "replaceHint": "Importez un fichier TXT/Markdown UTF-8, un PDF avec du texte ou un fichier DOCX, de 25 Mio maximum. L’original publié reste disponible jusqu’à ce que le remplacement soit prêt. Les liens aux collections sont conservés.",
                 "confirmReplace": "Importer le remplacement",
                 "replaceFailed": "Le remplacement n’a pas pu être envoyé. Rechargez pour vérifier la dernière version, vos droits, le stockage et les quotas disponibles, puis réessayez.",
                 "retentionLabel": "Délai de conservation des fichiers en jours",
@@ -655,6 +655,43 @@
                 "cleanupErrors": {
                     "STORAGE_UNAVAILABLE": "Le stockage privé est indisponible. Vérifiez ses identifiants enregistrés et son adresse autorisée, puis relancez le nettoyage.",
                     "CLEANUP_FAILED": "Le nettoyage des fichiers a échoué. Réessayez ou contactez un administrateur."
+                }
+            },
+            "extractionBudgetHint": "Les fichiers PDF et DOCX réservent 10 Mio supplémentaires pour l’extraction pendant le traitement. L’utilisation du stockage est ajustée après l’extraction.",
+            "diagnostics": {
+                "PDF_OCR_UNAVAILABLE": "Aucun texte exploitable n’a été trouvé dans ce PDF. Les documents numérisés nécessitent l’OCR, qui n’est pas disponible.",
+                "PDF_ENCRYPTED": "Ce PDF est chiffré. Importez une copie non chiffrée pour en extraire le texte.",
+                "FILE_INVALID": "Le fichier est endommagé ou ne correspond pas à son format. Exportez une copie valide et importez-la à nouveau.",
+                "PARSER_LIMIT": "Ce document dépasse les limites d’extraction de pages, de paragraphes ou de données extraites. Divisez-le ou simplifiez-le, puis importez-le à nouveau.",
+                "PARSER_TIMEOUT": "L’extraction a pris trop de temps et a été arrêtée. Essayez un document plus petit ou contactez un administrateur.",
+                "PARSER_UNAVAILABLE": "L’outil d’extraction est indisponible. Demandez à un administrateur de vérifier le worker, puis relancez l’extraction."
+            },
+            "sources": {
+                "title": "Aperçu des sources",
+                "hint": "Parcourez les pages PDF ou les sections, paragraphes, en-têtes, pieds de page et notes DOCX. Le texte est affiché en texte brut, par segments de 20 000 caractères maximum.",
+                "navigation": "Navigation dans les sources du document",
+                "position": "Source {current, number} sur {total, number}",
+                "pdfPage": "Page PDF {page, number}",
+                "docxSectionParagraph": "Section {section, number} · Paragraphe {paragraph, number}",
+                "docxParagraph": "Paragraphe {paragraph, number}",
+                "heading": "Titre : {heading}",
+                "previous": "Source précédente",
+                "next": "Source suivante",
+                "jumpLabel": "Numéro de source",
+                "jump": "Accéder à la source",
+                "jumpHint": "Saisissez un nombre entier entre 1 et {total, number}.",
+                "textNavigation": "Segments de texte de cette source",
+                "previousText": "Segment précédent",
+                "nextText": "Segment suivant",
+                "changedVersion": "Le document publié a changé. Rechargez ses détails pour consulter la source actuelle.",
+                "warnings": "{count, plural, one {# source ne contient aucun texte extractible.} other {# sources ne contiennent aucun texte extractible.}}",
+                "emptyPage": "Aucun texte extractible n’a été trouvé sur cette page PDF. Elle peut être vide ou ne contenir que des images. L’OCR n’est pas disponible.",
+                "emptyParagraph": "Aucun texte extractible n’a été trouvé dans ce paragraphe DOCX.",
+                "parts": {
+                    "header": "En-tête · Paragraphe {paragraph, number} · Partie {part, number}",
+                    "footer": "Pied de page · Paragraphe {paragraph, number} · Partie {part, number}",
+                    "footnote": "Notes de bas de page · Paragraphe {paragraph, number} · Partie {part, number}",
+                    "endnote": "Notes de fin · Paragraphe {paragraph, number} · Partie {part, number}"
                 }
             }
         }

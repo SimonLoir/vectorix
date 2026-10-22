@@ -1,3 +1,4 @@
+import { mediaTypeForFile, extractionReservation } from '@repo/documents';
 import { randomUUID } from 'node:crypto';
 import { ORPCError } from '@orpc/server';
 import type { AuthorizedContext } from '@routers/utils/authorized';
@@ -24,6 +25,8 @@ export async function replaceDocument(
     const sha256 = contentHash(bytes),
         versionId = randomUUID(),
         token = randomUUID();
+    const mediaType = mediaTypeForFile(input.file.name)!;
+    const reservation = extractionReservation(mediaType, bytes.length);
     const accepted = await mutate(context, libraryWrite, async (db, actor) => {
         await requireDocument(db, actor, input.id);
         const replay = await db.documentIngestion.findUnique({
@@ -69,7 +72,8 @@ export async function replaceDocument(
             usage = await quotaUsage(db, actor.organizationId);
         if (
             bytes.length > limits.originalBytes ||
-            usage.storageBytes + 2 * bytes.length > limits.storageBytes
+            BigInt(usage.storageBytes) + BigInt(bytes.length) + reservation >
+                BigInt(limits.storageBytes)
         )
             throw new ORPCError('CONFLICT', {
                 message: 'The storage quota is exceeded.',
@@ -87,9 +91,7 @@ export async function replaceDocument(
                 sha256,
                 byteSize: BigInt(bytes.length),
                 fileName: input.file.name,
-                mediaType: /\.txt$/i.test(input.file.name)
-                    ? 'text/plain'
-                    : 'text/markdown',
+                mediaType,
             },
         });
         await db.documentIngestion.create({
@@ -98,7 +100,7 @@ export async function replaceDocument(
                 organizationId: actor.organizationId,
                 requestId: input.requestId,
                 requestedBy: actor.userId,
-                reservedBytes: BigInt(bytes.length),
+                reservedBytes: reservation,
                 leaseToken: token,
                 leasedUntil: new Date(Date.now() + 300_000),
             },
