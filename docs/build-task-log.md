@@ -244,7 +244,7 @@ After the old-source proof, only the isolated fixture's retired generation/hold/
 
 ### M7 follow-up observations
 
-- [ ] Propagate server-resolved `VECTORIX_TIME_ZONE` through admin locale setup/provider, matching web. The preexisting organizations-list `format.dateTime` currently logs `ENVIRONMENT_FALLBACK`; do not hide it with an error handler.
+- [x] Propagate server-resolved `VECTORIX_TIME_ZONE` through admin locale setup/provider, matching web. The dashboard timezone follow-up below verifies the runtime handoff and removes `ENVIRONMENT_FALLBACK` without suppressing errors.
 - [ ] Exercise automatic active-index source updates when the library actor lacks that collection's management grant. M4 explicitly uses the accepted rebuild authority for pending candidates; the active-generation event-actor path still needs this operational coverage and any required current-authority handling.
 
 Final documentation checks passed: 16 documents, 18 parsed Mermaid diagrams, 92 local links and 3,453 ICU messages with locale/key parity. Temporary browser tabs, four application processes and four owned infrastructure containers were removed, and Ollama stopped while its named model volume was preserved. The historical-source download was checksum-verified and removed.
@@ -434,7 +434,7 @@ Redis credentials were delivered as `6a18d67` in [PR #35](https://github.com/Sim
 - [x] Run final workspace/catalog/build/image checks and independent review.
 - [x] Verify organization/feature mutations and audit inspection in production admin on private disposable infrastructure.
 - [x] Finalize English documentation/diagram/link checks.
-- [ ] Deliver a separate PR.
+- [x] Deliver a separate PR.
 
 The current implementation on `codex/superadmin-transaction-audit` uses the dedicated shared transaction helper and changes seven named handlers, two previously transactional actor checks and the audit helper. Root documentation links and this guide record the new boundary. No schema, migration, public DTO or dependency changes are planned. This slice protects concurrent superadmin owner operations only; the cross-path native owner/deletion protocol remains planned and issue #20 stays open. See [Superadmin transactions](superadmin-transactions.md) for concrete file references, the acceptance recipe, audit IP provenance and the deferred-guard design constraints.
 
@@ -445,3 +445,25 @@ Actual production API/admin acceptance created and renamed a synthetic empty org
 The separately reviewed [global owner-guard proposal](organization-owner-guard-proposal.md) remains design-only. It records the deferred native-deletion constraints, unvalidated post-initialization wrapping seam, role/snapshot/rollout limits and required cross-path matrix. No SQL migration or native guard was generated or applied; issue #20 remains open. The quoted migration-review rule will apply once a concrete supported wrapping seam and migration design are ready.
 
 Final scoped issue #20 documentation validation passed: five changed documents, two parsed Mermaid diagrams, 88 local Markdown file links, source/prose formatting and `git diff --check`. Independent documentation review found no material gap. The separate owner-guard proposal was independently reviewed and still requires a proven native transaction seam before migration approval is requested.
+
+The scoped superadmin transaction work was delivered as `d0acb91` in [PR #36](https://github.com/SimonLoir/vectorix/pull/36). Both exact-head required CI checks passed, and it was squash-merged as `e6c60cd`. Issue #20 remains open for the separately planned native ownership/deletion boundary.
+
+## Runtime follow-up — shared dashboard timezones
+
+- [x] Read the installed Next.js server/client and environment documentation in both affected applications.
+- [x] Centralize the unchanged web timezone resolver in dashboard-core and reuse it from both web server entry points.
+- [x] Resolve admin configuration on the server and pass the validated public zone through layout into its required provider prop.
+- [x] Run workspace/backend/catalog/build/image validation and independent review.
+- [x] Verify an owned DST audit fixture with UTC versus a different process zone, invalid fallback, three languages/reload and a production web smoke.
+- [x] Finalize English documentation, diagrams and local links.
+- [ ] Deliver a separate PR from merged superadmin transactions.
+
+Implementation and actual acceptance are complete on `codex/admin-runtime-timezone`, based on merged PR #36 (`e6c60cd`). Touched files are the new shared helper/public subpath, two web server imports and removed duplicate helper, admin request/layout/provider, `.env.example`, repository/package documentation, the earlier transaction acceptance note and this log. No dependency, lockfile, schema, migration or API DTO changes are required. The resolver body retains the existing trimmed Intl validation and Brussels fallback. Only a validated public string crosses the server/client boundary; locale resolution and language persistence are unchanged. Unrelated legacy explicit-date formatters remain separate work.
+
+Final validation passed: 23 workspace type checks, 23 lint tasks, 44 backend regressions, 150 disposable core/RAG HTTP tests with fresh/upgrade/repeat/schema parity, four production builds and all six image/runtime/infrastructure checks. Independent source review found no actionable P1/P2. The production code was frozen before these checks and no implementation-mirroring unit test was added for the unchanged resolver move.
+
+Actual acceptance used production API/web/admin, four private disposable infrastructure services and a synthetic audit fixture at `2026-03-29T01:30:00.000Z`. Process TZ remained Pacific/Honolulu. With runtime UTC, the same instant displayed 01:30 in EN/FR/nl-BE and remained 01:30 in persisted Belgian Dutch after reload. Restarting only web/admin with an invalid zone, on the same builds, displayed 03:30 in Belgian Dutch and restored English, proving the Brussels DST fallback. The initial English locale was restored, and production web showed its authenticated dashboard in Belgian Dutch then English after reload. Both final browser consoles were empty; the initial/invalid web/admin server logs had zero ENVIRONMENT_FALLBACK occurrences. Empty/missing/padded settings were not separately browser-exercised. This is provider/import acceptance, not a claim that every legacy formatter now honors the configured zone.
+
+The three previews, four owned infrastructure containers and two tabs were removed. No application database, external mail recipient or embedding provider was used. [Dashboard timezone configuration and acceptance](dashboard-timezones.md) and the [dashboard-core package guide](../packages/dashboard-core/README.md) record concrete entry points, lifecycle and component-specific limits.
+
+Final timezone documentation validation passed: six changed documents, two parsed Mermaid diagrams, 111 local Markdown file links, source/prose formatting and `git diff --check`. Independent documentation review found no material gap. Existing ICU dictionaries were unchanged.

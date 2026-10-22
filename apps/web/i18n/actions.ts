@@ -3,7 +3,7 @@
 import { type Locale } from '@/i18n/request';
 import { cookies, headers } from 'next/headers';
 import { resolveRequestLocale } from '@/i18n/resolveLocale';
-import { resolveVectorixTimeZone } from '@/i18n/time-zone';
+import { resolveVectorixTimeZone } from '@repo/dashboard-core/i18n/time-zone';
 
 export async function getIntl(): Promise<{
     locale: Locale;

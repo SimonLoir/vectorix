@@ -62,7 +62,7 @@ Vectorix is a multi-tenant application foundation. Preserve its reusable authent
 - Keep deployment configuration available at container startup. Do not bake deployment origins or private settings into frontend builds.
 - Before changing Next.js code, read the relevant documentation shipped with the installed version under the application's `node_modules/next/dist/docs/`. Follow its current APIs and deprecation notices.
 - Reuse shared UI primitives and preserve keyboard navigation, accessible labels, viewport-bounded dialogs, and internal scrolling.
-- Localize new user-facing UI through `next-intl` dictionaries in English, French, and Belgian Dutch, including headings, placeholders, confirmations, errors, toasts, and accessible labels. Use complete messages with ICU interpolation/plurals and locale-aware number/date formatting rather than sentence fragments or a hardcoded locale. Web and admin share locale resolution in `@repo/dashboard-core/i18n/locale`; keep page headings reactive to language changes.
+- Localize new user-facing UI through `next-intl` dictionaries in English, French, and Belgian Dutch, including headings, placeholders, confirmations, errors, toasts, and accessible labels. Use complete messages with ICU interpolation/plurals and locale-aware number/date formatting rather than sentence fragments or a hardcoded locale. Web and admin share locale resolution in `@repo/dashboard-core/i18n/locale` and runtime timezone validation in `@repo/dashboard-core/i18n/time-zone`; keep page headings reactive to language changes.
 - Keep large lists and selectors bounded and filtered on the server. Invalidate affected query variants after mutations, and keep loading, error, and permission states explicit.
 
 ## Workers and containers

@@ -2,7 +2,7 @@ import { getRequestConfig } from 'next-intl/server';
 import { cookies, headers } from 'next/headers';
 import { resolveRequestLocale } from '@/i18n/resolveLocale';
 import { type Locale } from '@/i18n/locales';
-import { resolveVectorixTimeZone } from '@/i18n/time-zone';
+import { resolveVectorixTimeZone } from '@repo/dashboard-core/i18n/time-zone';
 
 export { supportedLocales, type Locale } from '@/i18n/locales';
 

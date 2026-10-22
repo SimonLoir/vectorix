@@ -13,14 +13,20 @@ export function Providers({
     apiUrl,
     locale,
     messages,
+    timeZone,
 }: Readonly<{
     children: ReactNode;
     apiUrl: string;
     locale: string;
     messages: Record<string, unknown>;
+    timeZone: string;
 }>) {
     return (
-        <NextIntlClientProvider locale={locale} messages={messages}>
+        <NextIntlClientProvider
+            locale={locale}
+            messages={messages}
+            timeZone={timeZone}
+        >
             <ReactQueryClientProvider>
                 <AuthProvider baseURL={apiUrl}>
                     <ORPCProvider baseURL={apiUrl}>

@@ -1,5 +1,6 @@
 import { cookies, headers } from 'next/headers';
 import { resolveRequestLocale } from '@repo/dashboard-core/i18n/locale';
+import { resolveVectorixTimeZone } from '@repo/dashboard-core/i18n/time-zone';
 
 const dictionaries = {
     en: () => import('../messages/en.json'),
@@ -18,5 +19,9 @@ export async function getAdminIntl() {
         requestHeaders.get('accept-language')
     );
     const { default: messages } = await dictionaries[locale]();
-    return { locale, messages };
+    return {
+        locale,
+        messages,
+        timeZone: resolveVectorixTimeZone(process.env.VECTORIX_TIME_ZONE),
+    };
 }
