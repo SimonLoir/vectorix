@@ -2,7 +2,6 @@ import { ORPCError } from '@orpc/server';
 import type { AuthorizedContext } from '@routers/utils/authorized';
 import type {
     Prisma,
-    Chunk,
     IndexedDocument,
     DocumentVersion,
     IndexGenerationStatus,
@@ -17,10 +16,13 @@ import {
     indexCleanupWhere,
     requireIndexDocuments,
     requireIndexRead,
+    requireIndexPreviewCompletion,
 } from './access';
 import { publicIndexFailure } from './errors';
 import { supportsIndexProfile } from './embedding-profile';
 import { semanticTaskProgress } from './semantic-progress';
+import { readProjectedChunks, type ProjectedChunk } from './chunk-projection';
+import { resolveParentContextVersion } from './generation-profile';
 
 type Page = {
     collectionId: string;
@@ -28,10 +30,15 @@ type Page = {
     limit: number;
     offset: number;
 };
-type Publication = IndexedDocument & { sourceVersion: DocumentVersion };
+type Publication = Pick<
+    IndexedDocument,
+    'id' | 'documentId' | 'fileName' | 'status'
+> & {
+    sourceVersion: Pick<DocumentVersion, 'version'>;
+};
 
 /** Public canonical chunk projection is bounded independently of the full immutable provenance artifact. */
-export function chunkDto(chunk: Chunk, publication: Publication) {
+export function chunkDto(chunk: ProjectedChunk, publication: Publication) {
     const spans = Array.isArray(chunk.sourceSpans) ? chunk.sourceSpans : [];
     return chunkView.parse({
         ...chunk,
@@ -40,7 +47,8 @@ export function chunkDto(chunk: Chunk, publication: Publication) {
         documentName: publication.fileName,
         version: publication.sourceVersion.version,
         sourceSpans: spans.slice(0, 64),
-        sourceSpansTruncated: spans.length > 64,
+        sourceSpansTruncated: chunk.sourceSpansTruncated,
+        parentContext: chunk.parentContext ?? undefined,
         published: publication.status === 'PUBLISHED',
     });
 }
@@ -124,6 +132,7 @@ async function readIndexStatus(
             model: generation.configuration.model,
             dimensions: generation.configuration.dimensions,
             modelIdentity: generation.modelIdentity,
+            parentContextVersion: generation.parentContextVersion,
             createdAt: generation.createdAt,
             activatedAt: generation.activatedAt,
             retiredAt: generation.retiredAt,
@@ -418,6 +427,7 @@ export async function listIndexChunks(
                   })
               )?.id
             : undefined);
+    let parentEnabled = false;
     if (selectedId) {
         const selected = await context.db.indexGeneration.findFirst({
             where: {
@@ -428,17 +438,27 @@ export async function listIndexChunks(
                     ? { in: ['PROVISIONING', 'BUILDING', 'ACTIVE', 'FAILED'] }
                     : 'ACTIVE',
             },
-            select: { id: true },
+            select: {
+                id: true,
+                parentContextVersion: true,
+                configuration: { select: { parentChild: true } },
+            },
         });
         if (
             !selected ||
             (!access.canManage && selectedId !== collection.activeGenerationId)
         )
             throw new ORPCError('NOT_FOUND');
+        parentEnabled =
+            resolveParentContextVersion(
+                selected.configuration,
+                selected.parentContextVersion
+            ) !== null;
     }
     const where: Prisma.ChunkWhereInput = {
         organizationId: actor.organizationId,
         generationId: selectedId ?? '',
+        kind: 'CHILD',
         text: input.query
             ? { contains: input.query, mode: 'insensitive' }
             : undefined,
@@ -491,14 +511,48 @@ export async function listIndexChunks(
             take: input.limit,
             skip: input.offset,
             orderBy: [{ indexedDocumentId: 'asc' }, { ordinal: 'asc' }],
-            include: { indexedDocument: { include: { sourceVersion: true } } },
+            select: {
+                id: true,
+                indexedDocument: {
+                    select: {
+                        id: true,
+                        documentId: true,
+                        fileName: true,
+                        status: true,
+                        sourceVersion: { select: { version: true } },
+                    },
+                },
+            },
         }),
         context.db.chunk.count({ where }),
     ]);
-    await requireIndexRead(context, input.collectionId);
+    const chunks = await readProjectedChunks(context.db, {
+        organizationId: actor.organizationId,
+        generationId: selectedId ?? '',
+        ids: rows.map((row) => row.id),
+        parentEnabled,
+    });
+    const stillEligible = await context.db.chunk.findMany({
+        where: { AND: [where, { id: { in: rows.map((row) => row.id) } }] },
+        select: { id: true },
+        take: input.limit,
+    });
+    await requireIndexPreviewCompletion(
+        context,
+        input.collectionId,
+        selectedId,
+        access.canManage
+    );
+    const visible = new Set(stillEligible.map((row) => row.id));
+    const byId = new Map(chunks.map((chunk) => [chunk.id, chunk]));
     return {
         total,
-        items: rows.map((row) => chunkDto(row, row.indexedDocument)),
+        items: rows.flatMap((row) => {
+            const chunk = byId.get(row.id);
+            return chunk && visible.has(row.id)
+                ? [chunkDto(chunk, row.indexedDocument)]
+                : [];
+        }),
     };
 }
 

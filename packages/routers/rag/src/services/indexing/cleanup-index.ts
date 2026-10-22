@@ -87,7 +87,7 @@ export async function executePublicationCleanup(
         candidate.materializedChunks === candidate.chunkCount
     ) {
         const rows = await db.chunk.findMany({
-            where: { indexedDocumentId: candidateId },
+            where: { indexedDocumentId: candidateId, kind: 'CHILD' },
             orderBy: { ordinal: 'asc' },
             select: { id: true, ordinal: true, textHash: true },
             take: 100_001,

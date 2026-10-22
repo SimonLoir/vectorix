@@ -184,6 +184,24 @@ export async function indexCapabilities(
     };
 }
 
+/** Recheck management-dependent staged preview access after content hydration, including the current reader publication pointer. */
+export async function requireIndexPreviewCompletion(
+    context: AuthorizedContext,
+    collectionId: string,
+    generationId: string | undefined,
+    previouslyManaged: boolean
+) {
+    await requireIndexRead(context, collectionId);
+    const current = await indexCapabilities(context, collectionId);
+    if (!current.canRead || (previouslyManaged && !current.canManage))
+        throw new ORPCError('FORBIDDEN');
+    if (
+        !current.canManage &&
+        (generationId ?? null) !== current.collection.activeGenerationId
+    )
+        throw new ORPCError('NOT_FOUND');
+}
+
 /** Fail closed rather than leaking library names through a catalog-only grant. */
 export async function requireIndexDocuments(
     context: AuthorizedContext,

@@ -27,6 +27,12 @@ import { semanticQuotaTests } from './rag-tests/semantic-quotas';
 import { semanticLedgerTests } from './rag-tests/semantic-ledger';
 import { semanticFairnessTests } from './rag-tests/semantic-fairness';
 import { semanticCapacityTests } from './rag-tests/semantic-capacity';
+import { parentProviderTests } from './rag-tests/parent-providers';
+import { parentSearchTests } from './rag-tests/parent-search';
+import { parentLifecycleTests } from './rag-tests/parent-lifecycle';
+import { parentRetryTests } from './rag-tests/parent-retry';
+import { parentProvenanceTests } from './rag-tests/parent-provenance';
+import { parentPreviewRaceTests } from './rag-tests/parent-preview-race';
 
 after(cleanup);
 void test('RAG catalog with real PostgreSQL and HTTP transports', async (t) => {
@@ -58,4 +64,10 @@ void test('RAG catalog with real PostgreSQL and HTTP transports', async (t) => {
     await semanticLedgerTests(t);
     await semanticFairnessTests(t);
     await semanticCapacityTests(t);
+    await parentProviderTests(t);
+    await parentSearchTests(t);
+    await parentLifecycleTests(t);
+    await parentRetryTests(t);
+    await parentProvenanceTests(t);
+    await parentPreviewRaceTests(t);
 });

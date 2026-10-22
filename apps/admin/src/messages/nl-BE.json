@@ -18,7 +18,7 @@
             "originalBytes": "Maximale bestandsgrootte (bytes)",
             "storageBytes": "Bewaarde opslag (bytes)",
             "chunksPerCollection": "Passages per collectie",
-            "hint": "1 MiB = 1.048.576 bytes. Limieten voor opslag en actieve/tijdelijke passages gelden voor nieuwe reserveringen. Een lager quotum verwijdert geen bestaande gegevens.",
+            "hint": "1 MiB = 1.048.576 bytes. Limieten voor opslag en actieve/tijdelijke passages gelden voor nieuwe reserveringen. Passagelimieten tellen doorzoekbare onderliggende passages; bovenliggende context voegt begrensde applicatieopslag toe en krijgt geen embedding. Een lager quotum verwijdert geen bestaande gegevens.",
             "save": "Quota opslaan",
             "saving": "Opslaan…",
             "temporaryChunksPerCollection": "Tijdelijke passages per collectie",

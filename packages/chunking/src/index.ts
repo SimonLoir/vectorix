@@ -9,6 +9,17 @@ export {
     ChunkingError,
 } from './types';
 export type { StructureOptions, PlannedChunk, ChunkSpan } from './types';
+export { planParentContext } from './parent-context';
+export {
+    PARENT_CONTEXT_VERSION,
+    MAX_PARENT_CONTEXT_ROWS,
+    MAX_PARENT_CONTEXT_TEXT_BYTES,
+    MAX_PARENT_CONTEXT_SOURCE_SPAN_BYTES,
+} from './parent-context-types';
+export type {
+    ParentContextOptions,
+    ParentContextLayout,
+} from './parent-context-types';
 export {
     SEMANTIC_CHUNKER_VERSION,
     SEMANTIC_UNITIZER_VERSION,

@@ -435,8 +435,8 @@
             "minimum": "Minimale grootte (tokens)",
             "maximum": "Maximale grootte (tokens)",
             "percentile": "Semantische drempel (percentiel)",
-            "parentChild": "Zoek onderliggende passages en geef bovenliggende context terug (gepland)",
-            "parentMaximum": "Maximale grootte bovenliggende context (tokens)",
+            "parentChild": "Onderliggende passages zoeken en bovenliggende context teruggeven",
+            "parentMaximum": "Maximale grootte van bovenliggende context (geschatte tokens)",
             "binding": "Koppeling van inloggegevens",
             "platformConfiguration": "Platformconfiguratie",
             "destination": "Vectorbestemming",
@@ -454,9 +454,10 @@
             "tokenEstimationHint": "Groottes zijn schattingen: UTF-8-bytes gedeeld door {bytesPerToken, number}, naar boven afgerond. Ze gebruiken niet de tokenizer van het model. Een afzonderlijke bytelimiet uit het geverifieerde modelprofiel begrenst ook elke passage.",
             "tokenWindowHint": "Tokenvensters volgen de canonieke tekstvolgorde en kunnen koppen, alinea’s of pagina’s overschrijden. Hun bronverwijzingen behouden de exacte canonieke posities in de geïndexeerde extractie.",
             "tokenWindowTailHint": "Een korte laatste passage wordt alleen samengevoegd als de maximumgrootte en de bytelimiet van het model dit toelaten; anders blijft ze kort. Het minimum zorgt er nooit voor dat de laatste passage wordt weggelaten.",
-            "plannedChunkingHint": "Bovenliggende/onderliggende context is gepland. Dit profiel kan worden opgeslagen, maar indexering is niet beschikbaar zolang deze uitbreiding aanstaat.",
             "semanticHint": "Het percentiel gebruikt de dichtstbijzijnde rang van afstanden tussen opeenvolgende embeddings. Alle positieve gelijke waarden op de drempel kunnen een grens vormen; het is geen exact percentage splitsingen. Grootte, overlap en geverifieerde bytelimieten blijven gelden.",
-            "semanticWorkHint": "Grensbepaling voegt documentembeddingoproepen toe met het opgeslagen model, dimensies, voorbereiding, preset en gekoppelde inloggegevens. Aanvaarde voortgang blijft bewaard; een verzegeld plan behoudt zijn grenzen bij een nieuwe poging. Dit kan meer providergebruik verbruiken dan andere strategieën."
+            "semanticWorkHint": "Grensbepaling voegt documentembeddingoproepen toe met het opgeslagen model, dimensies, voorbereiding, preset en gekoppelde inloggegevens. Aanvaarde voortgang blijft bewaard; een verzegeld plan behoudt zijn grenzen bij een nieuwe poging. Dit kan meer providergebruik verbruiken dan andere strategieën.",
+            "parentContextHint": "Groepeer opeenvolgende onderliggende passages in ruimere context uit hetzelfde geïndexeerde document. De zoekopdracht rangschikt de onderliggende passages; de bovenliggende context krijgt geen embedding.",
+            "parentSizeHint": "De bovenliggende limiet gebruikt het aantal UTF-8-bytes gedeeld door {bytesPerToken, number}, naar boven afgerond, met een afzonderlijk maximum van {maxBytes, number} bytes. Ze moet de maximale grootte van een onderliggende passage dekken. Bovenliggende context gebruikt de contextlimiet van het embeddingmodel niet."
         },
         "access": {
             "title": "Toegang tot de collectie",
@@ -550,7 +551,7 @@
             "policies": "Opgeslagen beleid",
             "fileMaximum": "Maximale bestandsgrootte",
             "chunks": "Passages per collectie",
-            "policyHint": "Uploads reserveren capaciteit voor originelen en extracties. Indexering reserveert actieve en tijdelijke passages; bewaarde publicaties tellen mee tot de opruiming voltooid is. Alleen een platformbeheerder kan quota wijzigen.",
+            "policyHint": "Uploads reserveren capaciteit voor originelen en extracties. Indexering reserveert actieve en tijdelijke doorzoekbare onderliggende passages; bewaarde publicaties tellen mee tot de opruiming voltooid is. Bovenliggende context voegt begrensde applicatieopslag toe en krijgt geen embedding. Alleen een platformbeheerder kan quota wijzigen.",
             "temporaryChunks": "Tijdelijke passages per collectie"
         },
         "audit": {
@@ -715,7 +716,7 @@
             "working": "Bezig…",
             "readDenied": "Je hebt geen leesrecht voor deze collectie. Catalogusbeheer geeft geen toegang tot de inhoud.",
             "manageDenied": "Je kunt de index bekijken, maar niet beheren.",
-            "profileGate": "Indexering ondersteunt Ollama, Cohere, Voyage, OpenAI en Mistral met documentstructuur, tokenvensters of semantische opdeling. Bovenliggende/onderliggende uitbreiding blijft een opgeslagen concept.",
+            "profileGate": "Indexering ondersteunt Ollama, Cohere, Voyage, OpenAI en Mistral met onderliggende passages volgens documentstructuur, tokenvensters of semantische opdeling en optionele bovenliggende context.",
             "preset": "Invoervoorinstelling voor embeddings",
             "presetHint": "Kies expliciet een voorinstelling. Generiek verstuurt ruwe tekst; EmbeddingGemma gebruikt de gedocumenteerde document- en zoekvoorvoegsels.",
             "preparationHint": "Voorbereiding is een letterlijk voorvoegsel met een regeleinde voor documenten en zoekopdrachten. Het is geen invulsjabloon.",
@@ -752,7 +753,7 @@
             "taskSearch": "Achtergrondtaken filteren",
             "taskProgress": "{attempts, plural, one {# poging} other {# pogingen}} · {chunks, plural, one {# voltooide passage} other {# voltooide passages}} / {reserved, plural, one {# gereserveerde passage} other {# gereserveerde passages}} · bijgewerkt {updated}.",
             "retryTask": "Taak opnieuw proberen",
-            "chunksHint": "Bekijk begrensde passages en hun onveranderlijke canonieke bronposities voor deze generatie. Geschatte tokenaantallen gebruiken UTF-8-bytes gedeeld door drie, niet de tokenizer van het model. Tokenvensters kunnen structurele grenzen overschrijden; bronverwijzingen tonen hun oorsprong.",
+            "chunksHint": "Bekijk doorzoekbare onderliggende passages en optionele bovenliggende context voor deze generatie. Tokenaantallen zijn schattingen op basis van UTF-8-bytes gedeeld door drie, niet van de tokenizer van het model. Tokenvensters kunnen structuurgrenzen overschrijden; bronsegmenten tonen hun herkomst.",
             "chunkSearch": "Passagetekst doorzoeken",
             "version": "Versie {version, number}",
             "chunkInfo": "Passage {ordinal, number} · {tokens, number} tokens {estimate, select, yes {(geschat)} other {(geteld)}} · {published, select, yes {gepubliceerd} other {niet gepubliceerd}}.",
@@ -861,7 +862,7 @@
             },
             "errors": {
                 "ACCESS_REVOKED": "Je huidige lidmaatschap of collectierechten laten deze bewerking niet meer toe.",
-                "PROFILE_UNSUPPORTED": "Dit opgeslagen profiel wordt niet ondersteund voor indexering. Gebruik Ollama, Cohere, Voyage, OpenAI of Mistral met documentstructuur, tokenvensters of semantische opdeling en zonder bovenliggende/onderliggende uitbreiding. Cohere, Voyage, OpenAI en Mistral vereisen de preset Generiek.",
+                "PROFILE_UNSUPPORTED": "Dit opgeslagen model of opdelingsprofiel wordt niet ondersteund voor indexering. Gebruik Ollama, Cohere, Voyage, OpenAI of Mistral met onderliggende passages volgens documentstructuur, tokenvensters of semantische opdeling en eventueel een ondersteunde bovenliggende indeling. Cohere, Voyage, OpenAI en Mistral vereisen de preset Generiek.",
                 "CREDENTIALS_INVALID": "De opgeslagen embeddingtoegangsgegevens of goedgekeurde bestemming zijn niet beschikbaar. Controleer de profielkoppeling.",
                 "MODEL_NOT_FOUND": "Het opgeslagen model is niet gevonden of niet beschikbaar bij de ingestelde provider.",
                 "MODEL_UNSUPPORTED": "Het model biedt niet de vereiste native embeddingfunctie of voorinstelling.",
@@ -958,7 +959,18 @@
                 "SEMANTIC_PLANNING": "Semantische grenzen worden gepland. Aanvaarde voortgang blijft tussen workerhervattingen bewaard.",
                 "WAITING_FOR_EMBEDDING_CAPACITY": "Wachten op embeddingcapaciteit van de organisatie. De worker hervat automatisch wanneer capaciteit beschikbaar is; wachten verbruikt geen mislukte pogingen.",
                 "WAITING_FOR_EMBEDDING_WORK": "Het opruimen wacht tot verzonden embeddingwerk is afgehandeld of de deadline bereikt."
-            }
+            },
+            "sourcePositions": "Bronposities",
+            "matchedPassage": "Gevonden onderliggende passage",
+            "parentContextTitle": "Bovenliggende context",
+            "parentContextToggle": "{expanded, select, yes {Bovenliggende context verbergen} other {Bovenliggende context tonen}}",
+            "parentContextInfo": "{tokens, plural, one {# token} other {# tokens}} {estimate, select, yes {(geschat)} other {(geteld)}} · canonieke tekens {start, number}–{end, number}. De eindpositie is uitgesloten.",
+            "parentContextSourceHint": "De context en de gevonden passage komen uit exact dezelfde geïndexeerde versie. De toegang tot de bron wordt bij het openen opnieuw gecontroleerd.",
+            "parentUnderfilled": "Het begrensde venster met onderliggende kandidaten leverde minder verschillende bovenliggende contexten op dan gevraagd. Er kunnen nog andere toegankelijke contexten bestaan.",
+            "parentSearchHint": "Elke teruggegeven context behoudt zijn sterkste onderliggende match uit het begrensde kandidatenvenster. De getoonde scores horen bij die passage; scores van andere onderliggende passages worden niet opgeteld.",
+            "parentContextVersion": "Bovenliggende indeling: {version}",
+            "parentAccountingHint": "Passagetellers en quota tellen doorzoekbare onderliggende passages. Bovenliggende context voegt begrensde opgeslagen tekst toe en krijgt geen embedding.",
+            "parentSealingStage": "De volledige onderliggende en bovenliggende indeling wordt gecontroleerd en verzegeld voordat vectoren worden geschreven."
         },
         "semantic": {
             "title": "Semantische planning en embeddingwerk",

@@ -1,10 +1,146 @@
 import assert from 'node:assert/strict';
 import type { TestContext } from 'node:test';
 import { prisma } from '@repo/db';
+import {
+    chunkView,
+    indexGeneration,
+    parentContext,
+    searchResult,
+} from '@repo/api-contracts/v1/rag/indexing-types';
 import { app } from '../app';
 import { fixture as f, profile } from './fixtures';
 
 export async function lifecycleTests(t: TestContext) {
+    await t.test(
+        'optional parent context preserves historical chunk and generation DTOs and bounds new context',
+        () => {
+            const span = {
+                source: { kind: 'text' as const, index: 0, start: 0, end: 20 },
+                start: 2,
+                end: 9,
+            };
+            const child = {
+                id: 'contract-child',
+                generationId: 'contract-generation',
+                publicationId: 'contract-publication',
+                documentId: 'contract-document',
+                documentName: 'Contract document',
+                version: 1,
+                ordinal: 0,
+                text: 'passage',
+                tokenCount: 3,
+                tokenCountIsEstimate: true,
+                language: 'EN' as const,
+                sourceSpans: [span],
+                sourceSpansTruncated: false,
+                published: true,
+            };
+            assert.deepEqual(chunkView.parse(child), child);
+            assert.equal(
+                chunkView.parse({
+                    ...child,
+                    startOffset: null,
+                    endOffset: null,
+                }).startOffset,
+                null
+            );
+            const parent = {
+                id: 'contract-parent',
+                ordinal: 1,
+                text: 'A passage in context',
+                startOffset: 0,
+                endOffset: 20,
+                tokenCount: 7,
+                tokenCountIsEstimate: true,
+                sourceSpans: [span],
+                sourceSpansTruncated: false,
+            };
+            const extended = {
+                ...child,
+                startOffset: 2,
+                endOffset: 9,
+                parentContext: parent,
+            };
+            assert.deepEqual(chunkView.parse(extended), extended);
+            assert.deepEqual(
+                chunkView
+                    .omit({
+                        parentContext: true,
+                        startOffset: true,
+                        endOffset: true,
+                    })
+                    .parse(extended),
+                child
+            );
+            assert.equal(
+                parentContext.safeParse({
+                    ...parent,
+                    startOffset: 20,
+                    endOffset: 20,
+                }).success,
+                false
+            );
+            assert.equal(
+                parentContext.safeParse({
+                    ...parent,
+                    sourceSpans: Array.from({ length: 65 }, () => span),
+                }).success,
+                false
+            );
+            const source = {
+                receipt: 'same-child-receipt',
+                expiresAt: new Date(),
+            };
+            const result = searchResult.parse({
+                ...extended,
+                mediaType: 'text/plain',
+                tags: [],
+                metadata: {},
+                source,
+                scores: {
+                    rrf: 1 / 61,
+                    lexicalRank: 1,
+                    vectorRank: null,
+                    vectorDistance: null,
+                },
+            });
+            assert.equal(result.id, child.id);
+            assert.equal(result.text, child.text);
+            assert.deepEqual(result.source, source);
+            const generation = {
+                id: 'contract-generation',
+                status: 'ACTIVE' as const,
+                configurationRevision: 1,
+                previousGenerationId: null,
+                model: 'synthetic-model',
+                dimensions: 128,
+                modelIdentity: 'synthetic-identity',
+                createdAt: new Date(),
+                activatedAt: new Date(),
+                retiredAt: null,
+                cleanupAfter: null,
+                projectedChunks: 1,
+                totalDocuments: 1,
+                publishedDocuments: 1,
+                errorCode: null,
+            };
+            assert.deepEqual(indexGeneration.parse(generation), generation);
+            assert.equal(
+                indexGeneration.parse({
+                    ...generation,
+                    parentContextVersion: null,
+                }).parentContextVersion,
+                null
+            );
+            assert.deepEqual(
+                indexGeneration.omit({ parentContextVersion: true }).parse({
+                    ...generation,
+                    parentContextVersion: 'parent-context-utf8-v1',
+                }),
+                generation
+            );
+        }
+    );
     await t.test(
         'configuration revisions are immutable, optimistic, bounded, and have no private fields',
         async () => {
@@ -48,6 +184,17 @@ export async function lifecycleTests(t: TestContext) {
             const result = await f.owner.rag.collections.get({
                 id: collection.id,
             });
+            assert.equal(result.configuration.parentChild, true);
+            assert.equal(result.configuration.dimensions, 1024);
+            assert.equal(
+                (
+                    await f.owner.rag.indexing.status({
+                        collectionId: collection.id,
+                    })
+                ).unsupportedReason,
+                null,
+                'Parent mode is executable; model availability is established separately by native verification.'
+            );
             assert.ok(!('endpoint' in result.configuration));
             assert.ok(!('organizationId' in result.configuration));
             assert.ok(!('apiKey' in result.configuration));
@@ -206,14 +353,14 @@ export async function lifecycleTests(t: TestContext) {
                 { headers: f.owner.headers() }
             );
             assert.equal(response.status, 200);
-            assert.equal(response.headers.get('Vectorix-API-Revision'), '14');
+            assert.equal(response.headers.get('Vectorix-API-Revision'), '15');
             assert.equal(
                 (await response.json()).total,
                 (await f.owner.rag.collections.list({})).total
             );
             const spec = await (await app.request('/spec/v1.json')).json();
             const alias = await (await app.request('/spec.json')).json();
-            assert.equal(spec.info.version, '1.14.0');
+            assert.equal(spec.info.version, '1.15.0');
             assert.deepEqual(alias, spec);
             for (const provider of ['OPENAI', 'MISTRAL'])
                 assert.ok(
@@ -242,7 +389,7 @@ export async function lifecycleTests(t: TestContext) {
             const discovery = await (
                 await app.request('/api-versions.json')
             ).json();
-            assert.ok(JSON.stringify(discovery).includes('"revision":14'));
+            assert.ok(JSON.stringify(discovery).includes('"revision":15'));
             assert.equal(
                 (await app.request('/api/v1/admin/rag/collections')).status,
                 401

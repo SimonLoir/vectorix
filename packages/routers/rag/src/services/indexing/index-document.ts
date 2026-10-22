@@ -1,16 +1,12 @@
-import { randomUUID } from 'node:crypto';
-import { isDeepStrictEqual } from 'node:util';
 import type { IndexTask, PrismaClient } from '@repo/db';
 import { decodeStoredExtraction } from '@repo/documents';
-import type { PlannedChunk } from '@repo/chunking';
+import { planParentContext, type PlannedChunk } from '@repo/chunking';
 import {
     modelIdentity,
     embeddingInputByteLimit,
-    prepareEmbeddingInput,
     embedDocuments,
 } from '@repo/embeddings';
 import { readObject } from '@repo/storage';
-import { manifestHash } from '@repo/vector-store';
 import { collectionProfile } from '@repo/api-contracts/v1/rag/collections';
 import { MAX_DOCUMENT_BYTES } from '@repo/api-contracts/v1/rag/documents';
 import { runSerializableTransaction } from '@routers/utils/transactions';
@@ -31,10 +27,8 @@ import {
     lockSemanticAccounting,
 } from './semantic-work';
 import { collectIndexChunks } from './planned-chunks';
-import {
-    reserveCandidateChunks,
-    accountMaterializedChunks,
-} from './accounting';
+import { materializeIndexChunks } from './chunk-materialization';
+import { reserveCandidateChunks } from './accounting';
 import {
     requireCurrentCandidate,
     publishIndexedCandidate,
@@ -166,6 +160,11 @@ export async function executeDocumentIndex(
                   },
               })
             : collectIndexChunks(chunker.plan(extraction, options));
+    const layout = chunker.parentContextVersion
+        ? planParentContext(extraction, plans, {
+              parentMaxTokens: chunking.parentMaxTokens,
+          })
+        : undefined;
     await runSerializableTransaction(db, async (tx) => {
         await renewIndexClaim(tx, claim, 'PLANNING');
         await requireIndexAuthority(tx, task);
@@ -178,81 +177,17 @@ export async function executeDocumentIndex(
             count: plans.length,
         });
     });
-    for (let start = 0; start < plans.length; start += 128) {
-        const batch = plans.slice(start, start + 128).map((chunk) => ({
-            id: randomUUID(),
-            organizationId: claim.organizationId,
-            generationId: claim.generationId,
-            indexedDocumentId: candidateId,
-            ordinal: chunk.ordinal,
-            text: chunk.text,
-            textHash: contentHash(chunk.text),
-            embeddingInputHash: contentHash(
-                prepareEmbeddingInput(identity, 'document', chunk.text, {
-                    title: candidate.fileName,
-                    preparation: profile.preparation,
-                })
-            ),
-            sourceSpans: chunk.sourceSpans.map((span) => ({
-                source: { ...span.source },
-                start: span.start,
-                end: span.end,
-            })),
-            language: candidate.language,
-            tokenCount: chunk.tokenCount,
-            tokenCountIsEstimate: true,
-        }));
-        await runSerializableTransaction(db, async (tx) => {
-            await renewIndexClaim(tx, claim, 'MATERIALIZING');
-            await requireCurrentCandidate(tx, claim, candidateId);
-            const existing = await tx.chunk.findMany({
-                where: {
-                    indexedDocumentId: candidateId,
-                    ordinal: { gte: start, lt: start + batch.length },
-                },
-                orderBy: { ordinal: 'asc' },
-            });
-            for (const row of existing) {
-                const expected = batch[row.ordinal - start];
-                if (
-                    !expected ||
-                    row.textHash !== expected.textHash ||
-                    row.embeddingInputHash !== expected.embeddingInputHash ||
-                    !isDeepStrictEqual(row.sourceSpans, expected.sourceSpans)
-                )
-                    throw new IndexingError('PROCESSING_FAILED');
-            }
-            const present = new Set(existing.map((row) => row.ordinal));
-            const missing = batch.filter((row) => !present.has(row.ordinal));
-            if (missing.length) {
-                await tx.chunk.createMany({ data: missing });
-                await accountMaterializedChunks(tx, {
-                    collectionId: claim.collectionId,
-                    candidateId,
-                    taskId: task.id,
-                    count: missing.length,
-                });
-            }
-        });
-    }
-    const chunks = await db.chunk.findMany({
-        where: { indexedDocumentId: candidateId },
-        orderBy: { ordinal: 'asc' },
-        select: { id: true, ordinal: true, textHash: true },
-        take: 100_001,
+    const { chunks, hash } = await materializeIndexChunks(db, {
+        claim,
+        task,
+        candidateId,
+        language: candidate.language,
+        fileName: candidate.fileName,
+        preparation: profile.preparation,
+        identity,
+        children: plans,
+        layout,
     });
-    if (
-        chunks.length !== plans.length ||
-        chunks.some((chunk, index) => chunk.ordinal !== index)
-    )
-        throw new IndexingError('PROCESSING_FAILED');
-    const hash = manifestHash(
-        chunks.map((chunk) => ({
-            chunkId: chunk.id,
-            ordinal: chunk.ordinal,
-            chunkHash: chunk.textHash,
-        }))
-    );
     const publication = {
         id: candidateId,
         documentId: candidate.documentId,
@@ -275,6 +210,7 @@ export async function executeDocumentIndex(
             const rows = await db.chunk.findMany({
                 where: {
                     indexedDocumentId: candidateId,
+                    kind: 'CHILD',
                     ordinal: { gte: start, lt: start + 64 },
                 },
                 orderBy: { ordinal: 'asc' },

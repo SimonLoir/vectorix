@@ -4,6 +4,7 @@ import {
     resolveChunkingStrategy,
     SEMANTIC_CHUNKER_VERSION,
     SEMANTIC_UNITIZER_VERSION,
+    PARENT_CONTEXT_VERSION,
 } from '@repo/chunking';
 import {
     assertSupportedIndexProfile,
@@ -11,12 +12,28 @@ import {
 } from './embedding-profile';
 import { indexError } from './errors';
 
+/** Parent layout is application-owned and never changes a saved child algorithm or capability snapshot. */
+export function resolveParentContextVersion(
+    profile: Pick<IndexProfile, 'parentChild'>,
+    savedVersion?: string | null
+) {
+    const expected = profile.parentChild ? PARENT_CONTEXT_VERSION : null;
+    if (savedVersion !== undefined && savedVersion !== expected)
+        throw indexError('MODEL_CHANGED');
+    return expected;
+}
+
 /** Resolve the exact saved strategy/version pair before any credential, source or provider I/O. */
 export function resolveIndexChunking(
     profile: IndexProfile,
-    savedVersion?: string
+    savedVersion?: string,
+    savedParentContextVersion?: string | null
 ) {
     assertSupportedIndexProfile(profile);
+    const parentContextVersion = resolveParentContextVersion(
+        profile,
+        savedParentContextVersion
+    );
     try {
         if (profile.chunkingStrategy === 'SEMANTIC') {
             if (
@@ -28,11 +45,13 @@ export function resolveIndexChunking(
                 kind: 'SEMANTIC' as const,
                 version: SEMANTIC_CHUNKER_VERSION,
                 unitizerVersion: SEMANTIC_UNITIZER_VERSION,
+                parentContextVersion,
             };
         }
         return {
             ...resolveChunkingStrategy(profile.chunkingStrategy, savedVersion),
             kind: 'SYNCHRONOUS' as const,
+            parentContextVersion,
         };
     } catch (error) {
         if (error instanceof ChunkingError)
@@ -53,12 +72,17 @@ export async function requireGenerationChunking(
 ) {
     const generation = await db.indexGeneration.findFirst({
         where: { organizationId, id: generationId },
-        select: { configuration: true, chunkerVersion: true },
+        select: {
+            configuration: true,
+            chunkerVersion: true,
+            parentContextVersion: true,
+        },
     });
     if (!generation) throw indexError('MODEL_CHANGED');
     return resolveIndexChunking(
         generation.configuration,
-        generation.chunkerVersion
+        generation.chunkerVersion,
+        generation.parentContextVersion
     );
 }
 

@@ -58,6 +58,14 @@ export function IndexGenerations({
                                     chunks: generation.projectedChunks,
                                 })}
                             </p>
+                            {generation.parentContextVersion && (
+                                <p className='break-all text-xs text-muted-foreground'>
+                                    {tr('parentContextVersion', {
+                                        version:
+                                            generation.parentContextVersion,
+                                    })}
+                                </p>
+                            )}
                             {generation.previousGenerationId && (
                                 <p className='break-all text-xs text-muted-foreground'>
                                     {tr('rebuild.predecessor', {

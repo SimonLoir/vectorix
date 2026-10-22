@@ -50,6 +50,7 @@ async function exactSource(
             chunks: {
                 some: {
                     id: receipt.chunkId,
+                    kind: 'CHILD',
                     organizationId: receipt.organizationId,
                 },
             },
@@ -58,7 +59,7 @@ async function exactSource(
             sourceVersion: true,
             extraction: true,
             chunks: {
-                where: { id: receipt.chunkId },
+                where: { id: receipt.chunkId, kind: 'CHILD' },
                 take: 1,
                 select: { sourceSpans: true },
             },

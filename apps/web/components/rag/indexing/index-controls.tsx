@@ -206,6 +206,9 @@ export function IndexControls({
                     temporary: status.usage.temporaryLimit,
                 })}
             </p>
+            <p className='text-xs text-muted-foreground'>
+                {tr('parentAccountingHint')}
+            </p>
             <IndexGenerations collection={collection} status={status} />
             {review && (
                 <RebuildDialog

@@ -13,6 +13,8 @@ import { resolveIndexChunking } from './generation-profile';
 import { publicationFilters, type SearchFilters } from './filters';
 import { lexicalSearch } from './lexical';
 import { chunkDto } from './views';
+import { readProjectedChunks } from './chunk-projection';
+import { selectSearchRepresentatives } from './search-representatives';
 import { issueSourceReceipt } from './receipts';
 import { indexError, safeIndexError } from './errors';
 import { SEARCH_DEADLINE_MS } from './source-retention';
@@ -91,7 +93,8 @@ export async function searchCollection(
         if (!generation) throw indexError('SOURCE_UNAVAILABLE');
         resolveIndexChunking(
             generation.configuration,
-            generation.chunkerVersion
+            generation.chunkerVersion,
+            generation.parentContextVersion
         );
         const filters = publicationFilters(
             generation.configuration.metadataFields,
@@ -129,7 +132,10 @@ export async function searchCollection(
         });
         if (publications.length > 5000) throw indexError('CHUNK_LIMIT');
         const publicationIds = publications.map((item) => item.id);
-        const candidateLimit = Math.min(200, input.topK * 4);
+        const parentEnabled = generation.parentContextVersion !== null;
+        const candidateLimit = parentEnabled
+            ? Math.min(500, Math.max(200, input.topK * 10))
+            : Math.min(200, input.topK * 4);
         const lexicalPromise =
             input.strategy === 'VECTOR'
                 ? Promise.resolve([] as { id: string }[])
@@ -230,37 +236,80 @@ export async function searchCollection(
                 right.rrf - left.rrf || leftId.localeCompare(rightId)
         );
         await requireIndexRead(context, collection.id);
-        // Hydration revalidates exact captured publications and current associations;
-        // concurrent replacement may remove a hit, but never introduces another generation.
-        const chunks = await context.db.chunk.findMany({
+        // Ranking never loads canonical text/provenance. Refresh temporal fences
+        // after provider I/O and hydrate only final unique parent representatives.
+        const currentWhere = (): Prisma.IndexedDocumentWhereInput => ({
+            AND: [
+                livePublications(
+                    actor.organizationId,
+                    collection.id,
+                    generation.id
+                ),
+                filters,
+                { id: { in: publicationIds } },
+            ],
+        });
+        const metadata = await context.db.chunk.findMany({
             where: {
                 organizationId: actor.organizationId,
                 generationId: generation.id,
                 kind: 'CHILD',
                 id: { in: ranked.map(([id]) => id) },
-                indexedDocument: {
-                    AND: [
-                        where,
-                        {
-                            id: { in: publicationIds },
-                            generation: {
-                                status: { in: ['ACTIVE', 'RETIRED'] },
-                            },
-                        },
-                    ],
-                },
+                indexedDocument: currentWhere(),
             },
-            include: { indexedDocument: { include: { sourceVersion: true } } },
+            select: { id: true, parentId: true, indexedDocumentId: true },
+            take: candidateLimit * 2,
+        });
+        const selected = selectSearchRepresentatives(
+            ranked,
+            metadata,
+            parentEnabled,
+            input.topK
+        );
+        const chunks = await readProjectedChunks(context.db, {
+            organizationId: actor.organizationId,
+            generationId: generation.id,
+            ids: selected.map(([id]) => id),
+            parentEnabled,
+        });
+        // The exact candidate/association/source fences are current again after
+        // context hydration. Never replace the captured generation mid-request.
+        const publicationsNow = await context.db.indexedDocument.findMany({
+            where: {
+                AND: [
+                    currentWhere(),
+                    {
+                        id: { in: chunks.map((row) => row.indexedDocumentId) },
+                    },
+                ],
+            },
+            select: {
+                id: true,
+                documentId: true,
+                fileName: true,
+                status: true,
+                sourceVersionId: true,
+                extractionId: true,
+                sourceVersion: { select: { version: true } },
+                mediaType: true,
+                tags: true,
+                metadata: true,
+            },
+            take: input.topK,
         });
         await requireIndexRead(context, collection.id);
         const byId = new Map(chunks.map((chunk) => [chunk.id, chunk]));
+        const byPublication = new Map(
+            publicationsNow.map((row) => [row.id, row])
+        );
         if (Date.now() - startedAt >= SEARCH_DEADLINE_MS)
             throw indexError('PROVIDER_TIMEOUT');
-        const results = ranked
+        const results = selected
             .flatMap(([id, scores]) => {
                 const chunk = byId.get(id);
                 if (!chunk) return [];
-                const publication = chunk.indexedDocument;
+                const publication = byPublication.get(chunk.indexedDocumentId);
+                if (!publication) return [];
                 return [
                     {
                         ...chunkDto(chunk, publication),
@@ -289,6 +338,9 @@ export async function searchCollection(
             strategy: input.strategy,
             results,
             vectorUnderfilled: vectorResult.value.underfilled,
+            ...(parentEnabled
+                ? { parentUnderfilled: results.length < input.topK }
+                : {}),
             durationMs: Date.now() - startedAt,
         };
     } catch (error) {

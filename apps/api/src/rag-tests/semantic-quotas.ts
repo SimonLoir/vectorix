@@ -200,13 +200,13 @@ export async function semanticQuotaTests(t: TestContext) {
                 }
             );
             await t.test(
-                'the compatible semantic API is advertised at revision 1.14.0 with dedicated quota routes',
+                'the current compatible API revision retains dedicated semantic quota routes',
                 async () => {
                     const response = await app.request('/spec/v1.json');
                     assert.equal(response.status, 200);
                     assert.equal(
                         response.headers.get('Vectorix-API-Revision'),
-                        '14'
+                        '15'
                     );
                     const spec: unknown = await response.json();
                     assert(
@@ -217,7 +217,7 @@ export async function semanticQuotaTests(t: TestContext) {
                             typeof spec.info === 'object' &&
                             'version' in spec.info
                     );
-                    assert.equal(spec.info.version, '1.14.0');
+                    assert.equal(spec.info.version, '1.15.0');
                     assert(
                         'paths' in spec &&
                             spec.paths &&

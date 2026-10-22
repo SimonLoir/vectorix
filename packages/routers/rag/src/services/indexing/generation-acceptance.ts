@@ -287,6 +287,7 @@ export async function acceptIndexGeneration(
                         modelIdentity: identity.digest,
                         capabilitySnapshot: identity,
                         chunkerVersion: chunker.version,
+                        parentContextVersion: chunker.parentContextVersion,
                         snapshotSequence: locked.contentSequence,
                         appliedSequence: locked.contentSequence,
                         createdBy: currentActor.userId,
