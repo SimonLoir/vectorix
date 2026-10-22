@@ -9,6 +9,7 @@ Vectorix is a multi-tenant application foundation. Preserve its reusable authent
 - Use pnpm and Turborepo. The root `package.json` pins the supported Node.js and pnpm versions; install with `pnpm install --frozen-lockfile`.
 - Runtime services are `apps/web`, `apps/api`, `apps/admin`, `apps/workers`, and the database migrator in `packages/db`.
 - Local infrastructure is defined in `docker-compose.yml`: application PostgreSQL, Redis, a separate PostgreSQL vector store, and RustFS with a private bucket initializer. See `docs/rag-infrastructure.md` for configuration, role boundaries, and validation.
+- Bound HTTP request bodies before authentication and RPC/REST parsing; preserve registry-derived document upload allowances, actual exposed-stream byte counting and sanitized transport errors.
 - Put reusable logic in focused packages. `packages/routers/*` owns route implementations, `packages/api` composes routers, and `apps/api` wires HTTP transport, authentication, and request context.
 - Keep one endpoint per route file. Router `index.ts` files should import and compose handlers rather than contain business logic.
 - Split features into schemas, services, handlers, queue processors, page shells, forms, lists, dialogs, and shared types as needed. Avoid placing an entire workflow in one large file.

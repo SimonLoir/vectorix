@@ -70,6 +70,8 @@ Organization API keys remain separate from user sessions. Removed issuers, unbou
 
 The API uses `/rpc/v1` and `/api/v1`. The current compatible contract revision is `1.12.0`. The OpenAPI schema is available at `/spec/v1.json` and `/spec.json`, and the version registry at `/api-versions.json`. `/health` checks the process; `/ready` checks PostgreSQL and Redis.
 
+Before auth and RPC/REST parsing, the API limits ordinary request bodies to 1 MiB and reserves a 26 MiB envelope for the four supported POST document upload/replacement routes. The original-file contract remains 25 MiB. The guard counts exposed stream bytes even when `Content-Length` is absent or understated; CORS preflight and bodyless adapter behavior remain unchanged. See [HTTP request limits](docs/http-request-limits.md) for route matching, sanitized 413 responses and deployment boundaries.
+
 ## Configuration
 
 All variables are documented in `.env.example`. Public values are read on the server and passed to the interface, without `NEXT_PUBLIC_*` variables.
@@ -189,6 +191,7 @@ Implement changes on a dedicated `codex/*` branch and open a pull request agains
 ## Documentation
 
 - [Repository conventions](AGENTS.md): architecture, authorization, API compatibility, development, and validation rules.
+- [HTTP request limits](docs/http-request-limits.md): pre-parser body budgets, upload exceptions, actual-byte counting and acceptance.
 - [API-key authorization](docs/api-key-authorization.md): current issuer permissions, key/session separation, historical key reissue and role-revocation acceptance.
 - [RAG catalog and access](docs/rag-catalog-access.md): implemented backend foundation, schema, credentials, authorization, quotas, validation, and outstanding dashboard checklist.
 - [RAG infrastructure](docs/rag-infrastructure.md): phase 1 services, connection settings, role boundaries, and isolated acceptance tests.
