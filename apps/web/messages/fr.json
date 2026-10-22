@@ -88,6 +88,7 @@
         "sendResetLink": "Envoyer le lien",
         "resetLinkSent": "Lien de réinitialisation envoyé",
         "failedSendResetLink": "Échec de l'envoi du lien",
+        "temporarilyUnavailable": "La réinitialisation du mot de passe est temporairement indisponible. Réessayez plus tard ou contactez l’assistance.",
         "tryAnotherEmail": "Utiliser une autre adresse",
         "backToSignIn": "Retour à la connexion"
     },

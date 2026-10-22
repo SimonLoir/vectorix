@@ -88,6 +88,7 @@
         "sendResetLink": "Resetlink verzenden",
         "resetLinkSent": "Resetlink verzonden",
         "failedSendResetLink": "Resetlink verzenden mislukt",
+        "temporarilyUnavailable": "Wachtwoordherstel is tijdelijk niet beschikbaar. Probeer het later opnieuw of neem contact op met de ondersteuning.",
         "tryAnotherEmail": "Ander e-mailadres gebruiken",
         "backToSignIn": "Terug naar inloggen"
     },

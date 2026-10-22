@@ -88,6 +88,7 @@
         "sendResetLink": "Send reset link",
         "resetLinkSent": "Reset link sent",
         "failedSendResetLink": "Failed to send reset link",
+        "temporarilyUnavailable": "Password reset is temporarily unavailable. Try again later or contact support.",
         "tryAnotherEmail": "Use another email",
         "backToSignIn": "Back to sign in"
     },

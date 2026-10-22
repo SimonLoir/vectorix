@@ -1,4 +1,5 @@
 import MailService from '@repo/emails/mail-service';
+import { buildCanonicalPasswordResetUrl } from './password-reset-url';
 
 type MailCredentials =
     | {
@@ -27,8 +28,6 @@ type PasswordResetEmailInput = Readonly<{
 }>;
 
 const defaultSenderEmail = 'noreply@example.com';
-const publicWebUrlEnvKeys = ['VECTORIX_WEB_URL', 'WEB_URL', 'APP_URL'];
-const defaultPublicWebUrl = 'http://localhost:3000';
 
 const passwordResetTranslations: Record<
     PasswordResetLocale,
@@ -130,57 +129,6 @@ function getMailService(credentials: MailCredentials): MailService {
             },
         },
     });
-}
-
-function normalizeBaseUrl(value: string | null | undefined): string | null {
-    if (!value) return null;
-
-    try {
-        const url = new URL(value);
-        if (!['http:', 'https:'].includes(url.protocol)) return null;
-
-        return url.toString().replace(/\/$/, '');
-    } catch {
-        return null;
-    }
-}
-
-function getConfiguredPublicWebUrl(): string | null {
-    for (const key of publicWebUrlEnvKeys) {
-        const url = normalizeBaseUrl(process.env[key]);
-        if (url) return url;
-    }
-
-    return null;
-}
-
-function getRequestOrigin(request?: Request): string | null {
-    const origin = normalizeBaseUrl(request?.headers.get('origin'));
-    if (origin) return origin;
-
-    const referer = request?.headers.get('referer');
-    if (!referer) return null;
-
-    try {
-        return normalizeBaseUrl(new URL(referer).origin);
-    } catch {
-        return null;
-    }
-}
-
-function resolvePublicWebUrl(request?: Request): string {
-    return (
-        getConfiguredPublicWebUrl() ??
-        getRequestOrigin(request) ??
-        defaultPublicWebUrl
-    );
-}
-
-function buildResetPasswordUrl(baseUrl: string, token: string) {
-    const url = new URL('reset-password', `${baseUrl.replace(/\/$/, '')}/`);
-    url.searchParams.set('token', token);
-
-    return url.toString();
 }
 
 function parseCookieValue(cookieHeader: string | null, name: string) {
@@ -296,11 +244,13 @@ function buildPasswordResetHtml({
     `;
 }
 
+/** Revalidate the server URL before mail work; request headers affect locale only. */
 export async function sendPasswordResetEmail({
     user,
     token,
     request,
 }: PasswordResetEmailInput) {
+    const resetUrl = buildCanonicalPasswordResetUrl(token);
     const credentials = getGlobalMailCredentials();
     if (!credentials) {
         throw new Error(
@@ -312,8 +262,6 @@ export async function sendPasswordResetEmail({
     const t = passwordResetTranslations[locale];
     const mailService = getMailService(credentials);
     const trimmedName = user.name?.trim();
-    const resetUrl = buildResetPasswordUrl(resolvePublicWebUrl(request), token);
-
     await mailService.sendMail(
         user.email,
         t.subject,
