@@ -39,6 +39,12 @@ import { syncAuthorityRaceTests } from './rag-tests/sync-authority-races';
 import { syncAuthorityLedgerTests } from './rag-tests/sync-authority-ledger';
 import { syncAuthorityActivationTests } from './rag-tests/sync-authority-activation';
 
+import { operationsSnapshotTests } from './rag-tests/operations-snapshot';
+import { operationsAccessTests } from './rag-tests/operations-access';
+import { operationsLifecycleTests } from './rag-tests/operations-lifecycle';
+import { operationsActivationTests } from './rag-tests/operations-activation';
+import { operationsRaceTests } from './rag-tests/operations-races';
+
 after(cleanup);
 void test('RAG catalog with real PostgreSQL and HTTP transports', async (t) => {
     await setup();
@@ -80,4 +86,9 @@ void test('RAG catalog with real PostgreSQL and HTTP transports', async (t) => {
     await syncAuthorityRaceTests(t);
     await syncAuthorityLedgerTests(t);
     await syncAuthorityActivationTests(t);
+    await operationsSnapshotTests(t);
+    await operationsAccessTests(t);
+    await operationsLifecycleTests(t);
+    await operationsActivationTests(t);
+    await operationsRaceTests(t);
 });

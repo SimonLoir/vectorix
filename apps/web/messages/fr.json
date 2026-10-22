@@ -1060,6 +1060,72 @@
             "confirmedBatches": "Lots réussis confirmés",
             "uncertainBatches": "Lots non résolus",
             "taskHint": "La planification ajoute des embeddings de type document selon le profil enregistré. Les reprises ne consomment pas les tentatives d’échec. L’usage peut être enregistré après la perte du bail d’une tâche ; un résultat obsolète ne peut pas faire progresser le plan ni publier du contenu."
+        },
+        "operations": {
+            "title": "Opérations",
+            "description": "Repérez les tâches en attente ou en échec et ouvrez leur espace de récupération existant.",
+            "scope": "Ces totaux couvrent les tâches durables en cours dans toute l’organisation, y compris celles que vous ne pouvez pas consulter. Les filtres de détail ne changent pas les totaux de l’organisation.",
+            "unmeasured": "Cette vue ne mesure ni la santé des workers, ni l’activité de recherche, ni le débit, ni la latence par phase.",
+            "observedAt": "Instantané observé le {date}",
+            "total": "{count, plural, one {# tâche en cours} other {# tâches en cours}}",
+            "categories": {
+                "INGESTION": "Traitement des documents",
+                "DOCUMENT_CLEANUP": "Nettoyage des originaux et extractions",
+                "INDEXING": "Indexation et nettoyage des collections"
+            },
+            "counts": {
+                "uploading": "Dépôt en attente",
+                "due": "Éligible au prochain scan",
+                "scheduled": "Planifié",
+                "leased": "Prise en charge valide",
+                "expired": "Sans bail de traitement valide",
+                "failed": "En échec"
+            },
+            "oldestAccepted": "Plus ancienne tâche en cours acceptée le : {date}",
+            "noAcceptedWork": "Aucune tâche en cours dans cette catégorie.",
+            "detailsTitle": "Tâches que vous pouvez consulter",
+            "detailsHint": "Seuls les éléments autorisés par vos droits actuels sur les documents ou les collections apparaissent ici. Ouvrez un espace pour consulter les contrôles de récupération disponibles ; cette liste ne donne pas de droits de récupération.",
+            "category": "Catégorie de tâche",
+            "state": "État de planification",
+            "search": "Filtrer par nom de document ou de collection",
+            "refresh": "Actualiser l’instantané",
+            "states": {
+                "ALL": "Tous les états en cours",
+                "UPLOADING": "Dépôt en attente",
+                "DUE": "Éligible au prochain scan",
+                "SCHEDULED": "Planifié",
+                "LEASED": "Prise en charge valide",
+                "EXPIRED": "Prise en charge sans bail valide",
+                "FAILED": "En échec"
+            },
+            "timingHint": "L’ancienneté comprend le dépôt, l’attente, les délais entre tentatives et les relances ; ce n’est pas le temps d’exécution. Les tâches éligibles nécessitent encore des contrôles d’accès, de source et de capacité. Un nettoyage planifié peut attendre la fin de la conservation. Une prise en charge ne prouve pas qu’un worker est actif.",
+            "visibleTotal": "{count, plural, one {# élément correspondant visible pour vous} other {# éléments correspondants visibles pour vous}}",
+            "empty": "Aucune tâche visible ne correspond à ces filtres. Les totaux de l’organisation peuvent inclure des tâches que vous ne pouvez pas consulter.",
+            "kinds": {
+                "INGESTION": "Dépôt et extraction",
+                "DOCUMENT_CLEANUP": "Nettoyage des fichiers privés",
+                "PROVISION": "Préparer l’index de la collection",
+                "INDEX_DOCUMENT": "Indexer le document",
+                "REMOVE_DOCUMENT": "Retirer le document indexé",
+                "CLEAN_PUBLICATION": "Nettoyer la publication conservée",
+                "CLEAN_GENERATION": "Nettoyer la génération d’index"
+            },
+            "version": "Version source {version, number}",
+            "deletedTarget": "Élément supprimé · espace de nettoyage uniquement",
+            "accepted": "Accepté le : {date}",
+            "age": "Ancienneté à cet instantané : {minutes, plural, =0 {moins d’une minute} one {# minute} other {# minutes}}",
+            "attempts": "{count, plural, one {# tentative enregistrée} other {# tentatives enregistrées}}",
+            "available": "Planifié pour le : {date}",
+            "leaseDeadline": "Échéance du bail de traitement : {date}",
+            "unknownFailure": "Un échec a été enregistré. Ouvrez l’espace pour consulter le diagnostic actuel disponible.",
+            "errors": {
+                "CLEANUP_FAILED": "Le nettoyage des fichiers privés a échoué. Consultez leur cycle de vie avant de relancer."
+            },
+            "openRecovery": "Ouvrir l’espace",
+            "openNamedWorkspace": "Ouvrir l’espace de {name}",
+            "inspectCleanup": "Consulter le nettoyage de la collection",
+            "inspectNamedCleanup": "Consulter le nettoyage de la collection supprimée {name}",
+            "paginationLimited": "La pagination couvre les {count, number} premiers éléments correspondants. Précisez les filtres pour consulter les autres tâches."
         }
     },
     "dashboard": {
@@ -1076,7 +1142,8 @@
             "roles": "Rôles et permissions",
             "apiKeys": "Clés API",
             "licenses": "Licences",
-            "documents": "Documents"
+            "documents": "Documents",
+            "operations": "Opérations"
         },
         "home": {
             "eyebrow": "ESPACE DE TRAVAIL",

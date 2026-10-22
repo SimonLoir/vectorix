@@ -1060,6 +1060,72 @@
             "confirmedBatches": "Bevestigde geslaagde batches",
             "uncertainBatches": "Onopgeloste batches",
             "taskHint": "Planning voegt documentembeddings toe volgens het opgeslagen profiel. Hervattingen verbruiken geen mislukte pogingen. Gebruik kan na het verlopen van een taaklease worden geregistreerd; verouderde resultaten kunnen het plan niet voortzetten of inhoud publiceren."
+        },
+        "operations": {
+            "title": "Operaties",
+            "description": "Vind wachtend of mislukt werk en open de bestaande herstelwerkruimte.",
+            "scope": "Deze totalen omvatten al het uitstaande duurzame werk van de organisatie, ook items die u niet kunt bekijken. Detailfilters wijzigen de organisatietotalen niet.",
+            "unmeasured": "Deze weergave meet geen workergezondheid, zoekactiviteit, doorvoer of latentie per fase.",
+            "observedAt": "Momentopname waargenomen op {date}",
+            "total": "{count, plural, one {# uitstaande taak} other {# uitstaande taken}}",
+            "categories": {
+                "INGESTION": "Documentverwerking",
+                "DOCUMENT_CLEANUP": "Opruimen van originelen en extracties",
+                "INDEXING": "Collectie-indexering en opruiming"
+            },
+            "counts": {
+                "uploading": "Upload wacht",
+                "due": "Komt in aanmerking voor een scan",
+                "scheduled": "Gepland",
+                "leased": "Geldige verwerkingsclaim",
+                "expired": "Geen geldige verwerkingslease",
+                "failed": "Mislukt"
+            },
+            "oldestAccepted": "Oudste uitstaande werk aanvaard op: {date}",
+            "noAcceptedWork": "Geen uitstaand werk in deze categorie.",
+            "detailsTitle": "Werk dat u kunt bekijken",
+            "detailsHint": "Hier verschijnen alleen items waarvoor u momenteel toegang tot documenten of collecties hebt. Open een werkruimte om beschikbare herstelopties te bekijken; deze lijst verleent geen herstelrechten.",
+            "category": "Werkcategorie",
+            "state": "Planningsstatus",
+            "search": "Filter op document- of collectienaam",
+            "refresh": "Momentopname vernieuwen",
+            "states": {
+                "ALL": "Alle uitstaande statussen",
+                "UPLOADING": "Upload wacht",
+                "DUE": "Komt in aanmerking voor een scan",
+                "SCHEDULED": "Gepland",
+                "LEASED": "Geldige verwerkingsclaim",
+                "EXPIRED": "Verwerkingsclaim zonder geldige lease",
+                "FAILED": "Mislukt"
+            },
+            "timingHint": "De ouderdom omvat upload, wachttijd, uitstel en nieuwe pogingen; dit is geen uitvoeringstijd. Werk dat aan de beurt is, vereist nog toegangs-, bron- en capaciteitscontroles. Geplande opruiming kan op het einde van de bewaartermijn wachten. Een verwerkingsclaim bewijst niet dat een worker actief is.",
+            "visibleTotal": "{count, plural, one {# overeenkomend item voor u zichtbaar} other {# overeenkomende items voor u zichtbaar}}",
+            "empty": "Geen zichtbaar werk voldoet aan deze filters. De organisatietotalen kunnen werk bevatten dat u niet kunt bekijken.",
+            "kinds": {
+                "INGESTION": "Upload en extractie",
+                "DOCUMENT_CLEANUP": "Privébestanden opruimen",
+                "PROVISION": "Collectie-index voorbereiden",
+                "INDEX_DOCUMENT": "Document indexeren",
+                "REMOVE_DOCUMENT": "Geïndexeerd document verwijderen",
+                "CLEAN_PUBLICATION": "Bewaarde publicatie opruimen",
+                "CLEAN_GENERATION": "Indexgeneratie opruimen"
+            },
+            "version": "Bronversie {version, number}",
+            "deletedTarget": "Verwijderd item · alleen opruimwerkruimte",
+            "accepted": "Aanvaard op: {date}",
+            "age": "Ouderdom bij deze momentopname: {minutes, plural, =0 {minder dan een minuut} one {# minuut} other {# minuten}}",
+            "attempts": "{count, plural, one {# geregistreerde poging} other {# geregistreerde pogingen}}",
+            "available": "Gepland voor: {date}",
+            "leaseDeadline": "Einde van de verwerkingslease: {date}",
+            "unknownFailure": "Er is een fout geregistreerd. Open de werkruimte om de huidige beschikbare diagnose te bekijken.",
+            "errors": {
+                "CLEANUP_FAILED": "Het opruimen van privébestanden is mislukt. Bekijk de levenscyclus voordat u opnieuw probeert."
+            },
+            "openRecovery": "Werkruimte openen",
+            "openNamedWorkspace": "Werkruimte voor {name} openen",
+            "inspectCleanup": "Collectie-opruiming bekijken",
+            "inspectNamedCleanup": "Opruiming voor verwijderde collectie {name} bekijken",
+            "paginationLimited": "Paginering omvat de eerste {count, number} overeenkomende items. Verfijn de filters om verder werk te bekijken."
         }
     },
     "dashboard": {
@@ -1076,7 +1142,8 @@
             "roles": "Rollen en rechten",
             "apiKeys": "API-sleutels",
             "licenses": "Licenties",
-            "documents": "Documenten"
+            "documents": "Documenten",
+            "operations": "Operaties"
         },
         "home": {
             "eyebrow": "WERKRUIMTE",

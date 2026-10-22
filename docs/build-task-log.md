@@ -564,7 +564,7 @@ Final documentation validation passed seven changed documents, eight parsed Merm
 - [x] Run appropriate automated/build/image checks and independent source review.
 - [x] Verify the complete real Ollama dashboard journey, locales, originals and cleanup.
 - [x] Finalize English documentation, diagrams and actual acceptance evidence.
-- [ ] Deliver the new PR and verify both exact-head CI checks before the authorized squash merge.
+- [x] Deliver the new PR and verify both exact-head CI checks before the authorized squash merge.
 
 Implementation and automated/browser acceptance are complete on `codex/m7a-sync-freshness` from `f891144`. The [synchronization guide](rag-sync-freshness.md) records the chosen authority policy, compatibility boundaries, concrete entry points and actual acceptance. This slice reuses the existing nullable generation controller and task lease epochs; no schema definition change or migration is needed. M7 operational usage/latency, worker health, backup/restore, quality and load acceptance remain planned. No M7 operational-readiness completion is claimed.
 
@@ -583,3 +583,40 @@ Read-only proof replayed all eight retained canonical layouts and checked exact 
 Cleanup removed all three owned previews, five owned containers, created tabs 18–19 and only two exact-path/hash-verified downloads. The user's tab 3, named Ollama volume and local admin Next type-import preference were preserved. No application .env/database or paid provider was used. The normal seven-day original delay/source grace was preserved without clock advancement or retention soak. Hosted protocols, process/crash negatives, role/key isolation and late provider/concurrent behavior remain automated coverage rather than additional live browser claims. M7 operational telemetry, worker health, backup/restore, relevance and load acceptance remain required.
 
 Final documentation validation passed seven changed documents, nine parsed Mermaid diagrams, 156 local Markdown file links, 3,972 ICU messages with locale-key parity, formatting and `git diff --check`.
+
+Delivered as d78eeb7 in [PR #41](https://github.com/SimonLoir/vectorix/pull/41). Both required checks passed on that exact head: smoke at 20:47:17 UTC and catalog at 20:51:17 UTC on October 22, 2026. The authorized squash merge completed as ca6dd80 at 20:53:13 UTC.
+
+## M7b.1 — Find and recover current organization work
+
+- [x] Independently review the smallest useful operations journey, existing durable evidence and access boundaries.
+- [x] Start a dedicated branch and align its base with merged PR #41 while preserving working files.
+- [x] Implement bounded, consistent organization counts and current-access detail rows without new persistence.
+- [x] Add compatible revision 1.17.0 organization/admin operations contracts and permission registration.
+- [x] Deliver localized web triage with existing guarded recovery screens, and admin technical totals.
+- [x] Cover current/superseded work, tenant/session/key isolation, scopes, deleted cleanup, scheduling and pagination with real transport tests.
+- [x] Run appropriate automated/build/image validation and independent review.
+- [x] Verify a real failure-to-recovery dashboard journey, locales/reload, safe admin visibility and owned cleanup.
+- [x] Finalize English documentation, Mermaid and actual acceptance evidence.
+- [ ] Deliver the separate PR and verify both exact-head checks before the authorized squash merge.
+
+Implementation and automated/browser acceptance are complete on codex/m7b-operations-triage from ca6dd80. The [operations guide](rag-operations.md) records current snapshot semantics, concrete integration entry points and actual acceptance. No schema or migration change is introduced. Historical all-strategy usage, phase latency and durable worker observations remain M7b.2; backup/restore, relevance and capacity acceptance remain M7c. PR delivery remains pending.
+
+Touched areas: explicit versioned organization/admin operations DTOs and route composition; permission registration and focused repeatable-read task/access services; server-filtered currentness and page rechecks; localized web Operations shell, count/list/recovery/error components and existing deleted-collection cleanup dialog reuse; admin organization Operations tab; six focused integration fixture/test files and compatible revision assertions. No dependency, runtime variable, persisted task mutation or new recovery endpoint is introduced.
+
+Final automated validation passed 229 disposable HTTP/core/RAG tests plus fresh/upgrade/repeat/parity checks and existing SQL/lock tests, 23 type checks, 23 lint tasks with existing warnings, 44 backend regressions, four production builds and all six image/infrastructure checks. Nine new HTTP journeys cover one-time scheduling states, real failed extraction/replacement/retry, literal name filters and ACL-before-paging, current role/group/key/foreign/suspension checks, admin/REST/spec parity, superseded indexing history, candidate-less removal/deleted cleanup, first-publication activation failure and a concurrent grant revocation. The first run passed 228/229: only the race harness missed a table name beyond PostgreSQL's activity-text prefix, before any grant edit/security assertion. The corrected detector observes the actual ungranted IndexTask relation lock and exact blocker PID; scoped API types/lint/format and the complete final catalog passed. Independent source/test reviews have no outstanding actionable P1/P2.
+
+Actual production browser run 016740437653 used four preview services and five owned infrastructure/model containers, no application .env/database. Ollama 0.40.8/EmbeddingGemma used its verified local digest, retrieval preset and 128 dimensions. One controlled FR/EN original with 2,814 bytes/2,777 UTF-16 code units fed parent-enabled semantic and token-window collections. Both version markers and accent/emoji sequences were immutable. Before workers started, Operations showed one actual due ingestion; normal extraction cleared it. Both initial indexes became active.
+
+Removing only the owner's management grants on both collections and replacing from the limited library writer produced two actual current ACCESS_REVOKED failures, leaving version 1 searchable. The manager saw global failed2/detail1; a name filter for the unauthorized second collection returned detail0. The quota-only observer saw global failed2/detail0 and no work names/links. The first independent read-only checkpoint matched those live states. The manager opened recovery by keyboard, adopted with 0 pending/0 running reassignments, observed the task still FAILED and explicitly retried from its document row. Version 2 published, global failures fell to1 and its failed list became empty. A second checkpoint confirmed manager controller/executor on the semantic collection and the second collection still owner-controlled/revoked.
+
+A real post-recovery hybrid search returned two version-2 contexts in 137ms; exact source preview and the 2,814-byte original download matched SHA-256 ee862084937b5347131ce25e5ff39592a2e7ffd3d9b5101adbbbbb7af9f6ee24. The owner then restored its management grant only on the second collection and retried. Both collections served version2 and current failed counts reached0. Final browser and independent snapshot agreed on two scheduled retained-publication cleanups and one original cleanup under the unchanged seven-day delay. Future cleanup was not treated as an incident, and no clock was advanced.
+
+The nonmember synthetic superadmin inspected matching organization totals without document/collection names/IDs or recovery controls. Web/admin EN/FR/nl-BE, Dutch reload and English restoration passed; both warning/error consoles were empty. Cleanup stopped four owned previews, removed five owned containers, closed only created tabs20–21 and removed only the exact-path/hash-verified synthetic download. The user's tab3, named Ollama volume and admin Next type-import preference were preserved. Screenshots and three private read-only checkpoints were saved as ignored evidence.
+
+No paid provider, retention soak, crash-loss/worker-liveness assertion, historical all-strategy usage, measured phase latency, backup/restore, relevance or load acceptance is claimed. Automated negative/concurrency coverage is separate from this actual browser journey.
+
+Final documentation validation passed six changed documents, nine parsed Mermaid diagrams, 149 local Markdown file links, 4,203 ICU messages with locale-key parity, formatting and git diff --check.
+
+Final independent review also caught a genuine cleanup-visibility gap: a late PUT can requeue physical deletion while the version remains PURGED and storage is charged again. The original-cleanup view now follows unfinished durable task status rather than excluding every PURGED source. The existing real late-PUT/orphan integration journey asserts operations visibility before re-purge and removal after actual cleanup. This edge case is automated evidence; the successful earlier browser journey used normal retained versions and was not replayed as a forged late upload.
+
+After the late-PUT visibility correction, scoped RAG/API type checks and focused lint passed, all four production builds passed again, the complete disposable catalog passed 229/229 again, and all six image/infrastructure checks passed again. Final documentation parsing/format/link checks and git diff --check passed.

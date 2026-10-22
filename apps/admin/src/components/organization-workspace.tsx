@@ -7,6 +7,7 @@ import { OrganizationRagQuota } from './organization-rag-quota';
 import { OrganizationSummary } from './organization-summary';
 import { OrganizationMembers } from './organization-members';
 import { OrganizationFeatures } from './organization-features';
+import { OrganizationOperations } from './organization-operations';
 export function OrganizationWorkspace({
     organizationId,
 }: {
@@ -24,6 +25,9 @@ export function OrganizationWorkspace({
                         {tr('workspace.organization')}
                     </TabsTrigger>
                     <TabsTrigger value='rag'>{tr('workspace.rag')}</TabsTrigger>
+                    <TabsTrigger value='operations'>
+                        {tr('workspace.operations')}
+                    </TabsTrigger>
                     <TabsTrigger value='members'>
                         {tr('workspace.members')}
                     </TabsTrigger>
@@ -42,6 +46,9 @@ export function OrganizationWorkspace({
                 </TabsContent>
                 <TabsContent value='members'>
                     <OrganizationMembers organizationId={organizationId} />
+                </TabsContent>
+                <TabsContent value='operations'>
+                    <OrganizationOperations organizationId={organizationId} />
                 </TabsContent>
                 <TabsContent value='features'>
                     <OrganizationFeatures organizationId={organizationId} />

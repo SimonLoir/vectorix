@@ -565,6 +565,16 @@ export async function sourceHoldTests(t: TestContext) {
                         assert.ok(missing.discardedAt);
                         assert.equal(missing.ingestion?.reservedBytes, 0n);
                         assert.equal(missing.cleanup, null);
+                        const beforeOperations =
+                            await f.owner.rag.operations.overview({
+                                category: 'DOCUMENT_CLEANUP',
+                                query: name,
+                            });
+                        assert.equal(beforeOperations.visibleTotal, 0);
+                        const beforeCleanupCount = beforeOperations.counts.find(
+                            (row) => row.category === 'DOCUMENT_CLEANUP'
+                        );
+                        assert(beforeCleanupCount);
                         release();
                         await upload;
                         const orphan =
@@ -584,6 +594,32 @@ export async function sourceHoldTests(t: TestContext) {
                             before + 2 * Number(pending.byteSize)
                         );
                         assert.equal(await exists(pending.objectKey), true);
+                        const orphanOperations =
+                            await f.owner.rag.operations.overview({
+                                category: 'DOCUMENT_CLEANUP',
+                                query: name,
+                            });
+                        assert.equal(orphanOperations.visibleTotal, 1);
+                        const orphanWork = orphanOperations.items[0];
+                        assert(orphanWork);
+                        assert.equal(orphanWork.id, pending.id);
+                        assert.equal(orphanWork.version, 1);
+                        assert.equal(orphanWork.status, 'PENDING');
+                        assert.equal(orphanWork.state, 'SCHEDULED');
+                        assert.deepEqual(orphanWork.target, {
+                            type: 'DOCUMENT',
+                            id: pending.documentId,
+                            deleted: false,
+                        });
+                        assert(
+                            orphanWork.availableAt > orphanOperations.observedAt
+                        );
+                        assert.equal(
+                            orphanOperations.counts.find(
+                                (row) => row.category === 'DOCUMENT_CLEANUP'
+                            )?.total,
+                            beforeCleanupCount.total + 1
+                        );
                         await assert.rejects(
                             f.owner.rag.documents.download({
                                 id: pending.documentId,
@@ -597,6 +633,18 @@ export async function sourceHoldTests(t: TestContext) {
                             (await f.owner.rag.quota({})).usage.storageBytes,
                             before
                         );
+                        const cleanedOperations =
+                            await f.owner.rag.operations.overview({
+                                category: 'DOCUMENT_CLEANUP',
+                                query: name,
+                            });
+                        assert.equal(cleanedOperations.visibleTotal, 0);
+                        assert.deepEqual(cleanedOperations.items, []);
+                        const cleanedCount = cleanedOperations.counts.find(
+                            (row) => row.category === 'DOCUMENT_CLEANUP'
+                        );
+                        assert(cleanedCount);
+                        assert(cleanedCount.total <= beforeCleanupCount.total);
                     } finally {
                         release();
                         await Promise.allSettled([upload]);
