@@ -4,6 +4,7 @@ import type { TestContext } from 'node:test';
 import { isDeepStrictEqual } from 'node:util';
 import { Pool } from 'pg';
 import { prisma } from '@repo/db';
+import { getRagTelemetry } from '@routers/rag/telemetry';
 import { fixture as f } from './fixtures';
 import { parentText } from './parent-fixtures';
 import { semanticLatch, semanticText } from './semantic-fixtures';
@@ -88,6 +89,15 @@ export async function syncAuthorityRaceTests(t: TestContext) {
                     entry.documentId,
                     `${semanticText(64)}\nNouvelle forêt ABA.`
                 );
+                // Earlier suites can fill the bounded process coalescer; this
+                // app-only harness does not start the production flush timer.
+                for (let pass = 0; pass < 16; pass++)
+                    await getRagTelemetry(prisma).flush();
+                const beforeNativeTelemetry = (
+                    await f.owner.rag.telemetry.summary({})
+                ).dimensions.find((row) => row.workload === 'INDEX_SEMANTIC')
+                    ?.counters.nativeValidatedBatches;
+                assert(beforeNativeTelemetry);
                 const latch = semanticLatch();
                 fixture.state.beforeEmbedding = async () => {
                     delete fixture.state.beforeEmbedding;
@@ -184,6 +194,25 @@ export async function syncAuthorityRaceTests(t: TestContext) {
                     });
                 assert.equal(observed.state, 'SUCCEEDED');
                 assert(observed.usageRecordedAt);
+                // This is the actual paused HTTP response, not the separate
+                // synthetic direct-ledger fixture. Stale checkpoint rejection
+                // must not drop it or reemit it from mandatory settlement.
+                await getRagTelemetry(prisma).flush();
+                const lateNativeTelemetry = (
+                    await f.owner.rag.telemetry.summary({})
+                ).dimensions.find((row) => row.workload === 'INDEX_SEMANTIC')
+                    ?.counters.nativeValidatedBatches;
+                assert.equal(
+                    BigInt(lateNativeTelemetry!),
+                    BigInt(beforeNativeTelemetry) + 1n
+                );
+                await getRagTelemetry(prisma).flush();
+                assert.equal(
+                    (await f.owner.rag.telemetry.summary({})).dimensions.find(
+                        (row) => row.workload === 'INDEX_SEMANTIC'
+                    )?.counters.nativeValidatedBatches,
+                    lateNativeTelemetry
+                );
                 const task = await currentSyncTask(
                     entry.generationId,
                     entry.documentId

@@ -10,6 +10,8 @@ import { SemanticContinuation } from './semantic-capacity';
 import { reapSemanticWork } from './semantic-work';
 import { activateReadyGenerations } from './activation';
 import { scanIndexTasks } from './task-scan';
+import { getRagTelemetry } from '../telemetry';
+import { indexTelemetryTags, telemetryFailure } from '../telemetry/domain';
 import {
     executeDocumentRemoval,
     executeGenerationCleanup,
@@ -26,6 +28,8 @@ import {
     failIndexClaim,
     renewIndexClaim,
     requireIndexAuthority,
+    indexErrorCode,
+    IndexLeaseLost,
     type IndexClaim,
 } from './task-state';
 
@@ -39,6 +43,14 @@ export async function processCollectionIndexing(db: PrismaClient) {
     for (const task of tasks) {
         const claim = await claimIndexTask(db, task);
         if (!claim) continue;
+        const tags =
+            task.kind === 'INDEX_DOCUMENT'
+                ? indexTelemetryTags(
+                      task.organizationId,
+                      task.generation.configuration
+                  )
+                : null;
+        const execution = tags ? getRagTelemetry(db).start(tags) : undefined;
         try {
             switch (task.kind) {
                 case 'PROVISION': {
@@ -46,7 +58,7 @@ export async function processCollectionIndexing(db: PrismaClient) {
                     break;
                 }
                 case 'INDEX_DOCUMENT': {
-                    await executeDocumentIndex(db, claim, task);
+                    await executeDocumentIndex(db, claim, task, execution);
                     break;
                 }
                 case 'REMOVE_DOCUMENT': {
@@ -64,8 +76,28 @@ export async function processCollectionIndexing(db: PrismaClient) {
                     }
                     break;
             }
+            execution?.finish('SUCCESS');
         } catch (error) {
-            if (error instanceof SemanticContinuation) continue;
+            if (error instanceof SemanticContinuation) {
+                execution?.finish('CONTINUATION');
+                continue;
+            }
+            const failure =
+                error instanceof CandidateObsolete
+                    ? undefined
+                    : telemetryFailure(
+                          error instanceof IndexLeaseLost
+                              ? 'LEASE_LOST'
+                              : indexErrorCode(error)
+                      );
+            execution?.finish(
+                error instanceof CandidateObsolete
+                    ? 'SUPERSEDED'
+                    : failure === 'ACCESS' || failure === 'LEASE'
+                      ? 'DENIED'
+                      : 'FAILURE',
+                failure
+            );
             await (error instanceof CandidateObsolete
                 ? supersede(db, claim, task)
                 : failIndexClaim(db, claim, error));

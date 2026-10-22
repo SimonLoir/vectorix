@@ -1,4 +1,4 @@
-import type { IndexTask, Prisma, PrismaClient } from '@repo/db';
+import type { Prisma, PrismaClient } from '@repo/db';
 
 /**
  * Resume up to five eligible semantic allowance holders before ordinary work, while
@@ -7,7 +7,7 @@ import type { IndexTask, Prisma, PrismaClient } from '@repo/db';
  * failures; task stage labels do not. Claim CAS remains the authority when
  * concurrent workers observe the same bounded scan.
  */
-export async function scanIndexTasks(db: PrismaClient): Promise<IndexTask[]> {
+export async function scanIndexTasks(db: PrismaClient) {
     const now = new Date();
     const eligible: Prisma.IndexTaskWhereInput = {
         availableAt: { lte: now },
@@ -55,15 +55,27 @@ export async function scanIndexTasks(db: PrismaClient): Promise<IndexTask[]> {
         { createdAt: 'asc' },
         { id: 'asc' },
     ];
+    // Attribution is captured with the existing bounded scan; no telemetry-only query or mutable draft read.
+    const include = {
+        generation: {
+            select: {
+                configuration: {
+                    select: { provider: true, chunkingStrategy: true },
+                },
+            },
+        },
+    } as const;
     const priority = await db.indexTask.findMany({
         where: { AND: [eligible, semanticHolder] },
         orderBy,
         take: 5,
+        include,
     });
     const ordinary = await db.indexTask.findMany({
         where: { AND: [eligible, { NOT: semanticHolder }] },
         orderBy,
         take: 10 - priority.length,
+        include,
     });
     return [...priority, ...ordinary];
 }

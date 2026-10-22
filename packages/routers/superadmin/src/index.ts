@@ -3,6 +3,8 @@ import { getRagQuota } from './get-rag-quota';
 import { getSemanticQuota } from './get-semantic-quota';
 import { setSemanticQuota } from './set-semantic-quota';
 import { getOperations } from './get-operations';
+import { getTelemetry } from './get-telemetry';
+import { getWorkerObservations } from './get-worker-observations';
 import { superAdmin } from '@routers/utils/super-admin';
 import { getCurrentSuperAdmin } from './get-current-user';
 import { getSuperAdminDashboard } from './get-dashboard';
@@ -31,6 +33,7 @@ export const superAdminRouter = superAdmin
     .tag('Administration')
     .router({
         me: getCurrentSuperAdmin,
+        getWorkerObservations,
         users: superAdmin.prefix('/users').router({
             list: listSuperAdminUsers,
             get: getSuperAdminUser,
@@ -40,6 +43,7 @@ export const superAdminRouter = superAdmin
         audit: superAdmin.router({ list: listSuperAdminAuditLogs }),
         organizations: superAdmin.prefix('/organizations').router({
             getOperations,
+            getTelemetry,
             setRagQuota,
             getRagQuota,
             getSemanticQuota,

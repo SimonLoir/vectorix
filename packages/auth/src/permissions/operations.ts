@@ -88,6 +88,7 @@ export const operationPermissions: Record<string, PermissionSet> = {
     'admin.rag.connections': { ragCollection: ['create'] },
     'admin.rag.quota': { ragQuota: ['read'] },
     'admin.rag.operations.overview': { ragQuota: ['read'] },
+    'admin.rag.telemetry.summary': { ragQuota: ['read'] },
     'admin.rag.audit': { ragAudit: ['read'] },
     'admin.organization.get': {
         settings: ['read'],

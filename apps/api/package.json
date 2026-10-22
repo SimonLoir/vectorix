@@ -11,7 +11,7 @@
         "dev": "tsx watch src/index.ts",
         "start": "node dist/index.mjs",
         "lint": "eslint",
-        "test": "tsx --test ../../packages/auth/tests/passkey-options.test.ts ../../packages/auth/tests/two-factor.test.ts ../../packages/auth/tests/password-reset-url.test.ts ../../packages/db/tests/bigint-defaults.test.ts ../../packages/queues/src/redis-connection.test.ts src/template.test.ts src/http/request-body-limit.test.ts",
+        "test": "tsx --test ../../packages/auth/tests/passkey-options.test.ts ../../packages/auth/tests/two-factor.test.ts ../../packages/auth/tests/password-reset-url.test.ts ../../packages/db/tests/bigint-defaults.test.ts ../../packages/queues/src/redis-connection.test.ts src/template.test.ts src/http/request-body-limit.test.ts ../../packages/routers/rag/src/services/telemetry/tests/telemetry.test.ts",
         "test:integration": "tsx --test --test-concurrency=1 src/integration.test.ts src/rag.integration.test.ts"
     },
     "dependencies": {

@@ -206,7 +206,7 @@ export async function semanticQuotaTests(t: TestContext) {
                     assert.equal(response.status, 200);
                     assert.equal(
                         response.headers.get('Vectorix-API-Revision'),
-                        '17'
+                        '18'
                     );
                     const spec: unknown = await response.json();
                     assert(
@@ -217,7 +217,7 @@ export async function semanticQuotaTests(t: TestContext) {
                             typeof spec.info === 'object' &&
                             'version' in spec.info
                     );
-                    assert.equal(spec.info.version, '1.17.0');
+                    assert.equal(spec.info.version, '1.18.0');
                     assert(
                         'paths' in spec &&
                             spec.paths &&

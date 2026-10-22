@@ -10,6 +10,8 @@ import { readObject } from '@repo/storage';
 import { collectionProfile } from '@repo/api-contracts/v1/rag/collections';
 import { MAX_DOCUMENT_BYTES } from '@repo/api-contracts/v1/rag/documents';
 import { runSerializableTransaction } from '@routers/utils/transactions';
+import type { TelemetryExecution } from '../telemetry/types';
+import { measureSyncTelemetry, measureTelemetry } from '../telemetry/domain';
 import { boundStorage, contentHash } from '../documents/storage';
 import {
     boundEmbeddingConfiguration,
@@ -44,7 +46,8 @@ import {
 export async function executeDocumentIndex(
     db: PrismaClient,
     claim: IndexClaim,
-    task: IndexTask
+    task: IndexTask,
+    telemetry?: TelemetryExecution
 ) {
     if (!task.indexedDocumentId) throw new IndexingError('PROCESSING_FAILED');
     const candidateId = task.indexedDocumentId;
@@ -84,16 +87,23 @@ export async function executeDocumentIndex(
         claim.collectionId,
         binding.generation.configurationRevision
     );
+    const artifact = await measureTelemetry(
+        telemetry,
+        'SOURCE_READ',
+        async () =>
+            readObject(
+                await boundStorage(
+                    db,
+                    claim.organizationId,
+                    candidate.extraction.storageLocationId
+                ),
+                candidate.extraction.objectKey,
+                MAX_DOCUMENT_BYTES
+            )
+    );
+    telemetry?.sourceRead(artifact.byteLength);
     const extraction = decodeStoredExtraction(
-        await readObject(
-            await boundStorage(
-                db,
-                claim.organizationId,
-                candidate.extraction.storageLocationId
-            ),
-            candidate.extraction.objectKey,
-            MAX_DOCUMENT_BYTES
-        ),
+        artifact,
         candidate.extractorVersion
     );
     // Legacy TXT/Markdown artifacts share text.txt and retain exact offsets;
@@ -124,6 +134,7 @@ export async function executeDocumentIndex(
                   identity,
                   preparation: profile.preparation,
                   title: candidate.fileName,
+                  telemetry,
                   context: {
                       artifact: extraction,
                       options,
@@ -159,12 +170,16 @@ export async function executeDocumentIndex(
                           binding.generation.configurationRevision,
                   },
               })
-            : collectIndexChunks(chunker.plan(extraction, options));
-    const layout = chunker.parentContextVersion
-        ? planParentContext(extraction, plans, {
-              parentMaxTokens: chunking.parentMaxTokens,
-          })
-        : undefined;
+            : measureSyncTelemetry(telemetry, 'PLAN', () =>
+                  collectIndexChunks(chunker.plan(extraction, options))
+              );
+    const layout = measureSyncTelemetry(telemetry, 'PLAN', () =>
+        chunker.parentContextVersion
+            ? planParentContext(extraction, plans, {
+                  parentMaxTokens: chunking.parentMaxTokens,
+              })
+            : undefined
+    );
     await runSerializableTransaction(db, async (tx) => {
         await renewIndexClaim(tx, claim, 'PLANNING');
         await requireIndexAuthority(tx, task);
@@ -177,17 +192,22 @@ export async function executeDocumentIndex(
             count: plans.length,
         });
     });
-    const { chunks, hash } = await materializeIndexChunks(db, {
-        claim,
-        task,
-        candidateId,
-        language: candidate.language,
-        fileName: candidate.fileName,
-        preparation: profile.preparation,
-        identity,
-        children: plans,
-        layout,
-    });
+    const { chunks, hash } = await measureTelemetry(
+        telemetry,
+        'MATERIALIZE_SEAL',
+        () =>
+            materializeIndexChunks(db, {
+                claim,
+                task,
+                candidateId,
+                language: candidate.language,
+                fileName: candidate.fileName,
+                preparation: profile.preparation,
+                identity,
+                children: plans,
+                layout,
+            })
+    );
     const publication = {
         id: candidateId,
         documentId: candidate.documentId,
@@ -197,10 +217,8 @@ export async function executeDocumentIndex(
     };
     await renewIndexClaim(db, claim, 'EMBEDDING');
     await requireCurrentCandidate(db, claim, candidateId);
-    const opened = await binding.store.open(
-        binding.spec,
-        publication,
-        claim.leaseEpoch
+    const opened = await measureTelemetry(telemetry, 'VECTOR_WRITE_SEAL', () =>
+        binding.store.open(binding.spec, publication, claim.leaseEpoch)
     );
     if (opened.state === 'OPEN') {
         for (let start = 0; start < chunks.length; start += 64) {
@@ -215,42 +233,50 @@ export async function executeDocumentIndex(
                 },
                 orderBy: { ordinal: 'asc' },
             });
-            const embedded = await embedDocuments(
-                credentials,
-                identity,
-                rows.map((row) => ({
-                    text: row.text,
-                    title: candidate.fileName,
-                })),
-                {
-                    preparation: profile.preparation,
-                    timeoutMs: 90_000,
-                    ...(chunker.kind === 'SEMANTIC'
-                        ? {
-                              batchObserver: createSemanticWorkObserver(
-                                  db,
-                                  claim,
-                                  task,
-                                  candidateId,
-                                  'FINAL_DOCUMENT',
-                                  `final:${start}`
-                              ),
-                          }
-                        : {}),
-                }
+            const embedded = await measureTelemetry(
+                telemetry,
+                'FINAL_EMBED',
+                () =>
+                    embedDocuments(
+                        credentials,
+                        identity,
+                        rows.map((row) => ({
+                            text: row.text,
+                            title: candidate.fileName,
+                        })),
+                        {
+                            preparation: profile.preparation,
+                            timeoutMs: 90_000,
+                            numericObserver: telemetry?.nativeObserver,
+                            ...(chunker.kind === 'SEMANTIC'
+                                ? {
+                                      batchObserver: createSemanticWorkObserver(
+                                          db,
+                                          claim,
+                                          task,
+                                          candidateId,
+                                          'FINAL_DOCUMENT',
+                                          `final:${start}`
+                                      ),
+                                  }
+                                : {}),
+                        }
+                    )
             );
             await renewIndexClaim(db, claim, 'WRITING_VECTORS');
             await requireCurrentCandidate(db, claim, candidateId);
-            await binding.store.write(
-                binding.spec,
-                publication,
-                claim.leaseEpoch,
-                rows.map((row, index) => ({
-                    chunkId: row.id,
-                    ordinal: row.ordinal,
-                    chunkHash: row.textHash,
-                    vector: embedded.vectors[index]!,
-                }))
+            await measureTelemetry(telemetry, 'VECTOR_WRITE_SEAL', () =>
+                binding.store.write(
+                    binding.spec,
+                    publication,
+                    claim.leaseEpoch,
+                    rows.map((row, index) => ({
+                        chunkId: row.id,
+                        ordinal: row.ordinal,
+                        chunkHash: row.textHash,
+                        vector: embedded.vectors[index]!,
+                    }))
+                )
             );
             await db.indexTask.updateMany({
                 where: {
@@ -264,15 +290,19 @@ export async function executeDocumentIndex(
         }
     }
     await renewIndexClaim(db, claim, 'SEALING');
-    await binding.store.seal(binding.spec, publication, claim.leaseEpoch);
-    await runSerializableTransaction(db, async (tx) => {
-        if (chunker.kind === 'SEMANTIC')
-            await lockSemanticAccounting(tx, claim.organizationId);
-        await requireIndexAuthority(tx, task);
-        await publishIndexedCandidate(tx, claim, task, candidateId, hash);
-        if (chunker.kind === 'SEMANTIC')
-            await releaseSemanticWorkAllowance(tx, candidateId);
-    });
+    await measureTelemetry(telemetry, 'VECTOR_WRITE_SEAL', () =>
+        binding.store.seal(binding.spec, publication, claim.leaseEpoch)
+    );
+    await measureTelemetry(telemetry, 'CATALOG_PUBLISH', () =>
+        runSerializableTransaction(db, async (tx) => {
+            if (chunker.kind === 'SEMANTIC')
+                await lockSemanticAccounting(tx, claim.organizationId);
+            await requireIndexAuthority(tx, task);
+            await publishIndexedCandidate(tx, claim, task, candidateId, hash);
+            if (chunker.kind === 'SEMANTIC')
+                await releaseSemanticWorkAllowance(tx, candidateId);
+        })
+    );
     // Statistics are advisory: failure after catalog publication does not turn a completed publication into a failed task.
     await generationVectorAdapter(
         db,

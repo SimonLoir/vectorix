@@ -19,6 +19,7 @@
         "./components/nav-user": "./src/components/nav-user.tsx",
         "./components/person-avatar": "./src/components/person-avatar.tsx",
         "./components/team-switcher": "./src/components/team-switcher/index.ts",
+        "./components/recorded-activity": "./src/components/telemetry/index.ts",
         "./hooks/use-auth": "./src/hooks/use-auth.tsx",
         "./contexts/auth": "./src/contexts/auth.tsx",
         "./utils/date-utils": "./src/utils/date-utils.ts",
@@ -31,6 +32,7 @@
         "lint": "eslint"
     },
     "devDependencies": {
+        "@repo/api": "workspace:*",
         "@repo/eslint-config": "workspace:*",
         "@repo/typescript-config": "workspace:*",
         "@types/react": "19.3.0",

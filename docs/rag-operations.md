@@ -2,7 +2,7 @@
 
 **M7b.1 is implemented with automated validation and real Ollama dashboard acceptance complete.** This slice helps an organization operator find current ingestion, indexing or cleanup across the library and collections, open an existing authorized recovery screen and observe the result. It reuses persisted application tasks; no schema, migration or runtime configuration change is introduced.
 
-M7b.2 historical usage, measured phase durations and durable worker observations remain planned and require separate persistence review. M7c backup/restore, retrieval quality and capacity acceptance remain required. This page does not describe those capabilities as implemented.
+M7b.2 [recorded activity and worker observations](rag-observability.md) are implemented with automated validation and real Ollama dashboard acceptance complete. M7c backup/restore, retrieval quality and capacity acceptance remain required. This page does not describe those capabilities as implemented.
 
 ## Snapshot and authorization
 
@@ -71,4 +71,4 @@ The synthetic platform admin had no organization membership. Its Operations tab 
 
 Automated validation passed all 229 disposable HTTP/core/RAG tests, fresh installation, upgrades, repeat deployment and schema parity; 23 workspace type-check tasks, 23 lint tasks with existing warnings, 44 backend regressions, four application builds and all six production image/infrastructure checks. Nine new HTTP journeys cover snapshot scheduling, exact-current failures, ACL filtering before pagination, sessions/keys/foreign identifiers, deleted cleanup, activation blocked after publication and a real concurrent grant revocation before the final detail-access check. Independent production and test review found no outstanding actionable P1/P2 findings. The first catalog pass had one harness failure: PostgreSQL activity text truncated before the IndexTask name. Observing the actual blocked relation lock fixed the detector; the final complete run passed 229/229.
 
-Synthetic expired-lease, injected parser failure, stale copied identifiers, group/key isolation and concurrency negatives are automated evidence, not additional live browser claims. No retention soak, crash-loss guarantee, worker-liveness measurement, all-strategy historical usage, phase-duration measurement, paid-provider connectivity, backup/restore, relevance or load acceptance is claimed. M7b.2 and M7c remain required.
+Synthetic expired-lease, injected parser failure, stale copied identifiers, group/key isolation and concurrency negatives are automated evidence, not additional live browser claims. No retention soak, crash-loss guarantee, worker-liveness measurement, all-strategy historical usage, phase-duration measurement, paid-provider connectivity, backup/restore, relevance or load acceptance is claimed. M7b.2 observations have their own [separate acceptance record](rag-observability.md). M7c restore, relevance and capacity acceptance remain required.

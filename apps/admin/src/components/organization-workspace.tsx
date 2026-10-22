@@ -8,6 +8,7 @@ import { OrganizationSummary } from './organization-summary';
 import { OrganizationMembers } from './organization-members';
 import { OrganizationFeatures } from './organization-features';
 import { OrganizationOperations } from './organization-operations';
+import { OrganizationTelemetry } from './organization-telemetry';
 export function OrganizationWorkspace({
     organizationId,
 }: {
@@ -27,6 +28,9 @@ export function OrganizationWorkspace({
                     <TabsTrigger value='rag'>{tr('workspace.rag')}</TabsTrigger>
                     <TabsTrigger value='operations'>
                         {tr('workspace.operations')}
+                    </TabsTrigger>
+                    <TabsTrigger value='telemetry'>
+                        {tr('workspace.telemetry')}
                     </TabsTrigger>
                     <TabsTrigger value='members'>
                         {tr('workspace.members')}
@@ -49,6 +53,9 @@ export function OrganizationWorkspace({
                 </TabsContent>
                 <TabsContent value='operations'>
                     <OrganizationOperations organizationId={organizationId} />
+                </TabsContent>
+                <TabsContent value='telemetry'>
+                    <OrganizationTelemetry organizationId={organizationId} />
                 </TabsContent>
                 <TabsContent value='features'>
                     <OrganizationFeatures organizationId={organizationId} />

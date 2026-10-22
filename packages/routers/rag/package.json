@@ -12,6 +12,8 @@
         "./credentials": "./src/services/credential-resolution.ts",
         "./quotas": "./src/services/quotas.ts",
         "./operations": "./src/services/operations/index.ts",
+        "./telemetry": "./src/services/telemetry/index.ts",
+        "./telemetry-read": "./src/services/telemetry-read/index.ts",
         "./semantic-quotas": "./src/services/semantic-quotas.ts",
         "./ingestion": "./src/services/documents/process.ts",
         "./cleanup": "./src/services/documents/cleanup.ts",

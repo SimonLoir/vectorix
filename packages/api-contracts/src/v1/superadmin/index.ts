@@ -9,6 +9,10 @@ import { setOrganizationLegacyAccessV1Contract } from './legacy-access';
 import { superAdminUsersV1Contract } from './users';
 import { setLegacyFeaturesV1Contract } from './legacy-features';
 import { getOperationsContract } from './operations';
+import {
+    getTelemetryContract,
+    getWorkerObservationsContract,
+} from './telemetry';
 
 const featureKeyV1Schema = z
     .string()
@@ -182,6 +186,7 @@ export const entitlementsV1Schema = z.object({
 
 export const superAdminV1Contract = {
     users: superAdminUsersV1Contract,
+    getWorkerObservations: getWorkerObservationsContract,
     me: oc
         .route({ method: 'GET', path: '/me' })
         .input(z.object({}).strict().default({}))
@@ -233,6 +238,7 @@ export const superAdminV1Contract = {
     },
     organizations: {
         getOperations: getOperationsContract,
+        getTelemetry: getTelemetryContract,
         setRagQuota: setRagQuotaContract,
         getRagQuota: getRagQuotaContract,
         getSemanticQuota: getSemanticQuotaContract,

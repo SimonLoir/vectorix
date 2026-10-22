@@ -1,0 +1,229 @@
+// M7b.2 additive schema: migration explicitly approved for disposable tests.
+// See docs/rag-observability.md for scope, constraints and rollout.
+// Organization-owned aggregates use observed database UTC times.
+// No query/content/model/credential/actor dimension is stored.
+
+enum RagOperationalWorkload {
+  EXTRACTION
+  INDEX_STRUCTURE
+  INDEX_TOKEN
+  INDEX_SEMANTIC
+  SEARCH_LEXICAL
+  SEARCH_VECTOR
+  SEARCH_HYBRID
+}
+
+// Separate from CredentialProvider: NONE is required and S3 is not a native
+// embedding provider. Values describe the saved executing profile, not a draft.
+enum RagTelemetryProvider {
+  NONE
+  OLLAMA
+  COHERE
+  VOYAGE
+  OPENAI
+  MISTRAL
+}
+
+enum RagWorkerLane {
+  NOTIFICATIONS
+  DOCUMENTS
+  INDEXING
+}
+
+enum RagWorkerScanOutcome {
+  RETURNED
+  THREW
+}
+
+enum RagWorkerFailure {
+  SCAN_FAILED
+  DATABASE_UNAVAILABLE
+  REDIS_UNAVAILABLE
+  UNKNOWN
+}
+
+// Lazy-created in the same successfully committed transaction as real recorded
+// activity; no migration-time marker/backfill and no @updatedAt approximation.
+// Zero knownGapReports never proves complete capture. All reads are BEST_EFFORT.
+model OrganizationRagTelemetry {
+  organizationId         String       @id
+  organization           Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  formatVersion          Int          @default(1)
+  trackingSince          DateTime     @db.Timestamptz(3)
+  lastRecordedAt         DateTime     @db.Timestamptz(3)
+  knownGapReports        BigInt       @default(0)
+  lastKnownGapReportedAt DateTime?    @db.Timestamptz(3)
+}
+
+// Fixed-tag aggregate, never one row per search/native batch. bucketStart is
+// the UTC database recording hour, not the original request-start timestamp.
+// No default is used for bucketStart: the flush computes it once in its TX.
+// An observation start and its outcome may be recorded in different hours;
+// counters are not an authoritative task ledger or exact billing evidence.
+model RagOperationalHour {
+  organizationId String
+  organization   Organization           @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  bucketStart    DateTime               @db.Timestamptz(3)
+  workload       RagOperationalWorkload
+  provider       RagTelemetryProvider
+  formatVersion  Int                    @default(1)
+  lastRecordedAt DateTime               @db.Timestamptz(3)
+
+  recordedStarts        BigInt @default(0)
+  recordedSuccesses     BigInt @default(0)
+  recordedFailures      BigInt @default(0)
+  recordedContinuations BigInt @default(0)
+  recordedSupersessions BigInt @default(0)
+  recordedDenials       BigInt @default(0)
+
+  nativeStarts                  BigInt @default(0)
+  nativeValidatedBatches        BigInt @default(0)
+  nativeFailedBatches           BigInt @default(0)
+  validatedVectors              BigInt @default(0)
+  dispatchedPreparedBytes       BigInt @default(0)
+  validatedPreparedBytes        BigInt @default(0)
+  validatedEstimatedInputTokens BigInt @default(0)
+  knownProviderInputTokens       BigInt @default(0)
+  unknownProviderTokenBatches    BigInt @default(0)
+  unknownBilledTokenBatches      BigInt @default(0)
+  knownBilledInputTokens         Float  @default(0)
+
+  // NULL until an actual successful I/O byte observation; never inferred from
+  // document metadata, declared Content-Length, phase duration or old rows.
+  // Merge observed values additively with COALESCE(old, 0); an observed 0 is valid.
+  sourceReadBytes       BigInt?
+  artifactWrittenBytes  BigInt?
+
+  // Required fixed shape/ranges are specified below; Json alone is insufficient.
+  phaseStats    Json @default("{}")
+  failureCounts Json @default("{}")
+
+  @@id([organizationId, bucketStart, workload, provider])
+  @@index([bucketStart, organizationId])
+}
+
+// Three possible shared global rows, no process registry. Null/missing means no
+// observation. A heartbeat does not imply readiness or clear a scan failure.
+// A scan that RETURNED may still have handled failed individual domain tasks.
+model RagWorkerLaneObservation {
+  lane                            RagWorkerLane         @id
+  lastHeartbeatObservedAt         DateTime?             @db.Timestamptz(3)
+  lastScanStartObservedAt         DateTime?             @db.Timestamptz(3)
+  lastScanFinishObservedAt        DateTime?             @db.Timestamptz(3)
+  lastFinishedScanStartObservedAt DateTime?             @db.Timestamptz(3)
+  lastFinishedScanDurationMicros  BigInt?
+  lastScanOutcome                 RagWorkerScanOutcome?
+  lastSafeFailure                 RagWorkerFailure?
+}
+
+// REQUIRED SUPPLEMENTARY SQL / WRITER CONTRACT — not implemented by Prisma.
+// These requirements belong in the separately reviewed migration and tests.
+//
+// 1. Immutability and finite identity:
+//    - Both formatVersion values are exactly 1 and immutable.
+//    - Marker organizationId/trackingSince and hour organizationId/bucketStart/
+//      workload/provider are immutable after insertion.
+//    - bucketStart is aligned to a UTC hour (explicit UTC conversion; no
+//      session-time-zone-dependent date_trunc check).
+//    - EXTRACTION and SEARCH_LEXICAL require provider NONE. INDEX_STRUCTURE,
+//      INDEX_TOKEN, INDEX_SEMANTIC, SEARCH_VECTOR and SEARCH_HYBRID require one
+//      of OLLAMA/COHERE/VOYAGE/OPENAI/MISTRAL. Exactly 27 pairs are allowed.
+//
+// 2. Numeric values and payload bounds:
+//    - Every counter/knownGapReports and optional worker duration is a
+//      nonnegative signed 64-bit integer. Known billed input is finite and
+//      nonnegative: reject NaN and both infinities, not only values below zero.
+//    - validatedVectors counts returned vector rows only after complete native
+//      response validation, once per successful captured native batch. It is
+//      not active/searchable vector cardinality or a quota counter. Public
+//      values are unknown when nativeValidatedBatches is 0.
+//    - sourceReadBytes/artifactWrittenBytes must be SQL NULL or nonnegative
+//      signed 64-bit integers. NULL is unobserved; no default/backfill converts
+//      it to 0. Only successful actual I/O can add bytes. Successful repeated
+//      reads/writes count again even if outer execution later fails/retries.
+//      Counts describe observed completed logical I/O, not hidden transport
+//      retries, failed partial transfers or exact network traffic.
+//    - Native probes and catalog discovery are outside captured indexing/query
+//      coverage, including their vector/byte/usage observations.
+//    - No intra-hour starts/outcomes conservation constraint is valid.
+//    - phaseStats and failureCounts must be JSON objects, never JSON null,
+//      arrays/scalars, SQL NULL, or unknown keys. Defaults are not validation.
+//    - octet_length(phaseStats::text) <= 8192; proposed concrete separate cap
+//      octet_length(failureCounts::text) <= 1024, sufficient for all 12 keys
+//      holding maximum signed-64-bit decimal strings. The 1024-byte choice is
+//      an explicit review detail completing the proposal's small-map cap.
+//
+// 3. phaseStats fixed format version 1:
+//    - Each present phase is exactly {samples,sumMicros,maxMicros,buckets}.
+//      All four numerical kinds, including maxMicros and each bucket element,
+//      use canonical decimal strings matching 0|[1-9][0-9]* with numerical value
+//      <= 9223372036854775807. No JSON numeric rounding or implicit casts.
+//    - buckets is exactly 16 noncumulative counters. The inclusive upper
+//      microsecond bounds are [1000,5000,10000,25000,50000,100000,250000,500000,
+//      1000000,2500000,5000000,10000000,30000000,90000000,300000000,null]. The
+//      last bucket is the open tail, not a JSON infinity value.
+//    - Sum(buckets) = samples without intermediate BIGINT overflow. If samples
+//      is 0, sumMicros=maxMicros=0; otherwise 0 <= maxMicros <= sumMicros.
+//    - EXTRACTION keys: SOURCE_READ, PARSE_EXTRACT, ARTIFACT_WRITE,
+//      CATALOG_PUBLISH, EXECUTION_TOTAL.
+//    - INDEX_* keys: SOURCE_READ, PLAN, MATERIALIZE_SEAL, FINAL_EMBED,
+//      VECTOR_WRITE_SEAL, CATALOG_PUBLISH, EXECUTION_TOTAL. Only INDEX_SEMANTIC
+//      also permits BOUNDARY_EMBED. At most eight phase keys per row.
+//    - SEARCH_* keys: PREFLIGHT, QUERY_EMBED, LEXICAL, VECTOR, FUSION_HYDRATE,
+//      SERVICE_TOTAL, INTERNAL_PHASE_UNION. The writer only records phases actually executed:
+//      unexecuted phases are absent, never fabricated zero-duration samples.
+//
+// 4. failureCounts fixed format version 1:
+//    - Allowed keys only: ACCESS, PROFILE, CREDENTIALS, PROVIDER, STORAGE,
+//      SOURCE, VECTOR, QUOTA, LEASE, INPUT, PROCESSING, OTHER.
+//    - Values use the same canonical bounded decimal strings. No raw error
+//      codes/messages, responses or dynamic labels are stored. No unused
+//      Prisma enum is introduced for keys that exist only inside JSON.
+//
+// 5. Worker observations:
+//    - Record a finish's database observation time, associated observed start,
+//      monotonic duration, RETURNED/THREW outcome and safe failure atomically.
+//    - No finish timestamp requires outcome, associated start, duration and
+//      safe failure all to be SQL NULL. A recorded finish requires an outcome;
+//      associated start/duration may independently remain unknown (SQL NULL).
+//    - RETURNED requires safe failure NULL. THREW requires one finite
+//      RagWorkerFailure value; use UNKNOWN when no narrower class is known.
+//    - A known duration is nonnegative; a known associated observed start is
+//      no later than that finish observation. Do not fill absent observations
+//      with now(), zero, or successful state.
+//    - The independent latest global start may be before or after the latest
+//      finish due to other replicas. No cross-replica stuck/healthy invariant.
+//    - Heartbeats do not clear lastSafeFailure. A successfully recorded return
+//      can clear it while installing that return's finish tuple.
+//
+// 6. Rollout/cleanup:
+//    - No historical backfill; marker and lane rows are lazy-created.
+//    - Organization cascades preserve existing native deletion transactions
+//      and late RAG guard rollback. Telemetry must not recreate an organization.
+//    - Read APIs exclude hours outside the 30-day window. Bounded maintenance
+//      prunes expired hours; no retention claim for authoritative semantic
+//      usage/source holds/audits, which are separate and unchanged.
+
+// 7. Ordered observations and feasible histograms:
+//    - Marker/lane writers lock the row before sampling clock_timestamp(),
+//      then apply GREATEST against its prior observation. transaction_timestamp
+//      alone cannot order delayed concurrent reporters. Required marker/hour
+//      timestamps have no default: the writer supplies this database evidence.
+//    - For samples > 0, maxMicros belongs to the highest populated bucket.
+//      Let L/U be each bucket's inclusive integer bounds (first L=0, subsequent
+//      L=previous U+1; open-tail U=maxMicros). Using NUMERIC intermediates:
+//      sumMicros >= sum(count_i*L_i)+maxMicros-L_highest and
+//      sumMicros <= sum(count_i*min(U_i,maxMicros)). This requires one attained
+//      maximum and rejects impossible bucket/sample/duration combinations.
+//    - INDEX_* observations cover INDEX_DOCUMENT execution only. Provision,
+//      removal and cleanup remain current-work/lane evidence, not these totals.
+//      Lane buffering has exactly three bounded slots and one writer in flight.
+
+// 8. Search internal phase sample:
+//    - INTERNAL_PHASE_UNION is one observed request sample from at most five
+//      closed monotonic PREFLIGHT/LEXICAL/VECTOR/FUSION_HYDRATE intervals.
+//      VECTOR has two disjoint spans around the query embed call. Merge overlaps
+//      once, retain lexical work overlapping embedding, and never include
+//      SERVICE_TOTAL or QUERY_EMBED in the union. This excludes uncovered
+//      embedding wait and transport/authentication middleware/serialization;
+//      in-service authorization remains counted. It is not a predicted latency.

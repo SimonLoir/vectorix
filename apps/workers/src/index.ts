@@ -9,9 +9,12 @@ import {
 } from '@routers/rag/indexing';
 import { parseRichDocument } from './extraction/main';
 import { processNotifications } from './notifications/process';
+import { startWorkerObservations } from './observations';
+const observations = startWorkerObservations(prisma);
 const worker = new Worker(
     QueueName.NOTIFICATIONS,
-    () => processNotifications(prisma),
+    () =>
+        observations.scan('NOTIFICATIONS', () => processNotifications(prisma)),
     { connection, concurrency: 1 }
 );
 worker.on('error', (error) =>
@@ -21,6 +24,7 @@ worker.on('failed', (_job, error) =>
     console.error('Notification scan failed:', error.message)
 );
 await worker.waitUntilReady();
+observations.ready('NOTIFICATIONS');
 await getQueues().notifications.upsertJobScheduler(
     'notification-deliveries',
     { every: 10_000 },
@@ -28,10 +32,11 @@ await getQueues().notifications.upsertJobScheduler(
 );
 const documentWorker = new Worker(
     QueueName.DOCUMENTS,
-    async () => {
-        await processDocumentIngestions(prisma, parseRichDocument);
-        await processDocumentCleanups(prisma);
-    },
+    () =>
+        observations.scan('DOCUMENTS', async () => {
+            await processDocumentIngestions(prisma, parseRichDocument);
+            await processDocumentCleanups(prisma);
+        }),
     { connection, concurrency: 1 }
 );
 documentWorker.on('error', () =>
@@ -41,6 +46,7 @@ documentWorker.on('failed', () =>
     console.error('Document scan failed; durable tasks will be retried')
 );
 await documentWorker.waitUntilReady();
+observations.ready('DOCUMENTS');
 await getQueues().documents.upsertJobScheduler(
     'document-ingestion',
     { every: 5000 },
@@ -48,7 +54,8 @@ await getQueues().documents.upsertJobScheduler(
 );
 const indexingWorker = new Worker(
     QueueName.INDEXING,
-    () => processCollectionIndexing(prisma),
+    () =>
+        observations.scan('INDEXING', () => processCollectionIndexing(prisma)),
     { connection, concurrency: 1 }
 );
 indexingWorker.on('error', () =>
@@ -58,6 +65,7 @@ indexingWorker.on('failed', () =>
     console.error('Indexing scan failed; durable tasks will be retried')
 );
 await indexingWorker.waitUntilReady();
+observations.ready('INDEXING');
 await getQueues().indexing.upsertJobScheduler(
     'collection-indexing',
     { every: 5000 },
@@ -73,6 +81,7 @@ for (const signal of ['SIGINT', 'SIGTERM'])
         ]);
         await closeVectorAdapters();
         await closeQueues();
+        await observations.shutdown();
         await prisma.$disconnect();
         process.exit(0);
     });
