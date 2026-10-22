@@ -6,6 +6,7 @@ import { passkey } from '@better-auth/passkey';
 import { prisma } from '@repo/db';
 import { apiKey } from '@better-auth/api-key';
 import { sendPasswordResetEmail } from './password-reset-email';
+import { assertPasswordResetUrlConfigured } from './password-reset-url';
 import { authRateLimitOptions } from './rate-limit';
 import { isAccountCreationAllowed } from './account-creation';
 import { isOrganizationCreationAllowed } from './organization-creation';
@@ -66,6 +67,11 @@ const getAdvancedOptions = (): BetterAuthAdvancedOptions | undefined => {
 export const auth = betterAuth({
     hooks: {
         before: createAuthMiddleware(async (ctx) => {
+            // Better Auth swallows mail callback errors after creating a token.
+            // Validate first so known and unknown accounts receive the same 503.
+            if (ctx.path === '/request-password-reset') {
+                assertPasswordResetUrlConfigured();
+            }
             if (
                 ctx.path === '/update-user' &&
                 ctx.body &&

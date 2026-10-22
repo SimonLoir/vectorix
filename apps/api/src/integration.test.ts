@@ -11,6 +11,7 @@ import { processNotifications } from '../../workers/src/notifications/process';
 import { app } from './app';
 import { apiKeyIssuerRevocationTests } from './api-key-issuer-revocation';
 import { requestBodyIntegrationTests } from './request-body-integration';
+import { passwordResetIntegrationTests } from './password-reset-integration';
 
 if (
     !new URL(
@@ -385,5 +386,9 @@ void test('core journeys with real PostgreSQL and the HTTP transports', async (t
     await requestBodyIntegrationTests(t, {
         owner: a,
         organizationId: organizationIds[0]!,
+    });
+    await passwordResetIntegrationTests(t, {
+        createBrowser: browser,
+        registerUser: (id) => userIds.push(id),
     });
 });

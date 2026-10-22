@@ -41,7 +41,9 @@ export function ForgotPasswordForm({
                     },
                     onError: (ctx) => {
                         toast.error(
-                            ctx.error.message || t('failedSendResetLink')
+                            ctx.error.status === 503
+                                ? t('temporarilyUnavailable')
+                                : ctx.error.message || t('failedSendResetLink')
                         );
                     },
                 }
