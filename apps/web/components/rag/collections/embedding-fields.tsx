@@ -25,6 +25,12 @@ function initialDraft(configuration?: Configuration): EmbeddingDraft {
         preset: configuration?.embeddingPreset ?? 'GENERIC',
     };
 }
+function providerHintPrefix(provider: Provider) {
+    if (provider === 'VOYAGE') return 'voyage';
+    if (provider === 'OPENAI') return 'openai';
+    if (provider === 'MISTRAL') return 'mistral';
+    return 'cohere';
+}
 
 /** Keep unsaved provider/model choices separate from discovery of a saved credential binding. */
 export function EmbeddingFields({
@@ -41,12 +47,7 @@ export function EmbeddingFields({
     const [draft, setDraft] = useState(() => initialDraft(configuration));
     const catalog = hostedModelCatalog(draft.provider);
     const hosted = catalog !== null;
-    const hostedHintProvider =
-        draft.provider === 'VOYAGE'
-            ? 'voyage'
-            : draft.provider === 'OPENAI'
-              ? 'openai'
-              : 'cohere';
+    const hostedHintProvider = providerHintPrefix(draft.provider);
     const supportedModel = catalog?.models.find(
         (item) => item.model === draft.model
     );

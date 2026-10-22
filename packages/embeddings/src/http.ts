@@ -22,7 +22,9 @@ type NativePath =
 function isHostedConfigurationValid(config: EmbeddingConfiguration, url: URL) {
     return (
         config.provider === 'OLLAMA' ||
-        ((config.provider === 'OPENAI' || url.pathname === '/') &&
+        ((config.provider === 'OPENAI' ||
+            config.provider === 'MISTRAL' ||
+            url.pathname === '/') &&
             typeof config.apiKey === 'string' &&
             Boolean(config.apiKey.trim()))
     );
@@ -44,7 +46,7 @@ export function configurationUrl(config: EmbeddingConfiguration) {
     try {
         const url = new URL(config.endpoint);
         if (
-            !['OLLAMA', 'COHERE', 'VOYAGE', 'OPENAI'].includes(
+            !['OLLAMA', 'COHERE', 'VOYAGE', 'OPENAI', 'MISTRAL'].includes(
                 config.provider
             ) ||
             !['http:', 'https:'].includes(url.protocol) ||

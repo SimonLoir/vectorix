@@ -22,15 +22,24 @@ import {
     embedOpenAIQuery,
 } from './openai';
 import {
+    canonicalMistralModel,
+    discoverMistralModels,
+    verifyMistralEmbeddingModel,
+    embedMistralDocuments,
+    embedMistralQuery,
+} from './mistral';
+import {
     EmbeddingError,
     type OllamaConfiguration,
     type CohereConfiguration,
     type VoyageConfiguration,
     type OpenAIConfiguration,
+    type MistralConfiguration,
     type OllamaModelIdentity,
     type CohereModelIdentity,
     type VoyageModelIdentity,
     type OpenAIModelIdentity,
+    type MistralModelIdentity,
     type EmbeddingConfiguration,
     type ModelIdentity,
     type RequestOptions,
@@ -45,6 +54,7 @@ export function canonicalEmbeddingModel(provider: string, model: string) {
     if (provider === 'COHERE') return canonicalCohereModel(model);
     if (provider === 'VOYAGE') return canonicalVoyageModel(model);
     if (provider === 'OPENAI') return canonicalOpenAIModel(model);
+    if (provider === 'MISTRAL') return canonicalMistralModel(model);
     throw new EmbeddingError('INVALID_CONFIGURATION');
 }
 /** Native catalogs are bound to the resolved service; Voyage uses a local catalog without I/O. Neither proves embedding readiness. */
@@ -61,6 +71,8 @@ export async function discoverModels(
         return discoverVoyageModels(config, options);
     if (config.provider === 'OPENAI')
         return await discoverOpenAIModels(config, options);
+    if (config.provider === 'MISTRAL')
+        return await discoverMistralModels(config, options);
     throw new EmbeddingError('INVALID_CONFIGURATION');
 }
 /** Verify a complete resolved provider configuration without reading environment or organization state. */
@@ -85,6 +97,11 @@ export function verifyEmbeddingModel(
     options?: RequestOptions
 ): Promise<OpenAIModelIdentity>;
 export function verifyEmbeddingModel(
+    config: MistralConfiguration,
+    input: VerifyEmbeddingOptions,
+    options?: RequestOptions
+): Promise<MistralModelIdentity>;
+export function verifyEmbeddingModel(
     config: EmbeddingConfiguration,
     input: VerifyEmbeddingOptions,
     options?: RequestOptions
@@ -103,6 +120,8 @@ export async function verifyEmbeddingModel(
         return await verifyVoyageEmbeddingModel(config, input, options);
     if (config.provider === 'OPENAI')
         return await verifyOpenAIEmbeddingModel(config, input, options);
+    if (config.provider === 'MISTRAL')
+        return await verifyMistralEmbeddingModel(config, input, options);
     throw new EmbeddingError('INVALID_CONFIGURATION');
 }
 /** Dispatch only when the immutable snapshot belongs to the resolved provider. */
@@ -121,9 +140,11 @@ export async function embedDocuments(
         return await embedVoyageDocuments(config, identity, values, options);
     if (config.provider === 'OPENAI' && identity?.provider === 'OPENAI')
         return await embedOpenAIDocuments(config, identity, values, options);
+    if (config.provider === 'MISTRAL' && identity?.provider === 'MISTRAL')
+        return await embedMistralDocuments(config, identity, values, options);
     throw new EmbeddingError('MODEL_CHANGED');
 }
-/** Preserve each provider's native role semantics; OpenAI uses the same protocol for both inputs. */
+/** Preserve native role semantics; OpenAI and Mistral use the same protocol for both inputs. */
 export async function embedQuery(
     config: EmbeddingConfiguration,
     identity: ModelIdentity,
@@ -139,5 +160,7 @@ export async function embedQuery(
         return await embedVoyageQuery(config, identity, text, options);
     if (config.provider === 'OPENAI' && identity?.provider === 'OPENAI')
         return await embedOpenAIQuery(config, identity, text, options);
+    if (config.provider === 'MISTRAL' && identity?.provider === 'MISTRAL')
+        return await embedMistralQuery(config, identity, text, options);
     throw new EmbeddingError('MODEL_CHANGED');
 }

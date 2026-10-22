@@ -708,7 +708,7 @@
             "working": "Traitement…",
             "readDenied": "La lecture de cette collection n’est pas autorisée. L’administration du catalogue ne donne pas accès au contenu.",
             "manageDenied": "Vous pouvez consulter l’index mais pas le gérer.",
-            "profileGate": "L’indexation prend en charge Ollama, Cohere, Voyage et OpenAI avec un découpage selon la structure du document, sans extension parent-enfant. Les autres fournisseurs et profils de découpage restent des brouillons enregistrés.",
+            "profileGate": "L’indexation prend en charge Ollama, Cohere, Voyage, OpenAI et Mistral avec un découpage selon la structure du document, sans extension parent-enfant. Les profils de découpage supplémentaires restent des brouillons enregistrés.",
             "preset": "Préparation propre au modèle",
             "presetHint": "Choisissez explicitement une préparation. Le mode générique envoie le texte brut ; EmbeddingGemma utilise ses préfixes document et requête documentés.",
             "preparationHint": "La préparation est un préfixe littéral suivi d’un saut de ligne, pour les documents comme pour les requêtes. Ce n’est pas un modèle de substitution.",
@@ -939,7 +939,14 @@
             "openaiDimensionsHint": "Tailles entières documentées : {minimum, number}–{maximum, number}, par pas de {step, number}. Valeur native par défaut : {defaultDimensions, number}. Il s’agit de la politique de réduction de Vectorix ; vérifiez la taille enregistrée avant l’indexation.",
             "dimensionRange": "{current, number} sélectionnées · plage documentée : {minimum, number}–{maximum, number} · pas de {step, number}",
             "dimensionRangeInvalid": "Saisissez un nombre entier entre {minimum, number} et {maximum, number}.",
-            "rangeProbeHint": "Cette plage décrit la politique de réduction documentée de Vectorix, sans constituer une mesure indépendante du maximum du fournisseur. Cette vérification a testé uniquement la taille sélectionnée."
+            "rangeProbeHint": "Cette plage décrit la politique de réduction documentée de Vectorix, sans constituer une mesure indépendante du maximum du fournisseur. Cette vérification a testé uniquement la taille sélectionnée.",
+            "mistralCatalogHint": "Choisissez un modèle Mistral pris en charge avec sa taille de vecteur fixe. Ces choix locaux documentés ne vérifient pas l’accès. Enregistrez le profil, découvrez les modèles auprès du fournisseur enregistré, puis vérifiez le modèle enregistré.",
+            "mistralPresetHint": "Mistral utilise le même protocole natif d’embedding pour les documents et les requêtes, avec des vecteurs de taille fixe. Le préréglage générique n’ajoute aucun préfixe de texte propre au modèle.",
+            "mistralUnsupportedPresetHint": "Ce préréglage enregistré n’est pas pris en charge par Mistral. Choisissez Générique pour préparer une révision exécutable.",
+            "reviewedProcessingContext": "Budget de traitement documenté",
+            "mistralContextHint": "Vectorix applique un plafond prudent de {count, number} jetons à ces modèles Mistral documentés. Il s’agit d’une politique de traitement, pas d’une mesure du maximum natif du fournisseur.",
+            "observedResponseModel": "Modèle observé dans la réponse",
+            "observedResponseModelHint": "Le nom sélectionné ci-dessus est demandé au fournisseur. Ce nom observé dans la réponse est lié à l’empreinte de capacités et doit rester stable pour le profil enregistré."
         }
     },
     "dashboard": {

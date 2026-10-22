@@ -51,6 +51,7 @@ export const dimensionCapability = z
 export const verifiedEmbedding = z.object({
     provider: embeddingProvider,
     model: z.string(),
+    responseModel: z.string().min(1).max(200).optional(),
     digest: z.string(),
     family: z.string(),
     contextTokens: z.number().int().positive(),

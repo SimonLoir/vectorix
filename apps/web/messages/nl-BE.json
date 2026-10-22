@@ -708,7 +708,7 @@
             "working": "Bezig…",
             "readDenied": "Je hebt geen leesrecht voor deze collectie. Catalogusbeheer geeft geen toegang tot de inhoud.",
             "manageDenied": "Je kunt de index bekijken, maar niet beheren.",
-            "profileGate": "Indexering ondersteunt Ollama, Cohere, Voyage en OpenAI met documentstructuur als opdeling en zonder ouder-kinduitbreiding. Andere providers en opdelingsprofielen blijven opgeslagen concepten.",
+            "profileGate": "Indexering ondersteunt Ollama, Cohere, Voyage, OpenAI en Mistral met documentstructuur als opdeling en zonder ouder-kinduitbreiding. Aanvullende opdelingsprofielen blijven opgeslagen concepten.",
             "preset": "Invoervoorinstelling voor embeddings",
             "presetHint": "Kies expliciet een voorinstelling. Generiek verstuurt ruwe tekst; EmbeddingGemma gebruikt de gedocumenteerde document- en zoekvoorvoegsels.",
             "preparationHint": "Voorbereiding is een letterlijk voorvoegsel met een regeleinde voor documenten en zoekopdrachten. Het is geen invulsjabloon.",
@@ -939,7 +939,14 @@
             "openaiDimensionsHint": "Gedocumenteerde gehele groottes: {minimum, number}–{maximum, number}, in stappen van {step, number}. Ingebouwde standaard: {defaultDimensions, number}. Dit is het verkortingsbeleid van Vectorix; controleer de opgeslagen grootte vóór de indexering.",
             "dimensionRange": "{current, number} geselecteerd · gedocumenteerd bereik: {minimum, number}–{maximum, number} · stap {step, number}",
             "dimensionRangeInvalid": "Voer een geheel getal van {minimum, number} tot {maximum, number} in.",
-            "rangeProbeHint": "Het bereik beschrijft het gedocumenteerde verkortingsbeleid van Vectorix, geen afzonderlijk gemeten maximum van de provider. Deze controle heeft alleen de geselecteerde grootte getest."
+            "rangeProbeHint": "Het bereik beschrijft het gedocumenteerde verkortingsbeleid van Vectorix, geen afzonderlijk gemeten maximum van de provider. Deze controle heeft alleen de geselecteerde grootte getest.",
+            "mistralCatalogHint": "Kies een ondersteund Mistral-model met zijn vaste vectorgrootte. Deze gedocumenteerde lokale keuzes controleren de toegang niet. Sla het profiel op, zoek modellen bij de opgeslagen provider en controleer daarna het opgeslagen model.",
+            "mistralPresetHint": "Mistral gebruikt hetzelfde ingebouwde embeddingprotocol voor documenten en zoekvragen, met vectoren van vaste grootte. De generieke voorinstelling voegt geen modelspecifieke tekstprefixen toe.",
+            "mistralUnsupportedPresetHint": "Deze opgeslagen voorinstelling wordt niet ondersteund voor Mistral. Kies Generiek om een uitvoerbare revisie voor te bereiden.",
+            "reviewedProcessingContext": "Gedocumenteerd verwerkingsbudget",
+            "mistralContextHint": "Vectorix hanteert een voorzichtige bovengrens van {count, number} tokens voor deze gedocumenteerde Mistral-modellen. Dit is een verwerkingsbeleid, geen gemeten ingebouwd maximum van de provider.",
+            "observedResponseModel": "Waargenomen responsmodel",
+            "observedResponseModelHint": "De geselecteerde naam hierboven wordt bij de provider aangevraagd. Deze waargenomen responsnaam is gekoppeld aan de capaciteitenvingerafdruk en moet stabiel blijven voor het opgeslagen profiel."
         }
     },
     "dashboard": {

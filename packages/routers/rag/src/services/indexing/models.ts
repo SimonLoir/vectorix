@@ -70,7 +70,8 @@ export async function listEmbeddingModels(
                 : {
                       discoverySource:
                           profile.provider === 'COHERE' ||
-                          profile.provider === 'OPENAI'
+                          profile.provider === 'OPENAI' ||
+                          profile.provider === 'MISTRAL'
                               ? ('HOSTED_CATALOG' as const)
                               : ('LOCAL_RUNTIME' as const),
                   }),
@@ -120,7 +121,8 @@ export async function probeEmbeddingModel(
                 : {
                       discoverySource:
                           identity.provider === 'COHERE' ||
-                          identity.provider === 'OPENAI'
+                          identity.provider === 'OPENAI' ||
+                          identity.provider === 'MISTRAL'
                               ? ('HOSTED_CATALOG' as const)
                               : ('LOCAL_RUNTIME' as const),
                   }),

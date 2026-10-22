@@ -25,6 +25,7 @@ export function hostedModelCatalog(provider: string): HostedCatalog | null {
     if (provider === 'COHERE') return cohereCatalog;
     if (provider === 'VOYAGE') return voyageCatalog;
     if (provider === 'OPENAI') return openaiCatalog;
+    if (provider === 'MISTRAL') return mistralCatalog;
     return null;
 }
 
@@ -99,6 +100,20 @@ const openaiCatalog: HostedCatalog = {
                 step: 1,
             },
             defaultDimensions: 3072,
+        },
+    ],
+};
+const mistralCatalog: HostedCatalog = {
+    models: [
+        {
+            model: 'mistral-embed',
+            dimensions: [1024],
+            defaultDimensions: 1024,
+        },
+        {
+            model: 'mistral-embed-2312',
+            dimensions: [1024],
+            defaultDimensions: 1024,
         },
     ],
 };

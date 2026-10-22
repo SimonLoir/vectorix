@@ -1,6 +1,6 @@
 # Native embeddings
 
-`@repo/embeddings` implements native Ollama, Cohere, Voyage and OpenAI text embeddings. It accepts a complete resolved `EmbeddingConfiguration`: `{ provider: 'OLLAMA', endpoint, apiKey: string | null }` or `{ provider: 'COHERE' | 'VOYAGE' | 'OPENAI', endpoint, apiKey: string }`. It never reads environment variables, chooses organization credentials, downloads models, or accesses application databases. Mistral remains a planned adapter.
+`@repo/embeddings` implements native Ollama, Cohere, Voyage, OpenAI and Mistral text embeddings. It accepts a complete resolved `EmbeddingConfiguration`: `{ provider: 'OLLAMA', endpoint, apiKey: string | null }` or `{ provider: 'COHERE' | 'VOYAGE' | 'OPENAI' | 'MISTRAL', endpoint, apiKey: string }`. It never reads environment variables, chooses organization credentials, downloads models, or accesses application databases.
 
 The RAG layer resolves credentials and enforces exact operator-approved endpoints in [`embedding-profile.ts`](../routers/rag/src/services/indexing/embedding-profile.ts). Saved collection revisions retain their credential and destination binding. Invalid configured bindings fail without falling back to platform defaults.
 
@@ -9,10 +9,11 @@ The RAG layer resolves credentials and enforces exact operator-approved endpoint
 - `discoverModels(config, options?)` calls the resolved native service. Ollama returns installed canonical names, manifest digests and families, bounded to 512 models. Cohere queries its authenticated `/v1/models` catalog, follows at most five pages of 100 entries and intersects results with the reviewed text-model allowlist. Cohere summaries include `discoverySource: 'HOSTED_CATALOG'`, `identityKind: 'CAPABILITY_PROFILE'`, context and dimension choices. Optional catalog metadata may be absent or null: unnamed and unrelated entries are skipped, explicitly non-embedding entries are excluded, and reviewed names can use the endpoint-filtered listing when optional endpoint metadata is absent. Invalid non-null field types fail closed. Listing is not an embedding probe.
 - Voyage discovery returns the bounded local `VOYAGE_MODELS` catalog without HTTP. Its summaries set `reviewedCatalog: true` and omit `discoverySource`; they do not assert hosted listing, model availability, valid credentials or embedding readiness. Verification performs actual document/query probes.
 - OpenAI discovery calls native `GET models` under the complete saved API base and intersects at most 1,000 entries with its two reviewed text models. Summaries set `discoverySource: 'HOSTED_CATALOG'` and expose range metadata rather than an exhaustive size list. Catalog access and embedding readiness remain separate: verification directly probes the embedding endpoint without requiring discovery first.
+- Mistral discovery calls native `GET models`, bounds model cards and aliases, and exposes only explicitly reviewed IDs and aliases on a reviewed model card. Its catalog has no embeddings capability flag. Unknown cards cannot enable a model by asserting a known alias. Listing is not readiness: direct native probes establish a stable observed response ID.
 - `verifyEmbeddingModel(config, { model, dimensions, preset, preparation? }, options?)` validates the supported profile and native vectors at the selected dimensions. Ollama checks its installed manifest and model metadata; Cohere probes both retrieval roles using synthetic text without organization content. Unsupported reductions and presets fail explicitly.
 - `embedDocuments(config, identity, [{ text, title? }], options?)` and `embedQuery(config, identity, text, options?)` dispatch only when the configuration and saved identity belong to the same provider.
 - `canonicalEmbeddingModel(provider, model)` applies provider-specific normalization. Ollama adds its implicit `:latest` tag; hosted model IDs remain exact and case-sensitive. The original `canonicalOllamaModel` export remains available.
-- `modelIdentity` parses all four persisted identity formats. `embeddingIdentityKind(identity)` exposes `WEIGHTS_DIGEST` for legacy Ollama snapshots and `CAPABILITY_PROFILE` for Cohere/Voyage/OpenAI.
+- `modelIdentity` parses all five persisted identity formats. `embeddingIdentityKind(identity)` exposes `WEIGHTS_DIGEST` for legacy Ollama snapshots and `CAPABILITY_PROFILE` for Cohere/Voyage/OpenAI/Mistral.
 - `embeddingInputByteLimit(identity, { kind?, title?, preparation? })` supplies the conservative content byte budget used by chunking. `prepareEmbeddingInput` applies the same accounting at the provider boundary. `COHERE_MODELS` exposes the reviewed server-side capability catalog; this package contains Node.js integrations and must not be imported into browser components.
 
 ```mermaid
@@ -22,14 +23,17 @@ flowchart LR
     D --> C["Cohere: authenticated catalog and both retrieval probes"]
     D --> VY["Voyage: reviewed local catalog, then native probes"]
     D --> OA["OpenAI: native catalog and shared-input probes"]
+    D --> MI["Mistral: reviewed aliases and stable response-ID probes"]
     O --> W["Schema 1: native weights digest"]
     C --> P["Schema 2: capability-profile fingerprint"]
     VY --> VP["Schema 3: Voyage capability-profile fingerprint"]
     OA --> OP["Schema 4: OpenAI capability profile and dimension range"]
+    MI --> MP["Schema 5: Mistral profile and observed response ID"]
     W --> E["Native provider input semantics"]
     P --> E
     VP --> E
     OP --> E
+    MP --> E
     E --> V["Bounded float32-compatible vector validation"]
     V --> U["Vectors, reported usage and separate estimate"]
 ```
@@ -97,23 +101,41 @@ Native limits are 2,048 inputs and 300,000 aggregate input tokens per request. I
 
 Responses must carry the exact model and a complete unique integer-index permutation. Vectors return in input order across rows and batches; count, dimensions, finite float32 values and nonzero rounded norms are validated without normalizing provider precision. `usage.prompt_tokens` supplies provider input usage, with `null` propagated if any successful batch omits it. `total_tokens` is validated independently and cannot be below a reported prompt count; it is not substituted for input tokens or represented as separately reported billing.
 
+## Mistral
+
+Use a complete saved API base, normally `https://api.mistral.ai/v1`, with a nonempty key. Only fixed relative `models` and `embeddings` paths receive the credential. Approved proxy prefixes and existing `/v1` segments are preserved exactly; no extra version segment or origin reset occurs.
+
+The reviewed text model is `mistral-embed`, with the officially documented `mistral-embed-2312` alias. Both use fixed 1,024-dimensional vectors and the `GENERIC` preset. The model page describes an **8k** context; this adapter deliberately uses an **8,000-token processing budget**, rather than asserting a separately documented 8,192-token maximum. The general API's optional output-dimension/type features do not establish support for reducing this fixed-dimension model. Other model families, custom IDs and arbitrary aliases remain unsupported.
+
+Native requests send only `model`, `input: string[]` and `encoding_format: 'float'`. No `dimensions`, `output_dimension`, `output_dtype`, retrieval role, truncation, metadata or end-user field is invented. Document and query paths use the same native protocol and literal preparation. Titles are not rewritten into model prompts; oversize input is rejected locally rather than sliced.
+
+Native listing reads at most 1,000 cards, each with at most 100 aliases. Documented envelope defaults are supported: an omitted `object` uses `list`, omitted `data` is an empty catalog, and optional/defaulted model-card metadata may be absent. Existing nullish optional catalog metadata remains harmless; invalid present types fail closed, including null/non-array `data`. The reviewed ID/alias intersection does not require a nonexistent `capabilities.embeddings` flag or treat completion flags as embedding readiness. A reviewed card may expose either or both reviewed names. An unrelated card claiming one of those aliases cannot enable it. Discovery fingerprints cover reviewed catalog settings only; no embedding response ID has yet been observed.
+
+A strict immutable `schemaVersion: 5` capability identity records the exact requested `model`, ordered reviewed `equivalentModels` pair, and observed `responseModel`, along with fixed dimensions, processing budget and native semantics. Both synthetic probes must return the same member of that explicit pair; later embedding requests must retain that observed ID. A switch between the reviewed aliases fails with `MODEL_CHANGED`; an unreviewed response ID fails with `INVALID_PROVIDER_RESPONSE`. There is no model substitution or fallback. Saved replay checks the complete profile and fingerprint before I/O; schemas 1–4 retain their original meaning.
+
+This stable response-ID check is consistency evidence, **not weights attestation**. An unchanged hosted name cannot expose a hidden server-side weights change. The fingerprint identifies the saved capability configuration, including its observed alias, rather than a downloadable model manifest.
+
+`batchPolicy` is explicitly a Vectorix safety policy: at most **64 inputs**, with prepared UTF-8 bytes plus **32 reserved units per input** totaling at most **16,000** per request. These are conservative internal admission caps, not documented native batch/token limits or exact tokenizer counts. The shared per-input processing byte budget also applies. Fixed 1,024-dimensional batches remain comfortably below the shared 8 MiB response ceiling; all requests retain the 2 MiB JSON limit and one operation deadline.
+
+Native rows must form a complete unique integer-index permutation and are restored to input order across batches. Cosmetic `object` metadata accepts bounded strings and an omitted row object, matching native SDK optionality. The adapter intentionally requires row `index` and `embedding`, even for one input: although the general SDK permits their omission, vectors cannot be safely associated or published without them. Count, 1,024 dimensions, finite float32 representation and nonzero rounded norms are validated while preserving numeric precision. `usage.prompt_tokens` reports provider input tokens; missing usage in any batch propagates `null` rather than copying SDK zero defaults. `total_tokens` is checked separately, never substituted for input tokens or treated as separately reported billing. Controlled loopback fixtures verify this wire protocol; paid-provider connectivity, availability and relevance remain separate live checks.
+
 ## Bounds, preparation and usage
 
-Optional preparation is a literal prefix followed by a newline on both application paths. It is never interpreted as a template. Complete input, including any applicable preparation/title/preset prefix, must fit within the context-token count minus 32 bytes, capped at 64 KiB. This conservative byte bound avoids assuming a tokenizer and may produce smaller chunks than the provider's token maximum. Native truncation is disabled where the provider exposes that control; OpenAI has no truncation parameter.
+Optional preparation is a literal prefix followed by a newline on both application paths. It is never interpreted as a template. Complete input, including any applicable preparation/title/preset prefix, must fit within the context-token count minus 32 bytes, capped at 64 KiB. This conservative byte bound avoids assuming a tokenizer and may produce smaller chunks than the provider's token maximum. Native truncation is disabled where the provider exposes that control; OpenAI and Mistral have no truncation parameter.
 
-One operation deadline covers discovery, probes, all batches, retries and applicable manifest checks. Request JSON is bounded to 2 MiB, response JSON to 8 MiB and 16 nesting levels. Ollama requests contain at most 128 inputs; Cohere requests contain at most 96; Voyage and OpenAI use the dimension/byte/aggregate bounds above. Vector counts and exact dimensions must match; components must remain finite as float32 and the rounded vector must be nonzero. Valid provider precision is preserved rather than normalized or silently sliced.
+One operation deadline covers discovery, probes, all batches, retries and applicable manifest checks. Request JSON is bounded to 2 MiB, response JSON to 8 MiB and 16 nesting levels. Ollama requests contain at most 128 inputs; Cohere requests contain at most 96; Voyage, OpenAI and Mistral use the respective dimension/byte/aggregate bounds above. Vector counts and exact dimensions must match; components must remain finite as float32 and the rounded vector must be nonzero. Valid provider precision is preserved rather than normalized or silently sliced.
 
 HTTP 429 and 5xx responses receive at most three attempts with bounded backoff. Other error statuses are not retried. Redirects fail closed. Only fixed provider-specific native paths receive the resolved credentials. Errors expose stable domain codes without URLs, credentials, provider bodies or original exceptions. Endpoint approval and organization authorization remain the caller's responsibility.
 
 `EmbeddingUsage` keeps three quantities separate:
 
-- `providerInputTokens`: Ollama's aggregate `prompt_eval_count`, Cohere's `meta.tokens.input_tokens`, Voyage's `usage.total_tokens`, or OpenAI's `usage.prompt_tokens`; `null` if any successful batch omits it.
+- `providerInputTokens`: Ollama's aggregate `prompt_eval_count`, Cohere's `meta.tokens.input_tokens`, Voyage's `usage.total_tokens`, or OpenAI/Mistral's `usage.prompt_tokens`; `null` if any successful batch omits it.
 - `billedInputTokens`: optional Cohere aggregate `meta.billed_units.input_tokens`, independently `null` when unavailable. Billed units never replace model input-token counts.
 - `estimatedInputTokens`: the explicitly labeled prepared UTF-8 byte estimate, plus `requests` for successful embedding requests. Estimates are neither exact tokenizer counts nor provider billing.
 
 ## Validation
 
-Run `pnpm --filter @repo/embeddings test` for controlled loopback HTTP fixtures covering native payloads, retrieval semantics, dimension choices/ranges, catalog pagination/no-I/O catalogs, immutable identity compatibility, indexed ordering, batching, truthful usage, invalid float32 vectors, retries, cancellation, response limits, redirects and input preparation. These fixtures do not establish live Cohere/Voyage/OpenAI connectivity or product dashboard acceptance.
+Run `pnpm --filter @repo/embeddings test` for controlled loopback HTTP fixtures covering native payloads, retrieval semantics, dimension choices/ranges, catalog pagination/no-I/O catalogs, alias observation/drift, immutable identity compatibility, indexed ordering, batching, truthful usage, invalid float32 vectors, retries, cancellation, response limits, redirects and input preparation. These fixtures do not establish live hosted-provider connectivity or product dashboard acceptance.
 
 The [Ollama and EmbeddingGemma reproduction guide](../../docs/rag-ollama-embeddinggemma.md) provides the executed CPU container/version, model digest, installation and native probe commands, credential/network configuration and actual live evidence. For a separate live Ollama check, create a disposable official CPU-only container, install `embeddinggemma`, then run from this directory:
 
@@ -134,3 +156,5 @@ The script accepts only an explicit loopback endpoint and never reads `.env`. It
 - Cohere's official SDK distinguishes [model input tokens](https://github.com/cohere-ai/cohere-python/blob/main/src/cohere/types/api_meta_tokens.py) from [billed input units](https://github.com/cohere-ai/cohere-python/blob/main/src/cohere/types/api_meta_billed_units.py).
 - [Voyage native embedding API](https://docs.voyageai.com/reference/embeddings-api), [text models](https://docs.voyageai.com/docs/embeddings) and [official response schema](https://github.com/voyage-ai/openapi/blob/main/voyage-openapi.yml): retrieval roles, dimensions, current model-specific aggregate limits, indexed responses and token usage. The API/model pages are authoritative for current input/model limits; the older OpenAPI description still names older models and a lower batch limit.
 - [OpenAI native embedding API](https://developers.openai.com/api/reference/resources/embeddings/methods/create), [embedding guide](https://developers.openai.com/api/docs/guides/embeddings) and [native model listing](https://developers.openai.com/api/reference/resources/models/methods/list): exact request/response fields, dimensions minimum, default output sizes and shortening, per-input/aggregate limits and authenticated discovery. No paid-provider request is claimed by the controlled fixtures.
+- [Mistral native embedding API](https://docs.mistral.ai/api/endpoint/embeddings), [native model listing](https://docs.mistral.ai/api/endpoint/models), [text embedding guide](https://docs.mistral.ai/studio/knowledge-rag/embeddings/text_embeddings) and [model card](https://docs.mistral.ai/models/mistral-embed-23-12): native fields, model-card aliases, fixed dimensions and documented 8k context. The 8,000 processing budget and 64/16,000 batch policy are conservative Vectorix limits, not additional native guarantees.
+- Mistral's official SDK schemas for [model lists](https://github.com/mistralai/client-ts/blob/main/src/models/components/modellist.ts), [model cards](https://github.com/mistralai/client-ts/blob/main/src/models/components/basemodelcard.ts), [embedding responses](https://github.com/mistralai/client-ts/blob/main/src/models/components/embeddingresponse.ts) and [embedding rows](https://github.com/mistralai/client-ts/blob/main/src/models/components/embeddingresponsedata.ts): native defaults and optional cosmetic metadata, with the stricter useful-field requirements above retained for safe indexing.

@@ -13,7 +13,8 @@ export function ModelVerification({
         result.identityKind === 'CAPABILITY_PROFILE' ||
         result.provider === 'COHERE' ||
         result.provider === 'VOYAGE' ||
-        result.provider === 'OPENAI';
+        result.provider === 'OPENAI' ||
+        result.provider === 'MISTRAL';
     return (
         <section
             className='space-y-3 rounded-lg bg-muted p-4 text-sm'
@@ -27,6 +28,14 @@ export function ModelVerification({
                     <dt>{tr('verifiedModel')}</dt>
                     <dd className='break-all font-medium'>{result.model}</dd>
                 </div>
+                {result.responseModel && (
+                    <div>
+                        <dt>{tr('observedResponseModel')}</dt>
+                        <dd className='break-all font-medium'>
+                            {result.responseModel}
+                        </dd>
+                    </div>
+                )}
                 <div>
                     <dt>{tr('verifiedDimensions')}</dt>
                     <dd>
@@ -46,7 +55,13 @@ export function ModelVerification({
                     </dd>
                 </div>
                 <div>
-                    <dt>{tr('context')}</dt>
+                    <dt>
+                        {tr(
+                            result.provider === 'MISTRAL'
+                                ? 'reviewedProcessingContext'
+                                : 'context'
+                        )}
+                    </dt>
                     <dd>{tr('tokens', { count: result.contextTokens })}</dd>
                 </div>
                 <div>
@@ -69,6 +84,16 @@ export function ModelVerification({
             {result.dimensionCapability?.kind === 'RANGE' && (
                 <p className='text-xs text-muted-foreground'>
                     {tr('rangeProbeHint')}
+                </p>
+            )}
+            {result.provider === 'MISTRAL' && (
+                <p className='text-xs text-muted-foreground'>
+                    {tr('mistralContextHint', { count: result.contextTokens })}
+                </p>
+            )}
+            {result.responseModel && (
+                <p className='text-xs text-muted-foreground'>
+                    {tr('observedResponseModelHint')}
                 </p>
             )}
             {hosted && (
