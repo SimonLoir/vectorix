@@ -1,5 +1,6 @@
 import { Hono } from 'hono';
 import { cors } from 'hono/cors';
+import { bodyLimit } from 'hono/body-limit';
 import { auth } from '@repo/auth';
 import { prisma } from '@repo/db';
 import { getQueues } from '@repo/queues';
@@ -33,7 +34,11 @@ app.use(
             'x-api-key',
             'Vectorix-Expected-Organization-Id',
         ],
-        exposeHeaders: [...API_VERSION_RESPONSE_HEADERS],
+        exposeHeaders: [
+            ...API_VERSION_RESPONSE_HEADERS,
+            'Content-Disposition',
+            'Standard-Server',
+        ],
     })
 );
 app.on(['GET', 'POST'], '/api/auth/*', (c) => auth.handler(c.req.raw));
@@ -44,6 +49,11 @@ app.get('/ready', async (c) => {
     return c.json({ status: 'ok' });
 });
 for (const runtime of API_VERSION_RUNTIMES) {
+    for (const uploadPath of [
+        `${runtime.version.rpcPath}/admin/rag/documents/upload`,
+        `${runtime.version.restPath}/admin/rag/documents/uploads`,
+    ])
+        app.use(uploadPath, bodyLimit({ maxSize: 26 * 1024 * 1024 }));
     const { version, rpcHandler, openApiHandler } = runtime;
     for (const [prefix, handler] of [
         [version.rpcPath, rpcHandler],

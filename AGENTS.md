@@ -25,6 +25,7 @@ Vectorix is a multi-tenant application foundation. Preserve its reusable authent
 - Keep `credentials: 'include'` in the web oRPC fetch link at `apps/web/contexts/orpc.tsx`.
 - Never log secrets, raw credentials, session tokens, or unsanitized provider responses. Reuse `encrypt()` and `decrypt()` in `packages/routers/utils/src/utils/encryption.ts` for recoverable provider secrets, with `ENCRYPTION_SECRET` configured on the server.
 - Resolve credentials through `@routers/rag/credentials`: organization configuration precedes environment defaults, and existing collection revisions retain their saved binding. Fall back only when organization configuration is absent; invalid configured credentials must produce an explicit error. Keep provider configuration together rather than mixing keys and endpoints from different sources.
+- Keep private object I/O in `@repo/storage`, with bounded reads, sanitized failures, and operator-approved S3 endpoints. Follow each document version’s saved storage binding; changing the active credential must not retarget existing objects.
 - Reuse `@routers/rag/access` for collection and library authorization. Check current membership, organization permissions, member/group grants, and API-key issuer/scopes before accessing content. Global catalog administration does not implicitly grant collection reading. Keep audit writes and catalog mutations in the same transaction.
 
 ## Database and schemas
@@ -72,7 +73,7 @@ Vectorix is a multi-tenant application foundation. Preserve its reusable authent
 - Finish a cohesive change before running one appropriate validation pass. Repeat or broaden checks when a failure or subsequent change warrants it.
 - For implementation changes, validate the Prisma schema when relevant, run type checks, lint, relevant backend tests, and builds before committing. Root commands are `pnpm check-types`, `pnpm lint`, `pnpm test`, and `pnpm build`; use workspace filters for scoped work.
 - Use the isolated `_test` database convention for integration tests. Cover organization isolation, direct identifiers, permissions, transactions, and retries where affected; never run destructive tests against application data.
-- `pnpm test:catalog` owns disposable PostgreSQL/Redis containers and verifies fresh migrations, upgrades, repeat deployments, schema parity, and core/RAG API journeys. It does not read the local `.env` or use application databases.
+- `pnpm test:catalog` owns disposable PostgreSQL/Redis/RustFS containers and verifies fresh migrations, upgrades, repeat deployments, schema parity, and core/RAG API journeys. It does not read the local `.env` or use application databases.
 - Use browser verification for affected user journeys. For container changes, run `pnpm test:docker` where Docker is available and report any verification that could not run.
 - Record each product milestone's dashboard acceptance recipe, prerequisites, expected outcome, and actual browser verification in its PR and build log. API tests or mocked providers alone do not establish a working dashboard or live provider journey.
 - For documentation-only changes, review accuracy and local links, check formatting and `git diff --check`, and parse changed Mermaid diagrams. Application builds and tests are not required for prose-only edits.

@@ -399,7 +399,7 @@
             "detailTitle": "Collectie",
             "detailDescription": "Catalogusconfiguratie, toegang en geschiedenis.",
             "back": "← Alle collecties",
-            "unavailable": "Dit profiel is opgeslagen. Documenten uploaden, indexeren en de zoekomgeving zijn nog niet beschikbaar.",
+            "unavailable": "Dit profiel is opgeslagen. Upload TXT- of Markdown-documenten vanuit de bibliotheek; vectorindexering en zoeken zijn nog niet beschikbaar.",
             "editProfile": "Profiel bewerken",
             "delete": "Collectie verwijderen",
             "deleteTitle": "Deze collectie verwijderen?",
@@ -537,13 +537,13 @@
             "description": "Bekijk geregistreerde resources en de limieten van je organisatie.",
             "collectionsHint": "Limiet toegepast bij het maken van collecties",
             "documents": "Geregistreerde documenten",
-            "documentsHint": "Uploaden wordt in een volgende stap beschikbaar",
+            "documentsHint": "Bewaarde documenten in je bibliotheek",
             "storage": "Geregistreerde opslag",
             "storageHint": "Bewaarde originelen en extracties",
             "policies": "Opgeslagen beleid",
             "fileMaximum": "Maximale bestandsgrootte",
             "chunks": "Passages per collectie",
-            "policyHint": "Opslagreserveringen en passagelimieten worden bij ingestie toegepast. Deze waarden betekenen niet dat er al een upload of index bestaat. Alleen een platformbeheerder kan quota wijzigen."
+            "policyHint": "Uploads reserveren capaciteit voor het origineel en de geëxtraheerde tekst. Mislukte verwerking kan de reservering behouden tot een geslaagde nieuwe poging. Passagelimieten gelden zodra indexering beschikbaar is. Alleen een platformbeheerder kan quota wijzigen."
         },
         "audit": {
             "title": "Cataloguslogboek",
@@ -563,6 +563,57 @@
             "legacy": "Geen RAG-toegang · oude sleutel",
             "removeScope": "Bereik {id} verwijderen",
             "count": "{count, plural, =0 {Geen geautoriseerde collecties} one {# geautoriseerde collectie} other {# geautoriseerde collecties}}"
+        },
+        "documents": {
+            "title": "Documentbibliotheek",
+            "description": "Upload en bekijk documenten van je organisatie. Lezers zien documenten uit hun toegestane collecties.",
+            "detailTitle": "Document",
+            "detailDescription": "Bekijk het origineel, de geëxtraheerde tekst en de gekoppelde collecties.",
+            "search": "Documenten zoeken",
+            "upload": "Document uploaden",
+            "empty": "Geen documenten gevonden",
+            "emptyHint": "Upload een TXT- of Markdown-bestand, of vraag een beheerder om documenten toe te voegen aan een toegestane collectie.",
+            "uploadHint": "Kies een UTF-8 TXT- of Markdown-bestand van maximaal 25 MiB. De extractie gebeurt op de achtergrond.",
+            "file": "Documentbestand",
+            "invalidFile": "Kies een niet-leeg TXT- of Markdown-bestand van maximaal 25 MiB.",
+            "uploadFailed": "Upload mislukt. Controleer je opslaginstellingen, rechten en beschikbare quota en probeer opnieuw.",
+            "uploading": "Bezig met uploaden…",
+            "loadFailed": "Deze documentgegevens konden niet worden geladen. Controleer je toegang en probeer opnieuw.",
+            "actionFailed": "De actie is mislukt. Controleer je toegang, opslaginstellingen en beschikbare quota en probeer opnieuw.",
+            "collections": "Collecties",
+            "collectionsHint": "Alleen collecties die je kunt beheren worden getoond. Koppel een klaar document om het beschikbaar te maken voor hun lezers. Vectorindexering is nog niet beschikbaar.",
+            "searchCollections": "Collecties zoeken",
+            "attach": "Koppelen",
+            "detach": "Ontkoppelen",
+            "preview": "Geëxtraheerde tekst",
+            "previewHint": "Markdown wordt als gewone tekst getoond. Elke pagina toont maximaal 20.000 tekens.",
+            "characters": "Tekens {from, number}–{to, number} van {total, number}",
+            "back": "Terug naar de bibliotheek",
+            "versionInfo": "Versie {version, number} · {bytes, number} bytes · {date}",
+            "download": "Origineel downloaden",
+            "retry": "Extractie opnieuw proberen",
+            "status": {
+                "PENDING": "Upload in afwachting",
+                "PROCESSING": "Bezig met verwerken",
+                "READY": "Klaar",
+                "FAILED": "Mislukt",
+                "DELETED": "Verwijderd"
+            },
+            "task": {
+                "UPLOADING": "Upload wacht op bevestiging. Herstel kan tot vijf minuten duren.",
+                "PENDING": "Wachten op extractie.",
+                "PROCESSING": "Tekst extraheren (poging {attempts, number}).",
+                "READY": "Tekstextractie voltooid.",
+                "FAILED": "Verwerking gestopt na {attempts, plural, one {# poging} other {# pogingen}}."
+            },
+            "errors": {
+                "UPLOAD_INCOMPLETE": "De upload van het origineel is onvolledig. Upload het bestand opnieuw.",
+                "STORAGE_UNAVAILABLE": "Privéopslag is niet beschikbaar. Vraag een beheerder om de inloggegevens en het toegestane eindpunt te controleren.",
+                "TEXT_INVALID": "Dit bestand bevat geen geldige UTF-8-tekst. Sla het op als UTF-8 en upload het opnieuw.",
+                "TEXT_EMPTY": "Er is geen tekst gevonden in dit bestand.",
+                "ACCESS_REVOKED": "Het aanvragende lid heeft geen toegang meer. Een huidige beheerder kan opnieuw proberen.",
+                "PROCESSING_FAILED": "Verwerking mislukt. Probeer opnieuw of neem contact op met een beheerder."
+            }
         }
     },
     "dashboard": {
@@ -578,7 +629,8 @@
             "members": "Leden",
             "roles": "Rollen en rechten",
             "apiKeys": "API-sleutels",
-            "licenses": "Licenties"
+            "licenses": "Licenties",
+            "documents": "Documenten"
         },
         "home": {
             "eyebrow": "WERKRUIMTE",

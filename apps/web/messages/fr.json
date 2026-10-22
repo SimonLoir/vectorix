@@ -399,7 +399,7 @@
             "detailTitle": "Collection",
             "detailDescription": "Configuration, droits et historique du catalogue.",
             "back": "← Toutes les collections",
-            "unavailable": "Ce profil est enregistré. L’ajout de documents, l’indexation et le playground de recherche ne sont pas encore disponibles.",
+            "unavailable": "Ce profil est enregistré. Importez des documents TXT ou Markdown depuis la bibliothèque ; l’indexation vectorielle et la recherche ne sont pas encore disponibles.",
             "editProfile": "Modifier le profil",
             "delete": "Supprimer la collection",
             "deleteTitle": "Supprimer cette collection ?",
@@ -537,13 +537,13 @@
             "description": "Consultez les ressources enregistrées et les limites de votre organisation.",
             "collectionsHint": "Limite appliquée lors de la création",
             "documents": "Documents enregistrés",
-            "documentsHint": "Upload disponible dans une prochaine étape",
+            "documentsHint": "Documents conservés dans votre bibliothèque",
             "storage": "Stockage enregistré",
             "storageHint": "Originaux et extractions conservés",
             "policies": "Politiques enregistrées",
             "fileMaximum": "Taille maximale d’un fichier",
             "chunks": "Passages par collection",
-            "policyHint": "Les réservations de stockage et les limites de passages seront appliquées avec l’ingestion. Ces valeurs ne signifient pas qu’un upload ou un index existe déjà. Seul un administrateur de plateforme peut modifier les quotas."
+            "policyHint": "Les imports réservent de la capacité pour l’original et le texte extrait. Un traitement en échec peut conserver sa réservation jusqu’à une nouvelle tentative réussie. Les limites de passages s’appliqueront avec l’indexation. Seul un administrateur de la plateforme peut modifier les quotas."
         },
         "audit": {
             "title": "Journal du catalogue",
@@ -563,6 +563,57 @@
             "legacy": "Aucun accès RAG · ancienne clé",
             "removeScope": "Retirer le périmètre {id}",
             "count": "{count, plural, =0 {Aucune collection autorisée} one {# collection autorisée} other {# collections autorisées}}"
+        },
+        "documents": {
+            "title": "Bibliothèque de documents",
+            "description": "Importez et consultez les documents de votre organisation. Les lecteurs voient les documents de leurs collections autorisées.",
+            "detailTitle": "Document",
+            "detailDescription": "Consultez le fichier original, le texte extrait et les collections associées.",
+            "search": "Rechercher des documents",
+            "upload": "Importer un document",
+            "empty": "Aucun document trouvé",
+            "emptyHint": "Importez un fichier TXT ou Markdown, ou demandez à un gestionnaire d’ajouter des documents à une collection autorisée.",
+            "uploadHint": "Choisissez un fichier TXT ou Markdown en UTF-8, de 25 Mio maximum. L’extraction s’exécute en arrière-plan.",
+            "file": "Fichier du document",
+            "invalidFile": "Choisissez un fichier TXT ou Markdown non vide de 25 Mio maximum.",
+            "uploadFailed": "Échec de l’import. Vérifiez le stockage, vos droits et le quota disponible, puis réessayez.",
+            "uploading": "Import en cours…",
+            "loadFailed": "Impossible de charger ces données. Vérifiez vos droits et réessayez.",
+            "actionFailed": "Échec de l’action. Vérifiez vos droits, le stockage et le quota disponible, puis réessayez.",
+            "collections": "Collections",
+            "collectionsHint": "Seules les collections que vous pouvez gérer sont affichées. Associez un document prêt pour le rendre accessible à leurs lecteurs. L’indexation vectorielle n’est pas encore disponible.",
+            "searchCollections": "Rechercher des collections",
+            "attach": "Associer",
+            "detach": "Dissocier",
+            "preview": "Texte extrait",
+            "previewHint": "Le Markdown est affiché en texte brut. Chaque page contient au maximum 20 000 caractères.",
+            "characters": "Caractères {from, number}–{to, number} sur {total, number}",
+            "back": "Retour à la bibliothèque",
+            "versionInfo": "Version {version, number} · {bytes, number} octets · {date}",
+            "download": "Télécharger l’original",
+            "retry": "Relancer l’extraction",
+            "status": {
+                "PENDING": "Import en attente",
+                "PROCESSING": "Traitement en cours",
+                "READY": "Prêt",
+                "FAILED": "Échec",
+                "DELETED": "Supprimé"
+            },
+            "task": {
+                "UPLOADING": "Import en attente de confirmation. La récupération peut prendre cinq minutes.",
+                "PENDING": "En attente d’extraction.",
+                "PROCESSING": "Extraction du texte (tentative {attempts, number}).",
+                "READY": "Extraction du texte terminée.",
+                "FAILED": "Traitement arrêté après {attempts, plural, one {# tentative} other {# tentatives}}."
+            },
+            "errors": {
+                "UPLOAD_INCOMPLETE": "L’import du fichier original est incomplet. Importez à nouveau le fichier.",
+                "STORAGE_UNAVAILABLE": "Le stockage privé est indisponible. Un gestionnaire doit vérifier les identifiants et l’adresse autorisée.",
+                "TEXT_INVALID": "Ce fichier n’est pas un texte UTF-8 valide. Enregistrez-le en UTF-8 et importez-le à nouveau.",
+                "TEXT_EMPTY": "Aucun texte trouvé dans ce fichier.",
+                "ACCESS_REVOKED": "Le membre à l’origine du traitement n’a plus les droits nécessaires. Un gestionnaire actuel peut relancer l’extraction.",
+                "PROCESSING_FAILED": "Le traitement a échoué. Réessayez ou contactez un administrateur."
+            }
         }
     },
     "dashboard": {
@@ -578,7 +629,8 @@
             "members": "Membres",
             "roles": "Rôles et permissions",
             "apiKeys": "Clés API",
-            "licenses": "Licences"
+            "licenses": "Licences",
+            "documents": "Documents"
         },
         "home": {
             "eyebrow": "ESPACE DE TRAVAIL",

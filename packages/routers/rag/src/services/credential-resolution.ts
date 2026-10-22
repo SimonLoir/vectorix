@@ -30,7 +30,7 @@ export async function resolveCredential(
 }
 
 /** Read one complete environment configuration, without organization overrides. */
-function platformCredential(provider: Provider) {
+export function platformCredential(provider: Provider) {
     const prefix = `VECTORIX_DEFAULT_${provider}_`;
     const env = (name: string) => process.env[`${prefix}${name}`];
     const configuration =

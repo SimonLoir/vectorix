@@ -57,23 +57,30 @@ export async function quotaUsage(
     db: Prisma.TransactionClient,
     organizationId: string
 ) {
-    const [collections, documents, originals, extractions] = await Promise.all([
-        db.collection.count({ where: { organizationId, deletedAt: null } }),
-        db.document.count({ where: { organizationId, deletedAt: null } }),
-        db.documentVersion.aggregate({
-            where: { organizationId },
-            _sum: { byteSize: true },
-        }),
-        db.documentExtraction.aggregate({
-            where: { organizationId },
-            _sum: { byteSize: true },
-        }),
-    ]);
+    const [collections, documents, originals, extractions, reservations] =
+        await Promise.all([
+            db.collection.count({ where: { organizationId, deletedAt: null } }),
+            db.document.count({ where: { organizationId, deletedAt: null } }),
+            db.documentVersion.aggregate({
+                where: { organizationId, discardedAt: null },
+                _sum: { byteSize: true },
+            }),
+            db.documentExtraction.aggregate({
+                where: { organizationId },
+                _sum: { byteSize: true },
+            }),
+            db.documentIngestion.aggregate({
+                where: { organizationId },
+                _sum: { reservedBytes: true },
+            }),
+        ]);
     return {
         collections,
         documents,
         storageBytes: Number(
-            (originals._sum.byteSize ?? 0n) + (extractions._sum.byteSize ?? 0n)
+            (originals._sum.byteSize ?? 0n) +
+                (extractions._sum.byteSize ?? 0n) +
+                (reservations._sum.reservedBytes ?? 0n)
         ),
     };
 }

@@ -3,9 +3,11 @@
 import { type Locale } from '@/i18n/request';
 import { cookies, headers } from 'next/headers';
 import { resolveRequestLocale } from '@/i18n/resolveLocale';
+import { resolveVectorixTimeZone } from '@/i18n/time-zone';
 
 export async function getIntl(): Promise<{
     locale: Locale;
+    timeZone: string;
     messages: Record<string, unknown>;
 }> {
     const [cookieStore, headersList] = await Promise.all([
@@ -21,5 +23,9 @@ export async function getIntl(): Promise<{
     const messages = (await import(`../messages/${locale}.json`))
         .default as Record<string, unknown>;
 
-    return { locale, messages };
+    return {
+        locale,
+        messages,
+        timeZone: resolveVectorixTimeZone(process.env.VECTORIX_TIME_ZONE),
+    };
 }

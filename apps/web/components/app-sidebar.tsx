@@ -5,6 +5,7 @@ import { useTranslations } from 'next-intl';
 import {
     Home,
     Database,
+    FileText,
     Plug,
     UsersRound,
     Gauge,
@@ -37,6 +38,12 @@ const navigation = [
         label: 'collections',
         icon: Database,
         operation: 'admin.rag.collections.list',
+    },
+    {
+        href: '/dashboard/documents',
+        label: 'documents',
+        icon: FileText,
+        operation: 'admin.rag.documents.list',
     },
     {
         href: '/dashboard/settings/integrations',

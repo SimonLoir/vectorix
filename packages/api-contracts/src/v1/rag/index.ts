@@ -4,13 +4,7 @@ import { id, page, empty } from './common';
 import { credentialsContract } from './credentials';
 import { groupsContract } from './groups';
 import { collectionsContract } from './collections';
-const document = z.object({
-    id,
-    name: z.string(),
-    status: z.enum(['PENDING', 'PROCESSING', 'READY', 'FAILED', 'DELETED']),
-    createdAt: z.date(),
-    updatedAt: z.date(),
-});
+import { documentsContract } from './documents';
 export const quotaValues = z
     .object({
         collections: z.number().int().min(1).max(10_000),
@@ -24,18 +18,7 @@ export const ragContract = {
     credentials: credentialsContract,
     groups: groupsContract,
     collections: collectionsContract,
-    documents: {
-        list: oc
-            .route({ method: 'GET', path: '/documents' })
-            .input(page)
-            .output(
-                z.object({ items: z.array(document), total: z.number().int() })
-            ),
-        get: oc
-            .route({ method: 'GET', path: '/documents/{id}' })
-            .input(z.object({ id }).strict())
-            .output(document),
-    },
+    documents: documentsContract,
     connections: oc
         .route({ method: 'GET', path: '/connections' })
         .input(empty)

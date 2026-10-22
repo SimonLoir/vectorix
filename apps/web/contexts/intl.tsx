@@ -59,10 +59,17 @@ export function IntlProvider({
             await persistLocale(newLocale);
             // Load new messages client-side (no round-trip for the JSON)
             const mod = await messageImports[newLocale]();
-            queryClient.setQueryData(['intl'], {
-                locale: newLocale,
-                messages: mod.default as Record<string, unknown>,
-            });
+            queryClient.setQueryData<Awaited<ReturnType<typeof getIntl>>>(
+                ['intl'],
+                (previous) =>
+                    previous
+                        ? {
+                              ...previous,
+                              locale: newLocale,
+                              messages: mod.default as Record<string, unknown>,
+                          }
+                        : undefined
+            );
         },
         [queryClient]
     );
@@ -76,7 +83,11 @@ export function IntlProvider({
 
     return (
         <IntlContext value={{ locale, setLocale }}>
-            <NextIntlClientProvider locale={locale} messages={messages}>
+            <NextIntlClientProvider
+                locale={locale}
+                messages={messages}
+                timeZone={data?.timeZone}
+            >
                 {children}
             </NextIntlClientProvider>
         </IntlContext>

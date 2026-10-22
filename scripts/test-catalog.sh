@@ -6,7 +6,7 @@ prefix="vectorix-catalog-${RANDOM}-$$"
 cleanup() {
     result=$?
     if (( result != 0 )); then docker logs --tail 40 "$prefix-postgres" >&2 || true; fi
-    docker rm -fv "$prefix-postgres" "$prefix-redis" >/dev/null 2>&1 || true
+    docker rm -fv "$prefix-postgres" "$prefix-redis" "$prefix-rustfs" >/dev/null 2>&1 || true
     exit "$result"
 }
 trap cleanup EXIT
@@ -32,8 +32,10 @@ pnpm --filter @repo/db exec prisma migrate resolve --applied 20261021000000_init
 sql vectorix_upgrade_test < packages/db/prisma/migrations/20261022000000_rag_catalog_access/migration.sql
 pnpm --filter @repo/db exec prisma migrate resolve --applied 20261022000000_rag_catalog_access
 sql vectorix_upgrade_test < tests/catalog/provider-upgrade-seed.sql
+sql vectorix_upgrade_test < tests/catalog/document-upgrade-seed.sql
 for attempt in 1 2; do pnpm --filter @repo/db migrate:deploy; done
 sql vectorix_upgrade_test < tests/catalog/provider-upgrade-check.sql
+sql vectorix_upgrade_test < tests/catalog/document-upgrade-check.sql
 sql vectorix_upgrade_test < tests/catalog/upgrade-check.sql
 pnpm --filter @repo/db exec prisma migrate diff --from-config-datasource --to-schema prisma --exit-code
 
@@ -50,5 +52,27 @@ export ROOT_DOMAIN= BETTER_AUTH_COOKIE_NAME= BETTER_AUTH_COOKIE_PREFIX=
 export ALLOW_ACCOUNT_CREATION=true ALLOW_ORGANIZATION_CREATION=true
 export VECTORIX_FEATURE_PROVIDER_URL= VECTORIX_DEFAULT_RESEND_API_KEY= VECTORIX_DEFAULT_SMTP_HOST=
 export VECTORIX_WEB_PUSH_ENABLED=false
+# Real private object storage for binary HTTP and extraction journeys.
+docker run -d --name "$prefix-rustfs" -p 127.0.0.1::9000 \
+    -e RUSTFS_ACCESS_KEY=catalog-storage -e RUSTFS_SECRET_KEY=catalog-storage-test-secret \
+    -e RUSTFS_CONSOLE_ENABLE=false -e RUSTFS_OBS_LOG_DIRECTORY=/tmp/logs \
+    rustfs/rustfs:1.0.3@sha256:9ca9559533b537d10482fe923288b676ad08f92a7069d9a17327fbae3cab688b /data >/dev/null
+s3_port=$(docker port "$prefix-rustfs" 9000/tcp | cut -d: -f2)
+export VECTORIX_DEFAULT_S3_ENDPOINT="http://127.0.0.1:$s3_port"
+export VECTORIX_DEFAULT_S3_REGION=us-east-1 VECTORIX_DEFAULT_S3_BUCKET=catalog-documents
+export VECTORIX_DEFAULT_S3_ACCESS_KEY_ID=catalog-storage VECTORIX_DEFAULT_S3_SECRET_ACCESS_KEY=catalog-storage-test-secret
+export VECTORIX_DEFAULT_S3_FORCE_PATH_STYLE=true VECTORIX_S3_ALLOWED_ENDPOINTS=
+ready=false
+for attempt in {1..60}; do
+    if curl -fsS "$VECTORIX_DEFAULT_S3_ENDPOINT/health" >/dev/null 2>&1; then ready=true; break; fi
+    sleep 1
+done
+[[ "$ready" == true ]]
+docker run --rm --network "container:$prefix-rustfs" \
+    -e AWS_ENDPOINT_URL=http://127.0.0.1:9000 -e AWS_ACCESS_KEY_ID="$VECTORIX_DEFAULT_S3_ACCESS_KEY_ID" \
+    -e AWS_SECRET_ACCESS_KEY="$VECTORIX_DEFAULT_S3_SECRET_ACCESS_KEY" -e AWS_DEFAULT_REGION=us-east-1 \
+    -e AWS_EC2_METADATA_DISABLED=true -e S3_BUCKET="$VECTORIX_DEFAULT_S3_BUCKET" \
+    -v "$PWD/infra/s3:/scripts:ro" --entrypoint /bin/sh \
+    amazon/aws-cli:2.31.22@sha256:bf253be91e12d49ba1bd6dc939a76ea9777901772032692b14639e643118e1c1 /scripts/init-bucket.sh
 pnpm --filter api test:integration
 printf 'Fresh install, upgrade, repeat deployment, schema parity, core journeys, and RAG access tests passed.\n'

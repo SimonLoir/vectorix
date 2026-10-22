@@ -1,6 +1,7 @@
 import { Worker } from 'bullmq';
 import { connection, getQueues, QueueName, closeQueues } from '@repo/queues';
 import { prisma } from '@repo/db';
+import { processDocumentIngestions } from '@routers/rag/ingestion';
 import { processNotifications } from './notifications/process';
 const worker = new Worker(
     QueueName.NOTIFICATIONS,
@@ -19,10 +20,27 @@ await getQueues().notifications.upsertJobScheduler(
     { every: 10_000 },
     { name: 'scan', data: {}, opts: { removeOnComplete: 20, removeOnFail: 20 } }
 );
-console.log('Notification workers ready');
+const documentWorker = new Worker(
+    QueueName.DOCUMENTS,
+    () => processDocumentIngestions(prisma),
+    { connection, concurrency: 1 }
+);
+documentWorker.on('error', () =>
+    console.error('Document worker connection failed')
+);
+documentWorker.on('failed', () =>
+    console.error('Document scan failed; durable tasks will be retried')
+);
+await documentWorker.waitUntilReady();
+await getQueues().documents.upsertJobScheduler(
+    'document-ingestion',
+    { every: 5000 },
+    { name: 'scan', data: {}, opts: { removeOnComplete: 20, removeOnFail: 20 } }
+);
+console.log('Notification and document workers ready');
 for (const signal of ['SIGINT', 'SIGTERM'])
     process.once(signal, async () => {
-        await worker.close();
+        await Promise.all([worker.close(), documentWorker.close()]);
         await closeQueues();
         await prisma.$disconnect();
         process.exit(0);

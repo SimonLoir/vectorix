@@ -10,7 +10,8 @@
         "./access": "./src/services/access.ts",
         "./api-key-scopes": "./src/services/api-key-scopes.ts",
         "./credentials": "./src/services/credential-resolution.ts",
-        "./quotas": "./src/services/quotas.ts"
+        "./quotas": "./src/services/quotas.ts",
+        "./ingestion": "./src/services/documents/process.ts"
     },
     "scripts": {
         "check-types": "tsc6 -p tsconfig.json --noEmit",
@@ -29,6 +30,7 @@
         "@repo/auth": "workspace:*",
         "@routers/utils": "workspace:*",
         "@repo/db": "workspace:*",
-        "zod": "^4.6.5"
+        "zod": "^4.6.5",
+        "@repo/storage": "workspace:*"
     }
 }
