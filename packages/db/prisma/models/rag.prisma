@@ -24,6 +24,14 @@ enum DocumentStatus {
   DELETED
 }
 
+enum DocumentIngestionStatus {
+  UPLOADING
+  PENDING
+  PROCESSING
+  READY
+  FAILED
+}
+
 model Credentials {
   id             String             @id @default(uuid())
   organizationId String
@@ -318,10 +326,35 @@ model DocumentVersion {
   status            DocumentStatus @default(PENDING)
   createdAt         DateTime        @default(now())
   extraction        DocumentExtraction?
+  ingestion         DocumentIngestion?
+  storedAt          DateTime?
+  discardedAt       DateTime?
 
   @@unique([organizationId, id])
   @@unique([organizationId, documentId, version])
   @@unique([storageLocationId, objectKey])
+}
+
+// Durable upload reservation and extraction state. Redis only schedules scans.
+model DocumentIngestion {
+  versionId      String                  @id
+  organizationId String
+  version        DocumentVersion         @relation(fields: [organizationId, versionId], references: [organizationId, id], onDelete: Cascade)
+  requestId      String
+  requestedBy    String
+  status         DocumentIngestionStatus @default(UPLOADING)
+  reservedBytes  BigInt
+  attempts       Int                     @default(0)
+  availableAt    DateTime                @default(now())
+  leasedUntil    DateTime?
+  leaseToken     String?
+  errorCode      String?
+  createdAt      DateTime                @default(now())
+  updatedAt      DateTime                @updatedAt
+
+  @@unique([organizationId, requestId])
+  @@unique([organizationId, versionId])
+  @@index([status, availableAt])
 }
 
 model DocumentExtraction {

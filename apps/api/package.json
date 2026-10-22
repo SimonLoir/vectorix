@@ -41,7 +41,8 @@
         "react": "19.3.0",
         "resend": "^6.28.1",
         "@orpc/client": "^1.15.3",
-        "@routers/rag": "workspace:*"
+        "@routers/rag": "workspace:*",
+        "@aws-sdk/client-s3": "3.1148.0"
     },
     "devDependencies": {
         "@repo/eslint-config": "workspace:*",

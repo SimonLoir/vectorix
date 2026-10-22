@@ -399,7 +399,7 @@
             "detailTitle": "Collection",
             "detailDescription": "Catalog configuration, access, and history.",
             "back": "← All collections",
-            "unavailable": "This profile is saved. Document uploads, indexing, and the search playground are not available yet.",
+            "unavailable": "This profile is saved. Upload TXT or Markdown documents from the library; vector indexing and search are not available yet.",
             "editProfile": "Edit profile",
             "delete": "Delete collection",
             "deleteTitle": "Delete this collection?",
@@ -537,13 +537,13 @@
             "description": "Review recorded resources and your organization limits.",
             "collectionsHint": "Limit enforced when creating collections",
             "documents": "Recorded documents",
-            "documentsHint": "Uploads available in a later milestone",
+            "documentsHint": "Retained documents in your library",
             "storage": "Recorded storage",
             "storageHint": "Retained originals and extractions",
             "policies": "Saved policies",
             "fileMaximum": "Maximum file size",
             "chunks": "Passages per collection",
-            "policyHint": "Storage reservations and passage limits will be enforced with ingestion. These values do not mean an upload or index already exists. Only a platform administrator can change quotas."
+            "policyHint": "Uploads reserve capacity for the original and extracted text. Failed processing may retain reservations until a successful retry. Passage limits apply when indexing becomes available. Only a platform administrator can change quotas."
         },
         "audit": {
             "title": "Catalog audit",
@@ -563,6 +563,57 @@
             "legacy": "No RAG access · legacy key",
             "removeScope": "Remove scope {id}",
             "count": "{count, plural, =0 {No authorized collections} one {# authorized collection} other {# authorized collections}}"
+        },
+        "documents": {
+            "title": "Document library",
+            "description": "Upload and inspect documents shared by your organization. Readers see documents from their authorized collections.",
+            "detailTitle": "Document",
+            "detailDescription": "Inspect the original, extracted text and collection links.",
+            "search": "Search documents",
+            "upload": "Upload document",
+            "empty": "No documents found",
+            "emptyHint": "Upload a TXT or Markdown file, or ask a manager to add documents to an authorized collection.",
+            "uploadHint": "Choose a UTF-8 TXT or Markdown file, up to 25 MiB. Extraction runs in the background.",
+            "file": "Document file",
+            "invalidFile": "Choose a non-empty TXT or Markdown file of at most 25 MiB.",
+            "uploadFailed": "Upload failed. Check your storage configuration, permissions and available quota, then try again.",
+            "uploading": "Uploading…",
+            "loadFailed": "This document data could not be loaded. Check your access and try again.",
+            "actionFailed": "The action failed. Check your access, storage configuration and available quota, then try again.",
+            "collections": "Collections",
+            "collectionsHint": "Only collections you can manage are listed. Attach a ready document to make it available to their readers. Vector indexing is not available yet.",
+            "searchCollections": "Search collections",
+            "attach": "Attach",
+            "detach": "Detach",
+            "preview": "Extracted text",
+            "previewHint": "Markdown is shown as plain text. Each page displays up to 20,000 characters.",
+            "characters": "Characters {from, number}–{to, number} of {total, number}",
+            "back": "Back to library",
+            "versionInfo": "Version {version, number} · {bytes, number} bytes · {date}",
+            "download": "Download original",
+            "retry": "Retry extraction",
+            "status": {
+                "PENDING": "Upload pending",
+                "PROCESSING": "Processing",
+                "READY": "Ready",
+                "FAILED": "Failed",
+                "DELETED": "Deleted"
+            },
+            "task": {
+                "UPLOADING": "Upload awaiting confirmation. Recovery can take up to five minutes.",
+                "PENDING": "Waiting for extraction.",
+                "PROCESSING": "Extracting text (attempt {attempts, number}).",
+                "READY": "Text extraction complete.",
+                "FAILED": "Processing stopped after {attempts, plural, one {# attempt} other {# attempts}}."
+            },
+            "errors": {
+                "UPLOAD_INCOMPLETE": "The original upload is incomplete. Upload the file again.",
+                "STORAGE_UNAVAILABLE": "Private storage is unavailable. Ask a manager to check its credentials and allowed endpoint.",
+                "TEXT_INVALID": "This file is not valid UTF-8 text. Save it as UTF-8 and upload it again.",
+                "TEXT_EMPTY": "No text was found in this file.",
+                "ACCESS_REVOKED": "The requesting member no longer has access. A current manager can retry.",
+                "PROCESSING_FAILED": "Processing failed. Retry or contact an administrator."
+            }
         }
     },
     "dashboard": {
@@ -578,7 +629,8 @@
             "members": "Members",
             "roles": "Roles and permissions",
             "apiKeys": "API keys",
-            "licenses": "Licenses"
+            "licenses": "Licenses",
+            "documents": "Documents"
         },
         "home": {
             "eyebrow": "WORKSPACE",

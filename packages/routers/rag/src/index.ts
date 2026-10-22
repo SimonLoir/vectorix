@@ -1,3 +1,10 @@
+import { uploadDocumentHandler } from './documents/upload';
+import { detailsDocumentHandler } from './documents/details';
+import { previewDocumentHandler } from './documents/preview';
+import { downloadDocumentHandler } from './documents/download';
+import { retryDocumentHandler } from './documents/retry';
+import { collectionCandidatesDocumentHandler } from './documents/collectionCandidates';
+import { setCollectionDocumentHandler } from './documents/setCollection';
 import { authorized } from '@routers/utils/authorized';
 import { listCredentials } from './credentials/list';
 import { createCredentialHandler } from './credentials/create';
@@ -61,7 +68,17 @@ export const ragRouter = authorized
             setGrant: setGrantHandler,
             removeGrant: removeGrantHandler,
         },
-        documents: { list: listDocuments, get: getDocument },
+        documents: {
+            list: listDocuments,
+            get: getDocument,
+            upload: uploadDocumentHandler,
+            details: detailsDocumentHandler,
+            preview: previewDocumentHandler,
+            download: downloadDocumentHandler,
+            retry: retryDocumentHandler,
+            collectionCandidates: collectionCandidatesDocumentHandler,
+            setCollection: setCollectionDocumentHandler,
+        },
         connections: listConnections,
         quota: getQuota,
         audit: listAudit,
