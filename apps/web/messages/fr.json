@@ -399,7 +399,7 @@
             "detailTitle": "Collection",
             "detailDescription": "Configuration, indexation, documents recherchables, droits et historique.",
             "back": "← Toutes les collections",
-            "unavailable": "Associez depuis la bibliothèque des documents prêts au format TXT, Markdown, PDF avec texte ou DOCX. Les profils Ollama et Cohere pris en charge peuvent être vérifiés, indexés et recherchés depuis cette collection ; les autres profils restent des configurations enregistrées.",
+            "unavailable": "Associez depuis la bibliothèque des documents prêts au format TXT, Markdown, PDF avec texte ou DOCX. Les profils Ollama, Cohere et Voyage pris en charge peuvent être vérifiés, indexés et recherchés depuis cette collection ; les autres profils restent des configurations enregistrées.",
             "editProfile": "Modifier le profil",
             "delete": "Supprimer la collection",
             "deleteTitle": "Supprimer cette collection ?",
@@ -708,7 +708,7 @@
             "working": "Traitement…",
             "readDenied": "La lecture de cette collection n’est pas autorisée. L’administration du catalogue ne donne pas accès au contenu.",
             "manageDenied": "Vous pouvez consulter l’index mais pas le gérer.",
-            "profileGate": "L’indexation prend en charge Ollama et Cohere avec un découpage selon la structure du document, sans expansion parent-enfant. Les autres fournisseurs et découpages restent des brouillons enregistrés.",
+            "profileGate": "L’indexation prend en charge Ollama, Cohere et Voyage avec un découpage selon la structure du document, sans expansion parent-enfant. Les autres fournisseurs et découpages restent des brouillons enregistrés.",
             "preset": "Préparation propre au modèle",
             "presetHint": "Choisissez explicitement une préparation. Le mode générique envoie le texte brut ; EmbeddingGemma utilise ses préfixes document et requête documentés.",
             "preparationHint": "La préparation est un préfixe littéral suivi d’un saut de ligne, pour les documents comme pour les requêtes. Ce n’est pas un modèle de substitution.",
@@ -854,7 +854,7 @@
             },
             "errors": {
                 "ACCESS_REVOKED": "Votre appartenance ou vos droits sur la collection ne permettent plus cette opération.",
-                "PROFILE_UNSUPPORTED": "Ce profil enregistré n’est pas pris en charge pour l’indexation. Utilisez Ollama ou Cohere avec un découpage selon la structure du document, sans expansion parent-enfant. Cohere nécessite le préréglage générique.",
+                "PROFILE_UNSUPPORTED": "Ce profil enregistré n’est pas pris en charge pour l’indexation. Utilisez Ollama, Cohere ou Voyage avec un découpage selon la structure du document, sans expansion parent-enfant. Cohere et Voyage nécessitent le préréglage générique.",
                 "CREDENTIALS_INVALID": "Les credentials d’embedding enregistrés ou la destination autorisée sont indisponibles. Vérifiez le lien du profil.",
                 "MODEL_NOT_FOUND": "Le modèle enregistré est introuvable ou indisponible chez le fournisseur configuré.",
                 "MODEL_UNSUPPORTED": "Le modèle n’expose pas la capacité d’embedding native ou la préparation requise.",
@@ -920,13 +920,19 @@
             "savedUnsupportedDimensions": "{count, number} · dimensions enregistrées non prises en charge",
             "verificationRevision": "Vérification de la révision enregistrée {revision, number}",
             "capabilityFingerprint": "Empreinte du profil de capacités",
-            "hostedIdentityHint": "Cette empreinte identifie le profil de capacités déclaré du modèle hébergé. Vectorix ne peut pas vérifier les poids des modèles hébergés de Cohere à l’aide d’une empreinte.",
+            "hostedIdentityHint": "Cette empreinte identifie le profil de capacités déclaré du modèle hébergé. Vectorix ne peut pas vérifier les poids des modèles hébergés du fournisseur à l’aide d’une empreinte.",
             "discoverySources": {
                 "LOCAL_RUNTIME": "Modèles découverts sur le moteur local enregistré.",
                 "HOSTED_CATALOG": "Modèles pris en charge issus du catalogue du fournisseur hébergé."
             },
             "savedUnsupportedPreset": "EmbeddingGemma · préréglage enregistré non pris en charge",
-            "cohereUnsupportedPresetHint": "Ce préréglage enregistré n’est pas pris en charge par Cohere. Choisissez Générique pour préparer une révision exécutable."
+            "cohereUnsupportedPresetHint": "Ce préréglage enregistré n’est pas pris en charge par Cohere. Choisissez Générique pour préparer une révision exécutable.",
+            "voyageCatalogHint": "Choisissez un modèle Voyage pris en charge et sa taille de vecteur dans ce catalogue local documenté. Cela ne contacte pas Voyage et ne vérifie pas les identifiants : enregistrez le profil, puis vérifiez le modèle enregistré.",
+            "voyagePresetHint": "Voyage utilise les types d’entrée natifs document et query. Le préréglage générique n’ajoute aucun préfixe de texte propre au modèle.",
+            "voyageUnsupportedPresetHint": "Ce préréglage enregistré n’est pas pris en charge par Voyage. Choisissez Générique pour préparer une révision exécutable.",
+            "reviewedCatalogHint": "Ces choix proviennent d’un catalogue local documenté. Les afficher ne contacte pas le fournisseur et ne vérifie pas les identifiants. Vérifiez le modèle enregistré avant de lancer l’indexation.",
+            "reviewedProbeHint": "Les capacités proviennent du catalogue local documenté. Cette vérification a testé les types d’entrée natifs document et query avec la configuration du fournisseur enregistrée.",
+            "reviewedModels": "Voir le catalogue des modèles documentés"
         }
     },
     "dashboard": {

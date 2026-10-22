@@ -28,7 +28,9 @@ export function ModelDiscovery({
     const matchesSaved =
         saved.provider === selected.provider && saved.model === selected.model;
     const supported =
-        saved.provider === 'OLLAMA' || saved.provider === 'COHERE';
+        saved.provider === 'OLLAMA' ||
+        saved.provider === 'COHERE' ||
+        saved.provider === 'VOYAGE';
     if (!canOperation('admin.rag.indexing.models')) return null;
     return (
         <div className='space-y-3 sm:col-span-2'>
@@ -48,7 +50,13 @@ export function ModelDiscovery({
                     )
                 }
             >
-                {action.busy ? tr('discovering') : tr('discoverModels')}
+                {action.busy
+                    ? tr('discovering')
+                    : tr(
+                          saved.provider === 'VOYAGE'
+                              ? 'reviewedModels'
+                              : 'discoverModels'
+                      )}
             </Button>
             <p className='text-xs text-muted-foreground'>
                 {tr('savedDiscoveryHint', {
@@ -64,6 +72,11 @@ export function ModelDiscovery({
             <p className='text-xs text-muted-foreground'>
                 {tr('discoveryHint')}
             </p>
+            {models?.reviewedCatalog && matchesSaved && (
+                <p className='text-xs text-muted-foreground'>
+                    {tr('reviewedCatalogHint')}
+                </p>
+            )}
             {models?.discoverySource && matchesSaved && (
                 <p className='text-xs text-muted-foreground'>
                     {tr(`discoverySources.${models.discoverySource}`)}

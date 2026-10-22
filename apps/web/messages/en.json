@@ -399,7 +399,7 @@
             "detailTitle": "Collection",
             "detailDescription": "Configuration, indexing, searchable documents, access and history.",
             "back": "← All collections",
-            "unavailable": "Attach ready TXT, Markdown, text-based PDF or DOCX documents from the library. Supported Ollama and Cohere profiles can be verified, indexed and searched from this collection; other profiles remain saved configurations.",
+            "unavailable": "Attach ready TXT, Markdown, text-based PDF or DOCX documents from the library. Supported Ollama, Cohere and Voyage profiles can be verified, indexed and searched from this collection; other profiles remain saved configurations.",
             "editProfile": "Edit profile",
             "delete": "Delete collection",
             "deleteTitle": "Delete this collection?",
@@ -708,7 +708,7 @@
             "working": "Working…",
             "readDenied": "Reading this collection is not granted. Catalog administration alone does not grant content access.",
             "manageDenied": "You can inspect the index but cannot manage it.",
-            "profileGate": "Indexing supports Ollama and Cohere with document-structure chunking and no parent-child expansion. Other providers and chunking profiles remain saved drafts.",
+            "profileGate": "Indexing supports Ollama, Cohere and Voyage with document-structure chunking and no parent-child expansion. Other providers and chunking profiles remain saved drafts.",
             "preset": "Embedding input preset",
             "presetHint": "Choose a preset explicitly. Generic sends raw text; EmbeddingGemma uses its documented document and query prefixes.",
             "preparationHint": "Preparation is a literal prefix followed by a newline for both documents and queries. It is not a template.",
@@ -854,7 +854,7 @@
             },
             "errors": {
                 "ACCESS_REVOKED": "Current membership or collection access no longer permits this operation.",
-                "PROFILE_UNSUPPORTED": "This saved profile is not supported for indexing. Use Ollama or Cohere with document-structure chunking and no parent-child expansion. Cohere requires the Generic input preset.",
+                "PROFILE_UNSUPPORTED": "This saved profile is not supported for indexing. Use Ollama, Cohere or Voyage with document-structure chunking and no parent-child expansion. Cohere and Voyage require the Generic input preset.",
                 "CREDENTIALS_INVALID": "The saved embedding credentials or approved endpoint are unavailable. Check the collection binding.",
                 "MODEL_NOT_FOUND": "The saved model was not found or is not available at the configured provider.",
                 "MODEL_UNSUPPORTED": "The model does not expose the required native embedding capability or preset.",
@@ -920,13 +920,19 @@
             "savedUnsupportedDimensions": "{count, number} · unsupported saved dimensions",
             "verificationRevision": "Verification of saved revision {revision, number}",
             "capabilityFingerprint": "Capability profile fingerprint",
-            "hostedIdentityHint": "This fingerprint identifies the hosted model’s declared capability profile. Vectorix cannot verify Cohere’s hosted model weights with a digest.",
+            "hostedIdentityHint": "This fingerprint identifies the hosted model’s declared capability profile. Vectorix cannot verify the provider’s hosted model weights with a digest.",
             "discoverySources": {
                 "LOCAL_RUNTIME": "Models discovered from the saved local runtime.",
                 "HOSTED_CATALOG": "Supported models from the hosted provider’s catalog."
             },
             "savedUnsupportedPreset": "EmbeddingGemma · unsupported saved preset",
-            "cohereUnsupportedPresetHint": "This saved preset is not supported for Cohere. Choose Generic to prepare an executable revision."
+            "cohereUnsupportedPresetHint": "This saved preset is not supported for Cohere. Choose Generic to prepare an executable revision.",
+            "voyageCatalogHint": "Choose a supported Voyage model and vector size from this reviewed local catalog. It does not contact Voyage or verify credentials; save the profile, then verify the saved model.",
+            "voyagePresetHint": "Voyage uses native document and query input types. The Generic preset adds no model-specific text prefixes.",
+            "voyageUnsupportedPresetHint": "This saved preset is not supported for Voyage. Choose Generic to prepare an executable revision.",
+            "reviewedCatalogHint": "These choices come from a reviewed local model catalog. Listing them does not contact the provider or verify credentials. Verify the saved model before indexing.",
+            "reviewedProbeHint": "Capabilities come from the reviewed local catalog. This verification made native document and query probes using the saved provider binding.",
+            "reviewedModels": "View reviewed models"
         }
     },
     "dashboard": {

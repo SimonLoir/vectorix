@@ -3,6 +3,7 @@ import { useState } from 'react';
 import { useTranslations } from 'next-intl';
 import { SelectField, TextField } from '../form-fields';
 import { ModelDiscovery } from './model-discovery';
+import { hostedModelCatalog } from './hosted-model-catalog';
 import type { Collection } from '../types';
 
 type Configuration = Collection['configuration'];
@@ -13,25 +14,6 @@ interface EmbeddingDraft {
     dimensions: string;
     preset: Configuration['embeddingPreset'];
 }
-/** Keep this bounded UI selector aligned with @repo/embeddings' native Cohere catalog; it never discovers or validates credentials. */
-const cohereModels = [
-    {
-        model: 'embed-v4.0',
-        dimensions: [256, 512, 1024, 1536],
-        defaultDimensions: 1536,
-    },
-    {
-        model: 'embed-english-v3.0',
-        dimensions: [1024],
-        defaultDimensions: 1024,
-    },
-    {
-        model: 'embed-multilingual-v3.0',
-        dimensions: [1024],
-        defaultDimensions: 1024,
-    },
-];
-
 function initialDraft(configuration?: Configuration): EmbeddingDraft {
     return {
         provider: configuration?.provider ?? 'OLLAMA',
@@ -53,18 +35,22 @@ export function EmbeddingFields({
 }>) {
     const tr = useTranslations('rag');
     const [draft, setDraft] = useState(() => initialDraft(configuration));
-    const cohere = draft.provider === 'COHERE';
-    const supportedModel = cohereModels.find(
+    const catalog = hostedModelCatalog(draft.provider);
+    const hosted = catalog !== null;
+    const voyage = draft.provider === 'VOYAGE';
+    const supportedModel = catalog?.models.find(
         (item) => item.model === draft.model
     );
-    const executable = draft.provider === 'OLLAMA' || cohere;
+    const executable = draft.provider === 'OLLAMA' || hosted;
     function selectModel(model: string) {
         setDraft((current) => {
-            const next = cohereModels.find((item) => item.model === model);
+            const next = hostedModelCatalog(current.provider)?.models.find(
+                (item) => item.model === model
+            );
             return {
                 ...current,
                 model,
-                ...(current.provider === 'COHERE' && next
+                ...(next
                     ? {
                           dimensions: String(
                               next.dimensions.includes(
@@ -85,12 +71,13 @@ export function EmbeddingFields({
             setDraft(initialDraft(configuration));
             return;
         }
+        const defaultModel = hostedModelCatalog(provider)?.models[0];
         setDraft(
-            provider === 'COHERE'
+            defaultModel
                 ? {
                       provider,
-                      model: 'embed-v4.0',
-                      dimensions: '1536',
+                      model: defaultModel.model,
+                      dimensions: String(defaultModel.defaultDimensions),
                       preset: 'GENERIC',
                   }
                 : provider === 'OLLAMA'
@@ -123,7 +110,7 @@ export function EmbeddingFields({
                     <option value='OPENAI'>OpenAI</option>
                     <option value='MISTRAL'>Mistral</option>
                 </SelectField>
-                {cohere ? (
+                {catalog ? (
                     <SelectField
                         label={tr('profile.model')}
                         name='model'
@@ -137,7 +124,7 @@ export function EmbeddingFields({
                                 })}
                             </option>
                         )}
-                        {cohereModels.map((item) => (
+                        {catalog.models.map((item) => (
                             <option key={item.model} value={item.model}>
                                 {item.model}
                             </option>
@@ -155,9 +142,13 @@ export function EmbeddingFields({
                     />
                 )}
             </div>
-            {cohere && (
+            {hosted && (
                 <p className='text-sm text-muted-foreground'>
-                    {tr('indexing.cohereCatalogHint')}
+                    {tr(
+                        voyage
+                            ? 'indexing.voyageCatalogHint'
+                            : 'indexing.cohereCatalogHint'
+                    )}
                 </p>
             )}
             {!executable && (
@@ -193,7 +184,7 @@ export function EmbeddingFields({
                     const preset = event.target.value;
                     if (
                         preset === 'GENERIC' ||
-                        (preset === 'EMBEDDING_GEMMA' && !cohere)
+                        (preset === 'EMBEDDING_GEMMA' && !hosted)
                     )
                         setDraft((current) => ({ ...current, preset }));
                 }}
@@ -201,10 +192,10 @@ export function EmbeddingFields({
                 <option value='GENERIC'>
                     {tr('indexing.presets.GENERIC')}
                 </option>
-                {(!cohere || draft.preset === 'EMBEDDING_GEMMA') && (
+                {(!hosted || draft.preset === 'EMBEDDING_GEMMA') && (
                     <option value='EMBEDDING_GEMMA'>
                         {tr(
-                            cohere
+                            hosted
                                 ? 'indexing.savedUnsupportedPreset'
                                 : 'indexing.presets.EMBEDDING_GEMMA'
                         )}
@@ -213,15 +204,23 @@ export function EmbeddingFields({
             </SelectField>
             <p className='text-sm text-muted-foreground'>
                 {tr(
-                    cohere ? 'indexing.coherePresetHint' : 'indexing.presetHint'
+                    hosted
+                        ? voyage
+                            ? 'indexing.voyagePresetHint'
+                            : 'indexing.coherePresetHint'
+                        : 'indexing.presetHint'
                 )}
             </p>
-            {cohere && draft.preset !== 'GENERIC' && (
+            {hosted && draft.preset !== 'GENERIC' && (
                 <p role='status' className='text-sm'>
-                    {tr('indexing.cohereUnsupportedPresetHint')}
+                    {tr(
+                        voyage
+                            ? 'indexing.voyageUnsupportedPresetHint'
+                            : 'indexing.cohereUnsupportedPresetHint'
+                    )}
                 </p>
             )}
-            {cohere && supportedModel ? (
+            {hosted && supportedModel ? (
                 <SelectField
                     label={tr('profile.dimensions')}
                     name='dimensions'

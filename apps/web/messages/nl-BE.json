@@ -399,7 +399,7 @@
             "detailTitle": "Collectie",
             "detailDescription": "Configuratie, indexering, doorzoekbare documenten, rechten en geschiedenis.",
             "back": "← Alle collecties",
-            "unavailable": "Koppel gereedstaande TXT-, Markdown-, tekst-PDF- of DOCX-documenten vanuit de bibliotheek. Ondersteunde Ollama- en Cohere-profielen kunnen vanuit deze collectie worden gecontroleerd, geïndexeerd en doorzocht; andere profielen blijven opgeslagen configuraties.",
+            "unavailable": "Koppel gereedstaande TXT-, Markdown-, tekst-PDF- of DOCX-documenten vanuit de bibliotheek. Ondersteunde Ollama-, Cohere- en Voyage-profielen kunnen vanuit deze collectie worden gecontroleerd, geïndexeerd en doorzocht; andere profielen blijven opgeslagen configuraties.",
             "editProfile": "Profiel bewerken",
             "delete": "Collectie verwijderen",
             "deleteTitle": "Deze collectie verwijderen?",
@@ -708,7 +708,7 @@
             "working": "Bezig…",
             "readDenied": "Je hebt geen leesrecht voor deze collectie. Catalogusbeheer geeft geen toegang tot de inhoud.",
             "manageDenied": "Je kunt de index bekijken, maar niet beheren.",
-            "profileGate": "Indexering ondersteunt Ollama en Cohere met opdeling volgens de documentstructuur, zonder uitbreiding naar bovenliggende en onderliggende passages. Andere providers en opdelingen blijven opgeslagen concepten.",
+            "profileGate": "Indexering ondersteunt Ollama, Cohere en Voyage met opdeling volgens de documentstructuur, zonder uitbreiding naar bovenliggende en onderliggende passages. Andere providers en opdelingen blijven opgeslagen concepten.",
             "preset": "Invoervoorinstelling voor embeddings",
             "presetHint": "Kies expliciet een voorinstelling. Generiek verstuurt ruwe tekst; EmbeddingGemma gebruikt de gedocumenteerde document- en zoekvoorvoegsels.",
             "preparationHint": "Voorbereiding is een letterlijk voorvoegsel met een regeleinde voor documenten en zoekopdrachten. Het is geen invulsjabloon.",
@@ -854,7 +854,7 @@
             },
             "errors": {
                 "ACCESS_REVOKED": "Je huidige lidmaatschap of collectierechten laten deze bewerking niet meer toe.",
-                "PROFILE_UNSUPPORTED": "Dit opgeslagen profiel wordt niet ondersteund voor indexering. Gebruik Ollama of Cohere met opdeling volgens de documentstructuur, zonder uitbreiding naar bovenliggende en onderliggende passages. Cohere vereist de generieke invoervoorinstelling.",
+                "PROFILE_UNSUPPORTED": "Dit opgeslagen profiel wordt niet ondersteund voor indexering. Gebruik Ollama, Cohere of Voyage met opdeling volgens de documentstructuur, zonder uitbreiding naar bovenliggende en onderliggende passages. Cohere en Voyage vereisen de generieke invoervoorinstelling.",
                 "CREDENTIALS_INVALID": "De opgeslagen embeddingtoegangsgegevens of goedgekeurde bestemming zijn niet beschikbaar. Controleer de profielkoppeling.",
                 "MODEL_NOT_FOUND": "Het opgeslagen model is niet gevonden of niet beschikbaar bij de ingestelde provider.",
                 "MODEL_UNSUPPORTED": "Het model biedt niet de vereiste native embeddingfunctie of voorinstelling.",
@@ -920,13 +920,19 @@
             "savedUnsupportedDimensions": "{count, number} · niet-ondersteunde opgeslagen dimensies",
             "verificationRevision": "Controle van opgeslagen revisie {revision, number}",
             "capabilityFingerprint": "Vingerafdruk van het capaciteitenprofiel",
-            "hostedIdentityHint": "Deze vingerafdruk identificeert het opgegeven capaciteitenprofiel van het gehoste model. Vectorix kan de modelgewichten die Cohere host niet met een digest controleren.",
+            "hostedIdentityHint": "Deze vingerafdruk identificeert het opgegeven capaciteitenprofiel van het gehoste model. Vectorix kan de modelgewichten die de provider host niet met een digest controleren.",
             "discoverySources": {
                 "LOCAL_RUNTIME": "Modellen gevonden op de opgeslagen lokale runtime.",
                 "HOSTED_CATALOG": "Ondersteunde modellen uit de catalogus van de gehoste provider."
             },
             "savedUnsupportedPreset": "EmbeddingGemma · niet-ondersteunde opgeslagen voorinstelling",
-            "cohereUnsupportedPresetHint": "Deze opgeslagen voorinstelling wordt niet ondersteund voor Cohere. Kies Generiek om een uitvoerbare revisie voor te bereiden."
+            "cohereUnsupportedPresetHint": "Deze opgeslagen voorinstelling wordt niet ondersteund voor Cohere. Kies Generiek om een uitvoerbare revisie voor te bereiden.",
+            "voyageCatalogHint": "Kies een ondersteund Voyage-model en de vectorgrootte uit deze gedocumenteerde lokale catalogus. Dit maakt geen verbinding met Voyage en controleert geen inloggegevens: sla het profiel op en controleer daarna het opgeslagen model.",
+            "voyagePresetHint": "Voyage gebruikt de ingebouwde invoertypes document en query. De generieke voorinstelling voegt geen modelspecifieke tekstprefixen toe.",
+            "voyageUnsupportedPresetHint": "Deze opgeslagen voorinstelling wordt niet ondersteund voor Voyage. Kies Generiek om een uitvoerbare revisie voor te bereiden.",
+            "reviewedCatalogHint": "Deze keuzes komen uit een gedocumenteerde lokale modelcatalogus. De lijst maakt geen verbinding met de provider en controleert geen inloggegevens. Controleer het opgeslagen model voordat je de indexering start.",
+            "reviewedProbeHint": "De mogelijkheden komen uit de gedocumenteerde lokale catalogus. Deze controle heeft de ingebouwde document- en query-invoer getest met de opgeslagen providerconfiguratie.",
+            "reviewedModels": "Gedocumenteerde modellen bekijken"
         }
     },
     "dashboard": {

@@ -39,7 +39,7 @@ async function savedProfile(context: AuthorizedContext, collectionId: string) {
     return { actor, collection, profile };
 }
 
-/** Discovery uses the complete credential binding of the saved revision, with an operator-approved endpoint. */
+/** Resolve the saved binding and revision before listing models. Voyage lists reviewed local capabilities without testing provider access. */
 export async function listEmbeddingModels(
     context: AuthorizedContext,
     collectionId: string,
@@ -65,17 +65,21 @@ export async function listEmbeddingModels(
             throw indexError('MODEL_CHANGED');
         return {
             items: items.slice(0, 100),
-            discoverySource:
-                profile.provider === 'COHERE'
-                    ? ('HOSTED_CATALOG' as const)
-                    : ('LOCAL_RUNTIME' as const),
+            ...(profile.provider === 'VOYAGE'
+                ? { reviewedCatalog: true }
+                : {
+                      discoverySource:
+                          profile.provider === 'COHERE'
+                              ? ('HOSTED_CATALOG' as const)
+                              : ('LOCAL_RUNTIME' as const),
+                  }),
         };
     } catch (error) {
         throw safeIndexError(error);
     }
 }
 
-/** Probe the actual native model/digest and dimensions without sending any organization document content. */
+/** Probe both native retrieval roles and dimensions without organization content; hosted fingerprints do not attest to weights. */
 export async function probeEmbeddingModel(
     context: AuthorizedContext,
     input: {
@@ -110,10 +114,14 @@ export async function probeEmbeddingModel(
         return {
             ...identity,
             identityKind: embeddingIdentityKind(identity),
-            discoverySource:
-                identity.provider === 'COHERE'
-                    ? ('HOSTED_CATALOG' as const)
-                    : ('LOCAL_RUNTIME' as const),
+            ...(identity.provider === 'VOYAGE'
+                ? { reviewedCatalog: true }
+                : {
+                      discoverySource:
+                          identity.provider === 'COHERE'
+                              ? ('HOSTED_CATALOG' as const)
+                              : ('LOCAL_RUNTIME' as const),
+                  }),
         };
     } catch (error) {
         throw safeIndexError(error);
