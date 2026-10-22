@@ -1,0 +1,129 @@
+// Review draft only. JSON shape, byte bounds, lifecycle and accounting checks
+// require reviewed supplementary SQL and runtime validation; no migration exists.
+
+enum SemanticChunkPlanState {
+  PLANNING
+  READY
+  CLEANED
+}
+
+enum EmbeddingWorkPurpose {
+  BOUNDARY
+  FINAL_DOCUMENT
+}
+
+enum EmbeddingWorkState {
+  RESERVED
+  IN_FLIGHT
+  SUCCEEDED
+  FAILED
+  UNCERTAIN
+  CANCELLED
+}
+
+// One durable plan per immutable candidate. Only the last accepted unit vector
+// is checkpointed; canonical text and complete source provenance stay in extraction.
+model SemanticChunkPlan {
+  indexedDocumentId String @id
+  organizationId String
+  generationId String
+  indexedDocument IndexedDocument @relation(fields: [organizationId, generationId, indexedDocumentId], references: [organizationId, generationId, id], onDelete: Cascade)
+  configurationRevision Int
+  chunkerVersion String
+  unitizerVersion String
+  sourceHash String @db.VarChar(64)
+  profileHash String @db.VarChar(64)
+  modelIdentity String
+  unitManifestHash String @db.VarChar(64)
+  unitCount Int
+  unitRanges Json
+  completedUnits Int @default(0)
+  boundaryScores Json @default("[]")
+  lastUnitVector Bytes?
+  state SemanticChunkPlanState @default(PLANNING)
+  thresholdDistance Int?
+  finalRanges Json?
+  planHash String? @db.VarChar(64)
+  reservedBytes BigInt @default(0)
+  storedBytes BigInt @default(0)
+  // Unassigned candidate work allowance; transfer to a batch row without
+  // changing organization outstanding capacity until that attempt settles.
+  reservedPreparedBytes BigInt @default(0)
+  reservedBatches Int @default(0)
+  revision BigInt @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  sealedAt DateTime?
+  cleanedAt DateTime?
+
+  @@unique([organizationId, generationId, indexedDocumentId])
+  @@index([organizationId, state])
+}
+
+// One invocation of a bounded logical native batch, including its internal
+// transport retries. Dispatch counters are write-ahead intent, not paid billing.
+// There is no member FK: usage settlement and cleanup survive access revocation.
+model EmbeddingWorkAttempt {
+  id String @id @default(uuid())
+  organizationId String
+  generationId String
+  indexedDocumentId String
+  indexedDocument IndexedDocument @relation(fields: [organizationId, generationId, indexedDocumentId], references: [organizationId, generationId, id], onDelete: Cascade)
+  purpose EmbeddingWorkPurpose
+  operationKey String @db.VarChar(128)
+  batchOrdinal Int
+  attemptNumber Int
+  inputHash String @db.VarChar(64)
+  inputCount Int
+  preparedInputBytes Int
+  // Checked against the live task for plan/publication changes. Late usage
+  // may settle its own attempt after this task lease has been replaced.
+  taskId String
+  leaseEpoch BigInt
+  state EmbeddingWorkState @default(RESERVED)
+  reservedPreparedBytes BigInt @default(0)
+  reservedBatches Int @default(0)
+  dispatchedPreparedBytes BigInt @default(0)
+  dispatchedBatches Int @default(0)
+  successfulRequests Int?
+  estimatedInputTokens BigInt?
+  providerInputTokens BigInt?
+  billedInputTokens Float?
+  outcomeCode String? @db.VarChar(64)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  dispatchStartedAt DateTime?
+  deadlineAt DateTime
+  settledAt DateTime?
+  usageRecordedAt DateTime?
+  uncertainAt DateTime?
+
+  @@unique([organizationId, indexedDocumentId, purpose, operationKey, batchOrdinal, attemptNumber], map: "EmbeddingWorkAttempt_operation_attempt_key")
+  @@index([organizationId, generationId, indexedDocumentId, purpose])
+  @@index([organizationId, state, deadlineAt])
+  @@index([taskId, leaseEpoch])
+}
+
+// Outstanding capacity is separate from cumulative observed logical work/usage.
+// Known token subtotals plus unknown-batch counters must never imply complete billing.
+model OrganizationEmbeddingAccounting {
+  organizationId String @id
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  reservedPlanBytes BigInt @default(0)
+  storedPlanBytes BigInt @default(0)
+  reservedPreparedBytes BigInt @default(0)
+  reservedBatches BigInt @default(0)
+  dispatchedPreparedBytes BigInt @default(0)
+  dispatchedBatches BigInt @default(0)
+  observedSuccessfulRequests BigInt @default(0)
+  observedEstimatedInputTokens BigInt @default(0)
+  observedProviderInputTokens BigInt @default(0)
+  observedBilledInputTokens Float @default(0)
+  unknownProviderTokenBatches BigInt @default(0)
+  unknownBilledTokenBatches BigInt @default(0)
+  // Current unresolved uncertainty; late validated evidence can reduce it.
+  uncertainAttempts BigInt @default(0)
+  revision BigInt @default(0)
+  trackingSince DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}

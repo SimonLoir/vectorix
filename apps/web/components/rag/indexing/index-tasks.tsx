@@ -9,6 +9,7 @@ import {
     CatalogPagination,
     useCatalogPagination,
 } from '../catalog-controls';
+import { SemanticProgress } from './semantic-progress';
 import { IndexQueryState, IndexError, useIndexAction } from './index-state';
 
 export function IndexTasks({
@@ -76,6 +77,20 @@ export function IndexTasks({
                                         ),
                                     })}
                                 </p>
+                                {(task.stage === 'SEMANTIC_PLANNING' ||
+                                    task.stage ===
+                                        'WAITING_FOR_EMBEDDING_CAPACITY' ||
+                                    task.stage ===
+                                        'WAITING_FOR_EMBEDDING_WORK') && (
+                                    <p role='status'>
+                                        {tr(`semanticStages.${task.stage}`)}
+                                    </p>
+                                )}
+                                {task.semantic && (
+                                    <SemanticProgress
+                                        progress={task.semantic}
+                                    />
+                                )}
                                 {task.errorCode && (
                                     <p role='alert'>
                                         {tr(`errors.${task.errorCode}`)}

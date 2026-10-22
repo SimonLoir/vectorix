@@ -4,6 +4,7 @@ import { runSerializableTransaction } from '@routers/utils/transactions';
 import { generationVectorAdapter } from './generation-adapter';
 import { accountPurgedCandidate } from './accounting';
 import { releaseSourceHold } from './source-holds';
+import { purgeSemanticPlan } from './semantic-work';
 import {
     acknowledgeGenerationChange,
     retireIndexedDocument,
@@ -15,7 +16,12 @@ import {
     IndexingError,
 } from './task-state';
 
-async function deferCleanup(db: PrismaClient, claim: IndexClaim, until: Date) {
+async function deferCleanup(
+    db: PrismaClient,
+    claim: IndexClaim,
+    until: Date,
+    stage = 'WAITING_FOR_SOURCES'
+) {
     await db.indexTask.updateMany({
         where: {
             id: claim.id,
@@ -25,7 +31,7 @@ async function deferCleanup(db: PrismaClient, claim: IndexClaim, until: Date) {
         },
         data: {
             status: 'PENDING',
-            stage: 'WAITING_FOR_SOURCES',
+            stage,
             availableAt: until,
             leaseToken: null,
             leasedUntil: null,
@@ -108,8 +114,9 @@ export async function executePublicationCleanup(
             manifestHash: hash,
         });
     }
-    await runSerializableTransaction(db, async (tx) => {
+    const released = await runSerializableTransaction(db, async (tx) => {
         await renewIndexClaim(tx, claim, 'RELEASING');
+        if (!(await purgeSemanticPlan(tx, candidateId))) return false;
         await accountPurgedCandidate(tx, {
             collectionId: claim.collectionId,
             candidateId,
@@ -119,7 +126,15 @@ export async function executePublicationCleanup(
             indexedDocumentId: candidateId,
         });
         await completeIndexClaim(tx, claim);
+        return true;
     });
+    if (!released)
+        await deferCleanup(
+            db,
+            claim,
+            new Date(Date.now() + 5000),
+            'WAITING_FOR_EMBEDDING_WORK'
+        );
 }
 
 /** Removal hides current sources immediately; retained vector publications are cleaned only through their fenced tasks. */

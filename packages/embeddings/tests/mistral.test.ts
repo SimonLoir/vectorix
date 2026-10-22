@@ -7,6 +7,7 @@ import {
 import { once } from 'node:events';
 import { setTimeout as delay } from 'node:timers/promises';
 import { test } from 'node:test';
+import { assertObservedNativeBatches } from './batch-observer-fixture';
 import {
     discoverModels,
     verifyEmbeddingModel,
@@ -1057,3 +1058,15 @@ await test('Mistral malformed, oversized, deeply nested or invalid UTF8 response
         );
     }
 });
+
+await test('Mistral awaits observer checkpoints for each normalized native batch', () =>
+    fixture(async (config) => {
+        const identity = await verifyEmbeddingModel(config, selected);
+        await assertObservedNativeBatches(
+            config,
+            identity,
+            Array.from({ length: 3 }, (_, index) => ({
+                text: `doc${index} ` + 'a'.repeat(5990),
+            }))
+        );
+    }));

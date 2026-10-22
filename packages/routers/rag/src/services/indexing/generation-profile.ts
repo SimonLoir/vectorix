@@ -1,5 +1,10 @@
 import type { Prisma } from '@repo/db';
-import { ChunkingError, resolveChunkingStrategy } from '@repo/chunking';
+import {
+    ChunkingError,
+    resolveChunkingStrategy,
+    SEMANTIC_CHUNKER_VERSION,
+    SEMANTIC_UNITIZER_VERSION,
+} from '@repo/chunking';
 import {
     assertSupportedIndexProfile,
     type IndexProfile,
@@ -13,7 +18,22 @@ export function resolveIndexChunking(
 ) {
     assertSupportedIndexProfile(profile);
     try {
-        return resolveChunkingStrategy(profile.chunkingStrategy, savedVersion);
+        if (profile.chunkingStrategy === 'SEMANTIC') {
+            if (
+                savedVersion !== undefined &&
+                savedVersion !== SEMANTIC_CHUNKER_VERSION
+            )
+                throw new ChunkingError('INVALID_CHUNK_PROFILE');
+            return {
+                kind: 'SEMANTIC' as const,
+                version: SEMANTIC_CHUNKER_VERSION,
+                unitizerVersion: SEMANTIC_UNITIZER_VERSION,
+            };
+        }
+        return {
+            ...resolveChunkingStrategy(profile.chunkingStrategy, savedVersion),
+            kind: 'SYNCHRONOUS' as const,
+        };
     } catch (error) {
         if (error instanceof ChunkingError)
             throw indexError(
@@ -40,4 +60,24 @@ export async function requireGenerationChunking(
         generation.configuration,
         generation.chunkerVersion
     );
+}
+
+/** A retry must reject a future persisted unitizer before reading its source or opening a vector destination. */
+export async function requireSemanticPlanVersion(
+    db: Prisma.TransactionClient,
+    organizationId: string,
+    generationId: string,
+    candidateId: string
+) {
+    const plan = await db.semanticChunkPlan.findFirst({
+        where: { organizationId, generationId, indexedDocumentId: candidateId },
+        select: { chunkerVersion: true, unitizerVersion: true, state: true },
+    });
+    if (
+        plan &&
+        (plan.chunkerVersion !== SEMANTIC_CHUNKER_VERSION ||
+            plan.unitizerVersion !== SEMANTIC_UNITIZER_VERSION ||
+            plan.state === 'CLEANED')
+    )
+        throw indexError('MODEL_CHANGED');
 }

@@ -3,6 +3,7 @@ import { Buffer } from 'node:buffer';
 import { isDeepStrictEqual } from 'node:util';
 import { z } from 'zod';
 import { configurationUrl, operationSignal, requestJson } from './http';
+import { observeEmbeddingBatch } from './batch-observer';
 import { prepareEmbeddingInput } from './preparation';
 import {
     EmbeddingError,
@@ -277,17 +278,26 @@ async function embed(
             texts.push(text);
             position++;
         }
-        const result = await batch(config, identity, texts, kind, signal);
+        const result = await observeEmbeddingBatch(
+            {
+                identity,
+                kind,
+                ordinal: requests,
+                inputOffset: position - texts.length,
+                inputs: texts,
+                options,
+                signal,
+            },
+            () => batch(config, identity, texts, kind, signal)
+        );
         vectors.push(...result.vectors);
         requests++;
-        estimatedInputTokens += texts.reduce(
-            (sum, text) => sum + Math.ceil(Buffer.byteLength(text) / 4),
-            0
-        );
+        estimatedInputTokens += result.usage.estimatedInputTokens;
         providerInputTokens =
-            providerInputTokens === null || result.providerInputTokens === null
+            providerInputTokens === null ||
+            result.usage.providerInputTokens === null
                 ? null
-                : providerInputTokens + result.providerInputTokens;
+                : providerInputTokens + result.usage.providerInputTokens;
         if (
             providerInputTokens !== null &&
             !Number.isSafeInteger(providerInputTokens)

@@ -1,5 +1,7 @@
 import { setRagQuota } from './set-rag-quota';
 import { getRagQuota } from './get-rag-quota';
+import { getSemanticQuota } from './get-semantic-quota';
+import { setSemanticQuota } from './set-semantic-quota';
 import { superAdmin } from '@routers/utils/super-admin';
 import { getCurrentSuperAdmin } from './get-current-user';
 import { getSuperAdminDashboard } from './get-dashboard';
@@ -38,6 +40,8 @@ export const superAdminRouter = superAdmin
         organizations: superAdmin.prefix('/organizations').router({
             setRagQuota,
             getRagQuota,
+            getSemanticQuota,
+            setSemanticQuota,
             create: createOrganization,
             list: listOrganizations,
             get: getOrganization,

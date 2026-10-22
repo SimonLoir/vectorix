@@ -11,12 +11,15 @@
         "./api-key-scopes": "./src/services/api-key-scopes.ts",
         "./credentials": "./src/services/credential-resolution.ts",
         "./quotas": "./src/services/quotas.ts",
+        "./semantic-quotas": "./src/services/semantic-quotas.ts",
         "./ingestion": "./src/services/documents/process.ts",
         "./cleanup": "./src/services/documents/cleanup.ts",
         "./source-holds": "./src/services/indexing/source-holds.ts",
         "./indexing-changes": "./src/services/indexing/changes.ts",
         "./indexing": "./src/services/indexing/process.ts",
-        "./indexing-runtime": "./src/services/indexing/generation-adapter.ts"
+        "./indexing-runtime": "./src/services/indexing/generation-adapter.ts",
+        "./semantic-work": "./src/services/indexing/semantic-work.ts",
+        "./semantic-work-ledger": "./src/services/indexing/semantic-work-ledger.ts"
     },
     "scripts": {
         "check-types": "tsc6 -p tsconfig.json --noEmit",

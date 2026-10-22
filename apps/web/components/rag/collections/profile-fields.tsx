@@ -24,7 +24,8 @@ export function ProfileFields({
     const windowHintId = useId();
     const tailHintId = useId();
     const plannedHintId = useId();
-    const planned = strategy === 'SEMANTIC' || parent;
+    const planned = parent;
+    const semanticHintId = useId();
     return (
         <div className='space-y-5'>
             <EmbeddingFields
@@ -66,6 +67,7 @@ export function ProfileFields({
                 aria-describedby={[
                     estimateHintId,
                     ...(strategy === 'TOKEN_WINDOW' ? [windowHintId] : []),
+                    ...(strategy === 'SEMANTIC' ? [semanticHintId] : []),
                     ...(planned ? [plannedHintId] : []),
                 ].join(' ')}
                 onChange={(event) => {
@@ -91,6 +93,15 @@ export function ProfileFields({
                 <div className='space-y-2 text-sm text-muted-foreground'>
                     <p id={windowHintId}>{tr('profile.tokenWindowHint')}</p>
                     <p id={tailHintId}>{tr('profile.tokenWindowTailHint')}</p>
+                </div>
+            )}
+            {strategy === 'SEMANTIC' && (
+                <div
+                    id={semanticHintId}
+                    className='space-y-2 text-sm text-muted-foreground'
+                >
+                    <p>{tr('profile.semanticHint')}</p>
+                    <p>{tr('profile.semanticWorkHint')}</p>
                 </div>
             )}
             {planned && (
@@ -157,6 +168,9 @@ export function ProfileFields({
                 max={99}
                 defaultValue={configuration?.chunking.semanticPercentile ?? 90}
                 readOnly={strategy !== 'SEMANTIC'}
+                aria-describedby={
+                    strategy === 'SEMANTIC' ? semanticHintId : undefined
+                }
             />
             <CheckField
                 label={tr('profile.parentChild')}

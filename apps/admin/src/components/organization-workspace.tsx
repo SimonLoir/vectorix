@@ -2,6 +2,7 @@
 import { useTranslations } from 'next-intl';
 import Link from 'next/link';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@repo/ui/tabs';
+import { OrganizationSemanticQuota } from './organization-semantic-quota';
 import { OrganizationRagQuota } from './organization-rag-quota';
 import { OrganizationSummary } from './organization-summary';
 import { OrganizationMembers } from './organization-members';
@@ -33,8 +34,11 @@ export function OrganizationWorkspace({
                 <TabsContent value='summary'>
                     <OrganizationSummary organizationId={organizationId} />
                 </TabsContent>
-                <TabsContent value='rag'>
+                <TabsContent value='rag' className='space-y-6'>
                     <OrganizationRagQuota organizationId={organizationId} />
+                    <OrganizationSemanticQuota
+                        organizationId={organizationId}
+                    />
                 </TabsContent>
                 <TabsContent value='members'>
                     <OrganizationMembers organizationId={organizationId} />

@@ -9,3 +9,34 @@ export {
     ChunkingError,
 } from './types';
 export type { StructureOptions, PlannedChunk, ChunkSpan } from './types';
+export {
+    SEMANTIC_CHUNKER_VERSION,
+    SEMANTIC_UNITIZER_VERSION,
+    MAX_SEMANTIC_UNITS,
+    MAX_SEMANTIC_DISTANCE,
+    SemanticStateError,
+    assertSemanticVersions,
+} from './semantic-types';
+export type {
+    SemanticUnit,
+    SemanticRange,
+    SemanticUnitOptions,
+    SemanticOptions,
+    SemanticState,
+} from './semantic-types';
+export {
+    unitizeSemantic,
+    semanticUnitManifestHash,
+    validateSemanticUnits,
+} from './semantic-units';
+export {
+    quantizeSemanticVector,
+    quantizedAdjacentDistance,
+    semanticThreshold,
+    validateSemanticDistances,
+} from './semantic-distance';
+export {
+    chunkDocumentSemantic,
+    semanticPlanHash,
+    validateSemanticPlan,
+} from './semantic-plan';

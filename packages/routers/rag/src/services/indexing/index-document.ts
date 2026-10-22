@@ -20,7 +20,17 @@ import {
     matchesEmbeddingIdentity,
 } from './embedding-profile';
 import { generationVectorAdapter } from './generation-adapter';
-import { requireGenerationChunking } from './generation-profile';
+import {
+    requireGenerationChunking,
+    requireSemanticPlanVersion,
+} from './generation-profile';
+import { planSemanticCandidate } from './semantic-planning';
+import {
+    createSemanticWorkObserver,
+    releaseSemanticWorkAllowance,
+    lockSemanticAccounting,
+} from './semantic-work';
+import { collectIndexChunks } from './planned-chunks';
 import {
     reserveCandidateChunks,
     accountMaterializedChunks,
@@ -52,6 +62,13 @@ export async function executeDocumentIndex(
         claim.organizationId,
         claim.generationId
     );
+    if (chunker.kind === 'SEMANTIC')
+        await requireSemanticPlanVersion(
+            db,
+            claim.organizationId,
+            claim.generationId,
+            candidateId
+        );
     const binding = await generationVectorAdapter(
         db,
         claim.organizationId,
@@ -93,10 +110,7 @@ export async function executeDocumentIndex(
     )
         extraction.format = 'MARKDOWN';
     const chunking = collectionProfile.shape.chunking.parse(profile.chunking);
-    const plans: PlannedChunk[] = [];
-    let textBytes = 0,
-        spanBytes = 0;
-    for (const chunk of chunker.plan(extraction, {
+    const options = {
         ...chunking,
         maxEmbeddingInputBytes: Math.min(
             49_152,
@@ -105,14 +119,53 @@ export async function executeDocumentIndex(
                 preparation: profile.preparation,
             })
         ),
-    })) {
-        textBytes += Buffer.byteLength(chunk.text);
-        spanBytes += Buffer.byteLength(JSON.stringify(chunk.sourceSpans));
-        if (textBytes > 128 * 1024 ** 2 || spanBytes > 32 * 1024 ** 2)
-            throw new IndexingError('CHUNK_LIMIT');
-        plans.push(chunk);
-    }
-    if (!plans.length) throw new IndexingError('SOURCE_UNAVAILABLE');
+    };
+    const plans: PlannedChunk[] =
+        chunker.kind === 'SEMANTIC'
+            ? await planSemanticCandidate(db, {
+                  claim,
+                  task,
+                  candidateId,
+                  credentials,
+                  identity,
+                  preparation: profile.preparation,
+                  title: candidate.fileName,
+                  context: {
+                      artifact: extraction,
+                      options,
+                      sourceHash: contentHash(
+                          JSON.stringify({
+                              extractorVersion: candidate.extractorVersion,
+                              extraction,
+                          })
+                      ),
+                      profileHash: contentHash(
+                          JSON.stringify({
+                              revision:
+                                  binding.generation.configurationRevision,
+                              provider: profile.provider,
+                              model: profile.model,
+                              dimensions: profile.dimensions,
+                              preset: profile.embeddingPreset,
+                              preparation: profile.preparation,
+                              credentialId: profile.credentialId,
+                              credentialRevision: profile.credentialRevision,
+                              endpoint: profile.endpoint,
+                              fileName: candidate.fileName,
+                              sourceVersionId: candidate.sourceVersionId,
+                              extractionId: candidate.extractionId,
+                              capabilitySnapshot:
+                                  binding.generation.capabilitySnapshot,
+                              options,
+                          })
+                      ),
+                      modelIdentity: binding.generation.modelIdentity,
+                      dimensions: identity.dimensions,
+                      configurationRevision:
+                          binding.generation.configurationRevision,
+                  },
+              })
+            : collectIndexChunks(chunker.plan(extraction, options));
     await runSerializableTransaction(db, async (tx) => {
         await renewIndexClaim(tx, claim, 'PLANNING');
         await requireIndexAuthority(tx, task);
@@ -233,7 +286,22 @@ export async function executeDocumentIndex(
                     text: row.text,
                     title: candidate.fileName,
                 })),
-                { preparation: profile.preparation, timeoutMs: 90_000 }
+                {
+                    preparation: profile.preparation,
+                    timeoutMs: 90_000,
+                    ...(chunker.kind === 'SEMANTIC'
+                        ? {
+                              batchObserver: createSemanticWorkObserver(
+                                  db,
+                                  claim,
+                                  task,
+                                  candidateId,
+                                  'FINAL_DOCUMENT',
+                                  `final:${start}`
+                              ),
+                          }
+                        : {}),
+                }
             );
             await renewIndexClaim(db, claim, 'WRITING_VECTORS');
             await requireCurrentCandidate(db, claim, candidateId);
@@ -262,8 +330,12 @@ export async function executeDocumentIndex(
     await renewIndexClaim(db, claim, 'SEALING');
     await binding.store.seal(binding.spec, publication, claim.leaseEpoch);
     await runSerializableTransaction(db, async (tx) => {
+        if (chunker.kind === 'SEMANTIC')
+            await lockSemanticAccounting(tx, claim.organizationId);
         await requireIndexAuthority(tx, task);
         await publishIndexedCandidate(tx, claim, task, candidateId, hash);
+        if (chunker.kind === 'SEMANTIC')
+            await releaseSemanticWorkAllowance(tx, candidateId);
     });
     // Statistics are advisory: failure after catalog publication does not turn a completed publication into a failed task.
     await generationVectorAdapter(

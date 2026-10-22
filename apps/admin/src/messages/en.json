@@ -261,7 +261,8 @@
                     "userAccess": "Superadmin access updated",
                     "legacyAccess": "Legacy access updated",
                     "legacyFeatures": "Legacy features updated",
-                    "ragQuota": "RAG quota updated"
+                    "ragQuota": "RAG quota updated",
+                    "semanticQuota": "Semantic work quota updated"
                 }
             },
             "features": {
@@ -364,6 +365,47 @@
                 "usersTitle": "Users",
                 "usersDescription": "View Vectorix accounts, their organizations and their access to the superadmin console."
             }
+        },
+        "semanticQuota": {
+            "title": "Semantic indexing quotas",
+            "scope": "These counters cover boundary and final-document embeddings for semantic indexing only. Other strategies and calls before tracking began are excluded. This is technical work accounting, not money, credits or a provider invoice.",
+            "trackingSince": "Tracked since {date}.",
+            "notTracked": "No semantic work has been tracked yet. Historical provider calls are not included.",
+            "unknown": "Unknown",
+            "storedPlanBytes": "Stored planning payload (bytes)",
+            "reservedPlanBytes": "Reserved planning storage (bytes)",
+            "reservedPreparedBytes": "Outstanding prepared-input reservation (bytes)",
+            "reservedBatches": "Outstanding logical batch reservation",
+            "dispatchedPreparedBytes": "Lifetime dispatched prepared-input bytes",
+            "dispatchedBatches": "Lifetime logical batch dispatches",
+            "confirmedRequests": "Confirmed successful native batches",
+            "estimatedInputTokens": "Prepared-input token estimate (UTF-8 bytes / 4)",
+            "providerInputTokens": "Known native input tokens",
+            "billedInputTokens": "Known provider-billed token units",
+            "unknownProviderTokenBatches": "Batches with unknown native token usage",
+            "unknownBilledTokenBatches": "Batches with unknown billed token usage",
+            "uncertainAttempts": "Unresolved dispatched attempts",
+            "usageHint": "Dispatches record intent and can include uncertain work. One logical batch may have up to three internal transport attempts; wire requests and charges are not counted exactly. Known token subtotals are incomplete when unknown batches remain. Missing usage never means zero.",
+            "limitsTitle": "Semantic work and capacity limits",
+            "semanticUnitsPerDocument": "Semantic units per document",
+            "semanticPlanBytesPerDocument": "Planning payload per document (bytes)",
+            "semanticPlanBytesPerOrganization": "Organization planning capacity (bytes)",
+            "embeddingPreparedBytesPerCandidate": "Lifetime prepared-input allowance per candidate (bytes)",
+            "embeddingBatchesPerCandidate": "Lifetime logical batch allowance per candidate",
+            "embeddingOutstandingPreparedBytes": "Organization outstanding prepared-input capacity (bytes)",
+            "embeddingOutstandingBatches": "Organization outstanding logical batch capacity",
+            "limitsHint": "1 MiB = 1,048,576 bytes. Organization planning capacity must cover one document allowance; both outstanding work caps must admit a complete candidate allowance. A candidate shares its lifetime allowance across boundary planning, final embeddings and retries. Reducing limits does not remove stored data. Only a platform administrator can change limits.",
+            "usageTitle": "Observed semantic work",
+            "overridden": "Organization-specific semantic limits.",
+            "defaults": "Platform defaults. Saving creates an organization override.",
+            "saved": "Semantic quotas saved",
+            "loading": "Loading semantic quotas…",
+            "retry": "Retry",
+            "save": "Save semantic quotas",
+            "saving": "Saving…",
+            "loadFailed": "Semantic limits and usage could not be loaded. Check your platform access and retry.",
+            "saveFailed": "Semantic quotas could not be saved. Check your values and platform access, then retry.",
+            "invalid": "Enter safe whole numbers within the displayed limits. Organization planning capacity must cover one document allowance, and each outstanding work cap must cover a complete candidate allowance."
         }
     }
 }

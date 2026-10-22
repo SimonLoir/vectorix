@@ -4,6 +4,10 @@ import { superAdminV1 } from './v1-implementer';
 import { auditSuperAdminAction } from './audit';
 import { quotaLimits } from '@routers/rag/quotas';
 import { requireCurrentSuperAdmin } from './superadmin-transaction';
+import {
+    semanticQuotaLimits,
+    semanticQuotaPersistence,
+} from '@routers/rag/semantic-quotas';
 
 /** Quotas are platform policy; organization members cannot increase their own allowances. */
 export const setRagQuota = superAdminV1.organizations.setRagQuota.handler(
@@ -18,6 +22,9 @@ export const setRagQuota = superAdminV1.organizations.setRagQuota.handler(
             )
                 throw new ORPCError('NOT_FOUND');
             const current = await quotaLimits(db, input.organizationId);
+            const semantic = semanticQuotaPersistence(
+                await semanticQuotaLimits(db, input.organizationId)
+            );
             const effective = {
                 ...input.limits,
                 temporaryChunksPerCollection:
@@ -31,7 +38,11 @@ export const setRagQuota = superAdminV1.organizations.setRagQuota.handler(
             };
             await db.organizationQuota.upsert({
                 where: { organizationId: input.organizationId },
-                create: { organizationId: input.organizationId, ...limits },
+                create: {
+                    organizationId: input.organizationId,
+                    ...limits,
+                    ...semantic,
+                },
                 update: limits,
             });
             await auditSuperAdminAction({

@@ -6,7 +6,10 @@ import {
 } from './generation-adapter';
 import { executeDocumentIndex } from './index-document';
 import { requireGenerationChunking } from './generation-profile';
+import { SemanticContinuation } from './semantic-capacity';
+import { reapSemanticWork } from './semantic-work';
 import { activateReadyGenerations } from './activation';
+import { scanIndexTasks } from './task-scan';
 import {
     executeDocumentRemoval,
     executeGenerationCleanup,
@@ -28,37 +31,11 @@ import {
 
 /** PostgreSQL is the source of task state; Redis only schedules bounded scans without content or secrets. */
 export async function processCollectionIndexing(db: PrismaClient) {
+    await reapSemanticWork(db);
     // Bootstrap may be absent in a notification-only deployment. Durable indexing
     // claims below report safe errors; other worker queues continue independently.
     await initializeVectorDestination().catch(() => {});
-    const tasks = await db.indexTask.findMany({
-        where: {
-            availableAt: { lte: new Date() },
-            AND: [
-                {
-                    OR: [
-                        { status: 'PENDING' },
-                        {
-                            status: 'PROCESSING',
-                            leasedUntil: { lte: new Date() },
-                        },
-                    ],
-                },
-                {
-                    OR: [
-                        { kind: { not: 'INDEX_DOCUMENT' } },
-                        {
-                            generation: {
-                                status: { in: ['BUILDING', 'ACTIVE'] },
-                            },
-                        },
-                    ],
-                },
-            ],
-        },
-        orderBy: [{ availableAt: 'asc' }, { createdAt: 'asc' }, { id: 'asc' }],
-        take: 10,
-    });
+    const tasks = await scanIndexTasks(db);
     for (const task of tasks) {
         const claim = await claimIndexTask(db, task);
         if (!claim) continue;
@@ -88,6 +65,7 @@ export async function processCollectionIndexing(db: PrismaClient) {
                     break;
             }
         } catch (error) {
+            if (error instanceof SemanticContinuation) continue;
             await (error instanceof CandidateObsolete
                 ? supersede(db, claim, task)
                 : failIndexClaim(db, claim, error));

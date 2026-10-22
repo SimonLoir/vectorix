@@ -261,7 +261,8 @@
                     "userAccess": "Accès superadmin modifié",
                     "legacyAccess": "Accès legacy modifié",
                     "legacyFeatures": "Fonctionnalités legacy modifiées",
-                    "ragQuota": "Quota RAG modifié"
+                    "ragQuota": "Quota RAG modifié",
+                    "semanticQuota": "Quota de calcul sémantique modifié"
                 }
             },
             "features": {
@@ -364,6 +365,47 @@
                 "usersTitle": "Utilisateurs",
                 "usersDescription": "Consultez les comptes Vectorix, leurs organisations et leur accès à la console superadmin."
             }
+        },
+        "semanticQuota": {
+            "title": "Quotas d’indexation sémantique",
+            "scope": "Ces compteurs couvrent uniquement les embeddings de délimitation et des passages finaux de l’indexation sémantique. Les autres stratégies et les appels antérieurs au suivi sont exclus. Il s’agit de compteurs techniques, pas d’argent, de crédits ou d’une facture du fournisseur.",
+            "trackingSince": "Suivi depuis le {date}.",
+            "notTracked": "Aucun calcul sémantique n’a encore été suivi. Les appels historiques aux fournisseurs ne sont pas inclus.",
+            "unknown": "Inconnu",
+            "storedPlanBytes": "Planification stockée (octets)",
+            "reservedPlanBytes": "Stockage réservé à la planification (octets)",
+            "reservedPreparedBytes": "Réservation en cours pour les entrées préparées (octets)",
+            "reservedBatches": "Réservation en cours de lots logiques",
+            "dispatchedPreparedBytes": "Total cumulé des octets préparés envoyés",
+            "dispatchedBatches": "Total cumulé des envois de lots logiques",
+            "confirmedRequests": "Lots natifs réussis confirmés",
+            "estimatedInputTokens": "Estimation des tokens d’entrée (octets UTF-8 / 4)",
+            "providerInputTokens": "Tokens d’entrée natifs connus",
+            "billedInputTokens": "Unités de tokens facturés connues",
+            "unknownProviderTokenBatches": "Lots dont l’usage natif de tokens est inconnu",
+            "unknownBilledTokenBatches": "Lots dont les tokens facturés sont inconnus",
+            "uncertainAttempts": "Tentatives envoyées non résolues",
+            "usageHint": "Les envois enregistrent une intention et peuvent inclure des calculs incertains. Un lot logique peut entraîner jusqu’à trois tentatives de transport internes ; les requêtes réseau et les frais ne sont pas comptés exactement. Les sous-totaux connus sont incomplets tant que des lots restent inconnus. Un usage absent ne signifie jamais zéro.",
+            "limitsTitle": "Limites de calcul et de capacité sémantiques",
+            "semanticUnitsPerDocument": "Unités sémantiques par document",
+            "semanticPlanBytesPerDocument": "Planification par document (octets)",
+            "semanticPlanBytesPerOrganization": "Capacité de planification de l’organisation (octets)",
+            "embeddingPreparedBytesPerCandidate": "Budget cumulé d’entrée préparée par candidat (octets)",
+            "embeddingBatchesPerCandidate": "Budget cumulé de lots logiques par candidat",
+            "embeddingOutstandingPreparedBytes": "Capacité d’entrée préparée en cours de l’organisation (octets)",
+            "embeddingOutstandingBatches": "Capacité de lots logiques en cours de l’organisation",
+            "limitsHint": "1 Mio = 1 048 576 octets. La capacité de planification de l’organisation doit couvrir le budget d’un document ; chaque capacité de calcul en cours doit admettre le budget complet d’un candidat. Un candidat partage son budget cumulé entre la délimitation, les embeddings finaux et les nouvelles tentatives. Réduire les limites ne supprime pas les données. Seul un administrateur de la plateforme peut modifier les limites.",
+            "usageTitle": "Calcul sémantique observé",
+            "overridden": "Limites sémantiques propres à l’organisation.",
+            "defaults": "Valeurs par défaut de la plateforme. Enregistrer crée une dérogation pour cette organisation.",
+            "saved": "Quotas sémantiques enregistrés",
+            "loading": "Chargement des quotas sémantiques…",
+            "retry": "Réessayer",
+            "save": "Enregistrer les quotas sémantiques",
+            "saving": "Enregistrement…",
+            "loadFailed": "Les limites et l’usage sémantiques n’ont pas pu être chargés. Vérifiez votre accès à la plateforme et réessayez.",
+            "saveFailed": "Les quotas sémantiques n’ont pas pu être enregistrés. Vérifiez les valeurs et votre accès à la plateforme, puis réessayez.",
+            "invalid": "Saisissez des nombres entiers sûrs respectant les limites indiquées. La capacité de planification de l’organisation doit couvrir un document et chaque capacité de calcul en cours doit couvrir le budget complet d’un candidat."
         }
     }
 }

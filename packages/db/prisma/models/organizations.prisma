@@ -26,6 +26,7 @@ model Organization {
   collections Collection[]
   groups OrganizationGroup[]
   ragQuota OrganizationQuota?
+  embeddingAccounting OrganizationEmbeddingAccounting?
   ragAuditLogs RagAuditLog[]
   documents Document[]
 

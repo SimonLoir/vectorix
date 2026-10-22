@@ -43,6 +43,7 @@ const ACTION_KEYS: Record<string, string> = {
     'vectorix.organization.setLegacyAccess': 'legacyAccess',
     'vectorix.organization.legacyFeatures.set': 'legacyFeatures',
     'vectorix.organization.ragQuota.update': 'ragQuota',
+    'vectorix.organization.semanticQuota.update': 'semanticQuota',
 };
 
 function actionStyle(action: string) {

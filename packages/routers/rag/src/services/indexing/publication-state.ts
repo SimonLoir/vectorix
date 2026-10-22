@@ -1,6 +1,7 @@
 import type { IndexedDocument, IndexTask, Prisma } from '@repo/db';
 import { SOURCE_RETIRE_GRACE_MS } from './source-retention';
 import { retireSourceHold } from './source-holds';
+import { releaseSemanticWorkAllowance } from './semantic-work';
 import {
     IndexingError,
     renewIndexClaim,
@@ -83,6 +84,7 @@ export async function retireIndexedDocument(
     absoluteRetainUntil?: Date
 ) {
     if (['CLEANING', 'CLEANED'].includes(candidate.status)) return;
+    await releaseSemanticWorkAllowance(tx, candidate.id);
     const alreadyRetired = candidate.status === 'RETIRED';
     const activeGeneration = await tx.collection.count({
         where: {

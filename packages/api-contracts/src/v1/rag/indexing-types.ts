@@ -1,6 +1,7 @@
 import { z } from 'zod';
 import { id, embeddingProvider } from './common';
 import { documentSource } from './documents';
+import { semanticTaskProgress } from './semantic';
 
 export const indexFailure = z.enum([
     'ACCESS_REVOKED',
@@ -125,6 +126,7 @@ export const indexTask = z.object({
     errorCode: indexFailure.nullable(),
     updatedAt: z.date(),
     retryable: z.boolean(),
+    semantic: semanticTaskProgress.optional(),
 });
 export const chunkSpan = z.object({
     source: documentSource,

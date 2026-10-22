@@ -99,7 +99,7 @@ export type IndexProfile = {
 export function supportsIndexProfile(profile: IndexProfile) {
     const preset = profile.embeddingPreset ?? 'GENERIC';
     return (
-        ['DOCUMENT_STRUCTURE', 'TOKEN_WINDOW'].includes(
+        ['DOCUMENT_STRUCTURE', 'TOKEN_WINDOW', 'SEMANTIC'].includes(
             profile.chunkingStrategy
         ) &&
         !profile.parentChild &&

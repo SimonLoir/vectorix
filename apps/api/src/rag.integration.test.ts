@@ -20,6 +20,13 @@ import { openaiIndexingTests } from './rag-tests/openai-indexing';
 import { mistralIndexingTests } from './rag-tests/mistral-indexing';
 import { tokenWindowTests } from './rag-tests/token-window';
 import { tokenWindowProviderTests } from './rag-tests/token-window-providers';
+import { semanticLifecycleTests } from './rag-tests/semantic-lifecycle';
+import { semanticProviderTests } from './rag-tests/semantic-providers';
+import { semanticWorkTests } from './rag-tests/semantic-work';
+import { semanticQuotaTests } from './rag-tests/semantic-quotas';
+import { semanticLedgerTests } from './rag-tests/semantic-ledger';
+import { semanticFairnessTests } from './rag-tests/semantic-fairness';
+import { semanticCapacityTests } from './rag-tests/semantic-capacity';
 
 after(cleanup);
 void test('RAG catalog with real PostgreSQL and HTTP transports', async (t) => {
@@ -44,4 +51,11 @@ void test('RAG catalog with real PostgreSQL and HTTP transports', async (t) => {
     await mistralIndexingTests(t);
     await tokenWindowTests(t);
     await tokenWindowProviderTests(t);
+    await semanticLifecycleTests(t);
+    await semanticProviderTests(t);
+    await semanticWorkTests(t);
+    await semanticQuotaTests(t);
+    await semanticLedgerTests(t);
+    await semanticFairnessTests(t);
+    await semanticCapacityTests(t);
 });

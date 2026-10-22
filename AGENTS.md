@@ -43,6 +43,7 @@ Vectorix is a multi-tenant application foundation. Preserve its reusable authent
 - Prepare schema changes for review; migrations are generated manually after review. Do not generate or apply migrations automatically as a side effect of unrelated work. Follow an explicit migration request when given, and never use `db:push` in production.
 - Use transactions for related writes and preserve retry/idempotency guarantees. Keep durable task and delivery state in PostgreSQL; Redis is not its source of truth.
 - Dispatch chunk planning through the saved strategy and version; preserve legacy structure generations and reject unsupported version pairs before task-specific external I/O. Token counts remain estimates; verified embedding byte caps and canonical source spans are authoritative.
+- Keep semantic plans bound to immutable source/profile/model inputs. Checkpoint only accepted contiguous distances and one float32 vector, seal boundaries before chunk materialization, and preserve lifetime work across retries. Settle validated late usage before returning a stale-authority denial; it must never advance stale content. Successful planning/capacity continuations do not consume failure retries.
 - Keep index generations, publication pointers, ordered change receipts, chunk accounting and exact-version source holds in the application database. Provider/vector/S3 I/O stays outside its transactions. Preserve native organization-deletion transactions and database cleanup guards; a late guard failure must roll back member removal.
 
 ## API contracts and versioning
@@ -51,6 +52,7 @@ Vectorix is a multi-tenant application foundation. Preserve its reusable authent
 - `packages/api/src/versioning.ts` owns release metadata. `apps/api/src/api-versioning/registry.ts` is the single registry of supported majors, with unique majors and exactly one current entry.
 - Never break a supported major. Compatible additions increment its revision; breaking changes require a new major while retaining the old contract until its documented retirement.
 - Public input/output DTOs are explicit, hand-written Zod schemas in `packages/api-contracts/src/v1/`. Keep them independent of generated Prisma schemas so database changes cannot silently alter a public contract.
+- Preserve strict nested DTO shapes when adding compatible capabilities; use separate operations or optional outer siblings. Serialize cumulative BIGINT counters as decimal strings and distinguish unknown provider usage from zero and dispatch intent from confirmed work.
 - Use executable oRPC contracts with explicit inputs and outputs, and implement handlers through those contracts. Preserve operation parity between contracts and runtime routers; do not hide mismatches with casts.
 - Consumers use exported `VectorixApiV1Client` and `VectorixApiV1Outputs` types, not types inferred from a mutable runtime router.
 - Share services, queries, transactions, and integrations between API majors. Limit version-specific logic to contracts, input adapters, output mapping, and required compatibility behavior.

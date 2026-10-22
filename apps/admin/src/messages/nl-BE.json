@@ -261,7 +261,8 @@
                     "userAccess": "Superadmintoegang bijgewerkt",
                     "legacyAccess": "Legacytoegang bijgewerkt",
                     "legacyFeatures": "Legacyfuncties bijgewerkt",
-                    "ragQuota": "RAG-quotum bijgewerkt"
+                    "ragQuota": "RAG-quotum bijgewerkt",
+                    "semanticQuota": "Quotum voor semantisch werk bijgewerkt"
                 }
             },
             "features": {
@@ -364,6 +365,47 @@
                 "usersTitle": "Gebruikers",
                 "usersDescription": "Bekijk Vectorix-accounts, hun organisaties en hun toegang tot de superadminconsole."
             }
+        },
+        "semanticQuota": {
+            "title": "Quota voor semantische indexering",
+            "scope": "Deze tellers omvatten alleen grensbepaling en definitieve documentembeddings voor semantische indexering. Andere strategieën en oproepen van vóór de registratie zijn uitgesloten. Dit zijn technische werktellers, geen geld, credits of factuur van een provider.",
+            "trackingSince": "Geregistreerd sinds {date}.",
+            "notTracked": "Er is nog geen semantisch werk geregistreerd. Historische provideroproepen zijn niet inbegrepen.",
+            "unknown": "Onbekend",
+            "storedPlanBytes": "Opgeslagen planningsgegevens (bytes)",
+            "reservedPlanBytes": "Gereserveerde planningsopslag (bytes)",
+            "reservedPreparedBytes": "Openstaande reservering voor voorbereide invoer (bytes)",
+            "reservedBatches": "Openstaande reservering voor logische batches",
+            "dispatchedPreparedBytes": "Cumulatieve verzonden bytes voorbereide invoer",
+            "dispatchedBatches": "Cumulatieve verzendingen van logische batches",
+            "confirmedRequests": "Bevestigde geslaagde native batches",
+            "estimatedInputTokens": "Geschatte invoertokens (UTF-8-bytes / 4)",
+            "providerInputTokens": "Bekende native invoertokens",
+            "billedInputTokens": "Bekende aangerekende tokeneenheden",
+            "unknownProviderTokenBatches": "Batches met onbekend native tokengebruik",
+            "unknownBilledTokenBatches": "Batches met onbekende aangerekende tokens",
+            "uncertainAttempts": "Onopgeloste verzonden pogingen",
+            "usageHint": "Verzendingen registreren een intentie en kunnen onzeker werk omvatten. Eén logische batch kan tot drie interne transportpogingen bevatten; netwerkverzoeken en kosten worden niet exact geteld. Bekende subtotalen zijn onvolledig zolang batches onbekend blijven. Ontbrekend gebruik betekent nooit nul.",
+            "limitsTitle": "Limieten voor semantisch werk en capaciteit",
+            "semanticUnitsPerDocument": "Semantische eenheden per document",
+            "semanticPlanBytesPerDocument": "Planningsgegevens per document (bytes)",
+            "semanticPlanBytesPerOrganization": "Planningscapaciteit van de organisatie (bytes)",
+            "embeddingPreparedBytesPerCandidate": "Cumulatief invoerbudget per kandidaat (bytes)",
+            "embeddingBatchesPerCandidate": "Cumulatief budget voor logische batches per kandidaat",
+            "embeddingOutstandingPreparedBytes": "Openstaande invoercapaciteit van de organisatie (bytes)",
+            "embeddingOutstandingBatches": "Openstaande capaciteit voor logische batches van de organisatie",
+            "limitsHint": "1 MiB = 1.048.576 bytes. De planningscapaciteit van de organisatie moet één documentbudget dekken; beide openstaande werkcapaciteiten moeten een volledig kandidaatbudget toelaten. Een kandidaat deelt zijn cumulatieve budget over grensbepaling, definitieve embeddings en nieuwe pogingen. Lagere limieten verwijderen geen gegevens. Alleen een platformbeheerder kan limieten wijzigen.",
+            "usageTitle": "Waargenomen semantisch werk",
+            "overridden": "Semantische limieten voor deze organisatie.",
+            "defaults": "Platformstandaarden. Opslaan maakt een afwijking voor deze organisatie.",
+            "saved": "Semantische quota opgeslagen",
+            "loading": "Semantische quota laden…",
+            "retry": "Opnieuw proberen",
+            "save": "Semantische quota opslaan",
+            "saving": "Opslaan…",
+            "loadFailed": "Semantische limieten en gebruik konden niet worden geladen. Controleer uw platformtoegang en probeer opnieuw.",
+            "saveFailed": "Semantische quota konden niet worden opgeslagen. Controleer de waarden en uw platformtoegang en probeer opnieuw.",
+            "invalid": "Voer veilige gehele getallen binnen de getoonde limieten in. De planningscapaciteit van de organisatie moet één document dekken en elke openstaande werkcapaciteit moet een volledig kandidaatbudget dekken."
         }
     }
 }

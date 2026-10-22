@@ -91,6 +91,7 @@ export function retryIndexTask(
             data: {
                 status: 'PENDING',
                 attempts: 0,
+                continuationPending: false,
                 errorCode: null,
                 availableAt: new Date(),
                 leaseToken: null,
