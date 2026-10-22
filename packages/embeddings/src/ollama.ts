@@ -1,6 +1,7 @@
 import { Buffer } from 'node:buffer';
 import { z } from 'zod';
 import { requestJson, operationSignal } from './http';
+import { observeEmbeddingBatch } from './batch-observer';
 import { prepareEmbeddingInput } from './preparation';
 import {
     EmbeddingError,
@@ -255,30 +256,45 @@ async function embed(
             batch.push(input);
             position++;
         }
-        await assertManifest(config, identity, signal);
-        const response = validateVectors(
-            await requestJson(config, 'api/embed', signal, {
-                model: identity.model,
-                input: batch,
-                dimensions: identity.dimensions,
-                truncate: false,
-            }),
-            batch.length,
-            identity.dimensions,
-            identity.model
+        const result = await observeEmbeddingBatch(
+            {
+                identity,
+                kind,
+                ordinal: requests,
+                inputOffset: position - batch.length,
+                inputs: batch,
+                options,
+                signal,
+            },
+            async () => {
+                await assertManifest(config, identity, signal);
+                const response = validateVectors(
+                    await requestJson(config, 'api/embed', signal, {
+                        model: identity.model,
+                        input: batch,
+                        dimensions: identity.dimensions,
+                        truncate: false,
+                    }),
+                    batch.length,
+                    identity.dimensions,
+                    identity.model
+                );
+                // The native model name is not a manifest. This detects ordinary
+                // replacements, not hostile ABA swaps; retain both manifest checks.
+                await assertManifest(config, identity, signal);
+                return {
+                    vectors: response.embeddings,
+                    providerInputTokens: response.prompt_eval_count ?? null,
+                };
+            }
         );
-        // Ollama's embed response has a model name, no cryptographic manifest identity. This detects ordinary replacements, not hostile ABA swaps.
-        await assertManifest(config, identity, signal);
-        vectors.push(...response.embeddings);
+        vectors.push(...result.vectors);
         requests++;
-        estimatedInputTokens += batch.reduce(
-            (sum, input) => sum + Math.ceil(Buffer.byteLength(input) / 4),
-            0
-        );
-        if (response.prompt_eval_count === undefined)
+        estimatedInputTokens += result.usage.estimatedInputTokens;
+        if (result.usage.providerInputTokens === null)
             providerInputTokens = null;
         else if (providerInputTokens !== null) {
-            providerInputTokens += response.prompt_eval_count;
+            providerInputTokens += result.usage.providerInputTokens;
             if (!Number.isSafeInteger(providerInputTokens))
                 throw new EmbeddingError('INVALID_PROVIDER_RESPONSE');
         }

@@ -59,7 +59,18 @@ export function ProfileSummary({
                     <p>{tr('profile.tokenWindowHint')}</p>
                 </div>
             )}
-            {(c.chunkingStrategy === 'SEMANTIC' || c.parentChild) && (
+            {c.chunkingStrategy === 'SEMANTIC' && (
+                <div className='space-y-2 text-muted-foreground'>
+                    <p>{tr('profile.semanticHint')}</p>
+                    <p>{tr('profile.semanticWorkHint')}</p>
+                    <p>
+                        {tr('profile.tokenEstimationHint', {
+                            bytesPerToken: 3,
+                        })}
+                    </p>
+                </div>
+            )}
+            {c.parentChild && (
                 <p role='status' className='rounded-lg border p-3'>
                     {tr('profile.plannedChunkingHint')}
                 </p>

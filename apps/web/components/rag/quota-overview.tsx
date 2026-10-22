@@ -2,13 +2,18 @@
 import { useFormatter, useTranslations } from 'next-intl';
 import { useQuery } from '@tanstack/react-query';
 import { useORPC } from '@/hooks/use-orpc';
+import { SemanticQuotaOverview } from './semantic-quota-overview';
 import { CatalogQueryState } from './catalog-controls';
 
 export function QuotaOverview() {
     const tr = useTranslations('rag');
     const format = useFormatter();
     const { orpc } = useORPC();
-    const query = useQuery(orpc.admin.rag.quota.queryOptions({ input: {} }));
+    const query = useQuery({
+        ...orpc.admin.rag.quota.queryOptions({ input: {} }),
+        retry: false,
+        refetchInterval: 15_000,
+    });
     if (query.isPending || query.isError)
         return <CatalogQueryState query={query} />;
     const { limits, usage } = query.data;
@@ -50,6 +55,9 @@ export function QuotaOverview() {
                     </article>
                 ))}
             </div>
+            {query.data.semantic && (
+                <SemanticQuotaOverview semantic={query.data.semantic} />
+            )}
             <section className='rounded-xl border p-6 space-y-4'>
                 <h2 className='font-semibold'>{tr('usage.policies')}</h2>
                 <dl className='grid gap-4 sm:grid-cols-2'>

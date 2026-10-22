@@ -292,6 +292,13 @@ model OrganizationQuota {
   storageBytes       BigInt
   chunksPerCollection Int         @default(100000)
   temporaryChunksPerCollection Int @default(100000)
+  semanticUnitsPerDocument Int @default(8192)
+  semanticPlanBytesPerDocument Int @default(1048576)
+  semanticPlanBytesPerOrganization BigInt @default(67108864)
+  embeddingPreparedBytesPerCandidate BigInt @default(134217728)
+  embeddingBatchesPerCandidate Int @default(4096)
+  embeddingOutstandingPreparedBytes BigInt @default(536870912)
+  embeddingOutstandingBatches Int @default(16384)
   updatedAt          DateTime     @updatedAt
 }
 

@@ -7,6 +7,7 @@ import {
 import { once } from 'node:events';
 import { setTimeout as delay } from 'node:timers/promises';
 import { test } from 'node:test';
+import { assertObservedNativeBatches } from './batch-observer-fixture';
 import {
     discoverModels,
     verifyEmbeddingModel,
@@ -749,3 +750,13 @@ await test('Voyage response byte/depth/JSON limits reject hostile provider respo
         );
     }
 });
+
+await test('Voyage awaits observer checkpoints for each normalized native batch', () =>
+    fixture(async (config) => {
+        const identity = await verifyEmbeddingModel(config, selected);
+        await assertObservedNativeBatches(
+            config,
+            identity,
+            Array.from({ length: 897 }, (_, index) => ({ text: `doc${index}` }))
+        );
+    }));

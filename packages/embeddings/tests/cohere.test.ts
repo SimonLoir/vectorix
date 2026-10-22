@@ -7,6 +7,7 @@ import {
 import { once } from 'node:events';
 import { setTimeout as delay } from 'node:timers/promises';
 import { test } from 'node:test';
+import { assertObservedNativeBatches } from './batch-observer-fixture';
 import {
     discoverModels,
     verifyEmbeddingModel,
@@ -900,3 +901,56 @@ await test('invalid non-null catalog field types still fail closed without issui
             }
         );
 });
+
+await test('Cohere awaits observer checkpoints for each normalized native batch', () =>
+    fixture(async (config) => {
+        const identity = await verifyEmbeddingModel(config, selected);
+        await assertObservedNativeBatches(
+            config,
+            identity,
+            Array.from({ length: 97 }, (_, index) => ({ text: `doc${index}` }))
+        );
+    }));
+
+await test('Cohere observed batches keep omitted provider and billed usage null', () =>
+    fixture(
+        async (config) => {
+            const identity = await verifyEmbeddingModel(config, selected);
+            let after = 0;
+            const embedded = await embedDocuments(
+                config,
+                identity,
+                [{ text: 'text' }],
+                {
+                    batchObserver: {
+                        afterBatch(_metadata, batchResult) {
+                            after++;
+                            assert.equal(
+                                batchResult.usage.providerInputTokens,
+                                null
+                            );
+                            assert.equal(
+                                batchResult.usage.billedInputTokens,
+                                null
+                            );
+                            assert.equal(batchResult.usage.requests, 1);
+                        },
+                    },
+                }
+            );
+            assert.equal(after, 1);
+            assert.equal(embedded.usage.providerInputTokens, null);
+            assert.equal(embedded.usage.billedInputTokens, null);
+        },
+        (request, response, body) => {
+            if (request.url !== '/v2/embed') return;
+            const payload = result(body);
+            response.end(
+                JSON.stringify({
+                    embeddings: payload.embeddings,
+                    texts: payload.texts,
+                })
+            );
+            return true;
+        }
+    ));

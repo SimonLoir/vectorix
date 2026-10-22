@@ -46,18 +46,25 @@ sql vectorix_upgrade_test < packages/db/prisma/migrations/20261026000000_rag_ind
 pnpm --filter @repo/db exec prisma migrate resolve --applied 20261026000000_rag_indexing
 sql vectorix_upgrade_test < tests/catalog/indexing-upgrade-check.sql
 sql vectorix_upgrade_test < tests/catalog/rebuild-upgrade-seed.sql
+sql vectorix_upgrade_test < packages/db/prisma/migrations/20261027000000_rag_rebuild/migration.sql
+pnpm --filter @repo/db exec prisma migrate resolve --applied 20261027000000_rag_rebuild
+sql vectorix_upgrade_test < tests/catalog/semantic-upgrade-seed.sql
 for attempt in 1 2; do pnpm --filter @repo/db migrate:deploy; done
 sql vectorix_upgrade_test < tests/catalog/lifecycle-upgrade-check.sql
 sql vectorix_upgrade_test < tests/catalog/rebuild-upgrade-check.sql
 sql vectorix_upgrade_test < tests/catalog/provider-upgrade-check.sql
 sql vectorix_upgrade_test < tests/catalog/document-upgrade-check.sql
 sql vectorix_upgrade_test < tests/catalog/upgrade-check.sql
+sql vectorix_upgrade_test < tests/catalog/semantic-upgrade-check.sql
+sql vectorix_upgrade_test < tests/catalog/semantic-schema-check.sql
 pnpm --filter @repo/db exec prisma migrate diff --from-config-datasource --to-schema prisma --exit-code
 
 # Also validate a fresh installation and a no-op repeat deployment.
 export DATABASE_URL="postgresql://postgres:catalog-test-password@127.0.0.1:$pg_port/vectorix_catalog_test"
 for attempt in 1 2; do pnpm --filter @repo/db migrate:deploy; done
+sql vectorix_catalog_test < tests/catalog/semantic-schema-check.sql
 pnpm --filter @repo/db exec prisma migrate diff --from-config-datasource --to-schema prisma --exit-code
+node tests/catalog/semantic-lock-check.mjs
 export REDIS_URL="redis://127.0.0.1:$redis_port"
 export BETTER_AUTH_SECRET=catalog-integration-test-only-secret-12345678
 export ENCRYPTION_SECRET=1111111111111111111111111111111111111111111111111111111111111111

@@ -7,6 +7,7 @@ import {
 import { once } from 'node:events';
 import { setTimeout as delay } from 'node:timers/promises';
 import { test } from 'node:test';
+import { assertObservedNativeBatches } from './batch-observer-fixture';
 import {
     discoverModels,
     verifyEmbeddingModel,
@@ -1023,3 +1024,13 @@ await test('OpenAI a later batch failure rejects the whole operation without ret
         }
     );
 });
+
+await test('Openai awaits observer checkpoints for each normalized native batch', () =>
+    fixture(async (config) => {
+        const identity = await verifyEmbeddingModel(config, selected);
+        await assertObservedNativeBatches(
+            config,
+            identity,
+            Array.from({ length: 893 }, (_, index) => ({ text: `doc${index}` }))
+        );
+    }));

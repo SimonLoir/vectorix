@@ -743,10 +743,9 @@ export async function tokenWindowTests(t: TestContext) {
         );
 
         await t.test(
-            'semantic and parent-child drafts remain explicitly unsupported before provider probing',
+            'parent-child drafts remain explicitly unsupported before provider probing',
             async () => {
                 for (const unsupported of [
-                    { chunkingStrategy: 'SEMANTIC' as const },
                     { parentChild: true },
                 ]) {
                     const draft = await f.owner.rag.collections.create({

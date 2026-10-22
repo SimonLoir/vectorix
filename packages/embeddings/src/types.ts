@@ -242,12 +242,51 @@ export type EmbeddingUsage = {
     billedInputTokens?: number | null;
     /** Explicit estimate, never represented as provider billing or exact tokens. */
     estimatedInputTokens: number;
-    /** Successful embedding requests, excluding manifest checks and failed HTTP attempts. */
+    /** Successful logical native batches; excludes manifest checks and transport retry attempts. */
     requests: number;
 };
 export type EmbeddingResult = { vectors: number[][]; usage: EmbeddingUsage };
 export type RequestOptions = { signal?: AbortSignal; timeoutMs?: number };
-export type EmbeddingOptions = RequestOptions & { preparation?: string };
+/** One logical native batch, potentially retried internally by the HTTP transport. */
+export type EmbeddingBatch = Readonly<{
+    provider: EmbeddingProvider;
+    model: string;
+    modelIdentity: string;
+    kind: 'document' | 'query';
+    /** Zero-based within this embed call, not a durable operation/attempt ID. */
+    ordinal: number;
+    /** Zero-based prepared-input offset within this embed call. */
+    inputOffset: number;
+    inputCount: number;
+    /** Raw UTF-8 prepared-text bytes; not encoded HTTP-body bytes. */
+    preparedInputBytes: number;
+    /** Existing embedding estimate, ceil(UTF-8 bytes / 4) per prepared input. */
+    estimatedInputTokens: number;
+    preparedInputHashVersion: 'sha256-json-strings-v1';
+    /** SHA-256 of JSON.stringify(prepared inputs), in their native input order. */
+    preparedInputHash: string;
+}>;
+/**
+ * Awaited lifecycle hooks for caller-owned durable reservations/checkpoints.
+ * Before rejection prevents dispatch. After receives validated per-batch data,
+ * even when caller authority expired during I/O; callers fence state advances.
+ * Hook failure stops further batches. No event attests to wire attempts/billing.
+ */
+export type EmbeddingBatchObserver = Readonly<{
+    beforeBatch?: (batch: EmbeddingBatch) => void | Promise<void>;
+    afterBatch?: (
+        batch: EmbeddingBatch,
+        result: EmbeddingResult
+    ) => void | Promise<void>;
+    failedBatch?: (
+        batch: EmbeddingBatch,
+        code: EmbeddingErrorCode
+    ) => void | Promise<void>;
+}>;
+export type EmbeddingOptions = RequestOptions & {
+    preparation?: string;
+    batchObserver?: EmbeddingBatchObserver;
+};
 export type VerifyEmbeddingOptions = {
     model: string;
     dimensions: number;

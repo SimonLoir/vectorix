@@ -6,6 +6,8 @@ import {
 } from 'node:http';
 import { test } from 'node:test';
 import { once } from 'node:events';
+import { setTimeout as delay } from 'node:timers/promises';
+import { assertObservedNativeBatches } from './batch-observer-fixture';
 import {
     discoverModels,
     verifyEmbeddingModel,
@@ -17,6 +19,8 @@ import {
     prepareEmbeddingInput,
     type OllamaConfiguration,
     type ModelIdentity,
+    type EmbeddingBatch,
+    type EmbeddingErrorCode,
 } from '../src/index';
 
 const digest = 'a'.repeat(64);
@@ -566,3 +570,318 @@ await test('legitimate float32-representable provider values preserve their retu
             return true;
         }
     ));
+
+await test('Ollama awaits observer checkpoints for each normalized native batch', () =>
+    fixture(async (config) => {
+        await assertObservedNativeBatches(
+            config,
+            identity,
+            Array.from({ length: 129 }, (_, index) => ({ text: `doc${index}` }))
+        );
+    }));
+
+await test('awaited before-batch approval prevents native I/O and after data cannot mutate the returned vectors', () =>
+    fixture(async (config, requests) => {
+        const entered = Promise.withResolvers<void>();
+        const release = Promise.withResolvers<void>();
+        let metadata: EmbeddingBatch | undefined;
+        const pending = embedQuery(
+            config,
+            identity,
+            'private-canonical-input',
+            {
+                preparation: 'literal preparation',
+                batchObserver: {
+                    async beforeBatch(batch) {
+                        metadata = batch;
+                        entered.resolve();
+                        await release.promise;
+                    },
+                    afterBatch(_batch, result) {
+                        assert.equal(result.usage.providerInputTokens, 5);
+                        result.vectors[0]![0] = 12_345;
+                        result.usage.providerInputTokens = -1;
+                    },
+                },
+            }
+        );
+        try {
+            await Promise.race([
+                entered.promise,
+                pending.then(() =>
+                    assert.fail('Approval must occur before completion.')
+                ),
+            ]);
+            assert.equal(requests.length, 0);
+            assert(metadata);
+            assert.equal(metadata.kind, 'query');
+            assert(
+                !JSON.stringify(metadata).includes('private-canonical-input')
+            );
+            assert(!JSON.stringify(metadata).includes('literal preparation'));
+        } finally {
+            release.resolve();
+        }
+        const result = await pending;
+        assert.deepEqual(result.vectors, [[0.2, 0.3, 0.4]]);
+        assert.equal(result.usage.providerInputTokens, 5);
+    }));
+
+await test('a before-batch refusal performs no native I/O or completion/failure callback', () =>
+    fixture(async (config, requests) => {
+        const refusal = new Error('Caller refused the reservation.');
+        let otherHooks = 0;
+        await assert.rejects(
+            embedQuery(config, identity, 'text', {
+                batchObserver: {
+                    beforeBatch() {
+                        throw refusal;
+                    },
+                    afterBatch() {
+                        otherHooks++;
+                    },
+                    failedBatch() {
+                        otherHooks++;
+                    },
+                },
+            }),
+            (error: unknown) => error === refusal
+        );
+        assert.equal(requests.length, 0);
+        assert.equal(otherHooks, 0);
+    }));
+
+await test('completed native-batch usage survives a later failure and failed-hook errors preserve the native error', () => {
+    let embeds = 0;
+    return fixture(
+        async (config) => {
+            const completed: number[] = [];
+            const failures: {
+                metadata: EmbeddingBatch;
+                code: EmbeddingErrorCode;
+            }[] = [];
+            await assert.rejects(
+                embedDocuments(
+                    config,
+                    identity,
+                    Array.from({ length: 129 }, (_, index) => ({
+                        text: `doc${index}`,
+                    })),
+                    {
+                        batchObserver: {
+                            async afterBatch(metadata, result) {
+                                await Promise.resolve();
+                                assert.equal(metadata.inputOffset, 0);
+                                assert.equal(result.vectors.length, 128);
+                                completed.push(
+                                    result.usage.providerInputTokens!
+                                );
+                            },
+                            failedBatch(metadata, code) {
+                                failures.push({ metadata, code });
+                                throw new Error(
+                                    'Caller checkpoint storage is unavailable.'
+                                );
+                            },
+                        },
+                    }
+                ),
+                errorCode('PROVIDER_REJECTED')
+            );
+            assert.deepEqual(completed, [640]);
+            assert.equal(failures.length, 1);
+            assert.equal(failures[0]!.metadata.ordinal, 1);
+            assert.equal(failures[0]!.metadata.inputOffset, 128);
+            assert.equal(failures[0]!.metadata.inputCount, 1);
+            assert.equal(failures[0]!.code, 'PROVIDER_REJECTED');
+            assert(!JSON.stringify(failures).includes('private-provider-body'));
+        },
+        (request, response) => {
+            if (request.url !== '/api/embed' || ++embeds !== 2) return;
+            response.writeHead(400);
+            response.end(JSON.stringify({ error: 'private-provider-body' }));
+            return true;
+        }
+    );
+});
+
+await test('invalid native vectors produce only a sanitized failure event, never a completed checkpoint', () =>
+    fixture(
+        async (config) => {
+            let after = 0;
+            const failures: EmbeddingErrorCode[] = [];
+            await assert.rejects(
+                embedQuery(config, identity, 'text', {
+                    batchObserver: {
+                        afterBatch() {
+                            after++;
+                        },
+                        failedBatch(_metadata, code) {
+                            failures.push(code);
+                        },
+                    },
+                }),
+                errorCode('INVALID_PROVIDER_RESPONSE')
+            );
+            assert.equal(after, 0);
+            assert.deepEqual(failures, ['INVALID_PROVIDER_RESPONSE']);
+        },
+        (request, response) => {
+            if (request.url !== '/api/embed') return;
+            response.end(
+                JSON.stringify({
+                    model: identity.model,
+                    embeddings: [[0.1, 0.2]],
+                    error: 'private-provider-body',
+                })
+            );
+            return true;
+        }
+    ));
+
+await test('an after-batch checkpoint failure stops later native batches without reclassifying validated success', () =>
+    fixture(async (config, requests) => {
+        const checkpointFailure = new Error('Durable checkpoint failed.');
+        let failed = 0;
+        await assert.rejects(
+            embedDocuments(
+                config,
+                identity,
+                Array.from({ length: 129 }, (_, index) => ({
+                    text: `doc${index}`,
+                })),
+                {
+                    batchObserver: {
+                        afterBatch() {
+                            throw checkpointFailure;
+                        },
+                        failedBatch() {
+                            failed++;
+                        },
+                    },
+                }
+            ),
+            (error: unknown) => error === checkpointFailure
+        );
+        assert.equal(
+            requests.filter((request) => request.path === '/api/embed').length,
+            1
+        );
+        assert.equal(failed, 0);
+    }));
+
+await test('transport retries remain one observed logical batch and one successful usage request', () => {
+    let embeds = 0;
+    return fixture(
+        async (config) => {
+            let before = 0,
+                after = 0,
+                failed = 0;
+            const result = await embedQuery(config, identity, 'text', {
+                batchObserver: {
+                    beforeBatch() {
+                        before++;
+                    },
+                    afterBatch() {
+                        after++;
+                    },
+                    failedBatch() {
+                        failed++;
+                    },
+                },
+            });
+            assert.deepEqual(
+                { before, after, failed, wireAttempts: embeds },
+                { before: 1, after: 1, failed: 0, wireAttempts: 3 }
+            );
+            assert.equal(result.usage.requests, 1);
+        },
+        (request, response) => {
+            if (request.url !== '/api/embed' || ++embeds > 2) return;
+            response.writeHead(503);
+            response.end('private-transient-provider-body');
+            return true;
+        }
+    );
+});
+
+await test('before-batch waiting consumes the existing operation deadline without dispatching', () =>
+    fixture(async (config, requests) => {
+        const failures: EmbeddingErrorCode[] = [];
+        await assert.rejects(
+            embedQuery(config, identity, 'text', {
+                timeoutMs: 5,
+                batchObserver: {
+                    async beforeBatch() {
+                        await delay(20);
+                    },
+                    failedBatch(_metadata, code) {
+                        failures.push(code);
+                    },
+                },
+            }),
+            errorCode('PROVIDER_TIMEOUT')
+        );
+        assert.equal(requests.length, 0);
+        assert.deepEqual(failures, ['PROVIDER_TIMEOUT']);
+    }));
+
+await test('validated usage can finish its awaited checkpoint after caller cancellation', () =>
+    fixture(async (config) => {
+        const controller = new AbortController();
+        const entered = Promise.withResolvers<void>();
+        const release = Promise.withResolvers<void>();
+        let persistedAfterCancellation = false;
+        const pending = embedQuery(config, identity, 'text', {
+            signal: controller.signal,
+            batchObserver: {
+                async afterBatch(_metadata, result) {
+                    entered.resolve();
+                    await release.promise;
+                    assert.equal(result.usage.providerInputTokens, 5);
+                    persistedAfterCancellation = controller.signal.aborted;
+                },
+            },
+        });
+        try {
+            await Promise.race([
+                entered.promise,
+                pending.then(() => assert.fail('Checkpoint must be awaited.')),
+            ]);
+            controller.abort();
+        } finally {
+            release.resolve();
+        }
+        assert.equal((await pending).usage.requests, 1);
+        assert.equal(persistedAfterCancellation, true);
+    }));
+
+await test('prepared-input hashes are ordered, framed, preparation-sensitive and deterministic', () =>
+    fixture(async (config) => {
+        const hashes: string[] = [];
+        for (const [texts, preparation] of [
+            [['a', 'bc'], ''],
+            [['ab', 'c'], ''],
+            [['a', 'bc'], ''],
+            [['bc', 'a'], ''],
+            [['a', 'bc'], 'prefix'],
+        ] as const) {
+            await embedDocuments(
+                config,
+                identity,
+                texts.map((text) => ({ text })),
+                {
+                    preparation,
+                    batchObserver: {
+                        beforeBatch(metadata) {
+                            hashes.push(metadata.preparedInputHash);
+                        },
+                    },
+                }
+            );
+        }
+        assert.notEqual(hashes[0], hashes[1]);
+        assert.equal(hashes[0], hashes[2]);
+        assert.notEqual(hashes[0], hashes[3]);
+        assert.notEqual(hashes[0], hashes[4]);
+    }));

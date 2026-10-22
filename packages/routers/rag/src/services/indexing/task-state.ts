@@ -4,7 +4,11 @@ import type { IndexTask, Prisma, PrismaClient } from '@repo/db';
 import { EmbeddingError } from '@repo/embeddings';
 import { VectorStoreError } from '@repo/vector-store';
 import { StorageError } from '@repo/storage';
-import { ChunkingError } from '@repo/chunking';
+import { ChunkingError, SemanticStateError } from '@repo/chunking';
+import {
+    releaseSemanticWorkAllowance,
+    lockSemanticAccounting,
+} from './semantic-work';
 import { DocumentParserError } from '@repo/documents';
 import { permits } from '@repo/auth/permissions';
 import { getMemberPermissions } from '@repo/auth/permissions/resolve';
@@ -37,6 +41,7 @@ export async function claimIndexTask(
         where: {
             id: task.id,
             leaseEpoch: task.leaseEpoch,
+            continuationPending: task.continuationPending,
             availableAt: { lte: new Date() },
             OR: [
                 { status: 'PENDING' },
@@ -48,7 +53,8 @@ export async function claimIndexTask(
             leaseToken: token,
             leasedUntil: new Date(Date.now() + INDEX_LEASE_MS),
             leaseEpoch: { increment: 1 },
-            attempts: { increment: 1 },
+            attempts: { increment: task.continuationPending ? 0 : 1 },
+            continuationPending: false,
             errorCode: null,
         },
     });
@@ -152,6 +158,7 @@ export async function requireIndexAuthority(
 /** Whitelist diagnostic codes; raw provider, storage, Prisma and driver messages are never persisted. */
 export function indexErrorCode(error: unknown): IndexFailure {
     if (error instanceof IndexingError) return error.code;
+    if (error instanceof SemanticStateError) return 'PROCESSING_FAILED';
     if (error instanceof EmbeddingError)
         return error.code === 'INVALID_CONFIGURATION'
             ? 'CREDENTIALS_INVALID'
@@ -219,6 +226,14 @@ export async function failIndexClaim(
             'QUOTA_EXCEEDED',
         ].includes(code);
     await runSerializableTransaction(db, async (tx) => {
+        if (
+            task.indexedDocumentId &&
+            (await tx.semanticChunkPlan.findUnique({
+                where: { indexedDocumentId: task.indexedDocumentId },
+                select: { indexedDocumentId: true },
+            }))
+        )
+            await lockSemanticAccounting(tx, claim.organizationId);
         const failed = await tx.indexTask.updateMany({
             where: {
                 id: claim.id,
@@ -229,6 +244,7 @@ export async function failIndexClaim(
             },
             data: {
                 status: terminal ? 'FAILED' : 'PENDING',
+                continuationPending: false,
                 stage: 'FAILED',
                 errorCode: code,
                 leaseToken: null,
@@ -239,6 +255,8 @@ export async function failIndexClaim(
             },
         });
         if (!failed.count) return;
+        if (terminal && task.indexedDocumentId)
+            await releaseSemanticWorkAllowance(tx, task.indexedDocumentId);
         if (task.indexedDocumentId) {
             const candidate = await tx.indexedDocument.findUnique({
                 where: { id: task.indexedDocumentId },

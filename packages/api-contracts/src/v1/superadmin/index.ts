@@ -1,5 +1,9 @@
 import { oc } from '@orpc/contract';
 import { setRagQuotaContract, getRagQuotaContract } from './rag-quota';
+import {
+    getSemanticQuotaContract,
+    setSemanticQuotaContract,
+} from './semantic-quota';
 import { z } from 'zod';
 import { setOrganizationLegacyAccessV1Contract } from './legacy-access';
 import { superAdminUsersV1Contract } from './users';
@@ -229,6 +233,8 @@ export const superAdminV1Contract = {
     organizations: {
         setRagQuota: setRagQuotaContract,
         getRagQuota: getRagQuotaContract,
+        getSemanticQuota: getSemanticQuotaContract,
+        setSemanticQuota: setSemanticQuotaContract,
         setLegacyAccess: setOrganizationLegacyAccessV1Contract,
         setLegacyFeatures: setLegacyFeaturesV1Contract,
         create: oc

@@ -133,6 +133,35 @@ HTTP 429 and 5xx responses receive at most three attempts with bounded backoff. 
 - `billedInputTokens`: optional Cohere aggregate `meta.billed_units.input_tokens`, independently `null` when unavailable. Billed units never replace model input-token counts.
 - `estimatedInputTokens`: the explicitly labeled prepared UTF-8 byte estimate, plus `requests` for successful embedding requests. Estimates are neither exact tokenizer counts nor provider billing.
 
+## Awaited native-batch observation
+
+`embedDocuments` and `embedQuery` accept an optional `batchObserver`. Discovery and model-verification probes do not use these hooks. Each event describes one logical native batch, which can contain several inputs and can be split from one application call. The native HTTP transport permits up to three attempts per embedding request; Ollama manifest checks add separate requests under the same deadline. Observer counts and `usage.requests` do **not** attest to exact wire attempts or provider billing.
+
+```ts
+await embedDocuments(configuration, identity, documents, {
+    preparation,
+    batchObserver: {
+        async beforeBatch(batch) {
+            await reserveLogicalBatch(batch);
+        },
+        async afterBatch(batch, result) {
+            await checkpointValidatedBatch(batch, result);
+        },
+        async failedBatch(batch, code) {
+            await recordUncertainBatch(batch, code);
+        },
+    },
+});
+```
+
+The observer methods are optional and awaited in order. `beforeBatch` must resolve before this batch's native I/O, including Ollama's existing manifest checks. Rejection performs no batch I/O and calls neither completion nor failure hooks. `afterBatch` receives input-ordered validated vectors and normalized per-batch usage in a defensive copy. It can atomically record an accepted prefix and its usage before another batch starts. Its error propagates unchanged and stops subsequent batches; a validated success is not reclassified as a provider failure. Persistence can remain uncertain after such a callback error, so the caller needs its own durable recovery protocol.
+
+Native failure invokes `failedBatch` once with a sanitized `EmbeddingErrorCode`, without retaining provider bodies or exceptions. If that hook also fails, the original native error is preserved and no later batch runs. A failure can occur during a manifest check or before an embedding POST is sent, or after an uncertain provider attempt; the event alone does not establish that a charge occurred. Missing provider-token or separately billed usage remains `null`, never a fabricated zero.
+
+The descriptor contains provider/model, the saved identity digest, document/query kind, zero-based batch ordinal and input offset within this embed call, input count, total prepared UTF-8 text bytes and the existing `ceil(bytes / 4)` estimate summed per input. Callers supply their own durable operation/attempt identity; ordinals reset for a new call. This embedding-usage estimate is distinct from the chunk planner's `bytes / 3` estimate. `preparedInputHashVersion: 'sha256-json-strings-v1'` identifies SHA-256 of `JSON.stringify(preparedInputs)` in their input order. JSON framing distinguishes input boundaries. Descriptors contain neither prepared text nor endpoint/credentials/raw provider responses; they are not new identity snapshots or weight attestations.
+
+One existing operation signal covers batch sequencing, retries, manifest checks and time spent awaiting hooks. Hooks receive no fresh native timeout budget, but must bound their own database work: a pending callback is not forcibly interrupted by this package. A completed, validated batch still calls `afterBatch` when cancellation/authority expiry happens after native completion. The caller may record that late usage while refusing any stale checkpoint/publication advancement; the adapter does not implement leases, authorization or database accounting. With no observer, protocols, preparation, identity variants and aggregate result semantics remain unchanged.
+
 ## Validation
 
 Run `pnpm --filter @repo/embeddings test` for controlled loopback HTTP fixtures covering native payloads, retrieval semantics, dimension choices/ranges, catalog pagination/no-I/O catalogs, alias observation/drift, immutable identity compatibility, indexed ordering, batching, truthful usage, invalid float32 vectors, retries, cancellation, response limits, redirects and input preparation. These fixtures do not establish live hosted-provider connectivity or product dashboard acceptance.

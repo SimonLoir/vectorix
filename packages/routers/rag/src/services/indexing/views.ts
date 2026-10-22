@@ -20,6 +20,7 @@ import {
 } from './access';
 import { publicIndexFailure } from './errors';
 import { supportsIndexProfile } from './embedding-profile';
+import { semanticTaskProgress } from './semantic-progress';
 
 type Page = {
     collectionId: string;
@@ -222,6 +223,19 @@ export async function listIndexTasks(context: AuthorizedContext, input: Page) {
         }),
         context.db.indexTask.count({ where }),
     ]);
+    const semanticProgress = await semanticTaskProgress(
+        context.db,
+        access.actor.organizationId,
+        [
+            ...new Set(
+                tasks
+                    .filter((task) => task.kind === 'INDEX_DOCUMENT')
+                    .flatMap((task) =>
+                        task.indexedDocumentId ? [task.indexedDocumentId] : []
+                    )
+            ),
+        ]
+    );
     return {
         total,
         items: tasks.map((task) => ({
@@ -233,6 +247,16 @@ export async function listIndexTasks(context: AuthorizedContext, input: Page) {
             status: task.status,
             stage: task.stage,
             attempts: task.attempts,
+            ...(task.kind === 'INDEX_DOCUMENT' &&
+            task.indexedDocumentId &&
+            semanticProgress.has(task.indexedDocumentId)
+                ? {
+                      semantic: {
+                          ...semanticProgress.get(task.indexedDocumentId)!,
+                          continuations: task.continuations,
+                      },
+                  }
+                : {}),
             completedChunks: task.completedChunks,
             reservedChunks: task.reservedChunks,
             errorCode: publicIndexFailure(task.errorCode),

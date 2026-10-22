@@ -6,6 +6,7 @@ import { groupsContract } from './groups';
 import { collectionsContract } from './collections';
 import { documentsContract } from './documents';
 import { indexingContract } from './indexing';
+import { semanticQuotaView } from './semantic';
 export const quotaValues = z
     .object({
         collections: z.number().int().min(1).max(10_000),
@@ -47,6 +48,7 @@ export const ragContract = {
                     documents: z.number().int(),
                     storageBytes: z.number().int(),
                 }),
+                semantic: semanticQuotaView.optional(),
             })
         ),
     audit: oc

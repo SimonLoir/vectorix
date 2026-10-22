@@ -1,6 +1,6 @@
 # Token-window indexing and rebuilds
 
-M6a adds a second executable chunking strategy to the existing collection dashboard. A collection can use document structure or token windows with Ollama, Cohere, Voyage, OpenAI or Mistral, without parent/child expansion. Semantic chunking and parent/child context remain planned for M6b/M6c. No new database migration is required: collection revisions already retain the strategy/settings and generations already retain their chunker version.
+M6a introduced token windows as a second executable chunking strategy in the collection dashboard. Document structure and token windows support Ollama, Cohere, Voyage, OpenAI and Mistral without parent/child expansion. The current dashboard also executes [M6b semantic profiles](rag-semantic-planning.md), whose automated validation and real Ollama production-dashboard acceptance are complete. Parent/child context remains planned for M6c. The M6a slice required no new database migration: collection revisions already retained the strategy/settings and generations their chunker version. M6b has its own approved additive migration, documented in its guide.
 
 ## Window semantics
 
@@ -46,9 +46,9 @@ Prerequisites: the [local infrastructure](rag-infrastructure.md), API/web/worker
 4. On an already indexed structure collection, edit the saved draft to token windows. Confirm the old generation still serves searches. Start the rebuild and inspect the new chunks after activation. Previously captured source receipts must still read the exact old source while retained.
 5. Replace a document and inspect the new version after processing. On a provider failure, the previous publication stays searchable; retry completes the candidate without duplicated accounting.
 6. Switch English, French and Belgian Dutch and inspect labels/help. A reader with a current collection grant can search and inspect sources but cannot rebuild; revoking that grant blocks content access. Foreign organization identifiers do not grant access.
-7. Saving semantic or parent/child settings remains possible as a draft, with an explicit execution gate. These settings must not advertise a completed indexing journey.
+7. Semantic is now a separate executable strategy; follow the [M6b recipe](rag-semantic-planning.md) for boundary progress, usage and threshold rebuild checks. Parent/child settings remain a draft with an explicit execution gate and must not advertise a completed parent-context journey.
 
-### Actual verification
+### Actual M6a verification
 
 Automated validation passed: 23 workspace type checks, 23 lint tasks, 44 backend regressions, 23 chunking tests, 123 embedding-adapter tests, 162 disposable core/RAG HTTP tests, four production builds and all six image/runtime/infrastructure checks. The catalog pass includes fresh migrations, upgrades, repeat deployments and schema parity. Twelve added HTTP journeys cover token-window admission, exact Unicode/provenance, idempotency/accounting, current/foreign access, saved-version failure before embedding, provisioning recovery, quotas, replacement/rebuild retries, old receipts, future-mode gates and all four controlled hosted native protocols. Independent source, planner, UI and test reviews found no remaining actionable P1/P2.
 
@@ -73,4 +73,4 @@ Replacement/failure/retry, quota and permission-negative paths in this slice wer
 - `apps/web/components/rag/indexing/`: task status, rebuild actions, bounded chunk preview, search and source inspection.
 - `apps/api/src/rag-tests/{token-window,token-window-providers}.ts`: real disposable catalog/vector/object state with explicitly synthetic native-protocol vectors.
 
-Semantic boundary planning, durable semantic-cost reservations, parent/child containment/deduplication and operational recovery/load evidence remain separate planned work. See the [implementation plan](rag-implementation-plan.md).
+[M6b](rag-semantic-planning.md) now implements semantic boundary planning and durable technical work reservations/usage, with current validation recorded separately from the historical M6a results above. Parent/child containment/deduplication and operational recovery/load acceptance remain planned for M6c/M7. See the [implementation plan](rag-implementation-plan.md).

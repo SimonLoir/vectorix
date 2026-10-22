@@ -192,6 +192,8 @@ model IndexedDocument {
   chunks Chunk[]
   tasks IndexTask[]
   sourceHold DocumentSourceHold?
+  semanticPlan SemanticChunkPlan?
+  embeddingWorkAttempts EmbeddingWorkAttempt[]
 
   @@unique([organizationId, generationId, id])
   @@unique([organizationId, generationId, documentId, id])
@@ -253,6 +255,9 @@ model IndexTask {
   stage String @default("ACCEPTED")
   availableAt DateTime @default(now())
   attempts Int @default(0)
+  // Successful planning/capacity continuations do not consume failure retries.
+  continuationPending Boolean @default(false)
+  continuations Int @default(0)
   leaseEpoch BigInt @default(0)
   leaseToken String?
   leasedUntil DateTime?

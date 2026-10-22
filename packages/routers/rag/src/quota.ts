@@ -1,6 +1,10 @@
 import { ragV1 } from './v1-implementer';
 import { ragActor } from './services/access';
 import { quotaLimits, quotaUsage } from './services/quotas';
+import {
+    semanticQuotaLimits,
+    semanticQuotaUsage,
+} from './services/semantic-quotas';
 export const getQuota = ragV1.quota.handler(async ({ context }) => {
     const actor = await ragActor(
         context,
@@ -8,9 +12,15 @@ export const getQuota = ragV1.quota.handler(async ({ context }) => {
         { ragQuota: ['read'] },
         true
     );
-    const [limits, usage] = await Promise.all([
+    const [limits, usage, semanticLimits, semanticUsage] = await Promise.all([
         quotaLimits(context.db, actor.organizationId),
         quotaUsage(context.db, actor.organizationId),
+        semanticQuotaLimits(context.db, actor.organizationId),
+        semanticQuotaUsage(context.db, actor.organizationId),
     ]);
-    return { limits, usage };
+    return {
+        limits,
+        usage,
+        semantic: { limits: semanticLimits, usage: semanticUsage },
+    };
 });

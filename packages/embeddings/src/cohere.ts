@@ -3,6 +3,7 @@ import { Buffer } from 'node:buffer';
 import { isDeepStrictEqual } from 'node:util';
 import { z } from 'zod';
 import { requestJson, operationSignal, configurationUrl } from './http';
+import { observeEmbeddingBatch } from './batch-observer';
 import { prepareEmbeddingInput } from './preparation';
 import {
     cohereModelIdentity,
@@ -304,15 +305,38 @@ async function embed(
             bytes += size;
             position++;
         }
-        const response = await batch(config, identity, texts, kind, signal);
-        vectors.push(...response.embeddings.float);
-        requests++;
-        estimatedInputTokens += texts.reduce(
-            (sum, text) => sum + Math.ceil(Buffer.byteLength(text) / 4),
-            0
+        const result = await observeEmbeddingBatch(
+            {
+                identity,
+                kind,
+                ordinal: requests,
+                inputOffset: position - texts.length,
+                inputs: texts,
+                options,
+                signal,
+            },
+            async () => {
+                const response = await batch(
+                    config,
+                    identity,
+                    texts,
+                    kind,
+                    signal
+                );
+                return {
+                    vectors: response.embeddings.float,
+                    providerInputTokens:
+                        response.meta?.tokens?.input_tokens ?? null,
+                    billedInputTokens:
+                        response.meta?.billed_units?.input_tokens ?? null,
+                };
+            }
         );
-        const actual = response.meta?.tokens?.input_tokens;
-        const billed = response.meta?.billed_units?.input_tokens;
+        vectors.push(...result.vectors);
+        requests++;
+        estimatedInputTokens += result.usage.estimatedInputTokens;
+        const actual = result.usage.providerInputTokens;
+        const billed = result.usage.billedInputTokens;
         providerInputTokens =
             actual === null ||
             actual === undefined ||
