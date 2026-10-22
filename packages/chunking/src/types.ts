@@ -1,6 +1,7 @@
 import type { ExtractionSource } from '@repo/documents';
 
 export const STRUCTURE_CHUNKER_VERSION = 'structure-utf8-v1';
+export const TOKEN_WINDOW_CHUNKER_VERSION = 'token-window-utf8-v1';
 export const MAX_CHUNKS_PER_DOCUMENT = 100_000;
 /** Token counts are estimates; the independent byte cap protects the verified model context. */
 export interface StructureOptions {

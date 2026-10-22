@@ -18,6 +18,8 @@ import { cohereIndexingTests } from './rag-tests/cohere-indexing';
 import { voyageIndexingTests } from './rag-tests/voyage-indexing';
 import { openaiIndexingTests } from './rag-tests/openai-indexing';
 import { mistralIndexingTests } from './rag-tests/mistral-indexing';
+import { tokenWindowTests } from './rag-tests/token-window';
+import { tokenWindowProviderTests } from './rag-tests/token-window-providers';
 
 after(cleanup);
 void test('RAG catalog with real PostgreSQL and HTTP transports', async (t) => {
@@ -40,4 +42,6 @@ void test('RAG catalog with real PostgreSQL and HTTP transports', async (t) => {
     await voyageIndexingTests(t);
     await openaiIndexingTests(t);
     await mistralIndexingTests(t);
+    await tokenWindowTests(t);
+    await tokenWindowProviderTests(t);
 });

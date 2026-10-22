@@ -42,6 +42,7 @@ Vectorix is a multi-tenant application foundation. Preserve its reusable authent
 - Edit only relevant schema files. Do not run global `prisma format` for a targeted change in the multi-file schema.
 - Prepare schema changes for review; migrations are generated manually after review. Do not generate or apply migrations automatically as a side effect of unrelated work. Follow an explicit migration request when given, and never use `db:push` in production.
 - Use transactions for related writes and preserve retry/idempotency guarantees. Keep durable task and delivery state in PostgreSQL; Redis is not its source of truth.
+- Dispatch chunk planning through the saved strategy and version; preserve legacy structure generations and reject unsupported version pairs before task-specific external I/O. Token counts remain estimates; verified embedding byte caps and canonical source spans are authoritative.
 - Keep index generations, publication pointers, ordered change receipts, chunk accounting and exact-version source holds in the application database. Provider/vector/S3 I/O stays outside its transactions. Preserve native organization-deletion transactions and database cleanup guards; a late guard failure must roll back member removal.
 
 ## API contracts and versioning

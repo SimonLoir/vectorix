@@ -2,11 +2,7 @@ import { randomUUID } from 'node:crypto';
 import { isDeepStrictEqual } from 'node:util';
 import type { IndexTask, PrismaClient } from '@repo/db';
 import { decodeStoredExtraction } from '@repo/documents';
-import {
-    chunkDocumentStructure,
-    STRUCTURE_CHUNKER_VERSION,
-    type PlannedChunk,
-} from '@repo/chunking';
+import type { PlannedChunk } from '@repo/chunking';
 import {
     modelIdentity,
     embeddingInputByteLimit,
@@ -21,10 +17,10 @@ import { runSerializableTransaction } from '@routers/utils/transactions';
 import { boundStorage, contentHash } from '../documents/storage';
 import {
     boundEmbeddingConfiguration,
-    assertSupportedIndexProfile,
     matchesEmbeddingIdentity,
 } from './embedding-profile';
 import { generationVectorAdapter } from './generation-adapter';
+import { requireGenerationChunking } from './generation-profile';
 import {
     reserveCandidateChunks,
     accountMaterializedChunks,
@@ -51,6 +47,11 @@ export async function executeDocumentIndex(
     await renewIndexClaim(db, claim, 'READING_SOURCE');
     await requireIndexAuthority(db, task);
     const { candidate } = await requireCurrentCandidate(db, claim, candidateId);
+    const chunker = await requireGenerationChunking(
+        db,
+        claim.organizationId,
+        claim.generationId
+    );
     const binding = await generationVectorAdapter(
         db,
         claim.organizationId,
@@ -58,14 +59,12 @@ export async function executeDocumentIndex(
     );
     const identity = modelIdentity.parse(binding.generation.capabilitySnapshot);
     const profile = binding.configuration;
-    assertSupportedIndexProfile(profile);
     if (
         !matchesEmbeddingIdentity(
             identity,
             profile,
             binding.generation.modelIdentity
-        ) ||
-        binding.generation.chunkerVersion !== STRUCTURE_CHUNKER_VERSION
+        )
     )
         throw new IndexingError('MODEL_CHANGED');
     const credentials = await boundEmbeddingConfiguration(
@@ -97,7 +96,7 @@ export async function executeDocumentIndex(
     const plans: PlannedChunk[] = [];
     let textBytes = 0,
         spanBytes = 0;
-    for (const chunk of chunkDocumentStructure(extraction, {
+    for (const chunk of chunker.plan(extraction, {
         ...chunking,
         maxEmbeddingInputBytes: Math.min(
             49_152,

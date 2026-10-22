@@ -9,6 +9,7 @@ import {
     matchesEmbeddingIdentity,
 } from './embedding-profile';
 import { generationVectorAdapter } from './generation-adapter';
+import { resolveIndexChunking } from './generation-profile';
 import { publicationFilters, type SearchFilters } from './filters';
 import { lexicalSearch } from './lexical';
 import { chunkDto } from './views';
@@ -88,6 +89,10 @@ export async function searchCollection(
             include: { configuration: true },
         });
         if (!generation) throw indexError('SOURCE_UNAVAILABLE');
+        resolveIndexChunking(
+            generation.configuration,
+            generation.chunkerVersion
+        );
         const filters = publicationFilters(
             generation.configuration.metadataFields,
             input.filters

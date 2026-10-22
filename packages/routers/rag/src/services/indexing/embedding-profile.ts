@@ -88,7 +88,7 @@ export async function currentEmbeddingConfiguration(
     assertEmbeddingEndpoint(resolved.data.endpoint);
     return resolved.data;
 }
-type IndexProfile = {
+export type IndexProfile = {
     provider: string;
     chunkingStrategy: string;
     parentChild: boolean;
@@ -99,7 +99,9 @@ type IndexProfile = {
 export function supportsIndexProfile(profile: IndexProfile) {
     const preset = profile.embeddingPreset ?? 'GENERIC';
     return (
-        profile.chunkingStrategy === 'DOCUMENT_STRUCTURE' &&
+        ['DOCUMENT_STRUCTURE', 'TOKEN_WINDOW'].includes(
+            profile.chunkingStrategy
+        ) &&
         !profile.parentChild &&
         ((profile.provider === 'OLLAMA' &&
             ['GENERIC', 'EMBEDDING_GEMMA'].includes(preset)) ||
