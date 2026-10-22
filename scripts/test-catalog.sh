@@ -33,7 +33,13 @@ sql vectorix_upgrade_test < packages/db/prisma/migrations/20261022000000_rag_cat
 pnpm --filter @repo/db exec prisma migrate resolve --applied 20261022000000_rag_catalog_access
 sql vectorix_upgrade_test < tests/catalog/provider-upgrade-seed.sql
 sql vectorix_upgrade_test < tests/catalog/document-upgrade-seed.sql
+for migration in 20261023000000_openai_mistral_credentials 20261024000000_document_ingestion; do
+    sql vectorix_upgrade_test < "packages/db/prisma/migrations/$migration/migration.sql"
+    pnpm --filter @repo/db exec prisma migrate resolve --applied "$migration"
+done
+sql vectorix_upgrade_test < tests/catalog/lifecycle-upgrade-seed.sql
 for attempt in 1 2; do pnpm --filter @repo/db migrate:deploy; done
+sql vectorix_upgrade_test < tests/catalog/lifecycle-upgrade-check.sql
 sql vectorix_upgrade_test < tests/catalog/provider-upgrade-check.sql
 sql vectorix_upgrade_test < tests/catalog/document-upgrade-check.sql
 sql vectorix_upgrade_test < tests/catalog/upgrade-check.sql

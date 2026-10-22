@@ -311,6 +311,13 @@ model Document {
   @@index([organizationId, deletedAt, createdAt, id])
 }
 
+enum DocumentCleanupStatus {
+  PENDING
+  PROCESSING
+  FAILED
+  COMPLETE
+}
+
 model DocumentVersion {
   id                String          @id @default(uuid())
   organizationId    String
@@ -323,10 +330,12 @@ model DocumentVersion {
   sha256            String
   byteSize          BigInt
   mediaType         String
+  fileName          String?
   status            DocumentStatus @default(PENDING)
   createdAt         DateTime        @default(now())
   extraction        DocumentExtraction?
   ingestion         DocumentIngestion?
+  cleanup           DocumentCleanup?
   storedAt          DateTime?
   discardedAt       DateTime?
 
@@ -384,4 +393,26 @@ model CollectionDocument {
 
   @@id([collectionId, documentId])
   @@index([organizationId, documentId])
+}
+
+// Durable physical removal; tombstones deny content access before object deletion.
+model DocumentCleanup {
+  versionId      String                @id
+  organizationId String
+  version        DocumentVersion       @relation(fields: [organizationId, versionId], references: [organizationId, id], onDelete: Cascade)
+  requestedBy    String
+  reason         String
+  status         DocumentCleanupStatus @default(PENDING)
+  scheduledAt    DateTime
+  availableAt    DateTime
+  attempts       Int                   @default(0)
+  leasedUntil    DateTime?
+  leaseToken     String?
+  errorCode      String?
+  completedAt    DateTime?
+  createdAt      DateTime              @default(now())
+  updatedAt      DateTime              @updatedAt
+
+  @@unique([organizationId, versionId])
+  @@index([status, availableAt])
 }

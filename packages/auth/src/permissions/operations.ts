@@ -31,6 +31,15 @@ export const operationPermissions: Record<string, PermissionSet> = {
     'admin.rag.documents.details': { ragLibrary: ['read'] },
     'admin.rag.documents.preview': { ragLibrary: ['read'] },
     'admin.rag.documents.download': { ragLibrary: ['read'] },
+    'admin.rag.documents.replace': { ragLibrary: ['read', 'readAll', 'write'] },
+    'admin.rag.documents.delete': { ragLibrary: ['read', 'readAll', 'write'] },
+    'admin.rag.documents.lifecycle': {
+        ragLibrary: ['read', 'readAll', 'write'],
+    },
+    'admin.rag.documents.trash': { ragLibrary: ['read', 'readAll', 'write'] },
+    'admin.rag.documents.retryCleanup': {
+        ragLibrary: ['read', 'readAll', 'write'],
+    },
     'admin.rag.documents.upload': { ragLibrary: ['read', 'readAll', 'write'] },
     'admin.rag.documents.retry': { ragLibrary: ['read', 'readAll', 'write'] },
     'admin.rag.documents.collectionCandidates': {

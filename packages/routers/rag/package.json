@@ -11,7 +11,8 @@
         "./api-key-scopes": "./src/services/api-key-scopes.ts",
         "./credentials": "./src/services/credential-resolution.ts",
         "./quotas": "./src/services/quotas.ts",
-        "./ingestion": "./src/services/documents/process.ts"
+        "./ingestion": "./src/services/documents/process.ts",
+        "./cleanup": "./src/services/documents/cleanup.ts"
     },
     "scripts": {
         "check-types": "tsc6 -p tsconfig.json --noEmit",

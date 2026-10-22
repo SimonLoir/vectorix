@@ -10,6 +10,7 @@ import { ActionError, useCatalogAction } from '../catalog-action';
 import { DocumentQueryState } from './query-state';
 import { DocumentCollections } from './document-collections';
 import { DocumentPreview } from './document-preview';
+import { DocumentLifecycle } from './document-lifecycle';
 
 export function DocumentDetail({ id }: Readonly<{ id: string }>) {
     const tr = useTranslations('rag.documents');
@@ -90,25 +91,15 @@ export function DocumentDetail({ id }: Readonly<{ id: string }>) {
                                     {tr('download')}
                                 </Button>
                             )}
-                            {data.canManage && version?.retryable && (
-                                <Button
-                                    disabled={action.busy}
-                                    onClick={() =>
-                                        void action.run(() =>
-                                            client.admin.rag.documents.retry({
-                                                id,
-                                            })
-                                        )
-                                    }
-                                >
-                                    {tr('retry')}
-                                </Button>
-                            )}
                         </div>
                     </section>
                     {version?.previewAvailable && (
                         <DocumentPreview key={version.id} id={id} />
                     )}
+                    {data.canManage &&
+                        canOperation('admin.rag.documents.lifecycle') && (
+                            <DocumentLifecycle id={id} />
+                        )}
                     {data.canManage &&
                         canOperation('admin.rag.documents.setCollection') && (
                             <DocumentCollections

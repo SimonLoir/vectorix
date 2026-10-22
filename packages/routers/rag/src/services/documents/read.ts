@@ -16,11 +16,23 @@ export async function getDocumentDetails(
 ) {
     const actor = await ragActor(context, context.db, { ragLibrary: ['read'] });
     const document = await requireDocument(context.db, actor, id);
-    const version = await context.db.documentVersion.findFirst({
-        where: { organizationId: actor.organizationId, documentId: id },
+    const published = await context.db.documentVersion.findFirst({
+        where: {
+            organizationId: actor.organizationId,
+            documentId: id,
+            status: 'READY',
+            discardedAt: null,
+        },
         orderBy: { version: 'desc' },
         include: { ingestion: true, extraction: true },
     });
+    const version =
+        published ??
+        (await context.db.documentVersion.findFirst({
+            where: { organizationId: actor.organizationId, documentId: id },
+            orderBy: { version: 'desc' },
+            include: { ingestion: true, extraction: true },
+        }));
     return documentDetails.parse({
         document,
         canManage: !actor.keyId && permits(actor.permissions, libraryWrite),
@@ -73,9 +85,13 @@ export async function downloadDocument(context: AuthorizedContext, id: string) {
                 'The stored original does not match its recorded checksum.',
         });
     await contentDocument(context, id);
-    return new File([new Uint8Array(bytes)], document.name, {
-        type: 'application/octet-stream',
-    });
+    return new File(
+        [new Uint8Array(bytes)],
+        version.fileName ?? document.name,
+        {
+            type: 'application/octet-stream',
+        }
+    );
 }
 export async function previewDocument(
     context: AuthorizedContext,
