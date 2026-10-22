@@ -12,7 +12,7 @@ Archived version metadata, document tombstones and audit records remain after ph
 
 ## Replacement and publication
 
-A library manager selects **Replace document**, chooses another non-empty UTF-8 TXT/Markdown file of at most 25 MiB, and selects a whole-day retention delay from 0 through 365 days. Replacement defaults to seven days. Its deadline starts when the replacement request is accepted, rather than when extraction finishes. A subsequent replacement applies its selected delay to the older versions it schedules for cleanup.
+A library manager selects **Replace document**, chooses another non-empty UTF-8 TXT/Markdown file of at most 25 MiB, and selects a whole-day retention delay from 0 through 365 days. Replacement defaults to seven days. Its deadline starts when the replacement request is accepted, rather than when extraction finishes. A subsequent replacement applies its selected delay only to versions that have not already been scheduled for cleanup; earlier cleanup schedules are preserved.
 
 The request includes an expected latest version and an organization-scoped idempotency key. A stale dialog, concurrent replacement or attempt to start another replacement while the latest one is processing receives a conflict. Original and extraction capacity are reserved before the immutable original is written using the selected organization or platform S3 binding. A replacement does not consume another document-count slot.
 
@@ -33,6 +33,8 @@ flowchart LR
 ## Deletion, retention and quota accounting
 
 The deletion dialog confirms the document and its removal from every collection. It accepts a 0–365 day retention delay, defaulting to zero. The deadline starts when deletion is accepted. Zero means cleanup becomes eligible after active I/O safety windows; it does not promise synchronous object deletion.
+
+A later replacement does not extend an existing version’s cleanup deadline. Deletion may accelerate pending cleanup, but never postpone its earlier deadline or revoke an in-flight cleaner’s lease. The retention setting applies to newly scheduled cleanup and cannot restore files whose deletion has already started.
 
 One transaction tombstones the document, removes collection associations, revokes ingestion publication tokens, marks versions deleted, schedules their cleanup and writes audit. Normal list, details, preview and download operations deny access immediately, including to readers and scoped API keys. Retention preserves private objects temporarily; it does not restore content access and there is no undo or restore action. Managers can inspect retained version metadata and cleanup status through the **Deleted documents** view.
 

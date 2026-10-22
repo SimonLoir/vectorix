@@ -18,23 +18,37 @@ export async function scheduleVersionCleanup(
     const current = await db.documentCleanup.findUnique({
         where: { versionId: input.versionId },
     });
-    if (current?.status === 'COMPLETE') return;
+    // Once external deletion can have started, a new request cannot promise to retain those objects longer.
+    // Preserve the accepted retirement deadline and any in-flight cleaner's publication token.
+    if (
+        current &&
+        (input.reason === 'REPLACED' ||
+            current.status === 'PROCESSING' ||
+            current.status === 'COMPLETE')
+    )
+        return;
+    const scheduledAt = new Date(
+        Math.min(
+            input.scheduledAt.getTime(),
+            current?.scheduledAt.getTime() ?? Infinity
+        )
+    );
     const ingestion = await db.documentIngestion.findUnique({
         where: { versionId: input.versionId },
     });
     const availableAt = new Date(
         Math.max(
-            input.scheduledAt.getTime(),
+            scheduledAt.getTime(),
             (ingestion?.leasedUntil?.getTime() ?? 0) + OBJECT_IO_GRACE_MS
         )
     );
     await db.documentCleanup.upsert({
         where: { versionId: input.versionId },
-        create: { ...input, availableAt },
+        create: { ...input, scheduledAt, availableAt },
         update: {
             reason: input.reason,
             requestedBy: input.requestedBy,
-            scheduledAt: input.scheduledAt,
+            scheduledAt,
             availableAt,
             status: 'PENDING',
             attempts: 0,
