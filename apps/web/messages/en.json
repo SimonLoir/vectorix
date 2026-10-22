@@ -708,7 +708,7 @@
             "working": "Working…",
             "readDenied": "Reading this collection is not granted. Catalog administration alone does not grant content access.",
             "manageDenied": "You can inspect the index but cannot manage it.",
-            "profileGate": "Indexing supports Ollama, Cohere, Voyage and OpenAI with document-structure chunking and no parent-child expansion. Other providers and chunking profiles remain saved drafts.",
+            "profileGate": "Indexing supports Ollama, Cohere, Voyage, OpenAI and Mistral with document-structure chunking and no parent-child expansion. Additional chunking profiles remain saved drafts.",
             "preset": "Embedding input preset",
             "presetHint": "Choose a preset explicitly. Generic sends raw text; EmbeddingGemma uses its documented document and query prefixes.",
             "preparationHint": "Preparation is a literal prefix followed by a newline for both documents and queries. It is not a template.",
@@ -939,7 +939,14 @@
             "openaiDimensionsHint": "Reviewed integer sizes: {minimum, number}–{maximum, number}, step {step, number}. Native default: {defaultDimensions, number}. This is Vectorix’s shortening policy; verify the saved size before indexing.",
             "dimensionRange": "{current, number} selected · reviewed range: {minimum, number}–{maximum, number} · step {step, number}",
             "dimensionRangeInvalid": "Enter a whole number from {minimum, number} to {maximum, number}.",
-            "rangeProbeHint": "The range describes Vectorix’s reviewed shortening policy, not a separately measured provider maximum. This verification checked only the selected size."
+            "rangeProbeHint": "The range describes Vectorix’s reviewed shortening policy, not a separately measured provider maximum. This verification checked only the selected size.",
+            "mistralCatalogHint": "Choose a supported Mistral model with its fixed vector size. These reviewed local choices do not verify access. Save the profile, discover models through the saved provider, then verify the saved model.",
+            "mistralPresetHint": "Mistral uses the same native embedding protocol for documents and queries, with fixed-size vectors. The Generic preset adds no model-specific text prefixes.",
+            "mistralUnsupportedPresetHint": "This saved preset is not supported for Mistral. Choose Generic to prepare an executable revision.",
+            "reviewedProcessingContext": "Reviewed processing budget",
+            "mistralContextHint": "Vectorix applies a conservative cap of {count, number} tokens to these reviewed Mistral models. This is a processing policy, not a measured native provider maximum.",
+            "observedResponseModel": "Observed response model",
+            "observedResponseModelHint": "The selected name above is requested from the provider. This observed response name is bound to the capability fingerprint and must remain stable for the saved profile."
         }
     },
     "dashboard": {

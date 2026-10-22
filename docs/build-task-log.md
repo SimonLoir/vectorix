@@ -309,7 +309,7 @@ Final documentation validation passed: 18 documents, 21 parsed Mermaid diagrams,
 - [x] Run package/integration/workspace checks, production builds, six images and independent review on the final source.
 - [x] Execute the dashboard recipe with controlled native OpenAI, record sources/rebuild/credentials/locales and clean owned resources.
 - [x] Validate English documentation, Mermaid, links and ICU parity.
-- [ ] Deliver a dedicated reviewed PR from merged M5b.
+- [x] Deliver a dedicated reviewed PR from merged M5b.
 
 Implementation, automated checks and controlled dashboard acceptance are complete on `codex/rag-openai-provider`; [native OpenAI design and acceptance](rag-openai-embeddings.md) describes the current scope. No Prisma schema or migration change is planned. The user will configure paid-provider keys in an organization later; controlled results must not be presented as live provider acceptance. Voyage [PR #29](https://github.com/SimonLoir/vectorix/pull/29) passed both CI checks and was squash-merged as `bb32977`; this branch now uses that merged tree.
 
@@ -319,4 +319,25 @@ Actual dashboard acceptance used production web/API/workers, disposable PostgreS
 
 Keyword-only retrieval returned the French passage without changing any fixture counter. A new invalid organization key rejected native discovery and actual verification for another collection, while B retained its original valid binding and continued probing/searching. Durable final counters were 16 successful organization requests, 2 rejected invalid-key requests and 0 platform calls despite a valid fallback. English/French/Belgian Dutch reactive errors, range/profile/date/number formatting and persisted Belgian Dutch passed; a fresh final tab had no console warnings/errors. Owned previews/provider, four infrastructure containers, all three temporary tabs and the checksum-verified download were removed; preview/provider ports are unbound. A's three chunks remained on the ordinary 17-minute grace; no M5c retirement soak or live paid-provider claim is made.
 
-Final documentation validation passed: 19 documents, 22 parsed Mermaid diagrams, 143 local Markdown links and all 3,534 web/admin ICU messages with English/French/Belgian Dutch key parity. Formatting and whitespace checks passed; current API revision references and earlier provider introductions now include OpenAI. PR delivery remains pending.
+Final documentation validation passed: 19 documents, 22 parsed Mermaid diagrams, 143 local Markdown links and all 3,534 web/admin ICU messages with English/French/Belgian Dutch key parity. Formatting and whitespace checks passed; current API revision references and earlier provider introductions now include OpenAI. [PR #30](https://github.com/SimonLoir/vectorix/pull/30) passed both required CI checks and was squash-merged as `124c991`.
+
+## M5d — Mistral provider
+
+- [x] Review official native model/embedding documentation, fixed dimensions, aliases and conservative processing/batch policy.
+- [x] Add bounded native discovery, probes/batches, stable observed-response binding and schema-version-5 identity while preserving versions 1–4.
+- [x] Wire complete saved API bases, compatible API revision 1.12.0 and optional observed-model metadata through indexing/rebuild/search.
+- [x] Deliver localized fixed-dimension controls and truthful discovery/verification, preserving unsupported saved profiles.
+- [x] Run package/integration/workspace checks, production builds, all six images and independent review on the final source.
+- [x] Execute the controlled native dashboard acceptance recipe, record exact sources/rebuild/credentials/locales and clean owned resources.
+- [x] Validate English documentation, Mermaid, links and ICU parity.
+- [ ] Deliver a dedicated reviewed PR from merged M5c.
+
+Implementation, automated validation and controlled dashboard acceptance are complete on `codex/rag-mistral-provider`; [Mistral design and acceptance](rag-mistral-embeddings.md) records the scope. No Prisma schema or migration change is planned. OpenAI [PR #30](https://github.com/SimonLoir/vectorix/pull/30) passed both required CI checks and was squash-merged as `124c991`; this branch now uses that merged tree. The user will add paid-provider keys to an organization later; controlled results cannot establish live provider connectivity or quality.
+
+Validation passed: 123 native controlled HTTP tests (28 Mistral plus 95 existing), 121 disposable core/RAG catalog tests with seven-migration fresh/upgrade/replay/schema parity, 23 workspace type checks, 23 lint tasks, 23 backend regressions, four production builds and all six image/runtime/infrastructure checks. The initial API type pass found an obsolete dimension-one fixture branch; the corrected fixture and final 23-task pass succeeded. Review against the official SDK identified optional/default cosmetic response metadata; four native regressions and a final complete catalog/build/image pass cover its bounded handling. Model/index/vector fields remain mandatory for association. Independent review and final parser-delta review found no remaining P1/P2 issue. No migration added.
+
+Actual dashboard acceptance used production web/API/workers, disposable PostgreSQL/vector/Redis/private RustFS and a deterministic native Mistral fixture, without Ollama or paid-service calls. The saved base-alias/1024 profile discovered two reviewed names, showed the distinct observed dated response ID and published three bilingual Markdown passages. A paused alias/profile-change rebuild kept A searchable; resume activated B, while a captured old French source reopened and downloaded with an identical SHA-256. New English vector and Markdown-filtered French hybrid queries used B; the French passage had both ranks 1. This alias rebuild does not claim different underlying weights.
+
+Keyword-only retrieval left every fixture counter unchanged. Deliberately changing the returned reviewed alias failed search explicitly with MODEL_CHANGED; restoration allowed success. A new invalid organization credential rejected native discovery and probes without fallback, while B retained its original valid binding and remained usable. Final durable counters were 17 authenticated organization requests (including the controlled model-drift failure), two invalid-key rejections and zero platform calls. English/French/Belgian Dutch reactive errors, observed-model/budget labels, number/date formatting and persisted locale passed; a fresh final tab had no console warnings/errors. Owned previews/provider, four containers, three temporary tabs and the checksum-verified download were removed; ports are unbound. A's three chunks remained on the ordinary 17-minute grace; no retirement soak or live paid-provider result is claimed.
+
+Final documentation validation passed: 20 documents, 23 parsed Mermaid diagrams, 168 local Markdown links and all 3,555 web/admin ICU messages with English/French/Belgian Dutch key parity. Formatting and whitespace checks passed. PR delivery remains pending.

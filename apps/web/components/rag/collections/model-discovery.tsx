@@ -31,7 +31,8 @@ export function ModelDiscovery({
         saved.provider === 'OLLAMA' ||
         saved.provider === 'COHERE' ||
         saved.provider === 'VOYAGE' ||
-        saved.provider === 'OPENAI';
+        saved.provider === 'OPENAI' ||
+        saved.provider === 'MISTRAL';
     if (!canOperation('admin.rag.indexing.models')) return null;
     return (
         <div className='space-y-3 sm:col-span-2'>

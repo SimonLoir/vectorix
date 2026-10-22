@@ -21,11 +21,18 @@ export type OpenAIConfiguration = {
     endpoint: string;
     apiKey: string;
 };
+export type MistralConfiguration = {
+    provider: 'MISTRAL';
+    /** Complete API base, normally /v1, preserving an approved proxy prefix. */
+    endpoint: string;
+    apiKey: string;
+};
 export type EmbeddingConfiguration =
     | OllamaConfiguration
     | CohereConfiguration
     | VoyageConfiguration
-    | OpenAIConfiguration;
+    | OpenAIConfiguration
+    | MistralConfiguration;
 export type EmbeddingProvider = EmbeddingConfiguration['provider'];
 export type EmbeddingIdentityKind = 'WEIGHTS_DIGEST' | 'CAPABILITY_PROFILE';
 export type EmbeddingDiscoverySource = 'LOCAL_RUNTIME' | 'HOSTED_CATALOG';
@@ -165,11 +172,45 @@ export const openAIModelIdentity = z
         { message: 'Unsupported embedding dimensions.' }
     );
 export type OpenAIModelIdentity = z.infer<typeof openAIModelIdentity>;
+/** Fixed-dimension Mistral profile with a stable observed native ID within one explicitly reviewed alias pair. */
+export const mistralModelIdentity = z
+    .object({
+        schemaVersion: z.literal(5),
+        provider: z.literal('MISTRAL'),
+        identityKind: z.literal('CAPABILITY_PROFILE'),
+        model: z.enum(['mistral-embed', 'mistral-embed-2312']),
+        responseModel: z.enum(['mistral-embed', 'mistral-embed-2312']),
+        equivalentModels: z.tuple([
+            z.literal('mistral-embed'),
+            z.literal('mistral-embed-2312'),
+        ]),
+        digest: z.string().regex(/^[a-f0-9]{64}$/),
+        family: z.literal('mistral-embed'),
+        contextTokens: z.literal(8000),
+        defaultDimensions: z.literal(1024),
+        dimensions: z.literal(1024),
+        supportedDimensions: z.array(z.literal(1024)).length(1),
+        capabilities: z.array(z.string().min(1).max(100)).max(32),
+        preset: z.literal('GENERIC'),
+        retrievalRoles: z.literal('SHARED_INPUT'),
+        encodingFormat: z.literal('float'),
+        truncation: z.literal('UNSUPPORTED'),
+        batchPolicy: z
+            .object({
+                maxInputs: z.literal(64),
+                maxPreparedInputBytes: z.literal(16_000),
+                inputTokenReserve: z.literal(32),
+            })
+            .strict(),
+    })
+    .strict();
+export type MistralModelIdentity = z.infer<typeof mistralModelIdentity>;
 export const modelIdentity = z.union([
     ollamaModelIdentity,
     cohereModelIdentity,
     voyageModelIdentity,
     openAIModelIdentity,
+    mistralModelIdentity,
 ]);
 export type ModelIdentity = z.infer<typeof modelIdentity>;
 export type ModelSummary = {
