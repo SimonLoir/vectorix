@@ -25,6 +25,9 @@ import {
     recordIngestionFailure,
 } from './ingestion-state';
 import { reconcileUnpublishedWrite } from './retention';
+import { getRagTelemetry } from '../telemetry';
+import { telemetryFailure } from '../telemetry/domain';
+import type { TelemetryFailure, TelemetryOutcome } from '../telemetry/types';
 
 const LEASE_MS = 180_000;
 /** PostgreSQL owns claims and retries; Redis messages contain no document content or secrets. */
@@ -92,6 +95,13 @@ async function processClaim(
         },
     });
     const version = task.version;
+    const execution = getRagTelemetry(db).start({
+        organizationId: task.organizationId,
+        workload: 'EXTRACTION',
+        provider: 'NONE',
+    });
+    let outcome: TelemetryOutcome = 'FAILURE',
+        failure: TelemetryFailure | undefined;
     let wrote = false,
         published = false;
     try {
@@ -107,7 +117,11 @@ async function processClaim(
             !permits(membership.permissions, libraryWrite)
         )
             throw new TextExtractionError('ACCESS_REVOKED');
-        if (!(await ingestionMayWrite(db, versionId, token))) return;
+        if (!(await ingestionMayWrite(db, versionId, token))) {
+            outcome = 'DENIED';
+            failure = 'LEASE';
+            return;
+        }
         const config = await boundStorage(
             db,
             task.organizationId,
@@ -129,6 +143,7 @@ async function processClaim(
                     delay: new Date(),
                     discard: true,
                 });
+                failure = 'SOURCE';
                 return;
             }
             const recovered = await db.documentIngestion.updateMany({
@@ -139,56 +154,77 @@ async function processClaim(
                 },
                 data: { status: 'PROCESSING' },
             });
-            if (!recovered.count) return;
+            if (!recovered.count) {
+                outcome = 'DENIED';
+                failure = 'LEASE';
+                return;
+            }
             await db.documentVersion.updateMany({
                 where: { id: versionId, document: { deletedAt: null } },
                 data: { storedAt: new Date() },
             });
         }
-        const original = await readObject(
-            config,
-            version.objectKey,
-            MAX_DOCUMENT_BYTES
+        const original = await execution.measure('SOURCE_READ', () =>
+            readObject(config, version.objectKey, MAX_DOCUMENT_BYTES)
         );
+        execution.sourceRead(original.byteLength);
         if (contentHash(original) !== version.sha256)
             throw new TextExtractionError('UPLOAD_INCOMPLETE');
         const rich = isRichDocument(version.mediaType);
         let bytes: Uint8Array, extractorVersion: string;
-        if (rich) {
-            if (!parser) throw new DocumentParserError('PARSER_UNAVAILABLE');
-            const result = await parser(original, version.mediaType);
-            bytes = encodeStructuredExtraction(result);
-            extractorVersion =
-                result.format === 'PDF'
-                    ? 'pdf-structured-v1'
-                    : 'docx-structured-v1';
-        } else {
-            bytes = extractText(original, version.sha256);
-            extractorVersion = 'utf8-text-v1';
+        const closeParse = execution.phase('PARSE_EXTRACT');
+        try {
+            if (rich) {
+                if (!parser)
+                    throw new DocumentParserError('PARSER_UNAVAILABLE');
+                const result = await parser(original, version.mediaType);
+                bytes = encodeStructuredExtraction(result);
+                extractorVersion =
+                    result.format === 'PDF'
+                        ? 'pdf-structured-v1'
+                        : 'docx-structured-v1';
+            } else {
+                bytes = extractText(original, version.sha256);
+                extractorVersion = 'utf8-text-v1';
+            }
+        } finally {
+            closeParse();
         }
         if (bytes.byteLength > Number(task.reservedBytes))
             throw new DocumentParserError('PARSER_LIMIT');
         const key = `${task.organizationId}/${version.documentId}/${versionId}/${rich ? 'extraction.json' : 'text.txt'}`;
-        if (!(await ingestionMayWrite(db, versionId, token))) return;
+        if (!(await ingestionMayWrite(db, versionId, token))) {
+            outcome = 'DENIED';
+            failure = 'LEASE';
+            return;
+        }
         // Even a failed response may represent a completed remote PUT.
         wrote = true;
-        await putObject(
-            config,
-            key,
-            bytes,
-            contentHash(bytes),
-            rich
-                ? 'application/json; charset=utf-8'
-                : 'text/plain; charset=utf-8'
+        await execution.measure('ARTIFACT_WRITE', () =>
+            putObject(
+                config,
+                key,
+                bytes,
+                contentHash(bytes),
+                rich
+                    ? 'application/json; charset=utf-8'
+                    : 'text/plain; charset=utf-8'
+            )
         );
-        published = await publishExtraction(db, {
-            versionId,
-            token,
-            key,
-            byteSize: bytes.byteLength,
-            extractorVersion,
-        });
-        if (!published)
+        execution.artifactWritten(bytes.byteLength);
+        published = await execution.measure('CATALOG_PUBLISH', () =>
+            publishExtraction(db, {
+                versionId,
+                token,
+                key,
+                byteSize: bytes.byteLength,
+                extractorVersion,
+            })
+        );
+        if (published) outcome = 'SUCCESS';
+        else {
+            outcome = 'DENIED';
+            failure = 'ACCESS';
             await recordIngestionFailure(db, {
                 versionId,
                 token,
@@ -196,6 +232,7 @@ async function processClaim(
                 terminal: true,
                 delay: new Date(),
             });
+        }
     } catch (error) {
         const code =
             error instanceof TextExtractionError ||
@@ -204,6 +241,8 @@ async function processClaim(
                 : error instanceof StorageError
                   ? 'STORAGE_UNAVAILABLE'
                   : 'PROCESSING_FAILED';
+        failure = telemetryFailure(code);
+        outcome = failure === 'ACCESS' ? 'DENIED' : 'FAILURE';
         await recordIngestionFailure(db, {
             versionId,
             token,
@@ -218,6 +257,11 @@ async function processClaim(
             ),
         });
     } finally {
-        if (wrote && !published) await reconcileUnpublishedWrite(db, versionId);
+        try {
+            if (wrote && !published)
+                await reconcileUnpublishedWrite(db, versionId);
+        } finally {
+            execution.finish(outcome, failure);
+        }
     }
 }

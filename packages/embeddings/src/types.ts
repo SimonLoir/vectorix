@@ -246,6 +246,31 @@ export type EmbeddingUsage = {
     requests: number;
 };
 export type EmbeddingResult = { vectors: number[][]; usage: EmbeddingUsage };
+/** Numeric best-effort observation only; never a quota/checkpoint or transport-retry hook. */
+export type EmbeddingNumericEvent = Readonly<
+    {
+        provider: EmbeddingProvider;
+        kind: 'document' | 'query';
+        inputCount: number;
+        preparedInputBytes: number;
+    } & (
+        | { outcome: 'START' }
+        | {
+              outcome: 'FAILED';
+              durationMicros: number;
+              failure: EmbeddingErrorCode;
+          }
+        | {
+              outcome: 'VALIDATED';
+              durationMicros: number;
+              validatedVectors: number;
+              estimatedInputTokens: number;
+              providerInputTokens: number | null;
+              billedInputTokens: number | null;
+          }
+    )
+>;
+export type EmbeddingNumericObserver = (event: EmbeddingNumericEvent) => void;
 export type RequestOptions = { signal?: AbortSignal; timeoutMs?: number };
 /** One logical native batch, potentially retried internally by the HTTP transport. */
 export type EmbeddingBatch = Readonly<{
@@ -284,6 +309,8 @@ export type EmbeddingBatchObserver = Readonly<{
     ) => void | Promise<void>;
 }>;
 export type EmbeddingOptions = RequestOptions & {
+    /** Synchronous fail-soft numeric observations; never receives input text, hashes, models or vectors. */
+    numericObserver?: EmbeddingNumericObserver;
     preparation?: string;
     batchObserver?: EmbeddingBatchObserver;
 };

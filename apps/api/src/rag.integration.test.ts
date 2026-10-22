@@ -44,6 +44,10 @@ import { operationsAccessTests } from './rag-tests/operations-access';
 import { operationsLifecycleTests } from './rag-tests/operations-lifecycle';
 import { operationsActivationTests } from './rag-tests/operations-activation';
 import { operationsRaceTests } from './rag-tests/operations-races';
+import { telemetrySummaryTests } from './rag-tests/telemetry-summary';
+import { telemetryAccessTests } from './rag-tests/telemetry-access';
+import { telemetryRuntimeTests } from './rag-tests/telemetry-runtime';
+import { telemetryLimitTests } from './rag-tests/telemetry-limits';
 
 after(cleanup);
 void test('RAG catalog with real PostgreSQL and HTTP transports', async (t) => {
@@ -91,4 +95,8 @@ void test('RAG catalog with real PostgreSQL and HTTP transports', async (t) => {
     await operationsLifecycleTests(t);
     await operationsActivationTests(t);
     await operationsRaceTests(t);
+    await telemetrySummaryTests(t);
+    await telemetryAccessTests(t);
+    await telemetryRuntimeTests(t);
+    await telemetryLimitTests(t);
 });

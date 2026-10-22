@@ -27,6 +27,8 @@ model Organization {
   groups OrganizationGroup[]
   ragQuota OrganizationQuota?
   embeddingAccounting OrganizationEmbeddingAccounting?
+  ragTelemetry OrganizationRagTelemetry?
+  ragOperationalHours RagOperationalHour[]
   ragAuditLogs RagAuditLog[]
   documents Document[]
 

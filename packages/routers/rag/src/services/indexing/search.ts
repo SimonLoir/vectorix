@@ -18,6 +18,13 @@ import { selectSearchRepresentatives } from './search-representatives';
 import { issueSourceReceipt } from './receipts';
 import { indexError, safeIndexError } from './errors';
 import { SEARCH_DEADLINE_MS } from './source-retention';
+import { getRagTelemetry } from '../telemetry';
+import { measureTelemetry, telemetryFailure } from '../telemetry/domain';
+import type {
+    TelemetryExecution,
+    TelemetryFailure,
+    TelemetryOutcome,
+} from '../telemetry/types';
 
 type Input = {
     collectionId: string;
@@ -76,6 +83,12 @@ export async function searchCollection(
     input: Input
 ) {
     const startedAt = Date.now();
+    const monotonicStart = performance.now();
+    let execution: TelemetryExecution | undefined;
+    let closePreflight: (() => void) | undefined,
+        closeFusion: (() => void) | undefined;
+    let outcome: TelemetryOutcome = 'FAILURE',
+        failure: TelemetryFailure | undefined;
     try {
         const { actor, collection } = await requireIndexRead(
             context,
@@ -91,6 +104,26 @@ export async function searchCollection(
             include: { configuration: true },
         });
         if (!generation) throw indexError('SOURCE_UNAVAILABLE');
+        const provider =
+            input.strategy === 'LEXICAL'
+                ? 'NONE'
+                : generation.configuration.provider;
+        if (provider !== 'S3') {
+            execution = getRagTelemetry(context.db).start(
+                {
+                    organizationId: actor.organizationId,
+                    workload:
+                        input.strategy === 'LEXICAL'
+                            ? 'SEARCH_LEXICAL'
+                            : input.strategy === 'VECTOR'
+                              ? 'SEARCH_VECTOR'
+                              : 'SEARCH_HYBRID',
+                    provider,
+                },
+                monotonicStart
+            );
+            closePreflight = execution.phase('PREFLIGHT', monotonicStart);
+        }
         resolveIndexChunking(
             generation.configuration,
             generation.chunkerVersion,
@@ -136,16 +169,19 @@ export async function searchCollection(
         const candidateLimit = parentEnabled
             ? Math.min(500, Math.max(200, input.topK * 10))
             : Math.min(200, input.topK * 4);
+        closePreflight?.();
         const lexicalPromise =
-            input.strategy === 'VECTOR'
+            input.strategy === 'VECTOR' || !publicationIds.length
                 ? Promise.resolve([] as { id: string }[])
-                : lexicalSearch(context.db, {
-                      organizationId: actor.organizationId,
-                      generationId: generation.id,
-                      publicationIds,
-                      query: input.query,
-                      limit: candidateLimit,
-                  });
+                : measureTelemetry(execution, 'LEXICAL', () =>
+                      lexicalSearch(context.db, {
+                          organizationId: actor.organizationId,
+                          generationId: generation.id,
+                          publicationIds,
+                          query: input.query,
+                          limit: candidateLimit,
+                      })
+                  );
         const vectorPromise = (async () => {
             if (input.strategy === 'LEXICAL' || !publicationIds.length)
                 return {
@@ -156,47 +192,62 @@ export async function searchCollection(
                     }[],
                     underfilled: false,
                 };
-            const identity = modelIdentity.parse(generation.capabilitySnapshot);
-            if (
-                !matchesEmbeddingIdentity(
-                    identity,
-                    generation.configuration,
-                    generation.modelIdentity
-                )
-            )
-                throw indexError('MODEL_CHANGED');
-            const configuration = await boundEmbeddingConfiguration(
-                context.db,
-                actor.organizationId,
-                collection.id,
-                generation.configurationRevision
-            );
-            const query = await embedQuery(
-                configuration,
-                identity,
-                input.query,
-                {
-                    preparation: generation.configuration.preparation,
-                    signal: AbortSignal.timeout(SEARCH_DEADLINE_MS),
-                    timeoutMs: Math.min(30_000, SEARCH_DEADLINE_MS),
+            const prepared = await measureTelemetry(
+                execution,
+                'VECTOR',
+                async () => {
+                    const identity = modelIdentity.parse(
+                        generation.capabilitySnapshot
+                    );
+                    if (
+                        !matchesEmbeddingIdentity(
+                            identity,
+                            generation.configuration,
+                            generation.modelIdentity
+                        )
+                    )
+                        throw indexError('MODEL_CHANGED');
+                    const configuration = await boundEmbeddingConfiguration(
+                        context.db,
+                        actor.organizationId,
+                        collection.id,
+                        generation.configurationRevision
+                    );
+                    return { identity, configuration };
                 }
             );
-            const { store, spec } = await generationVectorAdapter(
-                context.db,
-                actor.organizationId,
-                generation.id
+            const query = await measureTelemetry(execution, 'QUERY_EMBED', () =>
+                embedQuery(
+                    prepared.configuration,
+                    prepared.identity,
+                    input.query,
+                    {
+                        preparation: generation.configuration.preparation,
+                        signal: AbortSignal.timeout(SEARCH_DEADLINE_MS),
+                        timeoutMs: Math.min(30_000, SEARCH_DEADLINE_MS),
+                        numericObserver: execution?.nativeObserver,
+                    }
+                )
             );
-            return await store.search(spec, {
-                vector: query.vectors[0]!,
-                allowedPublicationIds: publicationIds,
-                limit: candidateLimit,
-                mode: generation.projectedChunks <= 1000n ? 'exact' : 'ann',
+            return await measureTelemetry(execution, 'VECTOR', async () => {
+                const { store, spec } = await generationVectorAdapter(
+                    context.db,
+                    actor.organizationId,
+                    generation.id
+                );
+                return await store.search(spec, {
+                    vector: query.vectors[0]!,
+                    allowedPublicationIds: publicationIds,
+                    limit: candidateLimit,
+                    mode: generation.projectedChunks <= 1000n ? 'exact' : 'ann',
+                });
             });
         })();
         const [lexicalResult, vectorResult] = await Promise.allSettled([
             lexicalPromise,
             vectorPromise,
         ]);
+        closeFusion = execution?.phase('FUSION_HYDRATE');
         if (lexicalResult.status === 'rejected') throw lexicalResult.reason;
         if (vectorResult.status === 'rejected') throw vectorResult.reason;
         if (Date.now() - startedAt > SEARCH_DEADLINE_MS)
@@ -332,6 +383,7 @@ export async function searchCollection(
             .slice(0, input.topK);
         if (Date.now() - startedAt >= SEARCH_DEADLINE_MS)
             throw indexError('PROVIDER_TIMEOUT');
+        outcome = 'SUCCESS';
         return {
             generationId: generation.id,
             model: generation.configuration.model,
@@ -344,6 +396,20 @@ export async function searchCollection(
             durationMs: Date.now() - startedAt,
         };
     } catch (error) {
-        throw safeIndexError(error);
+        const safe = safeIndexError(error);
+        const code =
+            safe.data &&
+            typeof safe.data === 'object' &&
+            'errorCode' in safe.data
+                ? safe.data.errorCode
+                : safe.code;
+        failure = telemetryFailure(code);
+        outcome =
+            failure === 'ACCESS' || failure === 'LEASE' ? 'DENIED' : 'FAILURE';
+        throw safe;
+    } finally {
+        closePreflight?.();
+        closeFusion?.();
+        execution?.finish(outcome, failure);
     }
 }

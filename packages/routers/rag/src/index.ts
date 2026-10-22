@@ -57,11 +57,13 @@ import { listRevisions } from './collections/revisions';
 import { listGrantCandidates } from './collections/grantCandidates';
 import { listMemberCandidates } from './groups/memberCandidates';
 import { operationsOverviewHandler } from './operations/overview';
+import { telemetrySummaryHandler } from './telemetry/summary';
 
 export const ragRouter = authorized
     .prefix('/rag')
     .tag('RAG catalog')
     .router({
+        telemetry: { summary: telemetrySummaryHandler },
         operations: { overview: operationsOverviewHandler },
         indexing: {
             models: modelsIndexHandler,

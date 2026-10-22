@@ -33,6 +33,8 @@ import {
 } from './task-state';
 import { semanticQuotaLimits } from '../semantic-quotas';
 import { collectIndexChunks } from './planned-chunks';
+import type { TelemetryExecution } from '../telemetry/types';
+import { measureSyncTelemetry, measureTelemetry } from '../telemetry/domain';
 
 /** Spend only a bounded prefix in one claim; every accepted native batch checkpoints before the next dispatch. */
 export async function planSemanticCandidate(
@@ -46,6 +48,7 @@ export async function planSemanticCandidate(
         identity: ModelIdentity;
         preparation: string;
         title: string;
+        telemetry?: TelemetryExecution;
     }
 ): Promise<PlannedChunk[]> {
     const { claim, task, candidateId, context } = input;
@@ -83,16 +86,23 @@ export async function planSemanticCandidate(
                 });
             }
         );
-        await embedDocuments(
-            input.credentials,
-            input.identity,
-            state.units
-                .slice(initialOffset, initialOffset + 32)
-                .map((unit) => ({
-                    text: context.artifact.text.slice(unit.start, unit.end),
-                    title: input.title,
-                })),
-            { preparation: input.preparation, timeoutMs: 90_000, batchObserver }
+        await measureTelemetry(input.telemetry, 'BOUNDARY_EMBED', () =>
+            embedDocuments(
+                input.credentials,
+                input.identity,
+                state.units
+                    .slice(initialOffset, initialOffset + 32)
+                    .map((unit) => ({
+                        text: context.artifact.text.slice(unit.start, unit.end),
+                        title: input.title,
+                    })),
+                {
+                    preparation: input.preparation,
+                    timeoutMs: 90_000,
+                    batchObserver,
+                    numericObserver: input.telemetry?.nativeObserver,
+                }
+            )
         );
         plan = await db.semanticChunkPlan.findUniqueOrThrow({
             where: { indexedDocumentId: candidateId },
@@ -106,8 +116,10 @@ export async function planSemanticCandidate(
         throw new SemanticContinuation();
     }
     // Exhaust the pure planner outside the transaction. No partial chunk materialization is possible on a hard limit.
-    const chunks = collectIndexChunks(
-        chunkDocumentSemantic(context.artifact, context.options, complete)
+    const chunks = measureSyncTelemetry(input.telemetry, 'PLAN', () =>
+        collectIndexChunks(
+            chunkDocumentSemantic(context.artifact, context.options, complete)
+        )
     );
     if (plan.state === 'READY') return chunks;
     const finalRanges = chunks.map(({ ordinal, start, end }) => ({

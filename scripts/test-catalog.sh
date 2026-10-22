@@ -53,7 +53,12 @@ sql vectorix_upgrade_test < packages/db/prisma/migrations/20261028000000_rag_sem
 pnpm --filter @repo/db exec prisma migrate resolve --applied 20261028000000_rag_semantic
 sql vectorix_upgrade_test < tests/catalog/semantic-upgrade-check.sql
 sql vectorix_upgrade_test < tests/catalog/parent-context-upgrade-seed.sql
+sql vectorix_upgrade_test < packages/db/prisma/migrations/20261029000000_rag_parent_context/migration.sql
+pnpm --filter @repo/db exec prisma migrate resolve --applied 20261029000000_rag_parent_context
+sql vectorix_upgrade_test < tests/catalog/observability-upgrade-seed.sql
 for attempt in 1 2; do pnpm --filter @repo/db migrate:deploy; done
+sql vectorix_upgrade_test < tests/catalog/observability-upgrade-check.sql
+sql vectorix_upgrade_test < tests/catalog/observability-schema-check.sql
 sql vectorix_upgrade_test < tests/catalog/lifecycle-upgrade-check.sql
 sql vectorix_upgrade_test < tests/catalog/rebuild-upgrade-check.sql
 sql vectorix_upgrade_test < tests/catalog/provider-upgrade-check.sql
@@ -68,11 +73,13 @@ pnpm --filter @repo/db exec prisma migrate diff --from-config-datasource --to-sc
 # Also validate a fresh installation and a no-op repeat deployment.
 export DATABASE_URL="postgresql://postgres:catalog-test-password@127.0.0.1:$pg_port/vectorix_catalog_test"
 for attempt in 1 2; do pnpm --filter @repo/db migrate:deploy; done
+sql vectorix_catalog_test < tests/catalog/observability-schema-check.sql
 sql vectorix_catalog_test < tests/catalog/semantic-schema-check.sql
 docker exec "$prefix-postgres" psql -X -q -U postgres -d vectorix_catalog_test -v ON_ERROR_STOP=1 -f /catalog-tests/parent-context-schema-check.sql
 pnpm --filter @repo/db exec prisma migrate diff --from-config-datasource --to-schema prisma --exit-code
 node tests/catalog/semantic-lock-check.mjs
 node tests/catalog/parent-context-lock-check.mjs
+node tests/catalog/observability-lock-check.mjs
 export REDIS_URL="redis://127.0.0.1:$redis_port"
 export BETTER_AUTH_SECRET=catalog-integration-test-only-secret-12345678
 export ENCRYPTION_SECRET=1111111111111111111111111111111111111111111111111111111111111111

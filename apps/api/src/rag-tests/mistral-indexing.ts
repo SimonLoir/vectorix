@@ -594,7 +594,7 @@ export async function mistralIndexingTests(t: TestContext) {
                     }
                 );
                 assert.equal(rest.status, 200);
-                assert.equal(rest.headers.get('Vectorix-API-Revision'), '17');
+                assert.equal(rest.headers.get('Vectorix-API-Revision'), '18');
                 assert.equal(
                     (await rest.json()).results[0].id,
                     result.results[0]!.id
