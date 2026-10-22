@@ -17,7 +17,7 @@ export function CollectionIndexing({
 }: Readonly<{ collection: Collection }>) {
     const tr = useTranslations('rag.indexing');
     const { orpc } = useORPC();
-    const { canOperation } = useVectorixPermissions();
+    const { can, canOperation } = useVectorixPermissions();
     const allowed = canOperation('admin.rag.indexing.status');
     const query = useQuery({
         ...orpc.admin.rag.indexing.status.queryOptions({
@@ -31,6 +31,11 @@ export function CollectionIndexing({
     if (!allowed)
         return <p className='rounded-lg border p-4'>{tr('readDenied')}</p>;
     const status = query.isError ? undefined : query.data;
+    const canInspectDocuments =
+        status &&
+        (status.canRead || status.canManage) &&
+        can({ ragLibrary: ['read'] }) &&
+        canOperation('admin.rag.indexing.documents');
     return (
         <section className='space-y-5'>
             <h2 className='text-xl font-semibold'>{tr('title')}</h2>
@@ -41,11 +46,13 @@ export function CollectionIndexing({
                         <TabsTrigger value='index'>
                             {tr('operations')}
                         </TabsTrigger>
+                        {canInspectDocuments && (
+                            <TabsTrigger value='documents'>
+                                {tr('documents')}
+                            </TabsTrigger>
+                        )}
                         {status.canRead && (
                             <>
-                                <TabsTrigger value='documents'>
-                                    {tr('documents')}
-                                </TabsTrigger>
                                 <TabsTrigger value='chunks'>
                                     {tr('chunks')}
                                 </TabsTrigger>
@@ -69,17 +76,17 @@ export function CollectionIndexing({
                         )}
                         {!status.canRead && <p>{tr('readDenied')}</p>}
                     </TabsContent>
+                    {canInspectDocuments && (
+                        <TabsContent value='documents'>
+                            <IndexDocuments
+                                collectionId={collection.id}
+                                fields={collection.configuration.metadataFields}
+                                canManage={status.canManage}
+                            />
+                        </TabsContent>
+                    )}
                     {status.canRead && (
                         <>
-                            <TabsContent value='documents'>
-                                <IndexDocuments
-                                    collectionId={collection.id}
-                                    fields={
-                                        collection.configuration.metadataFields
-                                    }
-                                    canManage={status.canManage}
-                                />
-                            </TabsContent>
                             <TabsContent value='chunks'>
                                 <IndexChunks
                                     collectionId={collection.id}

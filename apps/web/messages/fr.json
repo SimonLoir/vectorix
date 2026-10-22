@@ -560,7 +560,8 @@
             "search": "Rechercher une action",
             "empty": "Aucune action à afficher.",
             "actor": "Acteur : {type} · {id}",
-            "target": "Cible : {id}"
+            "target": "Cible : {id}",
+            "synchronizationAdopted": "Synchronisation de l’index reprise"
         },
         "keys": {
             "title": "Périmètre des collections",
@@ -970,7 +971,57 @@
             "parentSearchHint": "Chaque contexte renvoyé conserve son meilleur passage enfant dans la fenêtre bornée de candidats. Les scores affichés appartiennent à ce passage ; les scores des autres enfants ne sont pas additionnés.",
             "parentContextVersion": "Disposition parent : {version}",
             "parentAccountingHint": "Les compteurs et quotas de passages comptent les enfants recherchables. Le contexte parent ajoute du texte stocké borné et ne reçoit pas d’embedding.",
-            "parentSealingStage": "Vérification et scellement de la disposition complète des enfants et parents avant l’écriture des vecteurs."
+            "parentSealingStage": "Vérification et scellement de la disposition complète des enfants et parents avant l’écriture des vecteurs.",
+            "synchronization": {
+                "title": "Synchronisation automatique",
+                "states": {
+                    "AUTHORIZED": "Responsable actuellement autorisé",
+                    "ACCESS_REVOKED": "Accès du responsable révoqué",
+                    "UNADOPTED": "Aucun responsable de synchronisation configuré"
+                },
+                "yourAccount": "Votre compte est le responsable de synchronisation configuré.",
+                "hints": {
+                    "AUTHORIZED": "Les nouvelles tâches automatiques utilisent les droits actuels de ce responsable. Chaque tâche existante exige toujours les droits actuels de son exécutant.",
+                    "ACCESS_REVOKED": "Le responsable configuré ne dispose plus des droits requis. Reprenez la synchronisation avec un compte autorisé pour les prochaines tâches automatiques. Les publications consultables restent accessibles aux lecteurs autorisés.",
+                    "UNADOPTED": "Cette ancienne génération n’a pas de responsable enregistré. Les générations initiales et consultables conservent l’auteur historique de la modification du document jusqu’à la reprise. Avant la première activation, relancer le provisionnement ou l’indexation d’un document peut aussi configurer le responsable."
+                },
+                "counts": "{pending, plural, one {# document en attente de publication} other {# documents en attente de publication}} · {blocked, plural, one {# tâche en échec} other {# tâches en échec}}",
+                "oldestPending": "Plus ancien candidat d’indexation actuel : {date}",
+                "noPendingDate": "Aucune date de candidat en attente n’est disponible.",
+                "lastPublished": "Dernière publication de document : {date}",
+                "neverPublished": "Aucune publication de document enregistrée.",
+                "metadataHint": "Ces indicateurs décrivent l’indexation de cette génération. Ils ne donnent pas accès au contenu des documents et ne garantissent pas qu’un worker est actif.",
+                "adopt": "Utiliser mon compte pour la synchronisation",
+                "dialogTitle": "Reprendre la synchronisation",
+                "dialogDescription": "Utilisez vos droits actuels pour les prochaines mises à jour automatiques et les tâches d’indexation en attente de cette génération.",
+                "generation": "Génération : {id}",
+                "pendingWork": "Les tâches en attente seront attribuées à votre compte. Les tentatives en cours seront interrompues et pourront répéter des appels au fournisseur, y compris des requêtes facturables.",
+                "failedUnchanged": "Les tâches en échec restent en échec. Relancez-les individuellement depuis les documents ou les tâches de fond après avoir examiné leurs erreurs. La reprise seule ne relance pas une activation en échec.",
+                "rebuildRights": "Cette reconstruction en attente exige les droits d’administration de la collection et de gestion des documents.",
+                "profileUnchanged": "Le profil enregistré, les droits de lecture et la conservation des documents restent inchangés.",
+                "stale": "Le responsable ou vos droits ont changé. Fermez cette fenêtre et vérifiez l’état actualisé avant de reprendre.",
+                "failed": "La reprise n’a pas pu être confirmée. L’état a été actualisé ; fermez cette fenêtre et vérifiez-le avant de réessayer. Une requête expirée peut déjà avoir abouti.",
+                "success": "Synchronisation reprise : {pending, plural, one {# tâche en attente réattribuée} other {# tâches en attente réattribuées}} ; {interrupted, plural, one {# tentative en cours interrompue} other {# tentatives en cours interrompues}}. Les tâches en échec doivent encore être relancées individuellement.",
+                "confirm": "Reprendre avec mon compte",
+                "cancel": "Annuler",
+                "close": "Fermer",
+                "working": "Reprise…",
+                "retryHint": "Avant la première activation, relancer le provisionnement ou l’indexation d’un document attribue aussi la synchronisation à votre compte. Dans une reconstruction en attente, la relance transfère aussi la synchronisation et exige les droits d’administration de la collection et de gestion des documents, sauf pour les tâches de nettoyage. Dans la génération consultable, la relance ne concerne que la tâche sélectionnée."
+            },
+            "freshness": {
+                "scope": "Cette liste suit la génération consultable, ou la génération initiale avant activation. Une reconstruction en attente a sa propre progression ci-dessus. Les dates de publication et de candidat concernent l’indexation, pas le dernier dépôt dans la bibliothèque.",
+                "states": {
+                    "NOT_INDEXED": "Aucune cible d’indexation",
+                    "CURRENT": "Version consultable à jour",
+                    "PENDING": "Mise à jour de publication en attente",
+                    "BLOCKED": "Mise à jour bloquée par une tâche en échec"
+                },
+                "desiredVersion": "Version cible : {version, number}",
+                "publishedAt": "Publication du document : {date}",
+                "pendingSince": "Candidat d’indexation actuel créé le : {date}",
+                "retry": "Relancer la tâche d’indexation actuelle en échec pour {name}",
+                "retryDocument": "Relancer l’indexation du document"
+            }
         },
         "semantic": {
             "title": "Planification sémantique et calcul des embeddings",

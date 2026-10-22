@@ -560,7 +560,8 @@
             "search": "Acties zoeken",
             "empty": "Geen acties om weer te geven.",
             "actor": "Actor: {type} · {id}",
-            "target": "Doel: {id}"
+            "target": "Doel: {id}",
+            "synchronizationAdopted": "Indexsynchronisatie overgenomen"
         },
         "keys": {
             "title": "Collectiebereik",
@@ -970,7 +971,57 @@
             "parentSearchHint": "Elke teruggegeven context behoudt zijn sterkste onderliggende match uit het begrensde kandidatenvenster. De getoonde scores horen bij die passage; scores van andere onderliggende passages worden niet opgeteld.",
             "parentContextVersion": "Bovenliggende indeling: {version}",
             "parentAccountingHint": "Passagetellers en quota tellen doorzoekbare onderliggende passages. Bovenliggende context voegt begrensde opgeslagen tekst toe en krijgt geen embedding.",
-            "parentSealingStage": "De volledige onderliggende en bovenliggende indeling wordt gecontroleerd en verzegeld voordat vectoren worden geschreven."
+            "parentSealingStage": "De volledige onderliggende en bovenliggende indeling wordt gecontroleerd en verzegeld voordat vectoren worden geschreven.",
+            "synchronization": {
+                "title": "Automatische synchronisatie",
+                "states": {
+                    "AUTHORIZED": "Verantwoordelijke momenteel bevoegd",
+                    "ACCESS_REVOKED": "Toegang van verantwoordelijke ingetrokken",
+                    "UNADOPTED": "Geen synchronisatieverantwoordelijke ingesteld"
+                },
+                "yourAccount": "Uw account is ingesteld als synchronisatieverantwoordelijke.",
+                "hints": {
+                    "AUTHORIZED": "Nieuwe automatische indexeringstaken gebruiken de huidige rechten van deze verantwoordelijke. Bestaande taken blijven de huidige rechten van hun eigen uitvoerder vereisen.",
+                    "ACCESS_REVOKED": "De ingestelde verantwoordelijke heeft de vereiste toegang niet meer. Neem de synchronisatie over met een bevoegd account voor toekomstige automatische taken. Bestaande doorzoekbare publicaties blijven beschikbaar voor bevoegde lezers.",
+                    "UNADOPTED": "Deze oudere generatie heeft geen opgeslagen verantwoordelijke. Eerste en doorzoekbare generaties behouden de historische uitvoerder van de documentwijziging tot overname. Vóór de eerste activering kan het opnieuw proberen van inrichting of documentindexering ook de verantwoordelijke instellen."
+                },
+                "counts": "{pending, plural, one {# document wacht op publicatie} other {# documenten wachten op publicatie}} · {blocked, plural, one {# mislukte taak} other {# mislukte taken}}",
+                "oldestPending": "Oudste huidige indexeringskandidaat: {date}",
+                "noPendingDate": "Er is geen datum voor een huidige wachtende kandidaat beschikbaar.",
+                "lastPublished": "Recentste documentpublicatie: {date}",
+                "neverPublished": "Nog geen documentpublicatie geregistreerd.",
+                "metadataHint": "Deze indicatoren beschrijven de indexering van deze generatie. Ze geven geen toegang tot documentinhoud en garanderen niet dat een worker actief is.",
+                "adopt": "Mijn account gebruiken voor synchronisatie",
+                "dialogTitle": "Synchronisatie overnemen",
+                "dialogDescription": "Gebruik uw huidige rechten voor toekomstige automatische updates en wachtende indexeringstaken in deze generatie.",
+                "generation": "Generatie: {id}",
+                "pendingWork": "Wachtende taken worden aan uw account toegewezen. Lopende pogingen worden onderbroken en kunnen providerwerk herhalen, waaronder betaalde aanvragen.",
+                "failedUnchanged": "Mislukte taken blijven mislukt. Probeer ze afzonderlijk opnieuw via de documentenlijst of achtergrondtaken nadat u de fouten hebt nagekeken. Overnemen alleen herstart geen mislukte activering.",
+                "rebuildRights": "Deze wachtende heropbouw vereist zowel collectiebeheer als documentbeheer.",
+                "profileUnchanged": "Het opgeslagen profiel, de leesrechten en de documentbewaring blijven ongewijzigd.",
+                "stale": "De verantwoordelijke of uw rechten zijn gewijzigd. Sluit dit venster en bekijk de vernieuwde status voordat u overneemt.",
+                "failed": "De overname kon niet worden bevestigd. De status is vernieuwd; sluit dit venster en bekijk die voordat u opnieuw probeert. Een aanvraag met een time-out kan al voltooid zijn.",
+                "success": "Synchronisatie overgenomen: {pending, plural, one {# wachtende taak opnieuw toegewezen} other {# wachtende taken opnieuw toegewezen}}; {interrupted, plural, one {# lopende poging onderbroken} other {# lopende pogingen onderbroken}}. Mislukte taken moeten nog afzonderlijk opnieuw worden geprobeerd.",
+                "confirm": "Overnemen met mijn account",
+                "cancel": "Annuleren",
+                "close": "Sluiten",
+                "working": "Overnemen…",
+                "retryHint": "Vóór de eerste activering wijst het opnieuw proberen van inrichting of documentindexering ook de synchronisatie aan uw account toe. In een wachtende heropbouw draagt een nieuwe poging ook de synchronisatie over en vereist die collectiebeheer en documentbeheer, behalve voor opruimtaken. In de doorzoekbare generatie geldt een nieuwe poging alleen voor de geselecteerde taak."
+            },
+            "freshness": {
+                "scope": "Deze lijst volgt de doorzoekbare generatie, of de eerste generatie vóór activering. Een wachtende heropbouw heeft hierboven een eigen voortgang. Publicatie- en kandidaatdatums beschrijven de indexering, niet de recentste bibliotheekupload.",
+                "states": {
+                    "NOT_INDEXED": "Nog geen indexeringsdoel",
+                    "CURRENT": "Doorzoekbare versie is actueel",
+                    "PENDING": "Publicatie-update wacht",
+                    "BLOCKED": "Publicatie-update geblokkeerd door een mislukte taak"
+                },
+                "desiredVersion": "Doelversie: {version, number}",
+                "publishedAt": "Documentpublicatie: {date}",
+                "pendingSince": "Huidige indexeringskandidaat aangemaakt: {date}",
+                "retry": "Huidige mislukte indexeringstaak voor {name} opnieuw proberen",
+                "retryDocument": "Documentindexering opnieuw proberen"
+            }
         },
         "semantic": {
             "title": "Semantische planning en embeddingwerk",

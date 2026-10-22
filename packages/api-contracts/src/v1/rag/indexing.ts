@@ -130,6 +130,26 @@ export const indexingContract = {
         })
         .input(reference.extend({ generationId: id }))
         .output(success),
+    adoptSynchronization: oc
+        .route({
+            method: 'POST',
+            path: '/collections/{collectionId}/index-generations/{generationId}/synchronization-adoptions',
+        })
+        .input(
+            reference.extend({
+                generationId: id,
+                expectedAuthorityUserId: id.nullable(),
+            })
+        )
+        .output(
+            z.object({
+                success: z.literal(true),
+                generationId: id,
+                authorityUserId: id,
+                reboundPendingTasks: z.number().int().nonnegative(),
+                interruptedTasks: z.number().int().nonnegative(),
+            })
+        ),
     status: oc
         .route({
             method: 'GET',
@@ -193,6 +213,22 @@ export const indexingContract = {
                             mediaType: z.string(),
                             libraryVersion: z.number().int().nullable(),
                             indexedVersion: z.number().int().nullable(),
+                            desiredVersion: z
+                                .number()
+                                .int()
+                                .nullable()
+                                .optional(),
+                            indexedAt: z.date().nullable().optional(),
+                            pendingSince: z.date().nullable().optional(),
+                            freshness: z
+                                .enum([
+                                    'NOT_INDEXED',
+                                    'CURRENT',
+                                    'PENDING',
+                                    'BLOCKED',
+                                ])
+                                .optional(),
+                            retryTaskId: id.nullable().optional(),
                             metadataRevision: z.number().int(),
                             language: contentLanguage,
                             tags: documentTags,

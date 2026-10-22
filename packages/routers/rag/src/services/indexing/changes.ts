@@ -12,6 +12,7 @@ import { acquireSourceHold } from './source-holds';
 import { indexError } from './errors';
 import { retireIndexedDocument } from './publication-state';
 import { projectMetadata } from './metadata-validation';
+import { automaticIndexUser } from './sync-authority';
 
 type ReadyVersion = DocumentVersion & { extraction: DocumentExtraction };
 export interface DocumentSnapshot {
@@ -217,14 +218,9 @@ async function stageChangedDocument(
             changeSequence: sequence,
             kind: 'INDEX_DOCUMENT',
             dedupeKey: `index:${candidate.id}`,
-            // The accepted rebuild owns its full catch-up snapshot. A library
-            // writer can replace a shared source without administering every
-            // linked collection; recheck B's durable controller instead.
-            requestedBy:
-                generation.previousGenerationId &&
-                ['PROVISIONING', 'BUILDING', 'FAILED'].includes(generation.status)
-                    ? generation.authorityUserId ?? generation.createdBy
-                    : requestedBy,
+            // A library writer keeps the event/audit identity while automatic
+            // collection work uses its separately accepted synchronization user.
+            requestedBy: automaticIndexUser(generation, requestedBy),
         },
     });
 }

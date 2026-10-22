@@ -1,6 +1,6 @@
 # Parent context indexing
 
-**M6c runtime, automated validation and browser acceptance are complete; PR delivery is pending.** Parent context works with structure, token-window and semantic children across the five native providers. API revision 1.15.0 adds compatible optional context fields. The additive `20261029000000_rag_parent_context` migration received independent review and explicit user approval before generation and disposable-database testing. Production-mode browser checks verified all three strategies with real local Ollama, child/context inspection, searches, a parent-size rebuild, exact original download, locales and administration. No application database was used.
+**M6c is delivered in [PR #40](https://github.com/SimonLoir/vectorix/pull/40), squash-merged as `f891144` after both exact-head checks passed.** Parent context works with structure, token-window and semantic children across the five native providers. API revision 1.15.0 adds compatible optional context fields. The additive `20261029000000_rag_parent_context` migration received independent review and explicit user approval before generation and disposable-database testing. Production-mode browser checks verified all three strategies with real local Ollama, child/context inspection, searches, a parent-size rebuild, exact original download, locales and administration. No application database was used.
 
 ## Dashboard journey
 
@@ -111,7 +111,7 @@ Cleanup stopped the four owned preview processes and removed their five containe
 - [x] Run types, lint, relevant backend/primitives/catalog tests, builds and six-image checks.
 - [x] Browser-test real Ollama parent-enabled structure/token/semantic collections: actual child/context preview, unique-parent FR/EN searches, sources and a parent-size rebuild retaining old results.
 - [x] Finish the downloaded-original checksum, locale/admin/reload, fresh-console and cleanup observations.
-- [ ] Deliver the reviewed PR with final outcomes and limitations; do not claim paid-provider connectivity, relevance quality or load acceptance from controlled fixtures.
+- [x] Deliver the reviewed PR with final outcomes and limitations; do not claim paid-provider connectivity, relevance quality or load acceptance from controlled fixtures.
 
 Prerequisites for the browser recipe are isolated application/vector PostgreSQL, Redis, private S3, production web/admin/API/workers and the documented installed Ollama/EmbeddingGemma model. A synthetic multi-topic FR/EN document should span enough children to demonstrate grouping, overlap and final-tail context. Inspect both child and parent canonical positions, unchanged child vector/accounting counts, deduplication before topK and authorized old-source access after a reviewed rebuild.
 
@@ -119,4 +119,4 @@ Prerequisites for the browser recipe are isolated application/vector PostgreSQL,
 
 Saved execution identity is resolved in `packages/routers/rag/src/services/indexing/generation-profile.ts` and `generation-acceptance.ts`. [Pure grouping](../packages/chunking/src/parent-context.ts) feeds `index-document.ts` and [parent-first materialization](../packages/routers/rag/src/services/indexing/chunk-materialization.ts); `publication-state.ts`, `accounting.ts` and `cleanup-index.ts` keep child publication/accounting and cleanup. [Metadata-only representatives](../packages/routers/rag/src/services/indexing/search-representatives.ts) and [bounded SQL projection](../packages/routers/rag/src/services/indexing/chunk-projection.ts) feed `search.ts` and `views.ts`; `sources.ts` rechecks exact child receipts. [Versioned DTOs](../packages/api-contracts/src/v1/rag/indexing-types.ts) feed the localized [chunk content](../apps/web/components/rag/indexing/chunk-content.tsx), `index-chunks.tsx`, `search-playground.tsx` and collection profile components. Focused HTTP journeys are in `apps/api/src/rag-tests/parent-*.ts`; migration proofs and races are in `tests/catalog/parent-context-*`.
 
-[AGENTS.md](../AGENTS.md) requires: “Prepare schema changes for review; migrations are generated manually after review.” The model delta and SQL/runtime protocol received that review and a separate explicit M6c approval before generation. PR delivery remains pending as listed above.
+[AGENTS.md](../AGENTS.md) requires: “Prepare schema changes for review; migrations are generated manually after review.” The model delta and SQL/runtime protocol received that review and a separate explicit M6c approval before generation. Delivery and exact-head CI are recorded above and in the build log.

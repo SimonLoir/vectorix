@@ -39,6 +39,11 @@ export function IndexTasks({
     return (
         <section className='space-y-4 rounded-xl border p-5'>
             <h3 className='font-semibold'>{tr('tasks')}</h3>
+            {canManage && canOperation('admin.rag.indexing.retry') && (
+                <p className='text-sm text-muted-foreground'>
+                    {tr('synchronization.retryHint')}
+                </p>
+            )}
             <CatalogSearch
                 value={page.query}
                 onChange={page.search}

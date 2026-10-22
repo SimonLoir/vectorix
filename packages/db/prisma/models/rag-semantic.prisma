@@ -1,5 +1,5 @@
-// Review draft only. JSON shape, byte bounds, lifecycle and accounting checks
-// require reviewed supplementary SQL and runtime validation; no migration exists.
+// Durable semantic plans and work evidence. JSON/lifecycle/accounting checks
+// are enforced by reviewed 20261028000000_rag_semantic SQL and runtime validation.
 
 enum SemanticChunkPlanState {
   PLANNING
