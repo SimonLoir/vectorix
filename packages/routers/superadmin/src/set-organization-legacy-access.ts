@@ -2,12 +2,14 @@ import { ORPCError } from '@orpc/server';
 import { runSerializableTransaction } from '@routers/utils/transactions';
 import { auditSuperAdminAction } from './audit';
 import { superAdminV1 } from './v1-implementer';
+import { requireCurrentSuperAdmin } from './superadmin-transaction';
 
 /** Atomically records an explicit entitlement exemption and its audit trail; never touches a provider or financial record. */
 export const setOrganizationLegacyAccess =
     superAdminV1.organizations.setLegacyAccess.handler(
         ({ context: { db, headers, user }, input }) =>
             runSerializableTransaction(db, async (tx) => {
+                await requireCurrentSuperAdmin(tx, user.id);
                 const existing = await tx.organization.findUnique({
                     where: { id: input.organizationId },
                     select: { id: true, vectorixLegacyAccess: true },

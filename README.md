@@ -197,6 +197,7 @@ Implement changes on a dedicated `codex/*` branch and open a pull request agains
 ## Documentation
 
 - [Repository conventions](AGENTS.md): architecture, authorization, API compatibility, development, and validation rules.
+- [Superadmin transactions](docs/superadmin-transactions.md): atomic mutations/audits, current actor checks, audit address provenance and remaining native owner-guard work.
 - [Redis connections](docs/redis-connections.md): encoded URL credentials, raw fallback precedence and isolated queue/worker acceptance.
 - [Canonical password-reset links](docs/password-reset-links.md): server-only destinations, strict configuration precedence and reset-request acceptance.
 - [HTTP request limits](docs/http-request-limits.md): pre-parser body budgets, upload exceptions, actual-byte counting and acceptance.
