@@ -8,7 +8,8 @@ import {
     success,
     principalPage,
 } from './common';
-export const collectionProfile = z
+import { metadataFields } from './indexing-types';
+const collectionProfileBase = z
     .object({
         provider: embeddingProvider,
         model: z.string().trim().min(1).max(200),
@@ -17,6 +18,10 @@ export const collectionProfile = z
         indexType: z.enum(['HNSW', 'DISKANN']).default('DISKANN'),
         numericType: z.literal('float32').default('float32'),
         preparation: z.string().max(4000).default(''),
+        embeddingPreset: z
+            .enum(['GENERIC', 'EMBEDDING_GEMMA'])
+            .default('GENERIC'),
+        metadataFields: metadataFields.default({}),
         chunkingStrategy: z
             .enum(['TOKEN_WINDOW', 'DOCUMENT_STRUCTURE', 'SEMANTIC'])
             .default('DOCUMENT_STRUCTURE'),
@@ -45,25 +50,46 @@ export const collectionProfile = z
             }),
         parentChild: z.boolean().default(false),
     })
-    .strict()
-    .superRefine((value, ctx) => {
-        if (value.indexType === 'HNSW' && value.dimensions > 2000)
-            ctx.addIssue({
-                code: 'custom',
-                message: 'Float32 HNSW supports at most 2000 dimensions.',
-            });
-        const c = value.chunking;
-        if (
-            c.overlapTokens >= c.targetTokens ||
-            c.minTokens > c.targetTokens ||
-            c.targetTokens > c.maxTokens ||
-            (value.parentChild && c.parentMaxTokens < c.maxTokens)
-        )
-            ctx.addIssue({
-                code: 'custom',
-                message: 'Inconsistent chunk sizes or overlap.',
-            });
-    });
+    .strict();
+
+/** Apply the same physical-index and chunk-size invariants to create and compatible update inputs. */
+function validateProfile(
+    value: Pick<
+        z.infer<typeof collectionProfileBase>,
+        'indexType' | 'dimensions' | 'chunking' | 'parentChild'
+    >,
+    ctx: z.RefinementCtx
+) {
+    if (value.indexType === 'HNSW' && value.dimensions > 2000)
+        ctx.addIssue({
+            code: 'custom',
+            message: 'Float32 HNSW supports at most 2000 dimensions.',
+        });
+    const c = value.chunking;
+    if (
+        c.overlapTokens >= c.targetTokens ||
+        c.minTokens > c.targetTokens ||
+        c.targetTokens > c.maxTokens ||
+        (value.parentChild && c.parentMaxTokens < c.maxTokens)
+    )
+        ctx.addIssue({
+            code: 'custom',
+            message: 'Inconsistent chunk sizes or overlap.',
+        });
+}
+
+export const collectionProfile =
+    collectionProfileBase.superRefine(validateProfile);
+const collectionUpdateProfile = collectionProfileBase
+    .extend({
+        embeddingPreset: collectionProfileBase.shape.embeddingPreset
+            .removeDefault()
+            .optional(),
+        metadataFields: collectionProfileBase.shape.metadataFields
+            .removeDefault()
+            .optional(),
+    })
+    .superRefine(validateProfile);
 export const collectionView = z.object({
     id,
     name: z.string(),
@@ -141,7 +167,7 @@ export const collectionsContract = {
                     expectedRevision: z.number().int().positive(),
                     name: z.string().trim().min(1).max(200),
                     description: z.string().max(2000),
-                    profile: collectionProfile,
+                    profile: collectionUpdateProfile,
                 })
                 .strict()
         )

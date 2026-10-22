@@ -8,6 +8,6 @@ DO $$ BEGIN
     IF EXISTS (SELECT FROM "ApiKeyPrincipal") OR EXISTS (SELECT FROM "ApiKeyCollectionScope")
        OR EXISTS (SELECT FROM "CollectionMemberGrant") OR EXISTS (SELECT FROM "CollectionGroupGrant")
     THEN RAISE EXCEPTION 'Migration granted implicit RAG access'; END IF;
-    IF (SELECT count(*) FROM _prisma_migrations WHERE finished_at IS NOT NULL AND rolled_back_at IS NULL) <> 5
-    THEN RAISE EXCEPTION 'Expected exactly five applied migrations'; END IF;
+    IF (SELECT count(*) FROM _prisma_migrations WHERE finished_at IS NOT NULL AND rolled_back_at IS NULL) <> 6
+    THEN RAISE EXCEPTION 'Expected exactly six applied migrations'; END IF;
 END $$;

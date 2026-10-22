@@ -5,11 +5,11 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useQuery } from '@tanstack/react-query';
 import { Button } from '@repo/ui/button';
-import { Badge } from '@repo/ui/badge';
 import { useORPC } from '@/hooks/use-orpc';
 import { useVectorixPermissions } from '@/contexts/vectorix-permissions';
 import { CatalogQueryState } from '../catalog-controls';
 import { ConfirmCatalogAction } from '../catalog-dialog';
+import { CollectionIndexing } from '../indexing/collection-indexing';
 import { ProfileSummary } from './profile-summary';
 import { CollectionForm } from './collection-form';
 import { RevisionHistory } from './revision-history';
@@ -51,13 +51,8 @@ export function CollectionDetail({ id }: Readonly<{ id: string }>) {
                             {item.description}
                         </p>
                     </div>
-                    <Badge variant='secondary'>
-                        {tr('collections.configurationOnly')}
-                    </Badge>
                 </div>
-                <p className='rounded-lg bg-muted p-4 text-sm'>
-                    {tr('collections.unavailable')}
-                </p>
+
                 <ProfileSummary configuration={item.configuration} />
                 <div className='flex flex-wrap gap-2'>
                     {item.permissions.administer &&
@@ -92,6 +87,7 @@ export function CollectionDetail({ id }: Readonly<{ id: string }>) {
                 canOperation('admin.rag.collections.grants') && (
                     <CollectionGrants id={id} />
                 )}
+            <CollectionIndexing collection={item} />
             <RevisionHistory id={id} />
             {editing && (
                 <CollectionForm

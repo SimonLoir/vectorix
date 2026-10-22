@@ -1,5 +1,6 @@
 'use client';
 
+import { useTranslations, useFormatter } from 'next-intl';
 import { Fragment, useDeferredValue, useState } from 'react';
 import Link from 'next/link';
 import { useQuery } from '@tanstack/react-query';
@@ -27,28 +28,22 @@ import {
 import { useORPC } from '@/hooks/use-orpc';
 import { LoadingState } from './loading-state';
 
-const ACTION_LABELS: Record<string, string> = {
-    'vectorix.organization.create': 'Organisation créée',
-    'vectorix.organization.update': 'Organisation modifiée',
-    'vectorix.organization.member.create-user': 'Utilisateur créé et ajouté',
-    'vectorix.organization.member.add-existing-user': 'Membre ajouté',
-    'vectorix.organization.member.update-role': 'Rôle du membre modifié',
-    'vectorix.organization.member.remove': 'Membre retiré',
-    'vectorix.organization.feature_override.set': 'Fonctionnalité modifiée',
-    'vectorix.organization.feature_override.clear': 'Override supprimé',
-    'vectorix.feature.create': 'Fonctionnalité créée',
-    'vectorix.feature.update': 'Fonctionnalité modifiée',
+const ACTION_KEYS: Record<string, string> = {
+    'vectorix.organization.create': 'organizationCreate',
+    'vectorix.organization.update': 'organizationUpdate',
+    'vectorix.organization.member.create-user': 'memberCreate',
+    'vectorix.organization.member.add-existing-user': 'memberAdd',
+    'vectorix.organization.member.update-role': 'memberRole',
+    'vectorix.organization.member.remove': 'memberRemove',
+    'vectorix.organization.feature_override.set': 'overrideSet',
+    'vectorix.organization.feature_override.clear': 'overrideClear',
+    'vectorix.feature.create': 'featureCreate',
+    'vectorix.feature.update': 'featureUpdate',
+    'vectorix.user.setSuperAdmin': 'userAccess',
+    'vectorix.organization.setLegacyAccess': 'legacyAccess',
+    'vectorix.organization.legacyFeatures.set': 'legacyFeatures',
+    'vectorix.organization.ragQuota.update': 'ragQuota',
 };
-
-function actionLabel(action: string) {
-    return (
-        ACTION_LABELS[action] ??
-        action
-            .replace(/^vectorix\./, '')
-            .replaceAll(/[._-]+/g, ' ')
-            .replace(/^./, (letter) => letter.toUpperCase())
-    );
-}
 
 function actionStyle(action: string) {
     return action.includes('member')
@@ -58,13 +53,14 @@ function actionStyle(action: string) {
           : 'border-emerald-400/20 bg-emerald-400/10 text-emerald-300';
 }
 
-const dateFormatter = new Intl.DateTimeFormat('fr-BE', {
-    dateStyle: 'medium',
-    timeStyle: 'short',
-});
-
 export function AuditLogList() {
+    const t = useTranslations('admin.secondary');
+    const format = useFormatter();
     const { orpc } = useORPC();
+    const actionLabel = (value: string) => {
+        const key = ACTION_KEYS[value];
+        return key ? t(`audit.actions.${key}`) : value;
+    };
     const [search, setSearch] = useState('');
     const [action, setAction] = useState('');
     const [page, setPage] = useState(1);
@@ -90,7 +86,8 @@ export function AuditLogList() {
                     <Search className='absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-500' />
                     <Input
                         className='admin-field border-0 bg-black/20 pl-10 focus-visible:ring-1'
-                        placeholder='Rechercher une action, un auteur, une cible ou une IP…'
+                        aria-label={t('audit.search')}
+                        placeholder={t('audit.search')}
                         value={search}
                         onChange={(event) => {
                             setSearch(event.target.value);
@@ -99,7 +96,7 @@ export function AuditLogList() {
                     />
                 </div>
                 <select
-                    aria-label='Filtrer par action'
+                    aria-label={t('audit.filter')}
                     className='admin-field min-w-64 px-3 text-sm'
                     value={action}
                     onChange={(event) => {
@@ -107,7 +104,7 @@ export function AuditLogList() {
                         setPage(1);
                     }}
                 >
-                    <option value=''>Toutes les actions</option>
+                    <option value=''>{t('audit.all')}</option>
                     {query.data?.actions.map((value) => (
                         <option key={value} value={value}>
                             {actionLabel(value)}
@@ -119,10 +116,10 @@ export function AuditLogList() {
             <Card className='admin-panel overflow-hidden rounded-2xl py-0 shadow-none'>
                 <CardContent className='px-0'>
                     {query.isPending ? (
-                        <LoadingState label='Chargement du journal…' />
+                        <LoadingState label={t('audit.loading')} />
                     ) : query.isError ? (
                         <p className='p-6 text-sm text-destructive'>
-                            {query.error.message}
+                            {t('common.loadError')}
                         </p>
                     ) : (
                         <div className='overflow-x-auto'>
@@ -130,14 +127,20 @@ export function AuditLogList() {
                                 <TableHeader>
                                     <TableRow className='border-white/8 bg-white/[0.025] hover:bg-white/[0.025]'>
                                         <TableHead className='h-12 pl-6'>
-                                            Date
+                                            {t('audit.date')}
                                         </TableHead>
-                                        <TableHead>Action</TableHead>
-                                        <TableHead>Auteur</TableHead>
-                                        <TableHead>Cible</TableHead>
-                                        <TableHead>Adresse IP</TableHead>
+                                        <TableHead>
+                                            {t('common.action')}
+                                        </TableHead>
+                                        <TableHead>
+                                            {t('audit.actor')}
+                                        </TableHead>
+                                        <TableHead>
+                                            {t('audit.target')}
+                                        </TableHead>
+                                        <TableHead>{t('audit.ip')}</TableHead>
                                         <TableHead className='pr-6 text-right'>
-                                            Détails
+                                            {t('audit.details')}
                                         </TableHead>
                                     </TableRow>
                                 </TableHeader>
@@ -148,10 +151,16 @@ export function AuditLogList() {
                                             <Fragment key={log.id}>
                                                 <TableRow className='border-white/8 hover:bg-cyan-400/[0.025]'>
                                                     <TableCell className='whitespace-nowrap py-4 pl-6 text-xs text-slate-400'>
-                                                        {dateFormatter.format(
+                                                        {format.dateTime(
                                                             new Date(
                                                                 log.createdAt
-                                                            )
+                                                            ),
+                                                            {
+                                                                dateStyle:
+                                                                    'medium',
+                                                                timeStyle:
+                                                                    'short',
+                                                            }
                                                         )}
                                                     </TableCell>
                                                     <TableCell>
@@ -239,7 +248,7 @@ export function AuditLogList() {
                                                             ) : (
                                                                 <ChevronRight className='h-4 w-4' />
                                                             )}
-                                                            Voir
+                                                            {t('audit.view')}
                                                         </Button>
                                                     </TableCell>
                                                 </TableRow>
@@ -253,26 +262,39 @@ export function AuditLogList() {
                                                                 <div className='space-y-2 text-xs text-slate-500'>
                                                                     <p className='flex items-center gap-2 text-slate-300'>
                                                                         <ShieldCheck className='h-4 w-4 text-emerald-400' />
-                                                                        Trace
-                                                                        immuable
+                                                                        {t(
+                                                                            'audit.immutable'
+                                                                        )}
                                                                     </p>
                                                                     <p>
-                                                                        ID :{' '}
-                                                                        {log.id}
+                                                                        {t(
+                                                                            'audit.id',
+                                                                            {
+                                                                                id: log.id,
+                                                                            }
+                                                                        )}
                                                                     </p>
                                                                     <p>
-                                                                        Utilisateur
-                                                                        :{' '}
-                                                                        {
-                                                                            log
-                                                                                .user
-                                                                                .id
-                                                                        }
+                                                                        {t(
+                                                                            'audit.userId',
+                                                                            {
+                                                                                id: log
+                                                                                    .user
+                                                                                    .id,
+                                                                            }
+                                                                        )}
                                                                     </p>
                                                                     <p>
-                                                                        Cible :{' '}
-                                                                        {log.targetId ??
-                                                                            'aucune'}
+                                                                        {t(
+                                                                            'audit.targetId',
+                                                                            {
+                                                                                id:
+                                                                                    log.targetId ??
+                                                                                    t(
+                                                                                        'audit.none'
+                                                                                    ),
+                                                                            }
+                                                                        )}
                                                                     </p>
                                                                 </div>
                                                                 <pre className='max-h-80 overflow-auto rounded-xl border border-white/8 bg-[#080d18] p-4 text-xs leading-5 text-slate-300'>
@@ -298,8 +320,7 @@ export function AuditLogList() {
                                             >
                                                 <ShieldCheck className='mx-auto h-7 w-7 text-slate-700' />
                                                 <p className='mt-3 text-sm text-slate-400'>
-                                                    Aucune action ne correspond
-                                                    aux filtres.
+                                                    {t('audit.empty')}
                                                 </p>
                                             </TableCell>
                                         </TableRow>
@@ -312,7 +333,9 @@ export function AuditLogList() {
             </Card>
 
             <div className='flex items-center justify-between px-1 text-sm text-slate-400'>
-                <span>{query.data?.total ?? 0} action(s)</span>
+                <span>
+                    {t('audit.total', { count: query.data?.total ?? 0 })}
+                </span>
                 <div className='flex items-center gap-2'>
                     <Button
                         size='sm'
@@ -320,10 +343,10 @@ export function AuditLogList() {
                         disabled={page <= 1}
                         onClick={() => setPage((current) => current - 1)}
                     >
-                        Précédent
+                        {t('common.previous')}
                     </Button>
                     <span className='px-2 text-xs'>
-                        {page} / {pageCount}
+                        {t('common.page', { page, total: pageCount })}
                     </span>
                     <Button
                         size='sm'
@@ -331,7 +354,7 @@ export function AuditLogList() {
                         disabled={page >= pageCount}
                         onClick={() => setPage((current) => current + 1)}
                     >
-                        Suivant
+                        {t('common.next')}
                     </Button>
                 </div>
             </div>

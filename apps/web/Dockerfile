@@ -28,6 +28,7 @@ RUN apk add --no-cache python3 make g++
 
 # Only copy files needed to compute dependency graph to leverage Docker cache
 COPY pnpm-lock.yaml pnpm-workspace.yaml package.json turbo.json ./
+COPY patches ./patches
 # Copy package manifests for workspaces (kept minimal for caching)
 COPY apps/web/package.json ./apps/web/package.json
 COPY apps/admin/package.json ./apps/admin/package.json

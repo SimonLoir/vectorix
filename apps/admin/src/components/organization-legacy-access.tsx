@@ -1,4 +1,5 @@
 'use client';
+import { useTranslations } from 'next-intl';
 
 import { useState } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
@@ -25,6 +26,7 @@ export function OrganizationLegacyAccess({
     readonly organizationId: string;
     readonly enabled: boolean;
 }) {
+    const tr = useTranslations('admin.core');
     const { orpc } = useORPC();
     const queryClient = useQueryClient();
     const [confirmationOpen, setConfirmationOpen] = useState(false);
@@ -40,7 +42,7 @@ export function OrganizationLegacyAccess({
                         queryKey: orpc.superadmin.dashboard.key(),
                     }),
                 ]);
-                toast.success('Mode d’accès Vectorix mis à jour');
+                toast.success(tr('accessModeUpdated'));
             },
         })
     );
@@ -49,25 +51,24 @@ export function OrganizationLegacyAccess({
             <CardHeader className='space-y-3'>
                 <CardTitle className='flex items-center gap-2 text-base'>
                     <ShieldCheck className='h-4 w-4 text-indigo-300' />
-                    Accès Vectorix
+                    {tr('vectorixAccess')}
                 </CardTitle>
                 <div>
                     <Badge variant={enabled ? 'default' : 'secondary'}>
                         {enabled
-                            ? 'Organisation legacy'
-                            : 'Fournisseur externe'}
+                            ? tr('legacyOrganization')
+                            : tr('externalProvider')}
                     </Badge>
                 </div>
             </CardHeader>
             <CardContent className='space-y-4 text-sm'>
                 <p className='text-slate-400'>
                     {enabled
-                        ? 'Cette organisation utilise les fonctionnalités choisies dans l’onglet Fonctionnalités, sans dépendre d’un plan ou de la disponibilité du fournisseur.'
-                        : 'Les fonctionnalités sont accordées uniquement par le fournisseur externe. Aucun plan local ni override individuel n’est utilisé.'}
+                        ? tr('legacyAccessHint')
+                        : tr('externalAccessHint')}
                 </p>
                 <p className='text-xs text-slate-400'>
-                    Le mode legacy est réservé aux exceptions gérées par le
-                    superadmin. Les permissions des membres restent inchangées.
+                    {tr('legacyExceptionHint')}
                 </p>
                 <Button
                     variant='outline'
@@ -76,9 +77,7 @@ export function OrganizationLegacyAccess({
                         setConfirmationOpen(true);
                     }}
                 >
-                    {enabled
-                        ? 'Retirer le statut legacy'
-                        : 'Marquer comme organisation legacy'}
+                    {enabled ? tr('removeLegacy') : tr('markLegacy')}
                 </Button>
                 <Dialog
                     open={confirmationOpen}
@@ -86,31 +85,28 @@ export function OrganizationLegacyAccess({
                         if (!mutation.isPending) setConfirmationOpen(open);
                     }}
                 >
-                    <DialogContent>
+                    <DialogContent closeLabel={tr('close')}>
                         <DialogHeader>
                             <DialogTitle>
                                 {enabled
-                                    ? 'Revenir au fournisseur externe ?'
-                                    : 'Accorder l’accès legacy ?'}
+                                    ? tr('returnExternalTitle')
+                                    : tr('grantLegacyTitle')}
                             </DialogTitle>
                             <DialogDescription>
                                 {enabled
-                                    ? 'Sans droits valides chez le fournisseur externe, cette organisation perdra l’accès aux modules. Vérifiez son abonnement avant de confirmer.'
-                                    : 'Cette organisation sera exemptée d’abonnement Vectorix. Choisissez ensuite ses fonctionnalités dans l’onglet Fonctionnalités ; aucune fonctionnalité n’est accordée par défaut.'}
+                                    ? tr('returnExternalHint')
+                                    : tr('grantLegacyHint')}
                             </DialogDescription>
                         </DialogHeader>
                         <p className='text-sm'>
-                            Ce changement ne résilie ni ne modifie un abonnement
-                            distant existant. Les renouvellements, demandes de
-                            paiement et factures restent gérés par le
-                            fournisseur ; adaptez-les séparément si nécessaire.
+                            {tr('remoteSubscriptionHint')}
                         </p>
                         {mutation.isError && (
                             <p
                                 role='alert'
                                 className='text-sm text-destructive'
                             >
-                                {mutation.error.message}
+                                {tr('saveFailed')}
                             </p>
                         )}
                         <DialogFooter>
@@ -119,7 +115,7 @@ export function OrganizationLegacyAccess({
                                 disabled={mutation.isPending}
                                 onClick={() => setConfirmationOpen(false)}
                             >
-                                Annuler
+                                {tr('cancel')}
                             </Button>
                             <Button
                                 disabled={mutation.isPending}
@@ -131,8 +127,8 @@ export function OrganizationLegacyAccess({
                                 }
                             >
                                 {mutation.isPending
-                                    ? 'Enregistrement…'
-                                    : 'Confirmer'}
+                                    ? tr('saving')
+                                    : tr('confirm')}
                             </Button>
                         </DialogFooter>
                     </DialogContent>

@@ -1,4 +1,17 @@
 import { sourcePreviewDocumentHandler } from './documents/sourcePreview';
+import { modelsIndexHandler } from './indexing/models';
+import { probeIndexHandler } from './indexing/probe';
+import { startIndexHandler } from './indexing/start';
+import { statusIndexHandler } from './indexing/status';
+import { tasksIndexHandler } from './indexing/tasks';
+import { retryIndexHandler } from './indexing/retry';
+import { documentsIndexHandler } from './indexing/documents';
+import { updateMetadataIndexHandler } from './indexing/updateMetadata';
+import { chunksIndexHandler } from './indexing/chunks';
+import { searchIndexHandler } from './indexing/search';
+import { sourcePreviewIndexHandler } from './indexing/sourcePreview';
+import { sourceOriginalIndexHandler } from './indexing/sourceOriginal';
+import { trashIndexHandler } from './indexing/trash';
 import { replaceDocumentHandler } from './documents/replace';
 import { deleteDocumentHandler } from './documents/delete';
 import { lifecycleDocumentHandler } from './documents/lifecycle';
@@ -45,6 +58,21 @@ export const ragRouter = authorized
     .prefix('/rag')
     .tag('RAG catalog')
     .router({
+        indexing: {
+            models: modelsIndexHandler,
+            probe: probeIndexHandler,
+            start: startIndexHandler,
+            status: statusIndexHandler,
+            tasks: tasksIndexHandler,
+            retry: retryIndexHandler,
+            documents: documentsIndexHandler,
+            updateMetadata: updateMetadataIndexHandler,
+            chunks: chunksIndexHandler,
+            search: searchIndexHandler,
+            sourcePreview: sourcePreviewIndexHandler,
+            sourceOriginal: sourceOriginalIndexHandler,
+            trash: trashIndexHandler,
+        },
         credentials: {
             list: listCredentials,
             create: createCredentialHandler,

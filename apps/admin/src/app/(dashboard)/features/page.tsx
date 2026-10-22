@@ -5,8 +5,8 @@ export default function FeaturesPage() {
     return (
         <div className='space-y-8'>
             <PageHeader
-                title='Fonctionnalités'
-                description='Gérez les clés et la disponibilité globale des modules. Les plans et leurs droits sont définis chez le fournisseur externe.'
+                titleKey='secondary.pages.featuresTitle'
+                descriptionKey='secondary.pages.featuresDescription'
             />
             <FeatureCatalog />
         </div>

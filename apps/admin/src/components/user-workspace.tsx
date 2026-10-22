@@ -1,5 +1,6 @@
 'use client';
 
+import { useTranslations, useFormatter } from 'next-intl';
 import Link from 'next/link';
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
@@ -13,6 +14,8 @@ import { UserMemberships } from './user-memberships';
 
 /** Selected global account dossier with independent, paginated organization memberships. */
 export function UserWorkspace({ userId }: Readonly<{ userId: string }>) {
+    const t = useTranslations('admin.secondary');
+    const format = useFormatter();
     const { orpc } = useORPC();
     const [page, setPage] = useState(1);
     const limit = 20;
@@ -23,19 +26,19 @@ export function UserWorkspace({ userId }: Readonly<{ userId: string }>) {
     );
 
     if (query.isPending)
-        return <LoadingState label='Chargement de l’utilisateur…' />;
+        return <LoadingState label={t('users.loadingAccount')} />;
     if (query.isError)
         return (
             <div className='space-y-3'>
                 <p role='alert' className='text-sm text-destructive'>
-                    {query.error.message}
+                    {t('common.loadError')}
                 </p>
                 <Button
                     variant='outline'
                     disabled={query.isFetching}
                     onClick={() => void query.refetch()}
                 >
-                    Recharger la fiche
+                    {t('common.reload')}
                 </Button>
             </div>
         );
@@ -50,7 +53,7 @@ export function UserWorkspace({ userId }: Readonly<{ userId: string }>) {
             >
                 <Link href='/users'>
                     <ArrowLeft className='h-4 w-4' />
-                    Tous les utilisateurs
+                    {t('users.back')}
                 </Link>
             </Button>
             <section className='admin-panel p-6 sm:p-8'>
@@ -78,17 +81,19 @@ export function UserWorkspace({ userId }: Readonly<{ userId: string }>) {
                                 {user.emailVerified ? (
                                     <>
                                         <CheckCircle2 className='h-3 w-3' />
-                                        E-mail vérifié
+                                        {t('users.emailVerified')}
                                     </>
                                 ) : (
-                                    'E-mail non vérifié'
+                                    t('users.emailUnverified')
                                 )}
                             </Badge>
                             <span className='text-xs text-slate-500'>
-                                Inscrit le{' '}
-                                {new Date(user.createdAt).toLocaleDateString(
-                                    'fr-BE'
-                                )}
+                                {t('users.joined', {
+                                    date: format.dateTime(
+                                        new Date(user.createdAt),
+                                        { dateStyle: 'medium' }
+                                    ),
+                                })}
                             </span>
                         </div>
                     </div>

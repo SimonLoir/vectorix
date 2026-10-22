@@ -1,5 +1,6 @@
 'use client';
 
+import { useTranslations } from 'next-intl';
 import { useMemo, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Layers3, Plus, Search } from 'lucide-react';
@@ -30,6 +31,7 @@ const initialForm = {
 };
 
 export function FeatureCatalog() {
+    const t = useTranslations('admin.secondary');
     const { orpc } = useORPC();
     const queryClient = useQueryClient();
     const [form, setForm] = useState(initialForm);
@@ -41,21 +43,21 @@ export function FeatureCatalog() {
     const createMutation = useMutation(
         orpc.superadmin.features.create.mutationOptions({
             onSuccess: async () => {
-                toast.success('Fonctionnalité créée');
+                toast.success(t('features.created'));
                 setForm(initialForm);
                 setCreateOpen(false);
                 await invalidate();
             },
-            onError: (error) => toast.error(error.message),
+            onError: () => toast.error(t('common.saveError')),
         })
     );
     const updateMutation = useMutation(
         orpc.superadmin.features.update.mutationOptions({
             onSuccess: async () => {
-                toast.success('Fonctionnalité mise à jour');
+                toast.success(t('features.updated'));
                 await invalidate();
             },
-            onError: (error) => toast.error(error.message),
+            onError: () => toast.error(t('common.saveError')),
         })
     );
     const filteredFeatures = useMemo(() => {
@@ -77,7 +79,8 @@ export function FeatureCatalog() {
                     <Input
                         className='admin-field border-0 bg-black/20 pl-10 focus-visible:ring-1'
                         value={search}
-                        placeholder='Rechercher un module…'
+                        aria-label={t('features.search')}
+                        placeholder={t('features.search')}
                         onChange={(event) => setSearch(event.target.value)}
                     />
                 </div>
@@ -85,14 +88,14 @@ export function FeatureCatalog() {
                     <DialogTrigger asChild>
                         <Button className='rounded-xl'>
                             <Plus className='h-4 w-4' />
-                            Nouvelle fonctionnalité
+                            {t('features.new')}
                         </Button>
                     </DialogTrigger>
-                    <DialogContent className='rounded-2xl border-white/10 bg-[#101827] p-0 sm:max-w-2xl'>
+                    <DialogContent className='max-h-[calc(100dvh-2rem)] overflow-y-auto rounded-2xl border-white/10 bg-[#101827] p-0 sm:max-w-2xl'>
                         <DialogHeader className='rounded-t-2xl border-b border-white/8 bg-white/[0.025] px-6 py-5'>
-                            <DialogTitle>Nouvelle fonctionnalité</DialogTitle>
+                            <DialogTitle>{t('features.new')}</DialogTitle>
                             <DialogDescription>
-                                Ajoutez un module au catalogue global Vectorix.
+                                {t('features.description')}
                             </DialogDescription>
                         </DialogHeader>
                         <form
@@ -113,7 +116,9 @@ export function FeatureCatalog() {
                         >
                             <div className='grid gap-4 sm:grid-cols-2'>
                                 <div className='space-y-2'>
-                                    <Label htmlFor='feature-name'>Nom</Label>
+                                    <Label htmlFor='feature-name'>
+                                        {t('features.name')}
+                                    </Label>
                                     <Input
                                         id='feature-name'
                                         className='admin-field'
@@ -130,12 +135,14 @@ export function FeatureCatalog() {
                                 </div>
                                 <div className='space-y-2'>
                                     <Label htmlFor='feature-key'>
-                                        Clé technique
+                                        {t('features.key')}
                                     </Label>
                                     <Input
                                         id='feature-key'
                                         className='admin-field font-mono text-sm'
-                                        placeholder='reporting.advanced'
+                                        placeholder={t(
+                                            'features.keyPlaceholder'
+                                        )}
                                         value={form.key}
                                         required
                                         onChange={(event) =>
@@ -148,7 +155,7 @@ export function FeatureCatalog() {
                                 </div>
                                 <div className='space-y-2'>
                                     <Label htmlFor='feature-category'>
-                                        Catégorie
+                                        {t('features.category')}
                                     </Label>
                                     <Input
                                         id='feature-category'
@@ -165,12 +172,12 @@ export function FeatureCatalog() {
                                 </div>
                                 <div className='space-y-2'>
                                     <Label htmlFor='feature-external-key'>
-                                        Clé externe
+                                        {t('features.externalKey')}
                                     </Label>
                                     <Input
                                         id='feature-external-key'
                                         className='admin-field font-mono text-sm'
-                                        placeholder='Optionnelle'
+                                        placeholder={t('features.optional')}
                                         value={form.externalKey}
                                         onChange={(event) =>
                                             setForm((current) => ({
@@ -183,7 +190,7 @@ export function FeatureCatalog() {
                             </div>
                             <div className='space-y-2'>
                                 <Label htmlFor='feature-description'>
-                                    Description
+                                    {t('features.descriptionLabel')}
                                 </Label>
                                 <Textarea
                                     id='feature-description'
@@ -198,10 +205,7 @@ export function FeatureCatalog() {
                                 />
                             </div>
                             <p className='text-sm text-slate-400'>
-                                Les accès sont définis par les plans du
-                                fournisseur externe. Les organisations legacy
-                                reçoivent uniquement les fonctionnalités
-                                sélectionnées.
+                                {t('features.accessHint')}
                             </p>
                             <DialogFooter>
                                 <Button
@@ -209,15 +213,15 @@ export function FeatureCatalog() {
                                     variant='outline'
                                     onClick={() => setCreateOpen(false)}
                                 >
-                                    Annuler
+                                    {t('common.cancel')}
                                 </Button>
                                 <Button
                                     type='submit'
                                     disabled={createMutation.isPending}
                                 >
                                     {createMutation.isPending
-                                        ? 'Création…'
-                                        : 'Créer le module'}
+                                        ? t('features.creating')
+                                        : t('features.create')}
                                 </Button>
                             </DialogFooter>
                         </form>
@@ -228,7 +232,7 @@ export function FeatureCatalog() {
             {query.isPending ? <LoadingState /> : null}
             {query.isError ? (
                 <p className='text-sm text-destructive'>
-                    {query.error.message}
+                    {t('common.loadError')}
                 </p>
             ) : null}
             {!query.isPending && filteredFeatures.length === 0 ? (
@@ -236,11 +240,10 @@ export function FeatureCatalog() {
                     <div>
                         <Layers3 className='mx-auto h-8 w-8 text-slate-300' />
                         <p className='mt-3 font-medium text-slate-300'>
-                            Aucun module trouvé
+                            {t('features.empty')}
                         </p>
                         <p className='mt-1 text-sm text-slate-400'>
-                            Modifiez votre recherche ou créez une
-                            fonctionnalité.
+                            {t('features.emptyHint')}
                         </p>
                     </div>
                 </div>
@@ -268,7 +271,7 @@ export function FeatureCatalog() {
                                     </Badge>
                                     {!feature.isActive && (
                                         <Badge variant='secondary'>
-                                            Désactivée globalement
+                                            {t('features.disabled')}
                                         </Badge>
                                     )}
                                 </div>
@@ -277,14 +280,13 @@ export function FeatureCatalog() {
                                 </p>
                                 <p className='mt-3 min-h-10 text-sm leading-5 text-slate-500'>
                                     {feature.description ??
-                                        'Aucune description renseignée.'}
+                                        t('features.noDescription')}
                                 </p>
                             </div>
                         </div>
                         <div className='mt-5 flex flex-wrap items-center gap-2 border-t border-white/8 pt-4'>
                             <span className='mr-auto text-xs text-slate-400'>
-                                Accès via le fournisseur externe ou le statut
-                                legacy
+                                {t('features.access')}
                             </span>
                             <Button
                                 size='sm'
@@ -302,7 +304,9 @@ export function FeatureCatalog() {
                                     })
                                 }
                             >
-                                {feature.isActive ? 'Désactiver' : 'Réactiver'}
+                                {feature.isActive
+                                    ? t('features.disable')
+                                    : t('features.enable')}
                             </Button>
                         </div>
                     </article>

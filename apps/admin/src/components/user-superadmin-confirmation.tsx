@@ -1,5 +1,6 @@
 'use client';
 
+import { useTranslations } from 'next-intl';
 import { Button } from '@repo/ui/button';
 import {
     Dialog,
@@ -35,6 +36,7 @@ export function UserSuperAdminConfirmation({
     onClose: () => void;
     onConfirm: (snapshot: UserAccessSnapshot) => void;
 }>) {
+    const t = useTranslations('admin.secondary');
     return (
         <Dialog
             open={snapshot !== null}
@@ -46,23 +48,27 @@ export function UserSuperAdminConfirmation({
                 <DialogHeader>
                     <DialogTitle>
                         {snapshot?.enabled
-                            ? 'Nommer superadmin ?'
-                            : 'Retirer l’accès superadmin ?'}
+                            ? t('access.confirmAppoint')
+                            : t('access.confirmRemove')}
                     </DialogTitle>
                     <DialogDescription>
-                        {snapshot?.name} ({snapshot?.email}){' '}
-                        {snapshot?.enabled
-                            ? 'pourra accéder à la console Vectorix et administrer ses utilisateurs, organisations et réglages.'
-                            : 'perdra immédiatement l’accès à la console Vectorix.'}
+                        {t(
+                            snapshot?.enabled
+                                ? 'access.appointDescription'
+                                : 'access.removeDescription',
+                            {
+                                name: snapshot?.name ?? '',
+                                email: snapshot?.email ?? '',
+                            }
+                        )}
                     </DialogDescription>
                 </DialogHeader>
                 <p className='text-sm text-muted-foreground'>
-                    Le changement sera enregistré dans le journal d’audit.
+                    {t('access.audit')}
                 </p>
                 {error ? (
                     <p role='alert' className='text-sm text-destructive'>
-                        {error} Fermez cette fenêtre et rechargez la fiche avant
-                        de réessayer.
+                        {error} {t('access.errorRecovery')}
                     </p>
                 ) : null}
                 <DialogFooter>
@@ -71,7 +77,7 @@ export function UserSuperAdminConfirmation({
                         disabled={pending}
                         onClick={onClose}
                     >
-                        Annuler
+                        {t('common.cancel')}
                     </Button>
                     <Button
                         disabled={!snapshot || pending || requiresReload}
@@ -80,10 +86,10 @@ export function UserSuperAdminConfirmation({
                         }}
                     >
                         {pending
-                            ? 'Enregistrement…'
+                            ? t('access.saving')
                             : snapshot?.enabled
-                              ? 'Nommer superadmin'
-                              : 'Retirer l’accès'}
+                              ? t('access.appoint')
+                              : t('access.removeShort')}
                     </Button>
                 </DialogFooter>
             </DialogContent>

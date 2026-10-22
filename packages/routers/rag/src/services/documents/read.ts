@@ -8,7 +8,12 @@ import {
     MAX_DOCUMENT_BYTES,
 } from '@repo/api-contracts/v1/rag/documents';
 import { ragActor } from '../access';
-import { requireDocument, contentDocument, libraryWrite } from './access';
+import {
+    requireDocument,
+    contentDocument,
+    libraryWrite,
+    requireReadableVersion,
+} from './access';
 import { boundStorage, contentHash } from './storage';
 
 export async function getDocumentDetails(
@@ -23,6 +28,7 @@ export async function getDocumentDetails(
             documentId: id,
             status: 'READY',
             discardedAt: null,
+            contentState: 'AVAILABLE',
         },
         orderBy: { version: 'desc' },
         include: { ingestion: true, extraction: true },
@@ -45,13 +51,22 @@ export async function getDocumentDetails(
                   byteSize: Number(version.byteSize),
                   mediaType: version.mediaType,
                   createdAt: version.createdAt,
-                  stored: Boolean(version.storedAt && !version.discardedAt),
+                  stored: Boolean(
+                      version.storedAt &&
+                      !version.discardedAt &&
+                      version.contentState === 'AVAILABLE'
+                  ),
                   retryable: Boolean(
                       version.ingestion?.status === 'FAILED' &&
-                      !version.discardedAt
+                      !version.discardedAt &&
+                      version.contentState === 'AVAILABLE'
                   ),
                   previewAvailable: Boolean(
-                      version.extraction && version.status === 'READY'
+                      version.extraction &&
+                      !version.extraction.discardedAt &&
+                      !version.discardedAt &&
+                      version.contentState === 'AVAILABLE' &&
+                      version.status === 'READY'
                   ),
                   task: publicIngestionTask(version.ingestion),
               }
@@ -79,7 +94,7 @@ export async function downloadDocument(context: AuthorizedContext, id: string) {
             message:
                 'The stored original does not match its recorded checksum.',
         });
-    await contentDocument(context, id);
+    await requireReadableVersion(context, id, version.id);
     return new File(
         [new Uint8Array(bytes)],
         version.fileName ?? document.name,
@@ -93,7 +108,11 @@ export async function previewDocument(
     input: { id: string; offset: number }
 ) {
     const { actor, version } = await contentDocument(context, input.id);
-    if (!version.extraction || version.status !== 'READY')
+    if (
+        !version.extraction ||
+        version.extraction.discardedAt ||
+        version.status !== 'READY'
+    )
         throw new ORPCError('CONFLICT', {
             message: 'The extracted text is not ready.',
         });
@@ -110,7 +129,7 @@ export async function previewDocument(
         bytes,
         version.extraction.extractorVersion
     );
-    await contentDocument(context, input.id);
+    await requireReadableVersion(context, input.id, version.id);
     if (input.offset > 0 && /[\uDC00-\uDFFF]/.test(text.charAt(input.offset)))
         throw new ORPCError('BAD_REQUEST');
     let end = Math.min(text.length, input.offset + 20_000);
@@ -130,7 +149,11 @@ export async function previewDocumentSource(
     input: { id: string; sourceIndex: number; offset: number }
 ) {
     const { actor, version } = await contentDocument(context, input.id);
-    if (!version.extraction || version.status !== 'READY')
+    if (
+        !version.extraction ||
+        version.extraction.discardedAt ||
+        version.status !== 'READY'
+    )
         throw new ORPCError('CONFLICT', {
             message: 'The extracted text is not ready.',
         });
@@ -162,7 +185,7 @@ export async function previewDocumentSource(
         /[\uD800-\uDBFF]/.test(fullText.charAt(end - 1))
     )
         end--;
-    await contentDocument(context, input.id);
+    await requireReadableVersion(context, input.id, version.id);
     return {
         format:
             version.mediaType === 'text/markdown'

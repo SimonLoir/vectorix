@@ -3,6 +3,9 @@ import type { AuthorizedContext } from '@routers/utils/authorized';
 import { ragActor, grantWhere, requireCollection } from '../access';
 import { mutate, audit } from '../mutation';
 import { libraryWrite, requireDocument } from './access';
+import { recordDocumentChange } from '../indexing/changes';
+import { MAX_INDEXED_DOCUMENTS_PER_COLLECTION } from '../indexing/limits';
+import { indexError } from '../indexing/errors';
 
 const required = { ...libraryWrite, ragCollection: ['manageDocuments'] };
 export async function documentCollectionCandidates(
@@ -65,6 +68,26 @@ export function setDocumentCollection(
                 documentId: input.id,
             },
         };
+        const current = await db.collectionDocument.findUnique({ where });
+        if (Boolean(current) === input.attached)
+            return { success: true as const };
+        if (
+            input.attached &&
+            (await db.indexGeneration.count({
+                where: {
+                    organizationId: actor.organizationId,
+                    collectionId: input.collectionId,
+                    status: { not: 'CLEANED' },
+                },
+            })) &&
+            (await db.collectionDocument.count({
+                where: {
+                    organizationId: actor.organizationId,
+                    collectionId: input.collectionId,
+                },
+            })) >= MAX_INDEXED_DOCUMENTS_PER_COLLECTION
+        )
+            throw indexError('QUOTA_EXCEEDED');
         await (input.attached
             ? db.collectionDocument.upsert({
                   where,
@@ -82,6 +105,13 @@ export function setDocumentCollection(
                       documentId: input.id,
                   },
               }));
+        await recordDocumentChange(db, {
+            organizationId: actor.organizationId,
+            collectionId: input.collectionId,
+            documentId: input.id,
+            kind: input.attached ? 'UPSERT' : 'REMOVE',
+            requestedBy: actor.userId,
+        });
         await audit(
             db,
             actor,

@@ -1,4 +1,5 @@
 import { ORPCError } from '@orpc/server';
+import { isDeepStrictEqual } from 'node:util';
 import { permits } from '@repo/auth/permissions';
 import type { AuthorizedContext } from '@routers/utils/authorized';
 import { collectionProfile } from '@repo/api-contracts/v1/rag/collections';
@@ -6,9 +7,12 @@ import { mutate, audit } from './mutation';
 import { requireCollection } from './access';
 import { quotaLimits } from './quotas';
 import { profileData } from './collection-profile';
-import { collectionDto } from './collection-view';
+import { collectionDto, configurationDto } from './collection-view';
+import { recordCollectionDeletion } from './indexing/changes';
 
 type Profile = typeof collectionProfile._output;
+type UpdateProfile = Omit<Profile, 'embeddingPreset' | 'metadataFields'> &
+    Partial<Pick<Profile, 'embeddingPreset' | 'metadataFields'>>;
 export function createCollection(
     context: AuthorizedContext,
     input: {
@@ -85,7 +89,7 @@ export function updateCollection(
         expectedRevision: number;
         name: string;
         description: string;
-        profile: Profile;
+        profile: UpdateProfile;
     }
 ) {
     return mutate(context, { ragCollection: ['update'] }, async (db, actor) => {
@@ -100,10 +104,60 @@ export function updateCollection(
                 message:
                     'Collection configuration changed. Reload before updating.',
             });
+        const saved = await db.collectionConfigRevision.findUniqueOrThrow({
+            where: {
+                ['organizationId_collectionId_revision']: {
+                    organizationId: actor.organizationId,
+                    collectionId: current.id,
+                    revision: current.configurationRevision,
+                },
+            },
+        });
+        const publicConfiguration = configurationDto(saved);
+        const previous = collectionProfile.parse(
+            Object.fromEntries(
+                Object.keys(collectionProfile.shape).map((key) => [
+                    key,
+                    publicConfiguration[
+                        key as keyof typeof publicConfiguration
+                    ],
+                ])
+            )
+        );
+        const nextProfile = collectionProfile.parse({
+            ...input.profile,
+            embeddingPreset:
+                input.profile.embeddingPreset ?? previous.embeddingPreset,
+            metadataFields:
+                input.profile.metadataFields ?? previous.metadataFields,
+        });
+        if (isDeepStrictEqual(previous, nextProfile)) {
+            const updated = await db.collection.update({
+                where: { id: current.id },
+                data: { name: input.name, description: input.description },
+            });
+            await audit(db, actor, 'collection.update', current.id, {
+                revision: current.configurationRevision,
+            });
+            return collectionDto(db, actor, updated);
+        }
+        if (
+            await db.indexGeneration.count({
+                where: {
+                    organizationId: actor.organizationId,
+                    collectionId: current.id,
+                    status: { not: 'CLEANED' },
+                },
+            })
+        )
+            throw new ORPCError('CONFLICT', {
+                message:
+                    'The indexed collection profile is immutable. Rebuilding with a new profile is a later milestone.',
+            });
         const profile = await profileData(
             db,
             actor.organizationId,
-            input.profile
+            nextProfile
         );
         const revision = current.configurationRevision + 1;
         await db.collectionConfigRevision.create({
@@ -143,7 +197,12 @@ export function deleteCollection(
             where: { id: current.id },
             data: { deletedAt: new Date() },
         });
-        // Shared library documents survive. Retain immutable revisions for future cleanup/recovery.
+        await recordCollectionDeletion(db, {
+            organizationId: actor.organizationId,
+            collectionId: current.id,
+            requestedBy: actor.userId,
+        });
+        // Shared library documents survive. Retain immutable revisions for cleanup/recovery.
         await audit(db, actor, 'collection.delete', current.id);
         return { success: true as const };
     });

@@ -3,6 +3,7 @@ import type { AuthorizedContext } from '@routers/utils/authorized';
 import { mutate, audit } from '../mutation';
 import { libraryWrite } from './access';
 import { scheduleVersionCleanup } from './retention';
+import { recordDocumentChange } from '../indexing/changes';
 
 /** Tombstones and link removal take effect immediately; private object deletion is durable and independent of membership. */
 export function deleteDocument(
@@ -34,12 +35,29 @@ export function deleteDocument(
             where: { id: input.id },
             data: { deletedAt, status: 'DELETED' },
         });
+        const associations = await db.collectionDocument.findMany({
+            where: {
+                organizationId: actor.organizationId,
+                documentId: input.id,
+                collection: { deletedAt: null },
+            },
+            orderBy: { collectionId: 'asc' },
+            select: { collectionId: true },
+        });
         await db.collectionDocument.deleteMany({
             where: {
                 organizationId: actor.organizationId,
                 documentId: input.id,
             },
         });
+        for (const association of associations)
+            await recordDocumentChange(db, {
+                organizationId: actor.organizationId,
+                collectionId: association.collectionId,
+                documentId: input.id,
+                kind: 'REMOVE',
+                requestedBy: actor.userId,
+            });
         const versions = await db.documentVersion.findMany({
             where: {
                 organizationId: actor.organizationId,

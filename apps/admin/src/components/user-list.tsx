@@ -1,5 +1,6 @@
 'use client';
 
+import { useTranslations } from 'next-intl';
 import { useDeferredValue, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Search } from 'lucide-react';
@@ -10,14 +11,15 @@ import { LoadingState } from './loading-state';
 import { UserDirectoryTable } from './user-directory-table';
 
 type AccessFilter = 'all' | 'superadmin' | 'standard';
-const filterLabels = {
-    all: 'Tous',
-    superadmin: 'Superadmins',
-    standard: 'Sans accès console',
+const filterKeys = {
+    all: 'users.all',
+    superadmin: 'users.superadmins',
+    standard: 'common.noAccess',
 };
 
 /** Paged global account search; changing a filter always starts again at the first page. */
 export function UserList() {
+    const t = useTranslations('admin.secondary');
     const { orpc } = useORPC();
     const [search, setSearch] = useState('');
     const [access, setAccess] = useState<AccessFilter>('all');
@@ -41,7 +43,7 @@ export function UserList() {
             <div className='admin-panel flex flex-col gap-4 p-3 xl:flex-row xl:items-center xl:justify-between'>
                 <div
                     className='flex flex-wrap gap-1 rounded-xl bg-black/20 p-1'
-                    aria-label='Filtrer les accès à la console'
+                    aria-label={t('users.filter')}
                 >
                     {(['all', 'superadmin', 'standard'] as const).map(
                         (value) => (
@@ -55,7 +57,7 @@ export function UserList() {
                                     setPage(1);
                                 }}
                             >
-                                {filterLabels[value]}
+                                {t(filterKeys[value])}
                             </button>
                         )
                     )}
@@ -63,8 +65,8 @@ export function UserList() {
                 <div className='relative w-full xl:w-96'>
                     <Search className='absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400' />
                     <Input
-                        aria-label='Rechercher un utilisateur par nom ou e-mail'
-                        placeholder='Nom ou adresse e-mail…'
+                        aria-label={t('users.searchLabel')}
+                        placeholder={t('users.search')}
                         className='admin-field border-0 bg-black/20 pl-10'
                         value={search}
                         onChange={(event) => {
@@ -76,18 +78,18 @@ export function UserList() {
             </div>
             <section className='admin-panel overflow-hidden'>
                 {query.isPending ? (
-                    <LoadingState label='Chargement des utilisateurs…' />
+                    <LoadingState label={t('users.loading')} />
                 ) : query.isError ? (
                     <div role='alert' className='space-y-3 p-6'>
                         <p className='text-sm text-destructive'>
-                            {query.error.message}
+                            {t('common.loadError')}
                         </p>
                         <Button
                             variant='outline'
                             disabled={query.isFetching}
                             onClick={() => void query.refetch()}
                         >
-                            Réessayer
+                            {t('common.retry')}
                         </Button>
                     </div>
                 ) : (
@@ -95,7 +97,9 @@ export function UserList() {
                 )}
             </section>
             <div className='flex flex-wrap items-center justify-between gap-3 text-sm text-slate-400'>
-                <span>{query.data?.total ?? 0} utilisateur(s)</span>
+                <span>
+                    {t('users.total', { count: query.data?.total ?? 0 })}
+                </span>
                 <div className='flex items-center gap-2'>
                     <Button
                         size='sm'
@@ -103,10 +107,10 @@ export function UserList() {
                         disabled={page <= 1 || query.isFetching}
                         onClick={() => setPage((current) => current - 1)}
                     >
-                        Précédent
+                        {t('common.previous')}
                     </Button>
                     <span className='px-2 text-xs'>
-                        {page} / {pageCount}
+                        {t('common.page', { page, total: pageCount })}
                     </span>
                     <Button
                         size='sm'
@@ -118,7 +122,7 @@ export function UserList() {
                         }
                         onClick={() => setPage((current) => current + 1)}
                     >
-                        Suivant
+                        {t('common.next')}
                     </Button>
                 </div>
             </div>

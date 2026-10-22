@@ -1,4 +1,5 @@
 'use client';
+import { useTranslations } from 'next-intl';
 
 import { useState } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
@@ -46,6 +47,7 @@ export function AddOrganizationMemberDialog({
 }: {
     readonly organizationId: string;
 }) {
+    const tr = useTranslations('admin.core');
     const { orpc } = useORPC();
     const queryClient = useQueryClient();
     const [open, setOpen] = useState(false);
@@ -57,9 +59,7 @@ export function AddOrganizationMemberDialog({
         orpc.superadmin.organizations.members.add.mutationOptions({
             onSuccess: async ({ userCreated }) => {
                 toast.success(
-                    userCreated
-                        ? 'Utilisateur créé et ajouté à l’organisation'
-                        : 'Utilisateur ajouté à l’organisation'
+                    userCreated ? tr('userCreatedAdded') : tr('userAdded')
                 );
                 setOpen(false);
                 await queryClient.invalidateQueries(
@@ -68,7 +68,7 @@ export function AddOrganizationMemberDialog({
                     })
                 );
             },
-            onError: (error) => toast.error(error.message),
+            onError: () => toast.error(tr('saveFailed')),
         })
     );
 
@@ -90,16 +90,18 @@ export function AddOrganizationMemberDialog({
             <DialogTrigger asChild>
                 <Button className='rounded-xl shadow-sm'>
                     <Plus className='h-4 w-4' />
-                    Ajouter un membre
+                    {tr('addMember')}
                 </Button>
             </DialogTrigger>
-            <DialogContent className='rounded-2xl border-white/10 bg-[#101827] p-0 sm:max-w-xl'>
+            <DialogContent
+                closeLabel={tr('close')}
+                className='rounded-2xl border-white/10 bg-[#101827] p-0 sm:max-w-xl'
+            >
                 <DialogHeader>
                     <div className='rounded-t-2xl border-b border-white/8 bg-white/[0.025] px-6 py-5'>
-                        <DialogTitle>Ajouter un membre</DialogTitle>
+                        <DialogTitle>{tr('addMember')}</DialogTitle>
                         <DialogDescription className='mt-1'>
-                            Liez un compte Vectorix existant ou créez un nouvel
-                            utilisateur.
+                            {tr('addMemberHint')}
                         </DialogDescription>
                     </div>
                 </DialogHeader>
@@ -113,10 +115,10 @@ export function AddOrganizationMemberDialog({
                                 value='existing'
                                 className='rounded-lg'
                             >
-                                Compte existant
+                                {tr('existingAccount')}
                             </TabsTrigger>
                             <TabsTrigger value='new' className='rounded-lg'>
-                                Nouvel utilisateur
+                                {tr('newUser')}
                             </TabsTrigger>
                         </TabsList>
                     </Tabs>
@@ -142,25 +144,27 @@ export function AddOrganizationMemberDialog({
                 >
                     {mode === 'new' ? (
                         <div className='space-y-2'>
-                            <Label htmlFor='member-name'>Nom complet</Label>
+                            <Label htmlFor='member-name'>
+                                {tr('fullName')}
+                            </Label>
                             <Input
                                 className='admin-field'
                                 id='member-name'
                                 name='name'
-                                placeholder='Marie Dupont'
+                                placeholder={tr('namePlaceholder')}
                                 required
                                 autoFocus
                             />
                         </div>
                     ) : null}
                     <div className='space-y-2'>
-                        <Label htmlFor='member-email'>Adresse e-mail</Label>
+                        <Label htmlFor='member-email'>{tr('email')}</Label>
                         <Input
                             className='admin-field'
                             id='member-email'
                             name='email'
                             type='email'
-                            placeholder='marie@exemple.be'
+                            placeholder={tr('emailPlaceholder')}
                             required
                             autoFocus={mode === 'existing'}
                         />
@@ -168,7 +172,7 @@ export function AddOrganizationMemberDialog({
                     {mode === 'new' ? (
                         <div className='space-y-2'>
                             <Label htmlFor='member-password'>
-                                Mot de passe temporaire
+                                {tr('temporaryPassword')}
                             </Label>
                             <div className='flex gap-2'>
                                 <Input
@@ -185,7 +189,8 @@ export function AddOrganizationMemberDialog({
                                     type='button'
                                     size='icon'
                                     variant='outline'
-                                    title='Générer un mot de passe'
+                                    title={tr('generatePassword')}
+                                    aria-label={tr('generatePassword')}
                                     onClick={() =>
                                         setPassword(generatePassword())
                                     }
@@ -196,42 +201,51 @@ export function AddOrganizationMemberDialog({
                                     type='button'
                                     size='icon'
                                     variant='outline'
-                                    title='Copier le mot de passe'
+                                    title={tr('copyPassword')}
+                                    aria-label={tr('copyPassword')}
                                     disabled={!password}
                                     onClick={async () => {
-                                        await navigator.clipboard.writeText(
-                                            password
-                                        );
-                                        toast.success('Mot de passe copié');
+                                        try {
+                                            await navigator.clipboard.writeText(
+                                                password
+                                            );
+                                            toast.success(tr('passwordCopied'));
+                                        } catch {
+                                            toast.error(tr('clipboardFailed'));
+                                        }
                                     }}
                                 >
                                     <Copy className='h-4 w-4' />
                                 </Button>
                             </div>
                             <p className='text-xs text-muted-foreground'>
-                                Communiquez-le de façon sécurisée à
-                                l’utilisateur.
+                                {tr('passwordHint')}
                             </p>
                         </div>
                     ) : null}
                     <div className='space-y-2'>
-                        <Label>Rôle dans l’organisation</Label>
+                        <Label>{tr('organizationRole')}</Label>
                         <Select
                             value={role}
                             onValueChange={(value) =>
                                 setRole(value as MemberRole)
                             }
                         >
-                            <SelectTrigger className='admin-field w-full'>
+                            <SelectTrigger
+                                aria-label={tr('organizationRole')}
+                                className='admin-field w-full'
+                            >
                                 <SelectValue />
                             </SelectTrigger>
                             <SelectContent>
-                                <SelectItem value='member'>Membre</SelectItem>
+                                <SelectItem value='member'>
+                                    {tr('member')}
+                                </SelectItem>
                                 <SelectItem value='admin'>
-                                    Administrateur
+                                    {tr('administrator')}
                                 </SelectItem>
                                 <SelectItem value='owner'>
-                                    Propriétaire
+                                    {tr('owner')}
                                 </SelectItem>
                             </SelectContent>
                         </Select>
@@ -247,11 +261,10 @@ export function AddOrganizationMemberDialog({
                             />
                             <div>
                                 <Label htmlFor='email-verified'>
-                                    E-mail déjà vérifié
+                                    {tr('emailVerified')}
                                 </Label>
                                 <p className='mt-1 text-xs text-muted-foreground'>
-                                    À activer uniquement si l’adresse a été
-                                    confirmée par un autre moyen.
+                                    {tr('emailVerifiedHint')}
                                 </p>
                             </div>
                         </div>
@@ -262,14 +275,14 @@ export function AddOrganizationMemberDialog({
                             variant='outline'
                             onClick={() => setOpen(false)}
                         >
-                            Annuler
+                            {tr('cancel')}
                         </Button>
                         <Button type='submit' disabled={mutation.isPending}>
                             {mutation.isPending
-                                ? 'Ajout…'
+                                ? tr('adding')
                                 : mode === 'new'
-                                  ? 'Créer et ajouter'
-                                  : 'Ajouter'}
+                                  ? tr('createAdd')
+                                  : tr('add')}
                         </Button>
                     </DialogFooter>
                 </form>

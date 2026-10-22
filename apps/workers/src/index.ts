@@ -3,6 +3,10 @@ import { connection, getQueues, QueueName, closeQueues } from '@repo/queues';
 import { prisma } from '@repo/db';
 import { processDocumentIngestions } from '@routers/rag/ingestion';
 import { processDocumentCleanups } from '@routers/rag/cleanup';
+import {
+    processCollectionIndexing,
+    closeVectorAdapters,
+} from '@routers/rag/indexing';
 import { parseRichDocument } from './extraction/main';
 import { processNotifications } from './notifications/process';
 const worker = new Worker(
@@ -42,10 +46,32 @@ await getQueues().documents.upsertJobScheduler(
     { every: 5000 },
     { name: 'scan', data: {}, opts: { removeOnComplete: 20, removeOnFail: 20 } }
 );
-console.log('Notification and document workers ready');
+const indexingWorker = new Worker(
+    QueueName.INDEXING,
+    () => processCollectionIndexing(prisma),
+    { connection, concurrency: 1 }
+);
+indexingWorker.on('error', () =>
+    console.error('Indexing worker connection failed')
+);
+indexingWorker.on('failed', () =>
+    console.error('Indexing scan failed; durable tasks will be retried')
+);
+await indexingWorker.waitUntilReady();
+await getQueues().indexing.upsertJobScheduler(
+    'collection-indexing',
+    { every: 5000 },
+    { name: 'scan', data: {}, opts: { removeOnComplete: 20, removeOnFail: 20 } }
+);
+console.log('Notification, document and indexing workers ready');
 for (const signal of ['SIGINT', 'SIGTERM'])
     process.once(signal, async () => {
-        await Promise.all([worker.close(), documentWorker.close()]);
+        await Promise.all([
+            worker.close(),
+            documentWorker.close(),
+            indexingWorker.close(),
+        ]);
+        await closeVectorAdapters();
         await closeQueues();
         await prisma.$disconnect();
         process.exit(0);

@@ -187,7 +187,7 @@ The correction lives in `packages/routers/rag/src/services/documents/retention.t
 - [x] Add bounded native PDF and isolated DOCX parsing only in workers, immutable page/paragraph ranges and localized dashboard source navigation.
 - [x] Complete real/adversarial parser, HTTP/S3, authorization, cleanup and quota verification; final production container checks are recorded below.
 - [x] Run types, lint, backend regressions, builds, documentation/diagram checks and production dashboard acceptance.
-- [ ] Independently review, commit, push and open the product PR; merge only after its checks pass.
+- [x] Independently review and deliver PR #6; squash-merge after both catalog and six-image CI checks pass.
 
 Entry points and the full acceptance recipe/results are in [PDF/DOCX library](rag-rich-documents.md). No database change is required. Validation passed: Prisma, 20 type-check and 20 lint tasks (non-blocking warnings), 22 backend regressions, all four application builds, 43 parser tests, independent verification of 37 deterministic binaries, and 64 real core/RAG integration tests plus migration fresh/upgrade/repeat/schema parity. Independent review corrected prototype-extension acceptance and orphaned DOCX story/note extraction; seven targeted reference regressions were independently rerun.
 
@@ -196,3 +196,29 @@ Production browser checks cover real bilingual PDF upload/page navigation/source
 Final container validation after the active-reference correction: all six images and infrastructure checks passed, including the real bundled native PDF and isolated DOCX parser, API dependency exclusion, standalone web/admin assets, worker startup, fresh/repeated migrations, HNSW/DiskANN roles and private S3 restart persistence. Ten Mermaid diagrams, 47 local links and 111 document messages in all three locales validate. No application database was used.
 
 The final fresh manager tab had no console warnings/errors. Temporary tabs, web/API/workers, their disposable PostgreSQL/Redis/RustFS and the checksum-verified test download were cleaned up. The pre-existing admin route-type import modification is preserved outside this commit.
+
+## M3 — First Ollama index and hybrid search
+
+- [x] Merge independently reviewed M2b PR #6 after both CI checks succeed; start `codex/rag-first-search` from squash commit `e4c4685`.
+- [x] Prepare/review additive generation, publication, chunk, task, ordered receipt, accounting and source-hold schema; generate explicitly authorized migration `20261026000000_rag_indexing`.
+- [x] Verify initial disposable upgrade/fresh/repeat migration deployment and Prisma schema parity.
+- [x] Implement bounded structure chunking, native Ollama probe/embedding, independent vector adapter and durable first-index/publication/update/cleanup processing.
+- [x] Connect localized profile/model controls, index status/retry/chunks, collection document metadata, hybrid playground, exact sources and deleted-collection cleanup to V1 revision 1.7.0.
+- [x] Complete independent protocol review and integrated regressions, including canonical metadata, old V1 clients and source cleanup races.
+- [x] Pass schema, workspace types/lint, backend/package/integration tests, all application builds and six container images.
+- [x] Verify representative dashboard journeys with a real installed Ollama model; record exact provider/model/dimensions, source/checksum, access, replacement, cleanup and locale results.
+- [ ] Review documentation, Mermaid, links and whitespace; commit/push and open the product PR, review it independently and wait for checks before the authorized merge.
+
+Entry points, architecture and detailed acceptance results are in [first collection search](rag-first-search.md). Native Ollama, structure chunking, the independent vector adapter, durable generation/publication/outbox/accounting/source-hold services and V1 revision 1.7.0 connect the profile, index, metadata, chunk, playground and exact-source dashboard journeys. Native organization deletion uses a preflight, transactional Prisma adapter and database guard. Admin core pages/forms now use complete English/French/Belgian Dutch messages and locale-aware dates/numbers. A locked, independently reviewed generator patch preserves native BigInt defaults; all five service Dockerfiles include it before frozen installation.
+
+Validation passed: frozen install, Prisma generation/validation, 23 workspace type-check tasks, 23 lint tasks (non-blocking warnings), 23 backend regressions, seven chunking tests, 21 controlled HTTP embedding tests, 11 real vector-store tests, all 88 isolated catalog/core/RAG integration tests, fresh/upgrade/repeat migration and schema parity, four production application builds and six-image runtime/infrastructure checks. Independent critical review found no remaining P1/P2 blocker. All 3,345 locale messages have ICU/key parity, and changed documentation/Mermaid/local links validate.
+
+Actual production-browser acceptance used real CPU Ollama 0.40.8 with original EmbeddingGemma, 256-dimensional DiskANN, private RustFS and isolated application/vector databases. The separate live adapter also verified 128/256/512/768 dimensions. PDF/DOCX/Markdown upload, structure/page/paragraph previews, initial publication, FR/EN hybrid/lexical/vector queries, combined filters, exact indexed sources and original checksums passed. Index-only pause proved library version 2 can publish while indexed version 1/source remain readable despite zero-day retention. Resume published version 2. A real DOCX quota failure left old charges unchanged; admin quota increase and dashboard retry published the two new passages. Reader access, grant revocation during source viewing and foreign direct-URL denial passed. EN/FR/nl-BE and admin zero temporary quota persistence passed.
+
+Collection deletion denied its direct URL while retaining the three shared library documents. After controlled advancement of only already-retired hold/task deadlines in the disposable fixture, real workers tombstoned four publications, dropped the vector table, deleted nine application chunks, released four holds and reduced A/R/U counters to zero. Dashboard zero-day Markdown deletion then purged both versions; real S3 HEAD checks confirmed absent originals/extractions, while PDF/DOCX originals/artifacts remained. The deleted-collection view showed zero pending/failed tasks. A fresh final web tab had no console warnings/errors. Detailed distinctions between browser checks, simulated failure coverage and real integrations are retained in the milestone document; no paid-provider, reference-corpus quality or M7 capacity result is claimed. The named Ollama volume is retained for subsequent milestones; preview processes/containers are stopped after acceptance.
+
+### Ollama and EmbeddingGemma reproducibility guide
+
+- [x] Document the executed CPU Docker image/resource limits, original EmbeddingGemma model/digest, native probe and same live adapter script in [the reproduction guide](rag-ollama-embeddinggemma.md), with an English Mermaid data-flow diagram.
+- [x] Explain organization-first credentials, exact endpoint approval on API/workers, host/container networking, saved bindings, dashboard steps and troubleshooting; link the guide from `README.md` and `packages/embeddings/README.md`.
+- [x] Verify the recorded four-dimension real-model evidence against logs and distinguish it from 21 controlled HTTP tests, integrated dashboard acceptance and unperformed capacity/quality benchmarks. Check official primary references, Markdown formatting, local links, Mermaid, shell syntax and Compose YAML.

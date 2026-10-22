@@ -1,0 +1,17 @@
+diff --git a/lib/generators/model.js b/lib/generators/model.js
+index 9c5f157e1f4653e5b1febd6b9fa46226a3afc357..d896fb3f7bb2ec52e68e0293cceb9e96d04c995e 100644
+--- a/lib/generators/model.js
++++ b/lib/generators/model.js
+@@ -912,7 +912,11 @@ class PrismaTypeMapper {
+             }
+             else {
+                 // Handle literal defaults
+-                let literalValue = JSON.stringify(defaultValue);
++                // Prisma's DMMF represents BigInt literals as decimal strings.
++                // Zod needs an actual bigint default, including zero and negatives.
++                let literalValue = field.type === 'BigInt' && /^-?\d+$/.test(String(defaultValue))
++                    ? `${defaultValue}n`
++                    : JSON.stringify(defaultValue);
+                 // Preserve trailing .0 for Float defaults like 30.0 (JSON.stringify(30.0) => "30")
+                 if (typeof defaultValue === 'number' && field.type === 'Float') {
+                     const asString = String(defaultValue);

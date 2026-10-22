@@ -1,4 +1,5 @@
 'use client';
+import { useTranslations } from 'next-intl';
 
 import { useState } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
@@ -45,6 +46,7 @@ export function OrganizationLegacyFeatureEditor({
     readFailed: boolean;
     onReload: () => Promise<SelectionState | undefined>;
 }>) {
+    const tr = useTranslations('admin.core');
     const { orpc } = useORPC();
     const queryClient = useQueryClient();
     const [features, setFeatures] = useState(data.features);
@@ -61,7 +63,7 @@ export function OrganizationLegacyFeatureEditor({
                 setVersion(result.version);
                 setSelected(new Set(result.enabledFeatureIds));
                 setRequiresReload(false);
-                toast.success('Fonctionnalités legacy enregistrées');
+                toast.success(tr('legacyFeaturesSaved'));
                 await Promise.all([
                     queryClient.invalidateQueries({
                         queryKey: orpc.superadmin.organizations.features.key(),
@@ -95,26 +97,20 @@ export function OrganizationLegacyFeatureEditor({
 
     return (
         <div className='space-y-5 p-5'>
-            <p className='text-sm text-slate-400'>
-                Cochez les fonctionnalités accordées à cette organisation.
-                L’enregistrement attribue la sélection sans échéance ; les
-                autres fonctionnalités restent désactivées.
-            </p>
+            <p className='text-sm text-slate-400'>{tr('selectFeaturesHint')}</p>
             {version ? null : (
                 <p role='alert' className='text-sm text-amber-200'>
-                    Mettez à jour l’API pour gérer la sélection des
-                    fonctionnalités legacy.
+                    {tr('updateApiHint')}
                 </p>
             )}
             {requiresReload || stale ? (
                 <p role='alert' className='text-sm text-amber-200'>
-                    Rechargez les fonctionnalités avant de continuer. Le
-                    rechargement remplacera votre sélection en cours.
+                    {tr('reloadSelectionHint')}
                 </p>
             ) : null}
             {mutation.isError ? (
                 <p role='alert' className='text-sm text-destructive'>
-                    {mutation.error.message}
+                    {tr('saveFailed')}
                 </p>
             ) : null}
             <div className='flex justify-end'>
@@ -133,7 +129,7 @@ export function OrganizationLegacyFeatureEditor({
                         )
                     }
                 >
-                    Sélectionner tout
+                    {tr('selectAll')}
                 </Button>
             </div>
             <div className='grid gap-3 lg:grid-cols-2'>
@@ -159,7 +155,7 @@ export function OrganizationLegacyFeatureEditor({
             </div>
             <div className='flex flex-wrap items-center justify-between gap-4 border-t border-white/8 pt-5'>
                 <span className='text-sm text-slate-400'>
-                    {selected.size} fonctionnalité(s) sélectionnée(s)
+                    {tr('selectedFeaturesCount', { count: selected.size })}
                 </span>
                 <div className='flex flex-wrap gap-2'>
                     <Button
@@ -170,7 +166,7 @@ export function OrganizationLegacyFeatureEditor({
                         <RefreshCw
                             className={`h-4 w-4 ${fetching ? 'animate-spin' : ''}`}
                         />
-                        Recharger
+                        {tr('reload')}
                     </Button>
                     <Button
                         disabled={blocked}
@@ -184,8 +180,8 @@ export function OrganizationLegacyFeatureEditor({
                         }}
                     >
                         {mutation.isPending
-                            ? 'Enregistrement…'
-                            : 'Enregistrer la sélection'}
+                            ? tr('saving')
+                            : tr('saveSelection')}
                     </Button>
                 </div>
             </div>

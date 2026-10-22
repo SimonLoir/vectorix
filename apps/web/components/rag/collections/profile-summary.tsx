@@ -14,6 +14,7 @@ export function ProfileSummary({
     const fields = [
         ['profile.providerLabel', c.provider],
         ['profile.model', c.model],
+        ['indexing.preset', tr(`indexing.presets.${c.embeddingPreset}`)],
         ['profile.dimensions', format.number(c.dimensions)],
         ['profile.index', `${c.indexType} · ${c.metric} · ${c.numericType}`],
         ['profile.chunking', tr(strategyKeys[c.chunkingStrategy])],
@@ -84,6 +85,21 @@ export function ProfileSummary({
                     </dd>
                 </div>
             </dl>
+            {Object.keys(c.metadataFields).length > 0 && (
+                <div>
+                    <h3 className='text-muted-foreground'>
+                        {tr('indexing.metadataFields')}
+                    </h3>
+                    <dl className='mt-2 flex flex-wrap gap-3'>
+                        {Object.entries(c.metadataFields).map(([key, type]) => (
+                            <div key={key}>
+                                <dt>{key}</dt>
+                                <dd>{tr(`indexing.fieldTypes.${type}`)}</dd>
+                            </div>
+                        ))}
+                    </dl>
+                </div>
+            )}
             {c.preparation && (
                 <div>
                     <h3 className='text-muted-foreground'>

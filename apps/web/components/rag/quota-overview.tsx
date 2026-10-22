@@ -61,6 +61,14 @@ export function QuotaOverview() {
                     </div>
                     <div>
                         <dt className='text-sm text-muted-foreground'>
+                            {tr('usage.temporaryChunks')}
+                        </dt>
+                        <dd>
+                            {format.number(limits.temporaryChunksPerCollection)}
+                        </dd>
+                    </div>
+                    <div>
+                        <dt className='text-sm text-muted-foreground'>
                             {tr('usage.chunks')}
                         </dt>
                         <dd>{format.number(limits.chunksPerCollection)}</dd>

@@ -1,6 +1,31 @@
 import type { PermissionSet } from './catalogue';
 /** Unknown private operations fail closed. */
 export const operationPermissions: Record<string, PermissionSet> = {
+    'admin.rag.indexing.models': { ragCollection: ['manageDocuments'] },
+    'admin.rag.indexing.trash': {},
+    'admin.rag.indexing.probe': { ragCollection: ['manageDocuments'] },
+    'admin.rag.indexing.start': { ragCollection: ['manageDocuments'] },
+    'admin.rag.indexing.retry': { ragCollection: ['manageDocuments'] },
+    'admin.rag.indexing.updateMetadata': { ragCollection: ['manageDocuments'] },
+    'admin.rag.indexing.status': {},
+    'admin.rag.indexing.tasks': {},
+    'admin.rag.indexing.documents': {},
+    'admin.rag.indexing.chunks': {
+        ragCollection: ['read'],
+        ragLibrary: ['read'],
+    },
+    'admin.rag.indexing.search': {
+        ragCollection: ['read'],
+        ragLibrary: ['read'],
+    },
+    'admin.rag.indexing.sourcePreview': {
+        ragCollection: ['read'],
+        ragLibrary: ['read'],
+    },
+    'admin.rag.indexing.sourceOriginal': {
+        ragCollection: ['read'],
+        ragLibrary: ['read'],
+    },
     'admin.rag.credentials.list': { ragCredentials: ['read'] },
     'admin.rag.credentials.create': { ragCredentials: ['manage'] },
     'admin.rag.credentials.update': { ragCredentials: ['manage'] },

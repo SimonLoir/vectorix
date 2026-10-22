@@ -24,6 +24,7 @@ export async function contentDocument(context: AuthorizedContext, id: string) {
             organizationId: actor.organizationId,
             documentId: id,
             discardedAt: null,
+            contentState: 'AVAILABLE',
             status: 'READY',
         },
         orderBy: { version: 'desc' },
@@ -36,10 +37,32 @@ export async function contentDocument(context: AuthorizedContext, id: string) {
                 organizationId: actor.organizationId,
                 documentId: id,
                 discardedAt: null,
+                contentState: 'AVAILABLE',
             },
             orderBy: { version: 'desc' },
             include: { extraction: true, ingestion: true },
         }));
     if (!version) throw new ORPCError('NOT_FOUND');
     return { actor, document, version };
+}
+
+/** Revalidate the exact source after private I/O, even if a replacement changed the current publication meanwhile. */
+export async function requireReadableVersion(
+    context: AuthorizedContext,
+    documentId: string,
+    versionId: string
+) {
+    const { actor } = await contentDocument(context, documentId);
+    const version = await context.db.documentVersion.findFirst({
+        where: {
+            id: versionId,
+            documentId,
+            organizationId: actor.organizationId,
+            contentState: 'AVAILABLE',
+            discardedAt: null,
+        },
+        include: { extraction: true },
+    });
+    if (!version) throw new ORPCError('NOT_FOUND');
+    return version;
 }

@@ -1,0 +1,348 @@
+// Durable indexing and publication state. Dynamic vector tables are managed by the vector adapter.
+// Generated lexical columns and supplementary CHECK/partial UNIQUE constraints
+// are implemented in the reviewed indexing migration.
+
+enum DocumentContentState {
+  AVAILABLE
+  DELETING
+  PURGED
+}
+
+enum RagContentLanguage {
+  FR
+  EN
+  MIXED
+  UNDETERMINED
+}
+
+enum IndexGenerationStatus {
+  PROVISIONING
+  BUILDING
+  ACTIVE
+  FAILED
+  RETIRED
+  CLEANING
+  CLEANED
+}
+
+enum IndexedDocumentStatus {
+  STAGING
+  SEALED
+  PUBLISHED
+  RETIRED
+  CLEANING
+  CLEANED
+}
+
+enum IndexTaskKind {
+  PROVISION
+  INDEX_DOCUMENT
+  REMOVE_DOCUMENT
+  CLEAN_PUBLICATION
+  CLEAN_GENERATION
+}
+
+enum IndexTaskStatus {
+  PENDING
+  PROCESSING
+  COMPLETE
+  FAILED
+  CANCELLED
+}
+
+enum CollectionChangeKind {
+  UPSERT
+  REMOVE
+  COLLECTION_DELETE
+}
+
+enum GenerationChangeStatus {
+  PENDING
+  APPLIED
+}
+
+enum GenerationChangeEffect {
+  PUBLISHED
+  REMOVED
+  SUPERSEDED
+  COLLECTION_DELETED
+}
+
+enum SourceHoldState {
+  LIVE
+  RETIRED
+  RELEASED
+}
+
+enum RagChunkKind {
+  CHILD
+  PARENT
+}
+
+// Immutable executable profile/model/destination binding. Status/pointers/progress
+// change; table identity, configuration and verified model identity do not.
+model IndexGeneration {
+  id String @id @default(uuid())
+  organizationId String
+  collectionId String
+  collection Collection @relation("CollectionGenerations", fields: [organizationId, collectionId], references: [organizationId, id], onDelete: Cascade)
+  requestId String
+  configurationRevision Int
+  vectorConnectionId String
+  configuration CollectionConfigRevision @relation("GenerationConfiguration", fields: [organizationId, collectionId, configurationRevision, vectorConnectionId], references: [organizationId, collectionId, revision, vectorConnectionId], onDelete: NoAction)
+  vectorConnection VectorConnection @relation(fields: [organizationId, vectorConnectionId], references: [organizationId, id], onDelete: NoAction)
+  vectorSchema String @db.VarChar(63)
+  tableName String @db.VarChar(63)
+  destinationFingerprint String
+  modelIdentity String
+  capabilitySnapshot Json
+  chunkerVersion String
+  status IndexGenerationStatus @default(PROVISIONING)
+  snapshotSequence BigInt @default(0)
+  appliedSequence BigInt @default(0)
+  projectedChunks BigInt @default(0)
+  createdBy String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  activatedAt DateTime?
+  retiredAt DateTime?
+  cleanupAfter DateTime?
+  lastErrorCode String?
+  activeFor Collection[] @relation("ActiveCollectionGeneration")
+  documents GenerationDocument[]
+  publications IndexedDocument[]
+  tasks IndexTask[]
+  changes GenerationChange[]
+
+  @@unique([organizationId, id])
+  @@unique([organizationId, collectionId, id])
+  @@unique([organizationId, requestId])
+  @@unique([vectorConnectionId, vectorSchema, tableName])
+  @@index([organizationId, collectionId, status])
+}
+
+// Bounded per-generation document state. Retained after detach so monotonically
+// increasing buildRevision prevents detach/reattach from reusing purged IDs.
+model GenerationDocument {
+  organizationId String
+  collectionId String
+  generationId String
+  generation IndexGeneration @relation(fields: [organizationId, collectionId, generationId], references: [organizationId, collectionId, id], onDelete: Cascade)
+  documentId String
+  document Document @relation(fields: [organizationId, documentId], references: [organizationId, id], onDelete: NoAction)
+  desiredVersionId String?
+  desiredVersion DocumentVersion? @relation("DesiredSourceVersion", fields: [organizationId, documentId, desiredVersionId], references: [organizationId, documentId, id], onDelete: NoAction)
+  desiredExtractionId String?
+  desiredExtraction DocumentExtraction? @relation("DesiredExtraction", fields: [organizationId, desiredVersionId, desiredExtractionId], references: [organizationId, versionId, id], onDelete: NoAction)
+  desiredMetadataRevision Int @default(0)
+  desiredChangeSequence BigInt @default(0)
+  buildRevision Int @default(0)
+  targetChunkCount Int @default(0)
+  publishedIndexedDocumentId String?
+  publishedIndexedDocument IndexedDocument? @relation("PublishedDocument", fields: [organizationId, generationId, documentId, publishedIndexedDocumentId], references: [organizationId, generationId, documentId, id], onDelete: NoAction)
+  removedAt DateTime?
+  lastErrorCode String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@id([generationId, documentId])
+  @@unique([organizationId, generationId, documentId])
+  @@index([organizationId, documentId])
+}
+
+// One immutable candidate per build attempt, not just per source version: a
+// detached/re-attached or explicitly retried document can need a fresh vector ID.
+model IndexedDocument {
+  id String @id @default(uuid())
+  organizationId String
+  collectionId String
+  generationId String
+  generation IndexGeneration @relation(fields: [organizationId, collectionId, generationId], references: [organizationId, collectionId, id], onDelete: Cascade)
+  documentId String
+  sourceVersionId String
+  sourceVersion DocumentVersion @relation("IndexedSourceVersion", fields: [organizationId, documentId, sourceVersionId], references: [organizationId, documentId, id], onDelete: NoAction)
+  extractionId String
+  extraction DocumentExtraction @relation("IndexedExtraction", fields: [organizationId, sourceVersionId, extractionId], references: [organizationId, versionId, id], onDelete: NoAction)
+  extractorVersion String
+  buildRevision Int
+  metadataRevision Int
+  sourceChangeSequence BigInt
+  fileName String
+  mediaType String
+  language RagContentLanguage
+  tags String[] @default([])
+  metadata Json @default("{}")
+  documentCreatedAt DateTime
+  sourceCreatedAt DateTime
+  status IndexedDocumentStatus @default(STAGING)
+  chunkCount Int @default(0)
+  materializedChunks Int @default(0)
+  manifestHash String?
+  vectorSealedAt DateTime?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  publishedAt DateTime?
+  retiredAt DateTime?
+  publishedBy GenerationDocument[] @relation("PublishedDocument")
+  chunks Chunk[]
+  tasks IndexTask[]
+  sourceHold DocumentSourceHold?
+
+  @@unique([organizationId, generationId, id])
+  @@unique([organizationId, generationId, documentId, id])
+  @@unique([organizationId, sourceVersionId, id])
+  @@unique([organizationId, generationId, documentId, buildRevision])
+  @@index([organizationId, generationId, status])
+  @@index([organizationId, sourceVersionId])
+}
+
+// Canonical text and immutable provenance remain in the application database.
+// A reviewed SQL trigger maintains DB-owned tsvectors; explicit empty defaults
+// preserve Prisma createMany and schema-diff parity. See protocol.md.
+model Chunk {
+  id String @id @default(uuid())
+  organizationId String
+  generationId String
+  indexedDocumentId String
+  indexedDocument IndexedDocument @relation(fields: [organizationId, generationId, indexedDocumentId], references: [organizationId, generationId, id], onDelete: Cascade)
+  ordinal Int
+  kind RagChunkKind @default(CHILD)
+  text String
+  textHash String
+  embeddingInputHash String
+  sourceSpans Json
+  language RagContentLanguage
+  tokenCount Int
+  tokenCountIsEstimate Boolean @default(true)
+  parentId String?
+  parent Chunk? @relation("ChunkParent", fields: [organizationId, indexedDocumentId, parentId], references: [organizationId, indexedDocumentId, id], onDelete: NoAction, onUpdate: NoAction)
+  children Chunk[] @relation("ChunkParent")
+  lexicalFrench Unsupported("tsvector") @default(dbgenerated("''::tsvector"))
+  lexicalEnglish Unsupported("tsvector") @default(dbgenerated("''::tsvector"))
+  lexicalSimple Unsupported("tsvector") @default(dbgenerated("''::tsvector"))
+  createdAt DateTime @default(now())
+
+  @@unique([organizationId, indexedDocumentId, id])
+  @@unique([indexedDocumentId, ordinal])
+  @@index([organizationId, generationId, indexedDocumentId])
+  @@index([lexicalFrench], type: Gin)
+  @@index([lexicalEnglish], type: Gin)
+  @@index([lexicalSimple], type: Gin)
+}
+
+// There is no FK to a member: accepted cleanup must survive requester removal.
+model IndexTask {
+  id String @id @default(uuid())
+  organizationId String
+  collectionId String
+  generationId String
+  generation IndexGeneration @relation(fields: [organizationId, collectionId, generationId], references: [organizationId, collectionId, id], onDelete: Cascade)
+  indexedDocumentId String?
+  indexedDocument IndexedDocument? @relation(fields: [organizationId, generationId, indexedDocumentId], references: [organizationId, generationId, id], onDelete: NoAction)
+  changeSequence BigInt?
+  change GenerationChange? @relation(fields: [organizationId, generationId, changeSequence], references: [organizationId, generationId, sequence], onDelete: NoAction)
+  kind IndexTaskKind
+  dedupeKey String
+  requestedBy String
+  status IndexTaskStatus @default(PENDING)
+  stage String @default("ACCEPTED")
+  availableAt DateTime @default(now())
+  attempts Int @default(0)
+  leaseEpoch BigInt @default(0)
+  leaseToken String?
+  leasedUntil DateTime?
+  reservedChunks Int @default(0)
+  completedChunks Int @default(0)
+  errorCode String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  completedAt DateTime?
+
+  @@unique([organizationId, dedupeKey])
+  @@index([status, availableAt, leasedUntil])
+  @@index([organizationId, collectionId, status])
+}
+
+// Atomic mutation outbox and ordered catch-up log; metadata is a validated
+// snapshot, so later metadata edits cannot change replay of an accepted event.
+model CollectionChange {
+  id String @id @default(uuid())
+  organizationId String
+  collectionId String
+  collection Collection @relation(fields: [organizationId, collectionId], references: [organizationId, id], onDelete: Cascade)
+  sequence BigInt
+  kind CollectionChangeKind
+  documentId String?
+  document Document? @relation(fields: [organizationId, documentId], references: [organizationId, id], onDelete: NoAction)
+  sourceVersionId String?
+  sourceVersion DocumentVersion? @relation("ChangedSourceVersion", fields: [organizationId, documentId, sourceVersionId], references: [organizationId, documentId, id], onDelete: NoAction)
+  extractionId String?
+  extraction DocumentExtraction? @relation("ChangedExtraction", fields: [organizationId, sourceVersionId, extractionId], references: [organizationId, versionId, id], onDelete: NoAction)
+  metadataRevision Int?
+  language RagContentLanguage?
+  tags String[] @default([])
+  metadata Json @default("{}")
+  createdAt DateTime @default(now())
+  dispatchAttempts Int @default(0)
+  availableAt DateTime @default(now())
+  dispatchedAt DateTime?
+  errorCode String?
+  receipts GenerationChange[]
+
+  @@unique([organizationId, collectionId, sequence])
+  @@index([availableAt, dispatchedAt])
+}
+
+// Explicit per-generation acknowledgement prevents advancing the watermark
+// past a missing or incomplete change merely because a later task completed.
+model GenerationChange {
+  organizationId String
+  collectionId String
+  generationId String
+  generation IndexGeneration @relation(fields: [organizationId, collectionId, generationId], references: [organizationId, collectionId, id], onDelete: Cascade)
+  sequence BigInt
+  change CollectionChange @relation(fields: [organizationId, collectionId, sequence], references: [organizationId, collectionId, sequence], onDelete: NoAction)
+  status GenerationChangeStatus @default(PENDING)
+  effect GenerationChangeEffect?
+  createdAt DateTime @default(now())
+  appliedAt DateTime?
+  tasks IndexTask[]
+
+  @@id([generationId, sequence])
+  @@unique([organizationId, generationId, sequence])
+  @@index([organizationId, generationId, status, sequence])
+}
+
+// The compound candidate FK proves that versionId is that candidate's source,
+// rather than merely another version in the same organization.
+model DocumentSourceHold {
+  id String @id @default(uuid())
+  organizationId String
+  versionId String
+  version DocumentVersion @relation(fields: [organizationId, versionId], references: [organizationId, id], onDelete: NoAction)
+  indexedDocumentId String @unique
+  indexedDocument IndexedDocument @relation(fields: [organizationId, versionId, indexedDocumentId], references: [organizationId, sourceVersionId, id], onDelete: Cascade)
+  state SourceHoldState @default(LIVE)
+  retainUntil DateTime?
+  releasedAt DateTime?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([organizationId, versionId, indexedDocumentId])
+  @@index([organizationId, versionId, state, retainUntil])
+}
+
+// Cached durable counters, updated in the same transactions as reservations,
+// chunk materialization/publication/retirement and acknowledged physical purge.
+model CollectionIndexAccounting {
+  collectionId String @id
+  organizationId String
+  collection Collection @relation(fields: [organizationId, collectionId], references: [organizationId, id], onDelete: Cascade)
+  activeChunks BigInt @default(0)
+  retainedChunks BigInt @default(0)
+  reservedChunks BigInt @default(0)
+  revision BigInt @default(0)
+  updatedAt DateTime @updatedAt
+
+  @@unique([organizationId, collectionId])
+}

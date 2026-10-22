@@ -10,7 +10,14 @@ export const setRagQuotaContract = oc
     })
     .input(
         z
-            .object({ organizationId: z.string().min(1), limits: quotaValues })
+            .object({
+                organizationId: z.string().min(1),
+                limits: quotaValues.extend({
+                    // Compatible old clients preserve the current temporary allowance.
+                    temporaryChunksPerCollection:
+                        quotaValues.shape.temporaryChunksPerCollection.optional(),
+                }),
+            })
             .strict()
     )
     .output(quotaValues);

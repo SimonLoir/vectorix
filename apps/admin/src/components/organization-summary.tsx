@@ -1,4 +1,5 @@
 'use client';
+import { useTranslations } from 'next-intl';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useORPC } from '@/hooks/use-orpc';
 import { Button } from '@repo/ui/button';
@@ -11,6 +12,7 @@ export function OrganizationSummary({
 }: {
     readonly organizationId: string;
 }) {
+    const tr = useTranslations('admin.core');
     const { orpc } = useORPC();
     const cache = useQueryClient();
     const query = useQuery(
@@ -22,13 +24,13 @@ export function OrganizationSummary({
         orpc.superadmin.organizations.update.mutationOptions({
             onSuccess: async () => {
                 await cache.invalidateQueries();
-                toast.success('Organisation enregistrée');
+                toast.success(tr('organizationSaved'));
             },
-            onError: (error) => toast.error(error.message),
+            onError: () => toast.error(tr('saveFailed')),
         })
     );
-    if (query.isPending) return <p>Chargement…</p>;
-    if (query.isError) return <p role='alert'>{query.error.message}</p>;
+    if (query.isPending) return <p>{tr('loading')}</p>;
+    if (query.isError) return <p role='alert'>{tr('loadFailed')}</p>;
     const organization = query.data;
     return (
         <div className='space-y-6'>
@@ -52,7 +54,7 @@ export function OrganizationSummary({
                         }}
                     >
                         <label className='block'>
-                            Nom
+                            {tr('name')}
                             <Input
                                 name='name'
                                 required
@@ -60,7 +62,7 @@ export function OrganizationSummary({
                             />
                         </label>
                         <label className='block'>
-                            Identifiant
+                            {tr('identifier')}
                             <Input
                                 name='slug'
                                 required
@@ -73,10 +75,10 @@ export function OrganizationSummary({
                                 type='checkbox'
                                 defaultChecked={organization.isActive}
                             />
-                            Organisation active
+                            {tr('organizationActive')}
                         </label>
                         <Button disabled={mutation.isPending}>
-                            Enregistrer
+                            {tr('save')}
                         </Button>
                     </form>
                 </CardContent>

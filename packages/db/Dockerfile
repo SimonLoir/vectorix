@@ -24,6 +24,7 @@ ENV CI=true
 RUN apk add --no-cache python3 make g++
 
 COPY pnpm-lock.yaml pnpm-workspace.yaml package.json turbo.json ./
+COPY patches ./patches
 COPY packages ./packages
 
 RUN --mount=type=cache,id=pnpm-store-v11,target=/pnpm/store,sharing=locked \

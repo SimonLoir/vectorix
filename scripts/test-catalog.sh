@@ -6,7 +6,7 @@ prefix="vectorix-catalog-${RANDOM}-$$"
 cleanup() {
     result=$?
     if (( result != 0 )); then docker logs --tail 40 "$prefix-postgres" >&2 || true; fi
-    docker rm -fv "$prefix-postgres" "$prefix-redis" "$prefix-rustfs" >/dev/null 2>&1 || true
+    docker rm -fv "$prefix-postgres" "$prefix-redis" "$prefix-rustfs" "$prefix-vector" >/dev/null 2>&1 || true
     exit "$result"
 }
 trap cleanup EXIT
@@ -38,8 +38,12 @@ for migration in 20261023000000_openai_mistral_credentials 20261024000000_docume
     pnpm --filter @repo/db exec prisma migrate resolve --applied "$migration"
 done
 sql vectorix_upgrade_test < tests/catalog/lifecycle-upgrade-seed.sql
+sql vectorix_upgrade_test < packages/db/prisma/migrations/20261025000000_document_lifecycle/migration.sql
+pnpm --filter @repo/db exec prisma migrate resolve --applied 20261025000000_document_lifecycle
+sql vectorix_upgrade_test < tests/catalog/indexing-upgrade-seed.sql
 for attempt in 1 2; do pnpm --filter @repo/db migrate:deploy; done
 sql vectorix_upgrade_test < tests/catalog/lifecycle-upgrade-check.sql
+sql vectorix_upgrade_test < tests/catalog/indexing-upgrade-check.sql
 sql vectorix_upgrade_test < tests/catalog/provider-upgrade-check.sql
 sql vectorix_upgrade_test < tests/catalog/document-upgrade-check.sql
 sql vectorix_upgrade_test < tests/catalog/upgrade-check.sql
@@ -80,5 +84,21 @@ docker run --rm --network "container:$prefix-rustfs" \
     -e AWS_EC2_METADATA_DISABLED=true -e S3_BUCKET="$VECTORIX_DEFAULT_S3_BUCKET" \
     -v "$PWD/infra/s3:/scripts:ro" --entrypoint /bin/sh \
     amazon/aws-cli:2.31.22@sha256:bf253be91e12d49ba1bd6dc939a76ea9777901772032692b14639e643118e1c1 /scripts/init-bucket.sh
+# Isolated native pgvector/pgvectorscale storage for first-index/search journeys.
+docker run -d --name "$prefix-vector" -p 127.0.0.1::5432 \
+    -e POSTGRES_PASSWORD=catalog-vector-admin -e POSTGRES_DB=vectorix_catalog_vectors_test \
+    -e VECTOR_PROVISIONER_PASSWORD=catalog-vector-indexer -e VECTOR_RUNTIME_PASSWORD=catalog-vector-runtime \
+    "${VECTOR_POSTGRES_IMAGE:-pxdv.be/vectorix/postgres-vector:local}" >/dev/null
+ready=false
+for attempt in {1..60}; do
+    if docker exec "$prefix-vector" pg_isready -U postgres -d vectorix_catalog_vectors_test >/dev/null 2>&1; then ready=true; break; fi
+    sleep 1
+done
+[[ "$ready" == true ]]
+vector_port=$(docker port "$prefix-vector" 5432/tcp | cut -d: -f2)
+export VECTOR_DATABASE_URL="postgresql://vectorix_runtime:catalog-vector-runtime@127.0.0.1:$vector_port/vectorix_catalog_vectors_test"
+export VECTOR_DATABASE_PROVISIONING_URL="postgresql://vectorix_indexer:catalog-vector-indexer@127.0.0.1:$vector_port/vectorix_catalog_vectors_test"
+export VECTOR_DATABASE_SCHEMA=vector_collections
+export VECTORIX_EMBEDDING_ALLOWED_ENDPOINTS=
 pnpm --filter api test:integration
 printf 'Fresh install, upgrade, repeat deployment, schema parity, core journeys, and RAG access tests passed.\n'

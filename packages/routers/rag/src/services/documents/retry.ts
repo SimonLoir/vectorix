@@ -17,7 +17,8 @@ export function retryDocument(context: AuthorizedContext, id: string) {
         if (
             !version?.ingestion ||
             version.ingestion.status !== 'FAILED' ||
-            version.discardedAt
+            version.discardedAt ||
+            version.contentState !== 'AVAILABLE'
         )
             throw new ORPCError('CONFLICT', {
                 message:

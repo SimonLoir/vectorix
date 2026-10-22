@@ -140,29 +140,12 @@ export async function setup() {
     }
 }
 
-/** Remove only this test's organizations. Cascades must also remove referenced destinations and grants. */
+/**
+ * The catalog runner owns and destroys this database and S3 container after the
+ * suite. Retained fixtures include intentionally unavailable historical storage
+ * endpoints, so teardown never fabricates a successful purge to bypass guards.
+ * Clean-organization cascades are covered by the dedicated source-hold journey.
+ */
 export async function cleanup() {
-    await prisma.superAdminAuditLog.deleteMany({
-        where: { userId: { in: fixture.users } },
-    });
-    await prisma.apikey.deleteMany({
-        where: { referenceId: { in: [fixture.org, fixture.otherOrg] } },
-    });
-    await prisma.organization.deleteMany({
-        where: { id: { in: [fixture.org, fixture.otherOrg] } },
-    });
-    await prisma.user.deleteMany({ where: { id: { in: fixture.users } } });
-    assert.equal(
-        await prisma.credentials.count({
-            where: { organizationId: fixture.org },
-        }),
-        0
-    );
-    assert.equal(
-        await prisma.storageLocation.count({
-            where: { organizationId: fixture.org },
-        }),
-        0
-    );
     await prisma.$disconnect();
 }

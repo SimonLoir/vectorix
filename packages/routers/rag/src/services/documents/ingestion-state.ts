@@ -3,6 +3,7 @@ import { getMemberPermissions } from '@repo/auth/permissions/resolve';
 import { permits } from '@repo/auth/permissions';
 import { runSerializableTransaction } from '@routers/utils/transactions';
 import { libraryWrite } from './access';
+import { publishDocumentChanges } from '../indexing/changes';
 
 /** Only the current live attempt may perform new external writes. */
 export async function ingestionMayWrite(
@@ -17,6 +18,7 @@ export async function ingestionMayWrite(
             leasedUntil: { gt: new Date() },
             version: {
                 discardedAt: null,
+                contentState: 'AVAILABLE',
                 document: { deletedAt: null, organization: { isActive: true } },
             },
         },
@@ -83,7 +85,7 @@ export function publishExtraction(
         });
         await tx.documentVersion.update({
             where: { id: input.versionId },
-            data: { status: 'READY' },
+            data: { status: 'READY', contentFence: { increment: 1 } },
         });
         await tx.document.update({
             where: { id: task.version.documentId },
@@ -91,6 +93,11 @@ export function publishExtraction(
                 status: 'READY',
                 name: task.version.fileName ?? task.version.document.name,
             },
+        });
+        await publishDocumentChanges(tx, {
+            organizationId: task.organizationId,
+            documentId: task.version.documentId,
+            requestedBy: task.requestedBy,
         });
         await tx.ragAuditLog.create({
             data: {
@@ -149,6 +156,8 @@ export function recordIngestionFailure(
             data: {
                 status: version.document.deletedAt ? 'DELETED' : 'FAILED',
                 discardedAt: input.discard ? new Date() : undefined,
+                contentState: input.discard ? 'PURGED' : undefined,
+                contentFence: { increment: 1 },
             },
         });
         const latest = await tx.documentVersion.findFirst({
@@ -165,6 +174,7 @@ export function recordIngestionFailure(
                 documentId: version.documentId,
                 status: 'READY',
                 discardedAt: null,
+                contentState: 'AVAILABLE',
             },
         });
         if (

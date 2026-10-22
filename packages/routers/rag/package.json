@@ -12,7 +12,11 @@
         "./credentials": "./src/services/credential-resolution.ts",
         "./quotas": "./src/services/quotas.ts",
         "./ingestion": "./src/services/documents/process.ts",
-        "./cleanup": "./src/services/documents/cleanup.ts"
+        "./cleanup": "./src/services/documents/cleanup.ts",
+        "./source-holds": "./src/services/indexing/source-holds.ts",
+        "./indexing-changes": "./src/services/indexing/changes.ts",
+        "./indexing": "./src/services/indexing/process.ts",
+        "./indexing-runtime": "./src/services/indexing/generation-adapter.ts"
     },
     "scripts": {
         "check-types": "tsc6 -p tsconfig.json --noEmit",
@@ -33,6 +37,9 @@
         "@repo/db": "workspace:*",
         "zod": "^4.6.5",
         "@repo/storage": "workspace:*",
-        "@repo/documents": "workspace:*"
+        "@repo/documents": "workspace:*",
+        "@repo/embeddings": "workspace:*",
+        "@repo/chunking": "workspace:*",
+        "@repo/vector-store": "workspace:*"
     }
 }

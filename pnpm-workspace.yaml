@@ -11,3 +11,5 @@ allowBuilds:
     esbuild: true
     msgpackr-extract: true
     prisma: true
+patchedDependencies:
+    '@pixeldrive/prisma-zod-generator@2.1.4': patches/@pixeldrive__prisma-zod-generator@2.1.4.patch

@@ -5,7 +5,7 @@ import { collectionProfile } from '@repo/api-contracts/v1/rag/collections';
 import { useORPC } from '@/hooks/use-orpc';
 import { Button } from '@repo/ui/button';
 import { CatalogDialog } from '../catalog-dialog';
-import { ActionError, useCatalogAction } from '../catalog-action';
+import { IndexError, useIndexAction } from '../indexing/index-state';
 import { TextField, AreaField, CheckField } from '../form-fields';
 import { ProfileFields } from './profile-fields';
 import type { Collection } from '../types';
@@ -17,7 +17,7 @@ export function CollectionForm({
     const tr = useTranslations('rag');
     const { client } = useORPC();
     const router = useRouter();
-    const mutation = useCatalogAction();
+    const mutation = useIndexAction();
     return (
         <CatalogDialog
             title={existing ? tr('collections.edit') : tr('collections.create')}
@@ -33,6 +33,8 @@ export function CollectionForm({
                     let savedId: string | undefined;
                     void mutation.run(
                         async () => {
+                            if (data.get('metadataFieldsValid') !== 'true')
+                                throw new Error(tr('indexing.invalidFields'));
                             const number = (key: string) =>
                                 Number(data.get(key));
                             const profile = collectionProfile.parse({
@@ -41,6 +43,10 @@ export function CollectionForm({
                                 dimensions: number('dimensions'),
                                 indexType: data.get('indexType'),
                                 preparation: data.get('preparation'),
+                                embeddingPreset: data.get('embeddingPreset'),
+                                metadataFields: JSON.parse(
+                                    String(data.get('metadataFields') ?? '{}')
+                                ) as unknown,
                                 chunkingStrategy: data.get('chunkingStrategy'),
                                 parentChild: data.has('parentChild'),
                                 chunking: {
@@ -97,7 +103,10 @@ export function CollectionForm({
                         defaultValue={existing?.description ?? ''}
                         rows={2}
                     />
-                    <ProfileFields configuration={existing?.configuration} />
+                    <ProfileFields
+                        configuration={existing?.configuration}
+                        collectionId={existing?.id}
+                    />
                     {!existing && (
                         <CheckField
                             name='grantCreatorRead'
@@ -109,7 +118,7 @@ export function CollectionForm({
                         {tr('collections.bindingHint')}
                     </p>
                 </fieldset>
-                <ActionError error={mutation.error} />
+                <IndexError error={mutation.error} />
                 <div className='flex justify-end gap-2'>
                     <Button
                         type='button'
