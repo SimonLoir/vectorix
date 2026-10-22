@@ -1,3 +1,5 @@
+'use client';
+import { useTranslations, useFormatter } from 'next-intl';
 import type { VectorixApiV1Outputs } from '@repo/api';
 import { Badge } from '@repo/ui/badge';
 import { Checkbox } from '@repo/ui/checkbox';
@@ -17,6 +19,8 @@ export function OrganizationFeatureCard({
     onToggle?: (checked: boolean) => void;
     disabled?: boolean;
 }>) {
+    const tr = useTranslations('admin.core');
+    const format = useFormatter();
     return (
         <div
             className={`rounded-2xl border p-4 ${(selected ?? feature.enabled) ? 'border-cyan-400/20 bg-cyan-400/[0.035]' : 'border-white/8 bg-white/[0.015]'}`}
@@ -42,7 +46,7 @@ export function OrganizationFeatureCard({
                         </Badge>
                         {feature.isActive ? null : (
                             <Badge variant='destructive'>
-                                Désactivée globalement
+                                {tr('globallyDisabled')}
                             </Badge>
                         )}
                     </div>
@@ -60,26 +64,28 @@ export function OrganizationFeatureCard({
                 ) : null}
             </div>
             <p className='mt-3 text-sm leading-5 text-slate-500'>
-                {feature.description ?? 'Aucune description'}
+                {feature.description ?? tr('noDescription')}
             </p>
             {feature.override?.expiresAt ? (
                 <p className='mt-3 text-xs text-amber-200'>
-                    Attribution actuelle jusqu’au{' '}
-                    {new Date(feature.override.expiresAt).toLocaleString(
-                        'fr-BE'
-                    )}
+                    {tr('overrideUntil', {
+                        date: format.dateTime(
+                            new Date(feature.override.expiresAt),
+                            { dateStyle: 'medium', timeStyle: 'short' }
+                        ),
+                    })}
                 </p>
             ) : null}
             <p className='mt-4 border-t border-white/8 pt-3 text-xs text-slate-400'>
                 {selected === undefined
                     ? feature.enabled
-                        ? 'Module accessible'
-                        : 'Module désactivé'
+                        ? tr('moduleAvailable')
+                        : tr('moduleDisabled')
                     : selected
                       ? feature.isActive
-                          ? 'Sélectionnée'
-                          : 'Sélectionnée, accès global désactivé'
-                      : 'Non sélectionnée'}
+                          ? tr('selected')
+                          : tr('selectedGloballyDisabled')
+                      : tr('notSelected')}
             </p>
         </div>
     );

@@ -1,4 +1,5 @@
 'use client';
+import { useTranslations, useFormatter } from 'next-intl';
 
 import Link from 'next/link';
 import { useDeferredValue, useState } from 'react';
@@ -22,6 +23,8 @@ import { StatusBadge } from './status-badge';
 type StatusFilter = 'all' | 'active' | 'inactive';
 
 export function OrganizationList() {
+    const tr = useTranslations('admin.core');
+    const format = useFormatter();
     const { orpc } = useORPC();
     const [search, setSearch] = useState('');
     const [status, setStatus] = useState<StatusFilter>('all');
@@ -47,6 +50,7 @@ export function OrganizationList() {
                     {(['all', 'active', 'inactive'] as const).map((value) => (
                         <button
                             key={value}
+                            aria-pressed={status === value}
                             type='button'
                             className={`rounded-lg px-3.5 py-2 text-xs font-medium transition-all ${
                                 status === value
@@ -59,10 +63,10 @@ export function OrganizationList() {
                             }}
                         >
                             {value === 'all'
-                                ? 'Toutes'
+                                ? tr('all')
                                 : value === 'active'
-                                  ? 'Actives'
-                                  : 'Inactives'}
+                                  ? tr('active')
+                                  : tr('inactive')}
                         </button>
                     ))}
                 </div>
@@ -70,7 +74,8 @@ export function OrganizationList() {
                     <Search className='absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400' />
                     <Input
                         className='admin-field border-0 bg-black/20 pl-10 focus-visible:ring-1'
-                        placeholder='Rechercher une organisation…'
+                        placeholder={tr('organizationSearch')}
+                        aria-label={tr('organizationSearch')}
                         value={search}
                         onChange={(event) => {
                             setSearch(event.target.value);
@@ -86,23 +91,25 @@ export function OrganizationList() {
                         <LoadingState />
                     ) : query.isError ? (
                         <p className='p-6 text-sm text-destructive'>
-                            {query.error.message}
+                            {tr('loadFailed')}
                         </p>
                     ) : (
                         <Table>
                             <TableHeader>
                                 <TableRow className='border-white/8 bg-white/[0.025] hover:bg-white/[0.025]'>
                                     <TableHead className='h-12 pl-6 text-[11px] font-semibold uppercase tracking-wider text-slate-400'>
-                                        Organisation
+                                        {tr('organization')}
                                     </TableHead>
-                                    <TableHead>Statut</TableHead>
-                                    <TableHead>Accès Vectorix</TableHead>
-                                    <TableHead>Utilisation</TableHead>
+                                    <TableHead>{tr('status')}</TableHead>
+                                    <TableHead>
+                                        {tr('vectorixAccess')}
+                                    </TableHead>
+                                    <TableHead>{tr('usage')}</TableHead>
                                     <TableHead className='hidden xl:table-cell'>
-                                        Création
+                                        {tr('created')}
                                     </TableHead>
                                     <TableHead className='pr-6 text-right'>
-                                        Actions
+                                        {tr('actions')}
                                     </TableHead>
                                 </TableRow>
                             </TableHeader>
@@ -138,32 +145,41 @@ export function OrganizationList() {
                                             <TableCell>
                                                 <span className='rounded-lg bg-white/7 px-2.5 py-1 text-xs font-medium text-slate-300'>
                                                     {organization.vectorixLegacyAccess
-                                                        ? 'Legacy'
-                                                        : 'Fournisseur externe'}
+                                                        ? tr('legacy')
+                                                        : tr(
+                                                              'externalProvider'
+                                                          )}
                                                 </span>
                                             </TableCell>
                                             <TableCell className='text-xs text-slate-500'>
                                                 <div className='flex items-center gap-3'>
                                                     <span className='flex items-center gap-1'>
                                                         <Users className='h-3.5 w-3.5 text-slate-400' />
-                                                        {
-                                                            organization._count
-                                                                .members
-                                                        }
+                                                        {tr(
+                                                            'organizationMemberCount',
+                                                            {
+                                                                count: organization
+                                                                    ._count
+                                                                    .members,
+                                                            }
+                                                        )}
                                                     </span>
                                                     <span>
-                                                        {
-                                                            organization._count
-                                                                .vectorixFeatureOverrides
-                                                        }{' '}
-                                                        licences
+                                                        {tr('licenseCount', {
+                                                            count: organization
+                                                                ._count
+                                                                .vectorixFeatureOverrides,
+                                                        })}
                                                     </span>
                                                 </div>
                                             </TableCell>
                                             <TableCell className='hidden whitespace-nowrap text-xs text-muted-foreground xl:table-cell'>
-                                                {new Date(
-                                                    organization.createdAt
-                                                ).toLocaleDateString('fr-BE')}
+                                                {format.dateTime(
+                                                    new Date(
+                                                        organization.createdAt
+                                                    ),
+                                                    { dateStyle: 'medium' }
+                                                )}
                                             </TableCell>
                                             <TableCell className='pr-6 text-right'>
                                                 <Button
@@ -175,7 +191,7 @@ export function OrganizationList() {
                                                     <Link
                                                         href={`/organizations/${organization.id}`}
                                                     >
-                                                        Ouvrir
+                                                        {tr('open')}
                                                         <ArrowUpRight className='h-4 w-4' />
                                                     </Link>
                                                 </Button>
@@ -189,7 +205,7 @@ export function OrganizationList() {
                                             colSpan={6}
                                             className='h-32 text-center'
                                         >
-                                            Aucune organisation trouvée.
+                                            {tr('noOrganizations')}
                                         </TableCell>
                                     </TableRow>
                                 ) : null}
@@ -200,7 +216,9 @@ export function OrganizationList() {
             </Card>
 
             <div className='flex items-center justify-between px-1 text-sm text-slate-400'>
-                <span>{query.data?.total ?? 0} organisation(s)</span>
+                <span>
+                    {tr('organizationCount', { count: query.data?.total ?? 0 })}
+                </span>
                 <div className='flex items-center gap-2'>
                     <Button
                         size='sm'
@@ -208,10 +226,10 @@ export function OrganizationList() {
                         disabled={page <= 1}
                         onClick={() => setPage((current) => current - 1)}
                     >
-                        Précédent
+                        {tr('previous')}
                     </Button>
                     <span className='px-2 text-xs'>
-                        {page} / {pageCount}
+                        {tr('pagination', { page, total: pageCount })}
                     </span>
                     <Button
                         size='sm'
@@ -219,7 +237,7 @@ export function OrganizationList() {
                         disabled={page >= pageCount}
                         onClick={() => setPage((current) => current + 1)}
                     >
-                        Suivant
+                        {tr('next')}
                     </Button>
                 </div>
             </div>

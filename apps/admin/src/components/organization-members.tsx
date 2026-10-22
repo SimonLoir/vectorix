@@ -1,4 +1,5 @@
 'use client';
+import { useTranslations, useFormatter } from 'next-intl';
 
 import { useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
@@ -45,12 +46,6 @@ type SelectedMember = {
     role: string;
 };
 
-const roleLabels: Record<string, string> = {
-    owner: 'Propriétaire',
-    admin: 'Administrateur',
-    member: 'Membre',
-};
-
 function initials(name: string) {
     return name
         .split(/\s+/)
@@ -66,6 +61,13 @@ export function OrganizationMembers({
 }: {
     readonly organizationId: string;
 }) {
+    const tr = useTranslations('admin.core');
+    const format = useFormatter();
+    const roleLabels: Record<string, string> = {
+        owner: tr('owner'),
+        admin: tr('administrator'),
+        member: tr('member'),
+    };
     const { orpc } = useORPC();
     const queryClient = useQueryClient();
     const [memberToRemove, setMemberToRemove] = useState<SelectedMember | null>(
@@ -78,29 +80,26 @@ export function OrganizationMembers({
     const updateRole = useMutation(
         orpc.superadmin.organizations.members.updateRole.mutationOptions({
             onSuccess: async () => {
-                toast.success('Rôle mis à jour');
+                toast.success(tr('roleUpdated'));
                 await queryClient.invalidateQueries(queryOptions);
             },
-            onError: (error) => toast.error(error.message),
+            onError: () => toast.error(tr('saveFailed')),
         })
     );
     const remove = useMutation(
         orpc.superadmin.organizations.members.remove.mutationOptions({
             onSuccess: async () => {
-                toast.success('Membre retiré de l’organisation');
+                toast.success(tr('memberRemoved'));
                 setMemberToRemove(null);
                 await queryClient.invalidateQueries(queryOptions);
             },
-            onError: (error) => toast.error(error.message),
+            onError: () => toast.error(tr('saveFailed')),
         })
     );
 
-    if (query.isPending)
-        return <LoadingState label='Chargement des membres…' />;
+    if (query.isPending) return <LoadingState label={tr('membersLoading')} />;
     if (query.isError) {
-        return (
-            <p className='text-sm text-destructive'>{query.error.message}</p>
-        );
+        return <p className='text-sm text-destructive'>{tr('loadFailed')}</p>;
     }
 
     return (
@@ -112,11 +111,12 @@ export function OrganizationMembers({
                             <span className='grid h-9 w-9 place-items-center rounded-xl bg-indigo-400/10 text-indigo-300'>
                                 <Users className='h-4 w-4' />
                             </span>
-                            Membres de l’organisation
+                            {tr('organizationMembers')}
                         </CardTitle>
                         <p className='mt-1 text-sm text-muted-foreground'>
-                            {query.data.members.length} compte(s) ont accès à
-                            cet espace.
+                            {tr('memberCount', {
+                                count: query.data.members.length,
+                            })}
                         </p>
                     </div>
                     <AddOrganizationMemberDialog
@@ -129,13 +129,13 @@ export function OrganizationMembers({
                             <TableHeader>
                                 <TableRow className='border-white/8 bg-white/[0.025] hover:bg-white/[0.025]'>
                                     <TableHead className='h-12 pl-6 text-[11px] font-semibold uppercase tracking-wider text-slate-400'>
-                                        Utilisateur
+                                        {tr('user')}
                                     </TableHead>
-                                    <TableHead>Statut</TableHead>
-                                    <TableHead>Rôle</TableHead>
-                                    <TableHead>Ajouté le</TableHead>
+                                    <TableHead>{tr('status')}</TableHead>
+                                    <TableHead>{tr('role')}</TableHead>
+                                    <TableHead>{tr('addedOn')}</TableHead>
                                     <TableHead className='pr-6 text-right'>
-                                        Action
+                                        {tr('action')}
                                     </TableHead>
                                 </TableRow>
                             </TableHeader>
@@ -177,11 +177,12 @@ export function OrganizationMembers({
                                                     variant='outline'
                                                     className='border-emerald-400/20 bg-emerald-400/10 text-emerald-300'
                                                 >
-                                                    <CheckCircle2 /> Vérifié
+                                                    <CheckCircle2 />{' '}
+                                                    {tr('verified')}
                                                 </Badge>
                                             ) : (
                                                 <Badge variant='secondary'>
-                                                    Non vérifié
+                                                    {tr('unverified')}
                                                 </Badge>
                                             )}
                                         </TableCell>
@@ -197,7 +198,12 @@ export function OrganizationMembers({
                                                     })
                                                 }
                                             >
-                                                <SelectTrigger className='h-9 w-40 rounded-xl border-white/10 bg-black/15 shadow-none'>
+                                                <SelectTrigger
+                                                    aria-label={tr(
+                                                        'organizationRole'
+                                                    )}
+                                                    className='h-9 w-40 rounded-xl border-white/10 bg-black/15 shadow-none'
+                                                >
                                                     <SelectValue>
                                                         {roleLabels[
                                                             member.role
@@ -206,28 +212,30 @@ export function OrganizationMembers({
                                                 </SelectTrigger>
                                                 <SelectContent>
                                                     <SelectItem value='owner'>
-                                                        Propriétaire
+                                                        {tr('owner')}
                                                     </SelectItem>
                                                     <SelectItem value='admin'>
-                                                        Administrateur
+                                                        {tr('administrator')}
                                                     </SelectItem>
                                                     <SelectItem value='member'>
-                                                        Membre
+                                                        {tr('member')}
                                                     </SelectItem>
                                                 </SelectContent>
                                             </Select>
                                         </TableCell>
                                         <TableCell className='whitespace-nowrap text-sm text-muted-foreground'>
-                                            {new Date(
-                                                member.createdAt
-                                            ).toLocaleDateString('fr-BE')}
+                                            {format.dateTime(
+                                                new Date(member.createdAt),
+                                                { dateStyle: 'medium' }
+                                            )}
                                         </TableCell>
                                         <TableCell className='pr-6 text-right'>
                                             <Button
                                                 size='icon'
                                                 variant='ghost'
                                                 className='text-muted-foreground hover:text-destructive'
-                                                title='Retirer le membre'
+                                                title={tr('removeMember')}
+                                                aria-label={tr('removeMember')}
                                                 onClick={() =>
                                                     setMemberToRemove({
                                                         id: member.id,
@@ -249,9 +257,7 @@ export function OrganizationMembers({
                                             colSpan={5}
                                             className='h-40 text-center text-muted-foreground'
                                         >
-                                            Aucun membre. Ajoutez au moins un
-                                            propriétaire pour rendre l’espace
-                                            accessible.
+                                            {tr('noMembers')}
                                         </TableCell>
                                     </TableRow>
                                 ) : null}
@@ -269,17 +275,19 @@ export function OrganizationMembers({
             >
                 <AlertDialogContent>
                     <AlertDialogHeader>
-                        <AlertDialogTitle>Retirer ce membre ?</AlertDialogTitle>
+                        <AlertDialogTitle>
+                            {tr('removeMemberTitle')}
+                        </AlertDialogTitle>
                         <AlertDialogDescription>
-                            {memberToRemove?.name} ({memberToRemove?.email})
-                            perdra immédiatement l’accès à cette organisation.
-                            Son compte global et ses accès éventuels à d’autres
-                            organisations seront conservés.
+                            {tr('removeMemberDescription', {
+                                name: memberToRemove?.name ?? '',
+                                email: memberToRemove?.email ?? '',
+                            })}
                         </AlertDialogDescription>
                     </AlertDialogHeader>
                     <AlertDialogFooter>
                         <AlertDialogCancel disabled={remove.isPending}>
-                            Annuler
+                            {tr('cancel')}
                         </AlertDialogCancel>
                         <AlertDialogAction
                             disabled={remove.isPending || !memberToRemove}
@@ -293,7 +301,7 @@ export function OrganizationMembers({
                         >
                             {remove.isPending
                                 ? 'Suppression…'
-                                : 'Retirer le membre'}
+                                : tr('removeMember')}
                         </AlertDialogAction>
                     </AlertDialogFooter>
                 </AlertDialogContent>

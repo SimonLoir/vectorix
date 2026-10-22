@@ -8,6 +8,7 @@ const defaults = {
     originalBytes: 25 * 1024 * 1024,
     storageBytes: 10 * 1024 ** 3,
     chunksPerCollection: 100_000,
+    temporaryChunksPerCollection: 100_000,
 };
 const names = {
     collections: 'COLLECTIONS',
@@ -15,6 +16,7 @@ const names = {
     originalBytes: 'ORIGINAL_BYTES',
     storageBytes: 'STORAGE_BYTES',
     chunksPerCollection: 'CHUNKS_PER_COLLECTION',
+    temporaryChunksPerCollection: 'TEMPORARY_CHUNKS_PER_COLLECTION',
 } as const;
 /** Per-organization overrides replace deployment defaults; invalid limits fail closed. */
 export async function quotaLimits(
@@ -29,6 +31,7 @@ export async function quotaLimits(
               collections: stored.collections,
               documents: stored.documents,
               chunksPerCollection: stored.chunksPerCollection,
+              temporaryChunksPerCollection: stored.temporaryChunksPerCollection,
               originalBytes: Number(stored.originalBytes),
               storageBytes: Number(stored.storageBytes),
           }
@@ -66,7 +69,7 @@ export async function quotaUsage(
                 _sum: { byteSize: true },
             }),
             db.documentExtraction.aggregate({
-                where: { organizationId },
+                where: { organizationId, discardedAt: null },
                 _sum: { byteSize: true },
             }),
             db.documentIngestion.aggregate({

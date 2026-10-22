@@ -1,4 +1,5 @@
 'use client';
+import { useTranslations } from 'next-intl';
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
@@ -30,6 +31,7 @@ function toSlug(value: string) {
 }
 
 export function CreateOrganizationDialog() {
+    const tr = useTranslations('admin.core');
     const { orpc } = useORPC();
     const router = useRouter();
     const queryClient = useQueryClient();
@@ -40,12 +42,12 @@ export function CreateOrganizationDialog() {
     const mutation = useMutation(
         orpc.superadmin.organizations.create.mutationOptions({
             onSuccess: async (organization) => {
-                toast.success('Organisation créée');
+                toast.success(tr('organizationCreated'));
                 setOpen(false);
                 await queryClient.invalidateQueries();
                 router.push(`/organizations/${organization.id}`);
             },
-            onError: (error) => toast.error(error.message),
+            onError: () => toast.error(tr('saveFailed')),
         })
     );
 
@@ -63,15 +65,17 @@ export function CreateOrganizationDialog() {
             <DialogTrigger asChild>
                 <Button className='rounded-xl shadow-sm'>
                     <Plus className='h-4 w-4' />
-                    Nouvelle organisation
+                    {tr('newOrganization')}
                 </Button>
             </DialogTrigger>
-            <DialogContent className='rounded-2xl border-white/10 bg-[#101827] p-0 sm:max-w-xl'>
+            <DialogContent
+                closeLabel={tr('close')}
+                className='rounded-2xl border-white/10 bg-[#101827] p-0 sm:max-w-xl'
+            >
                 <DialogHeader className='rounded-t-2xl border-b border-white/8 bg-white/[0.025] px-6 py-5'>
-                    <DialogTitle>Créer une organisation</DialogTitle>
+                    <DialogTitle>{tr('createOrganization')}</DialogTitle>
                     <DialogDescription>
-                        Créez le compte, puis ajoutez ses propriétaires et
-                        membres depuis sa fiche.
+                        {tr('createOrganizationHint')}
                     </DialogDescription>
                 </DialogHeader>
                 <form
@@ -82,12 +86,14 @@ export function CreateOrganizationDialog() {
                     }}
                 >
                     <div className='space-y-2'>
-                        <Label htmlFor='new-organization-name'>Nom</Label>
+                        <Label htmlFor='new-organization-name'>
+                            {tr('name')}
+                        </Label>
                         <Input
                             className='admin-field'
                             id='new-organization-name'
                             value={name}
-                            placeholder='Mon organisation'
+                            placeholder={tr('organizationNamePlaceholder')}
                             autoFocus
                             required
                             onChange={(event) => {
@@ -98,12 +104,14 @@ export function CreateOrganizationDialog() {
                         />
                     </div>
                     <div className='space-y-2'>
-                        <Label htmlFor='new-organization-slug'>Slug</Label>
+                        <Label htmlFor='new-organization-slug'>
+                            {tr('slug')}
+                        </Label>
                         <Input
                             className='admin-field'
                             id='new-organization-slug'
                             value={slug}
-                            placeholder='mon-organisation'
+                            placeholder={tr('slugPlaceholder')}
                             pattern='[a-z0-9]+(?:-[a-z0-9]+)*'
                             required
                             onChange={(event) => {
@@ -112,7 +120,7 @@ export function CreateOrganizationDialog() {
                             }}
                         />
                         <p className='text-xs text-muted-foreground'>
-                            Identifiant stable utilisé dans les URLs publiques.
+                            {tr('slugHint')}
                         </p>
                     </div>
                     <DialogFooter>
@@ -121,12 +129,12 @@ export function CreateOrganizationDialog() {
                             variant='outline'
                             onClick={() => setOpen(false)}
                         >
-                            Annuler
+                            {tr('cancel')}
                         </Button>
                         <Button type='submit' disabled={mutation.isPending}>
                             {mutation.isPending
-                                ? 'Création…'
-                                : 'Créer et gérer'}
+                                ? tr('creating')
+                                : tr('createManage')}
                         </Button>
                     </DialogFooter>
                 </form>

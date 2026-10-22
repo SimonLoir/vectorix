@@ -36,7 +36,10 @@
         "saxes": "6.0.0",
         "web-push": "3.6.7",
         "yauzl": "3.4.0",
-        "zod": "^4.6.5"
+        "zod": "^4.6.5",
+        "@repo/embeddings": "workspace:*",
+        "@repo/vector-store": "workspace:*",
+        "@repo/chunking": "workspace:*"
     },
     "devDependencies": {
         "@repo/eslint-config": "workspace:*",

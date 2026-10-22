@@ -1,4 +1,5 @@
 'use client';
+import { useTranslations, useFormatter } from 'next-intl';
 
 import Link from 'next/link';
 import { useQuery } from '@tanstack/react-query';
@@ -18,47 +19,45 @@ import { Button } from '@repo/ui/button';
 import { useORPC } from '@/hooks/use-orpc';
 import { LoadingState } from './loading-state';
 
-const cards = [
-    {
-        key: 'organizationsTotal',
-        label: 'Organisations',
-        detail: 'comptes au total',
-        icon: Building2,
-        accent: 'bg-indigo-400/10 text-indigo-300',
-    },
-    {
-        key: 'activeOrganizations',
-        label: 'Actives',
-        detail: 'espaces opérationnels',
-        icon: ToggleRight,
-        accent: 'bg-emerald-400/10 text-emerald-300',
-    },
-    {
-        key: 'usersTotal',
-        label: 'Utilisateurs',
-        detail: 'comptes enregistrés',
-        icon: Users,
-        accent: 'bg-sky-400/10 text-sky-300',
-    },
-    {
-        key: 'featuresTotal',
-        label: 'Fonctionnalités',
-        detail: 'modules au catalogue',
-        icon: SlidersHorizontal,
-        accent: 'bg-violet-400/10 text-violet-300',
-    },
-] as const;
-
 export function DashboardOverview() {
+    const tr = useTranslations('admin.core');
+    const format = useFormatter();
+    const cards = [
+        {
+            key: 'organizationsTotal',
+            label: tr('organizations'),
+            detail: tr('accountsTotal'),
+            icon: Building2,
+            accent: 'bg-indigo-400/10 text-indigo-300',
+        },
+        {
+            key: 'activeOrganizations',
+            label: tr('active'),
+            detail: tr('activeWorkspaces'),
+            icon: ToggleRight,
+            accent: 'bg-emerald-400/10 text-emerald-300',
+        },
+        {
+            key: 'usersTotal',
+            label: tr('users'),
+            detail: tr('registeredAccounts'),
+            icon: Users,
+            accent: 'bg-sky-400/10 text-sky-300',
+        },
+        {
+            key: 'featuresTotal',
+            label: tr('features'),
+            detail: tr('catalogModules'),
+            icon: SlidersHorizontal,
+            accent: 'bg-violet-400/10 text-violet-300',
+        },
+    ] as const;
     const { orpc } = useORPC();
     const query = useQuery(orpc.superadmin.dashboard.queryOptions({}));
 
-    if (query.isPending)
-        return <LoadingState label='Préparation du tableau de bord…' />;
+    if (query.isPending) return <LoadingState label={tr('dashboardLoading')} />;
     if (query.isError) {
-        return (
-            <p className='text-sm text-destructive'>{query.error.message}</p>
-        );
+        return <p className='text-sm text-destructive'>{tr('loadFailed')}</p>;
     }
 
     const activityRate = query.data.organizationsTotal
@@ -77,14 +76,13 @@ export function DashboardOverview() {
                     <div className='max-w-2xl'>
                         <div className='mb-5 inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/7 px-3 py-1.5 text-xs text-indigo-100'>
                             <Sparkles className='h-3.5 w-3.5 text-indigo-300' />
-                            Pilotage global de la plateforme
+                            {tr('globalManagement')}
                         </div>
                         <h2 className='text-2xl font-semibold tracking-[-0.035em] sm:text-3xl'>
-                            Tout Vectorix, au même endroit.
+                            {tr('heroTitle')}
                         </h2>
                         <p className='mt-3 max-w-xl text-sm leading-6 text-slate-400'>
-                            Gérez les organisations, leurs accès et les modules
-                            disponibles sans quitter votre centre de contrôle.
+                            {tr('heroDescription')}
                         </p>
                     </div>
                     <div className='flex flex-wrap gap-3'>
@@ -93,14 +91,16 @@ export function DashboardOverview() {
                             variant='outline'
                             className='border-white/15 bg-white/5 text-white hover:bg-white/10 hover:text-white'
                         >
-                            <Link href='/features'>Configurer les modules</Link>
+                            <Link href='/features'>
+                                {tr('configureModules')}
+                            </Link>
                         </Button>
                         <Button
                             asChild
                             className='bg-cyan-400 text-slate-950 hover:bg-cyan-300'
                         >
                             <Link href='/organizations'>
-                                Voir les organisations
+                                {tr('viewOrganizations')}
                                 <ArrowUpRight className='h-4 w-4' />
                             </Link>
                         </Button>
@@ -119,9 +119,7 @@ export function DashboardOverview() {
                                         {card.label}
                                     </p>
                                     <p className='mt-3 text-3xl font-semibold tracking-[-0.04em] text-slate-100'>
-                                        {query.data[card.key].toLocaleString(
-                                            'fr-BE'
-                                        )}
+                                        {format.number(query.data[card.key])}
                                     </p>
                                 </div>
                                 <span
@@ -143,10 +141,10 @@ export function DashboardOverview() {
                     <div className='flex items-center justify-between border-b border-white/8 px-6 py-5'>
                         <div>
                             <p className='font-semibold text-slate-100'>
-                                État de la plateforme
+                                {tr('platformStatus')}
                             </p>
                             <p className='mt-1 text-xs text-slate-400'>
-                                Synthèse des accès et services
+                                {tr('accessServicesSummary')}
                             </p>
                         </div>
                         <Badge
@@ -154,48 +152,52 @@ export function DashboardOverview() {
                             className='border-emerald-400/20 bg-emerald-400/10 text-emerald-300'
                         >
                             <span className='h-1.5 w-1.5 rounded-full bg-emerald-500' />
-                            API accessible
+                            {tr('apiAvailable')}
                         </Badge>
                     </div>
                     <div className='grid gap-px bg-white/8 sm:grid-cols-3'>
                         <div className='bg-[#101827] p-6'>
                             <div className='flex items-center gap-2 text-sm font-medium text-slate-300'>
                                 <ShieldCheck className='h-4 w-4 text-emerald-500' />
-                                Organisations actives
+                                {tr('activeOrganizations')}
                             </div>
                             <p className='mt-4 text-2xl font-semibold text-slate-100'>
-                                {activityRate}%
+                                {format.number(activityRate / 100, {
+                                    style: 'percent',
+                                    maximumFractionDigits: 0,
+                                })}
                             </p>
                             <div className='mt-3 h-1.5 overflow-hidden rounded-full bg-white/8'>
                                 <div
                                     className='h-full rounded-full bg-emerald-500'
-                                    style={{ width: `${activityRate}%` }}
+                                    style={{
+                                        width: `${activityRate}%`,
+                                    }}
                                 />
                             </div>
                         </div>
                         <div className='bg-[#101827] p-6'>
                             <div className='flex items-center gap-2 text-sm font-medium text-slate-300'>
                                 <Layers3 className='h-4 w-4 text-indigo-500' />
-                                Accès legacy
+                                {tr('legacyAccess')}
                             </div>
                             <p className='mt-4 text-2xl font-semibold text-slate-100'>
-                                Sur exception
+                                {tr('byException')}
                             </p>
                             <p className='mt-3 text-xs text-slate-400'>
-                                fonctionnalités attribuées explicitement, sans
-                                plan requis
+                                {tr('explicitFeatures')}
                             </p>
                         </div>
                         <div className='bg-[#101827] p-6'>
                             <div className='flex items-center gap-2 text-sm font-medium text-slate-300'>
                                 <CircleDollarSign className='h-4 w-4 text-amber-500' />
-                                Plans et abonnements
+                                {tr('plansSubscriptions')}
                             </div>
                             <p className='mt-4 text-2xl font-semibold text-slate-100'>
-                                Fournisseur externe
+                                {tr('externalProvider')}
                             </p>
                             <p className='mt-3 text-xs text-slate-400'>
-                                aucune attribution via un plan local
+                                {tr('noLocalPlans')}
                             </p>
                         </div>
                     </div>
@@ -203,23 +205,23 @@ export function DashboardOverview() {
 
                 <div className='admin-panel p-6'>
                     <p className='font-semibold text-slate-100'>
-                        Résolution des accès
+                        {tr('accessResolution')}
                     </p>
                     <p className='mt-1 text-xs text-slate-400'>
-                        Deux modes explicites, sans repli local
+                        {tr('accessModes')}
                     </p>
                     <div className='mt-6 space-y-4'>
                         {[
-                            'Mode manuel : fonctionnalités sélectionnées',
-                            'Sinon : droits du fournisseur externe',
-                            'Sans droits externes : aucun accès aux modules',
+                            tr('manualMode'),
+                            tr('externalMode'),
+                            tr('noExternalRights'),
                         ].map((label, index) => (
                             <div
                                 key={label}
                                 className='flex items-center gap-3'
                             >
                                 <span className='grid h-7 w-7 place-items-center rounded-full bg-white/7 text-[11px] font-semibold text-slate-400'>
-                                    {index + 1}
+                                    {format.number(index + 1)}
                                 </span>
                                 <span className='text-sm text-slate-300'>
                                     {label}
@@ -228,12 +230,11 @@ export function DashboardOverview() {
                         ))}
                     </div>
                     <div className='mt-6 rounded-xl border border-white/8 bg-white/[0.025] px-4 py-3 text-xs text-slate-500'>
-                        Fournisseur externe :{' '}
-                        <span className='font-semibold text-slate-300'>
-                            {query.data.externalProviderConfigured
-                                ? 'configuré'
-                                : 'non configuré'}
-                        </span>
+                        {tr('externalConfiguration', {
+                            configured: query.data.externalProviderConfigured
+                                ? 'yes'
+                                : 'no',
+                        })}
                     </div>
                 </div>
             </section>

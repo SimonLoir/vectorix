@@ -1,6 +1,6 @@
 # Document replacement and deletion — M2a.2
 
-M2a.2 adds dashboard replacement, version history, deletion, retention delays and durable private-object cleanup to the [TXT/Markdown library](rag-document-library.md). The implementation is complete and browser-verified against production application builds and disposable infrastructure. [PDF/DOCX extraction](rag-rich-documents.md) is implemented and browser-verified; embeddings, vector indexing and search remain planned.
+M2a.2 adds dashboard replacement, version history, deletion, retention delays and durable private-object cleanup to the [TXT/Markdown library](rag-document-library.md). The implementation is complete and browser-verified against production application builds and disposable infrastructure. [PDF/DOCX extraction](rag-rich-documents.md) is implemented and browser-verified; the [first Ollama index/search slice](rag-first-search.md) is implemented and browser-verified.
 
 ## Schema and deployment
 
@@ -40,7 +40,7 @@ One transaction tombstones the document, removes collection associations, revoke
 
 Every scan claims at most ten cleanup tasks. Each claim has a 180-second lease and fencing token. Cleanup waits until the retention deadline and any preceding ingestion lease plus a 60-second I/O grace period. S3 calls have bounded timeouts; token checks fence PostgreSQL publication and completion. A late original or extraction write that cannot publish schedules reconciliation, including recharging retained capacity if cleanup had already completed.
 
-Cleanup deletes the original and possible extracted text from their saved storage bindings, including an extraction whose S3 write occurred before its metadata was committed. It releases capacity only after all required delete calls succeed: the extraction row is removed, the original is marked discarded, and the ingestion reservation is zeroed in the same transaction as cleanup completion and audit. Partial storage failure keeps the bytes charged. Authorization for the accepted deletion or retirement remains valid after requester removal or organization suspension.
+Cleanup deletes the original and possible extracted text from their saved storage bindings, including an extraction whose S3 write occurred before its metadata was committed. It releases capacity only after all required delete calls succeed: the original and extraction are marked discarded, version content becomes PURGED, and the ingestion reservation is zeroed in the same transaction as cleanup completion and audit. Extraction metadata now remains for immutable index provenance; discarded rows do not count toward retained bytes. Exact-version source holds defer physical cleanup while an index or bounded source read still uses the version. Partial storage failure keeps the bytes charged. Authorization for the accepted deletion or retirement remains valid after requester removal or organization suspension.
 
 Failures use bounded backoff, capped at five minutes, and stop after five attempts. The version list displays the sanitized failure; after fixing the retained destination or credentials, a current library manager can retry cleanup. Retry preserves its retention deadline and does not release unconfirmed capacity. Restarts or duplicate scans can reclaim expired leases and repeat idempotent S3 deletes.
 

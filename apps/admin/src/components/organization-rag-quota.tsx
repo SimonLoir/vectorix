@@ -20,6 +20,11 @@ const fields = [
         max: Number.MAX_SAFE_INTEGER,
     },
     {
+        name: 'temporaryChunksPerCollection',
+        label: 'quota.temporaryChunksPerCollection',
+        max: 100_000_000,
+    },
+    {
         name: 'chunksPerCollection',
         label: 'quota.chunksPerCollection',
         max: 100_000_000,
@@ -48,7 +53,7 @@ export function OrganizationRagQuota({
     if (query.isError)
         return (
             <div role='alert'>
-                {query.error.message}{' '}
+                {tr('quota.loadFailed')}{' '}
                 <Button variant='outline' onClick={() => void query.refetch()}>
                     {tr('quota.retry')}
                 </Button>
@@ -80,6 +85,9 @@ export function OrganizationRagQuota({
                                 documents: number('documents'),
                                 originalBytes: number('originalBytes'),
                                 storageBytes: number('storageBytes'),
+                                temporaryChunksPerCollection: number(
+                                    'temporaryChunksPerCollection'
+                                ),
                                 chunksPerCollection: number(
                                     'chunksPerCollection'
                                 ),
@@ -101,7 +109,12 @@ export function OrganizationRagQuota({
                                     name={field.name}
                                     type='number'
                                     required
-                                    min={1}
+                                    min={
+                                        field.name ===
+                                        'temporaryChunksPerCollection'
+                                            ? 0
+                                            : 1
+                                    }
                                     max={field.max}
                                     step={1}
                                     defaultValue={query.data.limits[field.name]}
@@ -113,7 +126,7 @@ export function OrganizationRagQuota({
                         {tr('quota.hint')}
                     </p>
                     {mutation.isError && (
-                        <p role='alert'>{mutation.error.message}</p>
+                        <p role='alert'>{tr('quota.saveFailed')}</p>
                     )}
                     <Button disabled={mutation.isPending}>
                         {mutation.isPending

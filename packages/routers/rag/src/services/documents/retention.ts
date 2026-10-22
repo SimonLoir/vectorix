@@ -81,6 +81,8 @@ export async function reconcileUnpublishedWrite(
         });
         if (
             !version.cleanup &&
+            version.contentState === 'AVAILABLE' &&
+            !version.discardedAt &&
             !version.document.deletedAt &&
             latest?.id === versionId
         )
@@ -111,19 +113,25 @@ export async function reconcileUnpublishedWrite(
                 leasedUntil: null,
             },
         });
-        if (version.cleanup?.status === 'COMPLETE')
+        if (
+            version.contentState === 'PURGED' ||
+            version.discardedAt ||
+            version.cleanup?.status === 'COMPLETE'
+        )
             await tx.documentIngestion.updateMany({
                 where: { versionId },
                 data: {
-                    reservedBytes: extractionReservation(
-                        version.mediaType,
-                        version.byteSize
-                    ),
+                    reservedBytes:
+                        version.byteSize +
+                        extractionReservation(
+                            version.mediaType,
+                            version.byteSize
+                        ),
                 },
             });
         await tx.documentVersion.update({
             where: { id: versionId },
-            data: { discardedAt: null },
+            data: { contentFence: { increment: 1 } },
         });
     });
 }

@@ -258,7 +258,8 @@ export async function documentRetentionTests(t: TestContext) {
                         assert.equal(cleaned.cleanup?.status, 'COMPLETE');
                         assert.ok(cleaned.cleanup.completedAt);
                         assert.ok(cleaned.discardedAt);
-                        assert.equal(cleaned.extraction, null);
+                        assert.ok(cleaned.extraction?.discardedAt);
+                        assert.equal(cleaned.contentState, 'PURGED');
                         assert.equal(cleaned.ingestion?.reservedBytes, 0n);
                         assert.equal(
                             await objectExists(original.objectKey),

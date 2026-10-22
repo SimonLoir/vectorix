@@ -1,12 +1,15 @@
+'use client';
+
+import { useTranslations } from 'next-intl';
 import Link from 'next/link';
 import { ArrowUpRight, Building2 } from 'lucide-react';
 import { Button } from '@repo/ui/button';
 import type { AdminUserMembership } from './user-types';
 
-const roleLabels: Record<string, string> = {
-    owner: 'Propriétaire',
-    admin: 'Administrateur',
-    member: 'Membre',
+const roleKeys: Record<string, string> = {
+    owner: 'users.owner',
+    admin: 'users.admin',
+    member: 'users.member',
 };
 
 /** Bounded organization membership page; organization roles are managed in their existing dossiers. */
@@ -25,16 +28,16 @@ export function UserMemberships({
     fetching: boolean;
     onPageChange: (page: number) => void;
 }>) {
+    const t = useTranslations('admin.secondary');
     return (
         <section className='admin-panel overflow-hidden'>
             <div className='border-b border-white/8 px-6 py-5'>
                 <h2 className='flex items-center gap-2 font-semibold text-slate-100'>
                     <Building2 className='h-5 w-5 text-indigo-300' />
-                    Organisations associées
+                    {t('users.memberships')}
                 </h2>
                 <p className='mt-1 text-xs text-slate-500'>
-                    {total} organisation(s). Ouvrez un dossier pour gérer le
-                    rôle de ce membre.
+                    {t('users.membershipCount', { count: total })}
                 </p>
             </div>
             <div className='divide-y divide-white/8'>
@@ -50,30 +53,31 @@ export function UserMemberships({
                             <p className='mt-1 text-xs text-slate-500'>
                                 {membership.role
                                     .split(',')
-                                    .map(
-                                        (role) =>
-                                            roleLabels[role.trim()] ??
-                                            role.trim()
+                                    .map((role) =>
+                                        roleKeys[role.trim()]
+                                            ? t(roleKeys[role.trim()]!)
+                                            : role.trim()
                                     )
                                     .join(', ')}{' '}
                                 ·{' '}
                                 {membership.organization.isActive
-                                    ? 'Active'
-                                    : 'Inactive'}
+                                    ? t('users.active')
+                                    : t('users.inactive')}
                             </p>
                         </div>
                         <Button asChild variant='ghost' size='sm'>
                             <Link
                                 href={`/organizations/${encodeURIComponent(membership.organization.id)}`}
                             >
-                                Ouvrir <ArrowUpRight className='h-4 w-4' />
+                                {t('users.open')}
+                                <ArrowUpRight className='h-4 w-4' />
                             </Link>
                         </Button>
                     </div>
                 ))}
                 {memberships.length === 0 ? (
                     <p className='px-6 py-8 text-sm text-slate-400'>
-                        Aucune organisation sur cette page.
+                        {t('users.noMemberships')}
                     </p>
                 ) : null}
             </div>
@@ -84,10 +88,10 @@ export function UserMemberships({
                     disabled={page <= 1 || fetching}
                     onClick={() => onPageChange(page - 1)}
                 >
-                    Précédent
+                    {t('common.previous')}
                 </Button>
                 <span className='px-2 text-xs text-slate-400'>
-                    {page} / {pageCount}
+                    {t('common.page', { page, total: pageCount })}
                 </span>
                 <Button
                     variant='outline'
@@ -95,7 +99,7 @@ export function UserMemberships({
                     disabled={page >= pageCount || fetching}
                     onClick={() => onPageChange(page + 1)}
                 >
-                    Suivant
+                    {t('common.next')}
                 </Button>
             </div>
         </section>

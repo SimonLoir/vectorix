@@ -1,0 +1,28 @@
+{
+    "name": "@repo/vector-store",
+    "version": "0.1.0",
+    "private": true,
+    "type": "module",
+    "main": "src/index.ts",
+    "types": "src/index.ts",
+    "exports": {
+        ".": "./src/index.ts"
+    },
+    "scripts": {
+        "check-types": "tsc6 -p tsconfig.json --noEmit",
+        "lint": "eslint",
+        "test": "bash tests/run.sh"
+    },
+    "dependencies": {
+        "pg": "^8.23.0"
+    },
+    "devDependencies": {
+        "@repo/eslint-config": "workspace:*",
+        "@repo/typescript-config": "workspace:*",
+        "@types/node": "^26.6.2",
+        "@types/pg": "^8.23.1",
+        "eslint": "^10.11.0",
+        "tsx": "^4.23.15",
+        "typescript": "npm:@typescript/typescript6@6.0.2"
+    }
+}

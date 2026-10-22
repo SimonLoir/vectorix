@@ -1,3 +1,6 @@
+'use client';
+
+import { useTranslations, useFormatter } from 'next-intl';
 import Link from 'next/link';
 import { ArrowUpRight, ShieldCheck } from 'lucide-react';
 import { Badge } from '@repo/ui/badge';
@@ -16,19 +19,25 @@ import type { AdminUser } from './user-types';
 export function UserDirectoryTable({
     users,
 }: Readonly<{ users: AdminUser[] }>) {
+    const t = useTranslations('admin.secondary');
+    const format = useFormatter();
     return (
         <Table>
             <TableHeader>
                 <TableRow className='border-white/8 bg-white/[0.025] hover:bg-white/[0.025]'>
-                    <TableHead className='h-12 pl-6'>Utilisateur</TableHead>
-                    <TableHead>Accès console</TableHead>
+                    <TableHead className='h-12 pl-6'>
+                        {t('common.user')}
+                    </TableHead>
+                    <TableHead>{t('users.console')}</TableHead>
                     <TableHead className='hidden md:table-cell'>
-                        E-mail
+                        {t('common.email')}
                     </TableHead>
                     <TableHead className='hidden lg:table-cell'>
-                        Organisations
+                        {t('common.organizations')}
                     </TableHead>
-                    <TableHead className='pr-6 text-right'>Action</TableHead>
+                    <TableHead className='pr-6 text-right'>
+                        {t('common.action')}
+                    </TableHead>
                 </TableRow>
             </TableHeader>
             <TableBody>
@@ -55,19 +64,21 @@ export function UserDirectoryTable({
                                     className='border-cyan-400/20 bg-cyan-400/10 text-cyan-200'
                                 >
                                     <ShieldCheck className='h-3 w-3' />{' '}
-                                    Superadmin
+                                    {t('common.superadmin')}
                                 </Badge>
                             ) : (
                                 <span className='text-xs text-slate-500'>
-                                    Sans accès
+                                    {t('common.noAccess')}
                                 </span>
                             )}
                         </TableCell>
                         <TableCell className='hidden text-xs text-slate-400 md:table-cell'>
-                            {user.emailVerified ? 'Vérifié' : 'Non vérifié'}
+                            {user.emailVerified
+                                ? t('common.verified')
+                                : t('common.unverified')}
                         </TableCell>
                         <TableCell className='hidden text-sm text-slate-400 lg:table-cell'>
-                            {user._count.members}
+                            {format.number(user._count.members)}
                         </TableCell>
                         <TableCell className='pr-6 text-right'>
                             <Button
@@ -79,7 +90,8 @@ export function UserDirectoryTable({
                                 <Link
                                     href={`/users/${encodeURIComponent(user.id)}`}
                                 >
-                                    Gérer <ArrowUpRight className='h-4 w-4' />
+                                    {t('users.manage')}
+                                    <ArrowUpRight className='h-4 w-4' />
                                 </Link>
                             </Button>
                         </TableCell>
@@ -91,7 +103,7 @@ export function UserDirectoryTable({
                             colSpan={5}
                             className='h-32 text-center text-slate-400'
                         >
-                            Aucun utilisateur trouvé.
+                            {t('users.empty')}
                         </TableCell>
                     </TableRow>
                 ) : null}

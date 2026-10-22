@@ -16,6 +16,7 @@ import {
     clearRemovedMemberSessions,
 } from './permissions/key-hooks';
 import { organizationPolicyHook } from './permissions/organization-hooks';
+import { requireOrganizationCleanup } from './permissions/organization-deletion';
 import {
     organizationReadPolicyHook,
     organizationReadResultHook,
@@ -89,6 +90,7 @@ export const auth = betterAuth({
         : undefined,
     database: prismaAdapter(prisma, {
         provider: 'postgresql',
+        transaction: true,
     }),
     emailAndPassword: {
         enabled: true,
@@ -114,6 +116,8 @@ export const auth = betterAuth({
             roles,
             dynamicAccessControl: { enabled: true },
             organizationHooks: {
+                beforeDeleteOrganization: ({ organization }) =>
+                    requireOrganizationCleanup(prisma, organization.id),
                 afterRemoveMember: ({ member }) =>
                     clearRemovedMemberSessions(member),
             },

@@ -1,5 +1,6 @@
 'use client';
 
+import { useTranslations } from 'next-intl';
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
@@ -26,6 +27,7 @@ export function UserSuperAdminAccess({
     fetching: boolean;
     onReload: () => Promise<boolean>;
 }>) {
+    const t = useTranslations('admin.secondary');
     const { orpc } = useORPC();
     const queryClient = useQueryClient();
     const router = useRouter();
@@ -41,8 +43,8 @@ export function UserSuperAdminAccess({
                 setRequiresReload(false);
                 toast.success(
                     result.isSuperAdmin
-                        ? 'Utilisateur nommé superadmin'
-                        : 'Accès superadmin retiré'
+                        ? t('access.granted')
+                        : t('access.revoked')
                 );
                 if (result.id === me.data?.user.id && !result.isSuperAdmin) {
                     queryClient.removeQueries({
@@ -79,7 +81,7 @@ export function UserSuperAdminAccess({
             <div className='flex flex-wrap items-center justify-between gap-3'>
                 <h2 className='flex items-center gap-2 font-semibold text-slate-100'>
                     <ShieldCheck className='h-5 w-5 text-cyan-300' />
-                    Accès à la console
+                    {t('access.title')}
                 </h2>
                 <Badge
                     variant='outline'
@@ -89,22 +91,22 @@ export function UserSuperAdminAccess({
                             : 'border-white/10 text-slate-400'
                     }
                 >
-                    {user.isSuperAdmin ? 'Superadmin' : 'Sans accès console'}
+                    {user.isSuperAdmin
+                        ? t('common.superadmin')
+                        : t('common.noAccess')}
                 </Badge>
             </div>
             <p className='mt-4 text-sm leading-6 text-slate-400'>
-                Les superadmins gèrent les utilisateurs, les organisations et
-                les réglages de la console Vectorix.
+                {t('access.description')}
             </p>
             {lastSuperAdmin ? (
                 <p className='mt-4 rounded-xl border border-amber-400/15 bg-amber-400/[0.05] p-3 text-xs leading-5 text-amber-200'>
-                    Cet utilisateur est le dernier superadmin. Nommez une autre
-                    personne avant de retirer son accès.
+                    {t('access.last')}
                 </p>
             ) : null}
             {requiresReload ? (
                 <p role='alert' className='mt-4 text-xs text-amber-200'>
-                    Rechargez la fiche avant tout nouveau changement.
+                    {t('access.reloadRequired')}
                 </p>
             ) : null}
             <div className='mt-5 flex flex-wrap gap-2'>
@@ -130,8 +132,8 @@ export function UserSuperAdminAccess({
                     }}
                 >
                     {user.isSuperAdmin
-                        ? 'Retirer l’accès superadmin'
-                        : 'Nommer superadmin'}
+                        ? t('access.remove')
+                        : t('access.appoint')}
                 </Button>
                 <Button
                     variant='outline'
@@ -143,14 +145,14 @@ export function UserSuperAdminAccess({
                     <RefreshCw
                         className={`h-4 w-4 ${fetching ? 'animate-spin' : ''}`}
                     />
-                    Recharger la fiche
+                    {t('common.reload')}
                 </Button>
             </div>
             <UserSuperAdminConfirmation
                 snapshot={snapshot}
                 pending={mutation.isPending}
                 requiresReload={requiresReload}
-                error={mutation.isError ? mutation.error.message : undefined}
+                error={mutation.isError ? t('common.saveError') : undefined}
                 onClose={() => setSnapshot(null)}
                 onConfirm={(captured) =>
                     mutation.mutate({

@@ -14,6 +14,7 @@ import {
     CatalogQueryState,
     useCatalogPagination,
 } from '../catalog-controls';
+import { DeletedCollections } from './deleted-collections';
 import { CollectionForm } from './collection-form';
 
 export function CollectionsManager() {
@@ -81,7 +82,7 @@ export function CollectionsManager() {
                                     </p>
                                 </div>
                                 <Badge variant='secondary'>
-                                    {tr('collections.configurationOnly')}
+                                    {tr('indexing.collectionJourney')}
                                 </Badge>
                             </Link>
                         ))}
@@ -103,6 +104,7 @@ export function CollectionsManager() {
                     />
                 </>
             )}
+            {canOperation('admin.rag.indexing.trash') && <DeletedCollections />}
             {creating && <CollectionForm onClose={() => setCreating(false)} />}
         </div>
     );

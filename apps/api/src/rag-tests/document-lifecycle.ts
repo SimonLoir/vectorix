@@ -494,7 +494,8 @@ export async function documentLifecycleTests(t: TestContext) {
                 await completeCleanup(doc.id);
                 const after = await version(doc.versionId);
                 assert.ok(after.discardedAt);
-                assert.equal(after.extraction, null);
+                assert.ok(after.extraction?.discardedAt);
+                assert.equal(after.contentState, 'PURGED');
                 assert.equal(after.ingestion?.reservedBytes, 0n);
                 assert.equal(after.cleanup?.status, 'COMPLETE');
                 assert.ok(after.cleanup.completedAt);
@@ -750,10 +751,11 @@ export async function documentLifecycleTests(t: TestContext) {
                     assert.equal(await objectExists(first.objectKey), true);
                     assert.equal(reopened.cleanup?.status, 'PENDING');
                     assert.equal(reopened.cleanup.completedAt, null);
-                    assert.equal(reopened.discardedAt, null);
+                    assert.ok(reopened.discardedAt);
+                    assert.equal(reopened.contentState, 'PURGED');
                     assert.equal(
                         reopened.ingestion?.reservedBytes,
-                        first.byteSize
+                        2n * first.byteSize
                     );
                     assert.equal(
                         (await f.owner.rag.quota({})).usage.storageBytes,

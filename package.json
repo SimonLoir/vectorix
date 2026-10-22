@@ -21,6 +21,7 @@
         "test:docker": "bash scripts/test-docker.sh",
         "test:infra": "bash scripts/test-infrastructure.sh",
         "test:documents": "pnpm --filter workers exec node --import tsx ../../tests/documents/parser.test.mts",
+        "test:rag-primitives": "pnpm --filter @repo/chunking test && pnpm --filter @repo/embeddings test",
         "test:catalog": "bash scripts/test-catalog.sh"
     },
     "devDependencies": {

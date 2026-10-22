@@ -6,8 +6,8 @@ export default function OrganizationsPage() {
     return (
         <div className='space-y-8'>
             <PageHeader
-                title='Organisations'
-                description='Consultez les comptes inscrits, leur statut, leur plan et leurs fonctionnalités.'
+                titleKey='core.organizations'
+                descriptionKey='core.organizationsDescription'
                 action={<CreateOrganizationDialog />}
             />
             <OrganizationList />

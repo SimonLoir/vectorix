@@ -6,8 +6,8 @@ export default function DashboardPage() {
     return (
         <div className='space-y-8'>
             <PageHeader
-                title='Tableau de bord'
-                description='Pilotez les organisations Vectorix et leur accès aux modules de la plateforme.'
+                titleKey='core.dashboardTitle'
+                descriptionKey='core.dashboardDescription'
                 action={<CreateOrganizationDialog />}
             />
             <DashboardOverview />

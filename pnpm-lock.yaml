@@ -4,6 +4,9 @@ settings:
     autoInstallPeers: true
     excludeLinksFromLockfile: false
 
+patchedDependencies:
+    '@pixeldrive/prisma-zod-generator@2.1.4': 9fa0ca9822e764ed5a56ccf47147a3412ccdbdbd5f3da9325ca9e686254f7781
+
 importers:
     .:
         devDependencies:
@@ -328,6 +331,9 @@ importers:
             '@prisma/client':
                 specifier: ^7.10.0
                 version: 7.10.1(@typescript/typescript6@6.0.2)(prisma@7.10.0(@types/react-dom@19.3.0(@types/react@19.3.0))(@types/react@19.3.0)(@typescript/typescript6@6.0.2)(react-dom@19.3.0(react@19.3.0))(react@19.3.0))
+            '@repo/chunking':
+                specifier: workspace:*
+                version: link:../../packages/chunking
             '@repo/db':
                 specifier: workspace:*
                 version: link:../../packages/db
@@ -337,9 +343,15 @@ importers:
             '@repo/emails':
                 specifier: workspace:*
                 version: link:../../packages/emails
+            '@repo/embeddings':
+                specifier: workspace:*
+                version: link:../../packages/embeddings
             '@repo/queues':
                 specifier: workspace:*
                 version: link:../../packages/queues
+            '@repo/vector-store':
+                specifier: workspace:*
+                version: link:../../packages/vector-store
             '@routers/rag':
                 specifier: workspace:*
                 version: link:../../packages/routers/rag
@@ -516,6 +528,31 @@ importers:
                 specifier: npm:@typescript/typescript6@6.0.2
                 version: '@typescript/typescript6@6.0.2'
 
+    packages/chunking:
+        dependencies:
+            '@repo/documents':
+                specifier: workspace:*
+                version: link:../documents
+        devDependencies:
+            '@repo/eslint-config':
+                specifier: workspace:*
+                version: link:../eslint-config
+            '@repo/typescript-config':
+                specifier: workspace:*
+                version: link:../typescript-config
+            '@types/node':
+                specifier: ^26.6.2
+                version: 26.6.5
+            eslint:
+                specifier: ^10.11.0
+                version: 10.13.0(jiti@2.7.0)
+            tsx:
+                specifier: ^4.23.15
+                version: 4.23.15
+            typescript:
+                specifier: npm:@typescript/typescript6@6.0.2
+                version: '@typescript/typescript6@6.0.2'
+
     packages/dashboard-core:
         dependencies:
             '@better-auth/api-key':
@@ -603,7 +640,7 @@ importers:
         devDependencies:
             '@pixeldrive/prisma-zod-generator':
                 specifier: ^2.1.4
-                version: 2.1.4(@typescript/typescript6@6.0.2)(prisma@7.10.0(@types/react-dom@19.3.0(@types/react@19.3.0))(@types/react@19.3.0)(@typescript/typescript6@6.0.2)(react-dom@19.3.0(react@19.3.0))(react@19.3.0))(zod@4.6.7)
+                version: 2.1.4(patch_hash=9fa0ca9822e764ed5a56ccf47147a3412ccdbdbd5f3da9325ca9e686254f7781)(@typescript/typescript6@6.0.2)(prisma@7.10.0(@types/react-dom@19.3.0(@types/react@19.3.0))(@types/react@19.3.0)(@typescript/typescript6@6.0.2)(react-dom@19.3.0(react@19.3.0))(react@19.3.0))(zod@4.6.7)
             '@repo/eslint-config':
                 specifier: workspace:*
                 version: link:../eslint-config
@@ -675,6 +712,31 @@ importers:
             eslint:
                 specifier: ^10.11.0
                 version: 10.13.0(jiti@2.7.0)
+            typescript:
+                specifier: npm:@typescript/typescript6@6.0.2
+                version: '@typescript/typescript6@6.0.2'
+
+    packages/embeddings:
+        dependencies:
+            zod:
+                specifier: ^4.6.5
+                version: 4.6.7
+        devDependencies:
+            '@repo/eslint-config':
+                specifier: workspace:*
+                version: link:../eslint-config
+            '@repo/typescript-config':
+                specifier: workspace:*
+                version: link:../typescript-config
+            '@types/node':
+                specifier: ^26.6.2
+                version: 26.6.5
+            eslint:
+                specifier: ^10.11.0
+                version: 10.13.0(jiti@2.7.0)
+            tsx:
+                specifier: ^4.23.15
+                version: 4.23.15
             typescript:
                 specifier: npm:@typescript/typescript6@6.0.2
                 version: '@typescript/typescript6@6.0.2'
@@ -851,15 +913,24 @@ importers:
             '@repo/auth':
                 specifier: workspace:*
                 version: link:../../auth
+            '@repo/chunking':
+                specifier: workspace:*
+                version: link:../../chunking
             '@repo/db':
                 specifier: workspace:*
                 version: link:../../db
             '@repo/documents':
                 specifier: workspace:*
                 version: link:../../documents
+            '@repo/embeddings':
+                specifier: workspace:*
+                version: link:../../embeddings
             '@repo/storage':
                 specifier: workspace:*
                 version: link:../../storage
+            '@repo/vector-store':
+                specifier: workspace:*
+                version: link:../../vector-store
             '@routers/utils':
                 specifier: workspace:*
                 version: link:../utils
@@ -1062,6 +1133,34 @@ importers:
             eslint:
                 specifier: ^10.11.0
                 version: 10.13.0(jiti@2.7.0)
+            typescript:
+                specifier: npm:@typescript/typescript6@6.0.2
+                version: '@typescript/typescript6@6.0.2'
+
+    packages/vector-store:
+        dependencies:
+            pg:
+                specifier: ^8.23.0
+                version: 8.23.1
+        devDependencies:
+            '@repo/eslint-config':
+                specifier: workspace:*
+                version: link:../eslint-config
+            '@repo/typescript-config':
+                specifier: workspace:*
+                version: link:../typescript-config
+            '@types/node':
+                specifier: ^26.6.2
+                version: 26.6.5
+            '@types/pg':
+                specifier: ^8.23.1
+                version: 8.23.1
+            eslint:
+                specifier: ^10.11.0
+                version: 10.13.0(jiti@2.7.0)
+            tsx:
+                specifier: ^4.23.15
+                version: 4.23.15
             typescript:
                 specifier: npm:@typescript/typescript6@6.0.2
                 version: '@typescript/typescript6@6.0.2'
@@ -10450,7 +10549,7 @@ snapshots:
 
     '@pinojs/redact@0.4.0': {}
 
-    '@pixeldrive/prisma-zod-generator@2.1.4(@typescript/typescript6@6.0.2)(prisma@7.10.0(@types/react-dom@19.3.0(@types/react@19.3.0))(@types/react@19.3.0)(@typescript/typescript6@6.0.2)(react-dom@19.3.0(react@19.3.0))(react@19.3.0))(zod@4.6.7)':
+    '@pixeldrive/prisma-zod-generator@2.1.4(patch_hash=9fa0ca9822e764ed5a56ccf47147a3412ccdbdbd5f3da9325ca9e686254f7781)(@typescript/typescript6@6.0.2)(prisma@7.10.0(@types/react-dom@19.3.0(@types/react@19.3.0))(@types/react@19.3.0)(@typescript/typescript6@6.0.2)(react-dom@19.3.0(react@19.3.0))(react@19.3.0))(zod@4.6.7)':
         dependencies:
             '@prisma/client': 7.10.1(@typescript/typescript6@6.0.2)(prisma@7.10.0(@types/react-dom@19.3.0(@types/react@19.3.0))(@types/react@19.3.0)(@typescript/typescript6@6.0.2)(react-dom@19.3.0(react@19.3.0))(react@19.3.0))
             '@prisma/generator-helper': 7.10.1

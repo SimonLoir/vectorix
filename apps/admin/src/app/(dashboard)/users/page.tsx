@@ -5,8 +5,8 @@ export default function UsersPage() {
     return (
         <div className='space-y-8'>
             <PageHeader
-                title='Utilisateurs'
-                description='Consultez les comptes Vectorix, leurs organisations et leur accès à la console superadmin.'
+                titleKey='secondary.pages.usersTitle'
+                descriptionKey='secondary.pages.usersDescription'
             />
             <UserList />
         </div>

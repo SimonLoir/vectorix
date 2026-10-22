@@ -604,7 +604,7 @@ export async function documentRichTests(t: TestContext) {
                     { headers: f.owner.headers() }
                 );
                 assert.equal(rest.status, 200, await rest.clone().text());
-                assert.equal(rest.headers.get('Vectorix-API-Revision'), '6');
+                assert.equal(rest.headers.get('Vectorix-API-Revision'), '7');
                 assert.equal((await rest.json()).text, pdfPages[1]);
                 await f.owner.rag.collections.setGrant({
                     id: collection.id,
@@ -1039,10 +1039,11 @@ export async function documentRichTests(t: TestContext) {
                     assert.equal(await objectExists(key), true);
                     assert.equal(reopened.cleanup?.status, 'PENDING');
                     assert.equal(reopened.cleanup?.completedAt, null);
-                    assert.equal(reopened.discardedAt, null);
+                    assert.ok(reopened.discardedAt);
+                    assert.equal(reopened.contentState, 'PURGED');
                     assert.equal(
                         reopened.ingestion?.reservedBytes,
-                        BigInt(RICH_RESERVATION_BYTES)
+                        original.byteSize + BigInt(RICH_RESERVATION_BYTES)
                     );
                     assert.equal(
                         (await f.owner.rag.quota({})).usage.storageBytes,

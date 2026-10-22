@@ -2,6 +2,7 @@ import { Queue } from 'bullmq';
 export const QueueName = {
     NOTIFICATIONS: 'notifications',
     DOCUMENTS: 'documents',
+    INDEXING: 'indexing',
 } as const;
 const url = new URL(process.env.REDIS_URL ?? 'redis://localhost:6379');
 export const connection = {
@@ -13,12 +14,14 @@ export const connection = {
     ...(url.protocol === 'rediss:' ? { tls: {} } : {}),
     maxRetriesPerRequest: null,
 };
-let queues: { notifications: Queue; documents: Queue } | undefined;
+let queues:
+    { notifications: Queue; documents: Queue; indexing: Queue } | undefined;
 /** Lazily create Redis connections so importing contracts never connects to infrastructure. */
 export function getQueues() {
     return (queues ??= {
         notifications: new Queue(QueueName.NOTIFICATIONS, { connection }),
         documents: new Queue(QueueName.DOCUMENTS, { connection }),
+        indexing: new Queue(QueueName.INDEXING, { connection }),
     });
 }
 export type Queues = ReturnType<typeof getQueues>;
@@ -27,6 +30,7 @@ export async function closeQueues() {
         await Promise.all([
             queues.notifications.close(),
             queues.documents.close(),
+            queues.indexing.close(),
         ]);
         queues = undefined;
     }

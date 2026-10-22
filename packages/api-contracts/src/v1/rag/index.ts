@@ -5,6 +5,7 @@ import { credentialsContract } from './credentials';
 import { groupsContract } from './groups';
 import { collectionsContract } from './collections';
 import { documentsContract } from './documents';
+import { indexingContract } from './indexing';
 export const quotaValues = z
     .object({
         collections: z.number().int().min(1).max(10_000),
@@ -12,9 +13,11 @@ export const quotaValues = z
         originalBytes: z.number().int().min(1).max(10_737_418_240),
         storageBytes: z.number().int().min(1).max(Number.MAX_SAFE_INTEGER),
         chunksPerCollection: z.number().int().min(1).max(100_000_000),
+        temporaryChunksPerCollection: z.number().int().min(0).max(100_000_000),
     })
     .strict();
 export const ragContract = {
+    indexing: indexingContract,
     credentials: credentialsContract,
     groups: groupsContract,
     collections: collectionsContract,

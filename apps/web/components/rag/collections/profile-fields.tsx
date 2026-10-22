@@ -2,12 +2,21 @@
 import { useTranslations } from 'next-intl';
 import { useState } from 'react';
 import { TextField, SelectField, CheckField, AreaField } from '../form-fields';
+import { MetadataFields } from './metadata-fields';
+import { ModelDiscovery } from './model-discovery';
 import type { Collection } from '../types';
 
 export function ProfileFields({
     configuration,
-}: Readonly<{ configuration?: Collection['configuration'] }>) {
+    collectionId,
+}: Readonly<{
+    configuration?: Collection['configuration'];
+    collectionId?: string;
+}>) {
     const tr = useTranslations('rag');
+    const [model, setModel] = useState(
+        configuration?.model ?? 'embeddinggemma'
+    );
     const [strategy, setStrategy] = useState(
         configuration?.chunkingStrategy ?? 'DOCUMENT_STRUCTURE'
     );
@@ -31,10 +40,35 @@ export function ProfileFields({
                     name='model'
                     required
                     maxLength={200}
-                    defaultValue={configuration?.model}
+                    value={model}
+                    onChange={(event) => setModel(event.target.value)}
                     placeholder={tr('profile.modelPlaceholder')}
                 />
             </div>
+            {collectionId && (
+                <ModelDiscovery
+                    collectionId={collectionId}
+                    onSelect={setModel}
+                />
+            )}
+            <p className='text-sm text-muted-foreground'>
+                {tr('indexing.profileGate')}
+            </p>
+            <SelectField
+                label={tr('indexing.preset')}
+                name='embeddingPreset'
+                defaultValue={configuration?.embeddingPreset ?? 'GENERIC'}
+            >
+                <option value='GENERIC'>
+                    {tr('indexing.presets.GENERIC')}
+                </option>
+                <option value='EMBEDDING_GEMMA'>
+                    {tr('indexing.presets.EMBEDDING_GEMMA')}
+                </option>
+            </SelectField>
+            <p className='text-sm text-muted-foreground'>
+                {tr('indexing.presetHint')}
+            </p>
             <div className='grid gap-4 sm:grid-cols-2'>
                 <TextField
                     label={tr('profile.dimensions')}
@@ -43,7 +77,7 @@ export function ProfileFields({
                     required
                     min={1}
                     max={16_000}
-                    defaultValue={configuration?.dimensions}
+                    defaultValue={configuration?.dimensions ?? 768}
                 />
                 <SelectField
                     label={tr('profile.index')}
@@ -64,6 +98,10 @@ export function ProfileFields({
                 defaultValue={configuration?.preparation ?? ''}
                 rows={3}
             />
+            <p className='text-xs text-muted-foreground'>
+                {tr('indexing.preparationHint')}
+            </p>
+            <MetadataFields initial={configuration?.metadataFields} />
             <SelectField
                 label={tr('profile.chunking')}
                 name='chunkingStrategy'

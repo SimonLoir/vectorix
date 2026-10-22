@@ -1,4 +1,5 @@
 'use client';
+import { useTranslations } from 'next-intl';
 
 import { useQuery } from '@tanstack/react-query';
 import { Layers3 } from 'lucide-react';
@@ -15,18 +16,18 @@ export function OrganizationFeatures({
 }: {
     readonly organizationId: string;
 }) {
+    const tr = useTranslations('admin.core');
     const { orpc } = useORPC();
     const query = useQuery(
         orpc.superadmin.organizations.features.queryOptions({
             input: { organizationId },
         })
     );
-    if (query.isPending)
-        return <LoadingState label='Résolution des fonctionnalités…' />;
+    if (query.isPending) return <LoadingState label={tr('featuresLoading')} />;
     if (!query.data)
         return (
             <p className='text-sm text-destructive'>
-                {query.error?.message ?? 'Fonctionnalités indisponibles'}
+                {tr('featuresUnavailable')}
             </p>
         );
 
@@ -37,17 +38,16 @@ export function OrganizationFeatures({
             <CardHeader className='space-y-3 border-b border-white/8 py-5'>
                 <CardTitle className='flex items-center gap-2 text-base'>
                     <Layers3 className='h-4 w-4 text-indigo-300' />
-                    Fonctionnalités Vectorix
+                    {tr('vectorixFeatures')}
                 </CardTitle>
                 <p className='text-sm text-slate-400'>
                     {legacy
-                        ? 'Organisation legacy : seules les fonctionnalités sélectionnées sont accordées, sans abonnement requis.'
-                        : 'Les accès dépendent uniquement du fournisseur externe. Gérez les plans sur son instance.'}
+                        ? tr('legacyFeaturesHint')
+                        : tr('externalFeaturesHint')}
                 </p>
                 {query.isError && (
                     <p role='alert' className='text-sm text-amber-200'>
-                        Actualisation impossible. Votre sélection est conservée
-                        ; rechargez avant de continuer.
+                        {tr('refreshFailed')}
                     </p>
                 )}
                 <div>
@@ -59,16 +59,18 @@ export function OrganizationFeatures({
                         }
                     >
                         {legacy
-                            ? 'Accès legacy'
+                            ? tr('legacyAccess')
                             : external.configured
                               ? external.reachable
-                                  ? 'Fournisseur externe joignable'
-                                  : 'Fournisseur externe indisponible'
-                              : 'Fournisseur externe non configuré'}
+                                  ? tr('externalReachable')
+                                  : tr('externalUnavailable')
+                              : tr('externalNotConfigured')}
                     </Badge>
                 </div>
                 {!legacy && external.error && (
-                    <p className='text-xs text-amber-300'>{external.error}</p>
+                    <p className='text-xs text-amber-300'>
+                        {tr('externalUnavailable')}
+                    </p>
                 )}
             </CardHeader>
             {legacy ? (

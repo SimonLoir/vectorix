@@ -1,5 +1,6 @@
 'use client';
 
+import { useTranslations } from 'next-intl';
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { ArrowRight, CheckCircle2, Orbit, ShieldCheck } from 'lucide-react';
@@ -8,17 +9,21 @@ import { Button } from '@repo/ui/button';
 import { Input } from '@repo/ui/input';
 import { Label } from '@repo/ui/label';
 
-function submitLabel(pending: boolean, twoFactorPending: boolean) {
-    if (twoFactorPending) return pending ? 'Vérification…' : 'Vérifier';
-    return pending ? 'Connexion…' : 'Se connecter';
+/** Resolve a message key so pending and authentication errors stay reactive to locale changes. */
+function submitMessageKey(pending: boolean, twoFactorPending: boolean) {
+    if (twoFactorPending) return pending ? 'login.verifying' : 'login.verify';
+    return pending ? 'login.signingIn' : 'login.signIn';
 }
 
 export function AdminLoginForm() {
+    const t = useTranslations('admin.secondary');
     const auth = useAuth();
     const router = useRouter();
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
-    const [error, setError] = useState<string | null>(null);
+    const [error, setError] = useState<
+        'login.invalidCode' | 'login.failed' | null
+    >(null);
     const [pending, setPending] = useState(false);
     // Second step after `twoFactorRedirect`: TOTP or single-use backup code.
     const [twoFactorPending, setTwoFactorPending] = useState(false);
@@ -37,7 +42,7 @@ export function AdminLoginForm() {
             : await auth.twoFactor.verifyTotp(input);
         setPending(false);
         if (result.error) {
-            setError('Code invalide ou expiré.');
+            setError('login.invalidCode');
             return;
         }
         finish();
@@ -56,7 +61,7 @@ export function AdminLoginForm() {
         const result = await auth.signIn.email({ email, password });
         setPending(false);
         if (result.error) {
-            setError(result.error.message ?? 'Connexion impossible.');
+            setError('login.failed');
             return;
         }
         if (
@@ -83,20 +88,19 @@ export function AdminLoginForm() {
                 </div>
                 <div className='relative my-auto py-16'>
                     <p className='text-sm font-medium text-indigo-300'>
-                        Super administration
+                        {t('login.kicker')}
                     </p>
                     <h1 className='mt-4 max-w-md text-4xl font-semibold leading-[1.12] tracking-[-0.04em]'>
-                        Pilotez votre plateforme avec précision.
+                        {t('login.title')}
                     </h1>
                     <p className='mt-5 max-w-md text-sm leading-6 text-slate-400'>
-                        Organisations, utilisateurs et fonctionnalités réunis
-                        dans un espace de contrôle sécurisé.
+                        {t('login.description')}
                     </p>
                     <div className='mt-9 space-y-3'>
                         {[
-                            'Gestion centralisée des organisations',
-                            'Contrôle fin des accès et fonctionnalités',
-                            'Actions sensibles tracées et sécurisées',
+                            t('login.benefitOrganizations'),
+                            t('login.benefitAccess'),
+                            t('login.benefitAudit'),
                         ].map((item) => (
                             <div
                                 key={item}
@@ -109,7 +113,7 @@ export function AdminLoginForm() {
                     </div>
                 </div>
                 <p className='relative text-xs text-slate-600'>
-                    Accès réservé · Vectorix
+                    {t('login.restricted')}
                 </p>
             </section>
             <section className='flex items-center border-l border-white/8 bg-[#0d1423] px-6 py-10 sm:px-12 lg:px-14'>
@@ -122,11 +126,10 @@ export function AdminLoginForm() {
                             <ShieldCheck className='h-5 w-5' />
                         </div>
                         <h2 className='mt-5 text-3xl font-semibold tracking-[-0.04em] text-slate-100'>
-                            Bon retour.
+                            {t('login.welcome')}
                         </h2>
                         <p className='mt-2 text-sm leading-6 text-slate-500'>
-                            Connectez-vous avec votre compte super
-                            administrateur.
+                            {t('login.instructions')}
                         </p>
                     </div>
                     <form className='space-y-5' onSubmit={submit}>
@@ -137,8 +140,8 @@ export function AdminLoginForm() {
                                     className='text-xs font-medium text-slate-300'
                                 >
                                     {useBackupCode
-                                        ? 'Code de secours'
-                                        : 'Code de votre application d’authentification'}
+                                        ? t('login.backupCode')
+                                        : t('login.appCode')}
                                 </Label>
                                 <Input
                                     className='admin-field'
@@ -165,8 +168,8 @@ export function AdminLoginForm() {
                                     }}
                                 >
                                     {useBackupCode
-                                        ? 'Utiliser l’application d’authentification'
-                                        : 'Utiliser un code de secours'}
+                                        ? t('login.useApp')
+                                        : t('login.useBackup')}
                                 </button>
                             </div>
                         ) : (
@@ -176,7 +179,7 @@ export function AdminLoginForm() {
                                         htmlFor='email'
                                         className='text-xs font-medium text-slate-300'
                                     >
-                                        Adresse e-mail
+                                        {t('login.email')}
                                     </Label>
                                     <Input
                                         className='admin-field'
@@ -195,7 +198,7 @@ export function AdminLoginForm() {
                                         htmlFor='password'
                                         className='text-xs font-medium text-slate-300'
                                     >
-                                        Mot de passe
+                                        {t('login.password')}
                                     </Label>
                                     <Input
                                         className='admin-field'
@@ -213,7 +216,7 @@ export function AdminLoginForm() {
                         )}
                         {error ? (
                             <p className='rounded-xl border border-red-400/15 bg-red-400/8 px-4 py-3 text-sm text-red-300'>
-                                {error}
+                                {t(error)}
                             </p>
                         ) : null}
                         <Button
@@ -221,15 +224,14 @@ export function AdminLoginForm() {
                             type='submit'
                             disabled={pending}
                         >
-                            {submitLabel(pending, twoFactorPending)}
+                            {t(submitMessageKey(pending, twoFactorPending))}
                             {pending ? null : (
                                 <ArrowRight className='h-4 w-4' />
                             )}
                         </Button>
                     </form>
                     <p className='mt-7 text-center text-[11px] text-slate-400'>
-                        Cet espace est surveillé. Les actions sensibles sont
-                        journalisées.
+                        {t('login.notice')}
                     </p>
                 </div>
             </section>

@@ -18,7 +18,7 @@ export function OrganizationWorkspace({
                 {tr('workspace.back')}
             </Link>
             <Tabs defaultValue='summary'>
-                <TabsList>
+                <TabsList className='h-auto max-w-full flex-wrap justify-start'>
                     <TabsTrigger value='summary'>
                         {tr('workspace.organization')}
                     </TabsTrigger>

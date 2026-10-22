@@ -140,6 +140,8 @@ model VectorConnection {
   name           String       @default("Platform PostgreSQL")
   schema         String       @default("vector_collections")
   createdAt      DateTime     @default(now())
+  destinationFingerprint String?
+  indexGenerations IndexGeneration[]
   configurations CollectionConfigRevision[]
 
   @@unique([organizationId, id])
@@ -156,6 +158,12 @@ model Collection {
   createdAt             DateTime     @default(now())
   updatedAt             DateTime     @updatedAt
   deletedAt             DateTime?
+  contentSequence       BigInt @default(0)
+  activeGenerationId    String?
+  activeGeneration      IndexGeneration? @relation("ActiveCollectionGeneration", fields: [organizationId, id, activeGenerationId], references: [organizationId, collectionId, id], onDelete: NoAction, onUpdate: NoAction)
+  indexGenerations      IndexGeneration[] @relation("CollectionGenerations")
+  indexChanges          CollectionChange[]
+  indexAccounting       CollectionIndexAccounting?
   configurations        CollectionConfigRevision[]
   documents             CollectionDocument[]
   memberGrants          CollectionMemberGrant[]
@@ -185,11 +193,16 @@ model CollectionConfigRevision {
   numericType          String             @default("float32")
   endpoint             String
   preparation          String             @default("")
+  embeddingPreset      String             @default("GENERIC")
   chunkingStrategy     ChunkingStrategy   @default(DOCUMENT_STRUCTURE)
   chunking             Json
   parentChild          Boolean            @default(false)
   createdAt            DateTime           @default(now())
 
+  metadataFields       Json @default("{}")
+  indexGenerations     IndexGeneration[] @relation("GenerationConfiguration")
+
+  @@unique([organizationId, collectionId, revision, vectorConnectionId], map: "CollectionConfigRevision_index_binding_key")
   @@unique([organizationId, collectionId, revision])
 }
 
@@ -278,6 +291,7 @@ model OrganizationQuota {
   originalBytes      BigInt
   storageBytes       BigInt
   chunksPerCollection Int         @default(100000)
+  temporaryChunksPerCollection Int @default(100000)
   updatedAt          DateTime     @updatedAt
 }
 
@@ -304,6 +318,8 @@ model Document {
   createdAt      DateTime     @default(now())
   updatedAt      DateTime     @updatedAt
   deletedAt      DateTime?
+  indexManifests GenerationDocument[]
+  indexChanges   CollectionChange[]
   versions       DocumentVersion[]
   collections    CollectionDocument[]
 
@@ -336,9 +352,16 @@ model DocumentVersion {
   extraction        DocumentExtraction?
   ingestion         DocumentIngestion?
   cleanup           DocumentCleanup?
+  contentState      DocumentContentState @default(AVAILABLE)
+  contentFence      BigInt @default(0)
+  indexedDocuments  IndexedDocument[] @relation("IndexedSourceVersion")
+  desiredByGenerations GenerationDocument[] @relation("DesiredSourceVersion")
+  indexChanges      CollectionChange[] @relation("ChangedSourceVersion")
+  sourceHolds       DocumentSourceHold[]
   storedAt          DateTime?
   discardedAt       DateTime?
 
+  @@unique([organizationId, documentId, id])
   @@unique([organizationId, id])
   @@unique([organizationId, documentId, version])
   @@unique([storageLocationId, objectKey])
@@ -377,8 +400,13 @@ model DocumentExtraction {
   byteSize          BigInt
   extractorVersion  String
   language          String
+  discardedAt       DateTime?
+  indexedDocuments  IndexedDocument[] @relation("IndexedExtraction")
+  desiredByGenerations GenerationDocument[] @relation("DesiredExtraction")
+  indexChanges      CollectionChange[] @relation("ChangedExtraction")
   createdAt         DateTime        @default(now())
 
+  @@unique([organizationId, versionId, id])
   @@unique([organizationId, versionId])
   @@unique([storageLocationId, objectKey])
 }
@@ -389,6 +417,10 @@ model CollectionDocument {
   documentId     String
   collection     Collection @relation(fields: [organizationId, collectionId], references: [organizationId, id], onDelete: Cascade)
   document       Document   @relation(fields: [organizationId, documentId], references: [organizationId, id], onDelete: Cascade)
+  metadata       Json @default("{}")
+  metadataRevision Int @default(1)
+  language       RagContentLanguage @default(UNDETERMINED)
+  tags           String[] @default([])
   createdAt      DateTime   @default(now())
 
   @@id([collectionId, documentId])
