@@ -1,12 +1,17 @@
 import { ORPCError } from '@orpc/server';
 import type { AuthorizedContext } from '@routers/utils/authorized';
-import type { Prisma, Chunk, IndexedDocument, DocumentVersion } from '@repo/db';
-import {
-    chunkView,
-    documentMetadata,
-} from '@repo/api-contracts/v1/rag/indexing-types';
+import type {
+    Prisma,
+    Chunk,
+    IndexedDocument,
+    DocumentVersion,
+    IndexGenerationStatus,
+} from '@repo/db';
+import { chunkView } from '@repo/api-contracts/v1/rag/indexing-types';
 import { quotaLimits } from '../quotas';
 import { ragActor } from '../access';
+import { configurationDto } from '../collection-view';
+import { projectMetadata } from './metadata-validation';
 import {
     indexCapabilities,
     indexCleanupWhere,
@@ -39,14 +44,25 @@ export function chunkDto(chunk: Chunk, publication: Publication) {
 }
 
 /** Metadata-only progress does not grant access to chunks or document contents. */
-export async function getIndexStatus(
+export function getIndexStatus(
     context: AuthorizedContext,
     collectionId: string
 ) {
-    const access = await indexCapabilities(context, collectionId);
+    return context.db.$transaction(
+        (tx) => readIndexStatus(context, collectionId, tx),
+        { isolationLevel: 'RepeatableRead' }
+    );
+}
+
+async function readIndexStatus(
+    context: AuthorizedContext,
+    collectionId: string,
+    db: Prisma.TransactionClient
+) {
+    const access = await indexCapabilities(context, collectionId, db);
     const organizationId = access.actor.organizationId;
     const [generations, accounting, limits, configuration] = await Promise.all([
-        context.db.indexGeneration.findMany({
+        db.indexGeneration.findMany({
             where: { organizationId, collectionId },
             orderBy: [{ createdAt: 'desc' }, { id: 'desc' }],
             take: 10,
@@ -59,11 +75,11 @@ export async function getIndexStatus(
                 },
             },
         }),
-        context.db.collectionIndexAccounting.findUnique({
+        db.collectionIndexAccounting.findUnique({
             where: { collectionId },
         }),
-        quotaLimits(context.db, organizationId),
-        context.db.collectionConfigRevision.findUnique({
+        quotaLimits(db, organizationId),
+        db.collectionConfigRevision.findUnique({
             where: {
                 ['organizationId_collectionId_revision']: {
                     organizationId,
@@ -73,19 +89,46 @@ export async function getIndexStatus(
             },
         }),
     ]);
+    // A long-lived active generation may be older than ten discarded rebuilds.
+    // Keep it in the bounded response even when recent history fills the page.
+    if (
+        access.collection.activeGenerationId &&
+        !generations.some(
+            (item) => item.id === access.collection.activeGenerationId
+        )
+    ) {
+        const active = await db.indexGeneration.findFirst({
+            where: {
+                id: access.collection.activeGenerationId,
+                organizationId,
+                collectionId,
+            },
+            include: {
+                configuration: true,
+                _count: { select: { documents: true } },
+            },
+        });
+        if (active) {
+            generations.pop();
+            generations.unshift(active);
+        }
+    }
     const items = await Promise.all(
         generations.map(async (generation) => ({
             id: generation.id,
             status: generation.status,
             configurationRevision: generation.configurationRevision,
+            previousGenerationId: generation.previousGenerationId,
             model: generation.configuration.model,
             dimensions: generation.configuration.dimensions,
             modelIdentity: generation.modelIdentity,
             createdAt: generation.createdAt,
             activatedAt: generation.activatedAt,
+            retiredAt: generation.retiredAt,
+            cleanupAfter: generation.cleanupAfter,
             projectedChunks: Number(generation.projectedChunks),
             totalDocuments: generation._count.documents,
-            publishedDocuments: await context.db.generationDocument.count({
+            publishedDocuments: await db.generationDocument.count({
                 where: {
                     organizationId,
                     generationId: generation.id,
@@ -101,11 +144,44 @@ export async function getIndexStatus(
         configuration.provider !== 'OLLAMA' ||
         configuration.chunkingStrategy !== 'DOCUMENT_STRUCTURE' ||
         configuration.parentChild;
+    const candidateStates: IndexGenerationStatus[] = [
+        'PROVISIONING',
+        'BUILDING',
+        'FAILED',
+    ];
+    const [uncleaned, organizationRebuild] = await Promise.all([
+        db.indexGeneration.count({
+            where: { organizationId, collectionId, status: { not: 'CLEANED' } },
+        }),
+        db.indexGeneration.count({
+            where: {
+                organizationId,
+                previousGenerationId: { not: null },
+                status: { in: [...candidateStates] },
+            },
+        }),
+    ]);
+    const rebuildBlockedReason = unsupported
+        ? ('PROFILE_UNSUPPORTED' as const)
+        : generations.some((item) => candidateStates.includes(item.status)) ||
+            organizationRebuild
+          ? ('REBUILD_IN_PROGRESS' as const)
+          : uncleaned >= 2 || !access.collection.activeGenerationId
+            ? ('GENERATION_CONFLICT' as const)
+            : null;
+    const activeConfiguration = generations.find(
+        (item) => item.id === access.collection.activeGenerationId
+    )?.configuration;
     return {
         configurationRevision: access.collection.configurationRevision,
         deletedAt: access.collection.deletedAt,
         canManage: access.canManage,
         canRead: access.canRead,
+        canRebuild: access.canRebuild,
+        rebuildBlockedReason,
+        activeConfiguration: activeConfiguration
+            ? configurationDto(activeConfiguration)
+            : null,
         unsupportedReason: unsupported
             ? ('PROFILE_UNSUPPORTED' as const)
             : null,
@@ -140,7 +216,12 @@ export async function listIndexTasks(context: AuthorizedContext, input: Page) {
             orderBy: [{ createdAt: 'desc' }, { id: 'desc' }],
             take: input.limit,
             skip: input.offset,
-            include: { indexedDocument: { select: { documentId: true } } },
+            include: {
+                indexedDocument: { select: { documentId: true } },
+                generation: {
+                    select: { previousGenerationId: true, status: true },
+                },
+            },
         }),
         context.db.indexTask.count({ where }),
     ]);
@@ -161,6 +242,16 @@ export async function listIndexTasks(context: AuthorizedContext, input: Page) {
             updatedAt: task.updatedAt,
             retryable:
                 access.canManage &&
+                (!(
+                    task.generation.previousGenerationId &&
+                    ['PROVISIONING', 'BUILDING', 'FAILED'].includes(
+                        task.generation.status
+                    )
+                ) ||
+                    ['CLEAN_PUBLICATION', 'CLEAN_GENERATION'].includes(
+                        task.kind
+                    ) ||
+                    access.canRebuild) &&
                 task.status === 'FAILED' &&
                 (!access.collection.deletedAt ||
                     ['CLEAN_PUBLICATION', 'CLEAN_GENERATION'].includes(
@@ -180,6 +271,18 @@ export async function listIndexDocuments(
         input.collectionId
     );
     if (collection.deletedAt) throw new ORPCError('NOT_FOUND');
+    const profile = await context.db.collectionConfigRevision.findUniqueOrThrow(
+        {
+            where: {
+                ['organizationId_collectionId_revision']: {
+                    organizationId: actor.organizationId,
+                    collectionId: collection.id,
+                    revision: collection.configurationRevision,
+                },
+            },
+            select: { metadataFields: true },
+        }
+    );
     const generation =
         collection.activeGenerationId ??
         (
@@ -249,7 +352,7 @@ export async function listIndexDocuments(
                 metadataRevision: row.metadataRevision,
                 language: row.language,
                 tags: row.tags,
-                metadata: documentMetadata.parse(row.metadata),
+                metadata: projectMetadata(profile.metadataFields, row.metadata),
                 pending: Boolean(
                     generation &&
                     (!indexed ||
@@ -268,12 +371,53 @@ export async function listIndexChunks(
     input: Page & {
         documentId?: string;
         publicationId?: string;
+        generationId?: string;
     }
 ) {
-    const { actor } = await requireIndexRead(context, input.collectionId);
+    const { actor, collection } = await requireIndexRead(
+        context,
+        input.collectionId
+    );
     const access = await indexCapabilities(context, input.collectionId);
+    const selectedId =
+        input.generationId ??
+        collection.activeGenerationId ??
+        (access.canManage
+            ? (
+                  await context.db.indexGeneration.findFirst({
+                      where: {
+                          organizationId: actor.organizationId,
+                          collectionId: collection.id,
+                          status: {
+                              in: ['PROVISIONING', 'BUILDING', 'FAILED'],
+                          },
+                      },
+                      orderBy: { createdAt: 'desc' },
+                      select: { id: true },
+                  })
+              )?.id
+            : undefined);
+    if (selectedId) {
+        const selected = await context.db.indexGeneration.findFirst({
+            where: {
+                id: selectedId,
+                organizationId: actor.organizationId,
+                collectionId: collection.id,
+                status: access.canManage
+                    ? { in: ['PROVISIONING', 'BUILDING', 'ACTIVE', 'FAILED'] }
+                    : 'ACTIVE',
+            },
+            select: { id: true },
+        });
+        if (
+            !selected ||
+            (!access.canManage && selectedId !== collection.activeGenerationId)
+        )
+            throw new ORPCError('NOT_FOUND');
+    }
     const where: Prisma.ChunkWhereInput = {
         organizationId: actor.organizationId,
+        generationId: selectedId ?? '',
         text: input.query
             ? { contains: input.query, mode: 'insensitive' }
             : undefined,

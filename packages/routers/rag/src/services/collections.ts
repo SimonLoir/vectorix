@@ -9,6 +9,8 @@ import { quotaLimits } from './quotas';
 import { profileData } from './collection-profile';
 import { collectionDto, configurationDto } from './collection-view';
 import { recordCollectionDeletion } from './indexing/changes';
+import { indexError } from './indexing/errors';
+import { validateProfileMetadata } from './indexing/profile-metadata';
 
 type Profile = typeof collectionProfile._output;
 type UpdateProfile = Omit<Profile, 'embeddingPreset' | 'metadataFields'> &
@@ -99,6 +101,12 @@ export function updateCollection(
             input.id,
             'administer'
         );
+        // Share the collection write fence with rebuild acceptance and outbox
+        // mutations before comparing the saved configuration revision.
+        await db.collection.update({
+            where: { id: current.id },
+            data: { contentSequence: { increment: 0 } },
+        });
         if (current.configurationRevision !== input.expectedRevision)
             throw new ORPCError('CONFLICT', {
                 message:
@@ -146,14 +154,23 @@ export function updateCollection(
                 where: {
                     organizationId: actor.organizationId,
                     collectionId: current.id,
-                    status: { not: 'CLEANED' },
+                    status: { in: ['PROVISIONING', 'BUILDING', 'FAILED'] },
                 },
             })
         )
-            throw new ORPCError('CONFLICT', {
-                message:
-                    'The indexed collection profile is immutable. Rebuilding with a new profile is a later milestone.',
-            });
+            throw indexError('REBUILD_IN_PROGRESS', 'CONFLICT');
+        if (
+            !isDeepStrictEqual(
+                previous.metadataFields,
+                nextProfile.metadataFields
+            )
+        )
+            await validateProfileMetadata(
+                db,
+                actor.organizationId,
+                current.id,
+                nextProfile.metadataFields
+            );
         const profile = await profileData(
             db,
             actor.organizationId,

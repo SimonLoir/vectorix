@@ -41,9 +41,13 @@ sql vectorix_upgrade_test < tests/catalog/lifecycle-upgrade-seed.sql
 sql vectorix_upgrade_test < packages/db/prisma/migrations/20261025000000_document_lifecycle/migration.sql
 pnpm --filter @repo/db exec prisma migrate resolve --applied 20261025000000_document_lifecycle
 sql vectorix_upgrade_test < tests/catalog/indexing-upgrade-seed.sql
+sql vectorix_upgrade_test < packages/db/prisma/migrations/20261026000000_rag_indexing/migration.sql
+pnpm --filter @repo/db exec prisma migrate resolve --applied 20261026000000_rag_indexing
+sql vectorix_upgrade_test < tests/catalog/indexing-upgrade-check.sql
+sql vectorix_upgrade_test < tests/catalog/rebuild-upgrade-seed.sql
 for attempt in 1 2; do pnpm --filter @repo/db migrate:deploy; done
 sql vectorix_upgrade_test < tests/catalog/lifecycle-upgrade-check.sql
-sql vectorix_upgrade_test < tests/catalog/indexing-upgrade-check.sql
+sql vectorix_upgrade_test < tests/catalog/rebuild-upgrade-check.sql
 sql vectorix_upgrade_test < tests/catalog/provider-upgrade-check.sql
 sql vectorix_upgrade_test < tests/catalog/document-upgrade-check.sql
 sql vectorix_upgrade_test < tests/catalog/upgrade-check.sql

@@ -1,6 +1,6 @@
 # PDF and DOCX library — M2b
 
-M2b extends the existing document upload, replacement, extraction and authorized preview journey to text-based PDF and DOCX. The journey is implemented, independently reviewed and browser-verified against production builds and disposable infrastructure. Indexing, embeddings and search remain planned; this extraction milestone does not make a collection searchable.
+M2b extends the existing document upload, replacement, extraction and authorized preview journey to text-based PDF and DOCX. The journey is implemented, independently reviewed and browser-verified against production builds and disposable infrastructure. This extraction milestone alone does not make a collection searchable. [M3](rag-first-search.md) subsequently delivered Ollama indexing and filtered search; [M4](rag-index-rebuild.md) adds profile changes and rebuilds with a separate acceptance record.
 
 ## Runtime and storage
 

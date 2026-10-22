@@ -4,6 +4,9 @@ import { useFormatter, useTranslations } from 'next-intl';
 import { Button } from '@repo/ui/button';
 import { useORPC } from '@/hooks/use-orpc';
 import { useVectorixPermissions } from '@/contexts/vectorix-permissions';
+import { RebuildDialog, type RebuildReview } from './rebuild-dialog';
+import { IndexGenerations } from './index-generations';
+import { ProfileSummary } from '../collections/profile-summary';
 import { IndexError, useIndexAction } from './index-state';
 import type { Collection, RagOutputs } from '../types';
 import type { IndexStatus } from './types';
@@ -20,6 +23,7 @@ export function IndexControls({
     const [probe, setProbe] = useState<RagOutputs['indexing']['probe'] | null>(
         null
     );
+    const [review, setReview] = useState<RebuildReview | null>(null);
     const building = status.generations.some((generation) =>
         ['PROVISIONING', 'BUILDING'].includes(generation.status)
     );
@@ -31,6 +35,30 @@ export function IndexControls({
                     revision: collection.configurationRevision,
                 })}
             </p>
+            {status.active && (
+                <div
+                    className='space-y-2 rounded-lg bg-muted p-4 text-sm'
+                    role='status'
+                >
+                    <p className='font-medium'>
+                        {tr('rebuild.activeAvailable', {
+                            revision: status.active.configurationRevision,
+                            model: status.active.model,
+                            dimensions: status.active.dimensions,
+                        })}
+                    </p>
+                    <p>
+                        {tr('rebuild.draftState', {
+                            revision: collection.configurationRevision,
+                            same:
+                                status.active.configurationRevision ===
+                                collection.configurationRevision
+                                    ? 'yes'
+                                    : 'no',
+                        })}
+                    </p>
+                </div>
+            )}
             {status.unsupportedReason && (
                 <p role='status'>{tr(`errors.${status.unsupportedReason}`)}</p>
             )}
@@ -59,12 +87,16 @@ export function IndexControls({
                             {action.busy ? tr('working') : tr('probe')}
                         </Button>
                     )}
-                {status.canManage &&
+                {!status.active &&
+                    status.canManage &&
                     canOperation('admin.rag.indexing.start') && (
                         <Button
                             disabled={
                                 action.busy ||
-                                building ||
+                                status.generations.some(
+                                    (generation) =>
+                                        generation.status !== 'CLEANED'
+                                ) ||
                                 Boolean(status.active) ||
                                 Boolean(status.unsupportedReason)
                             }
@@ -82,10 +114,75 @@ export function IndexControls({
                             {building ? tr('building') : tr('start')}
                         </Button>
                     )}
+                {status.active &&
+                    status.activeConfiguration &&
+                    status.canRebuild &&
+                    canOperation('admin.rag.indexing.rebuild') && (
+                        <Button
+                            disabled={
+                                action.busy ||
+                                Boolean(status.rebuildBlockedReason) ||
+                                Boolean(status.unsupportedReason)
+                            }
+                            onClick={() => {
+                                if (
+                                    !status.active ||
+                                    !status.activeConfiguration
+                                )
+                                    return;
+                                setReview({
+                                    collectionId: collection.id,
+                                    revision: collection.configurationRevision,
+                                    activeGenerationId: status.active.id,
+                                    activeRevision:
+                                        status.active.configurationRevision,
+                                    activeConfiguration:
+                                        status.activeConfiguration,
+                                    draftConfiguration:
+                                        collection.configuration,
+                                });
+                            }}
+                        >
+                            {tr('rebuild.review')}
+                        </Button>
+                    )}
             </div>
+            {status.active && status.activeConfiguration && (
+                <details className='space-y-4 rounded-lg border p-4'>
+                    <summary className='cursor-pointer font-medium'>
+                        {tr('rebuild.activeProfile', {
+                            revision: status.active.configurationRevision,
+                        })}
+                    </summary>
+                    <ProfileSummary
+                        configuration={status.activeConfiguration}
+                    />
+                </details>
+            )}
+            {status.active &&
+                status.rebuildBlockedReason &&
+                status.rebuildBlockedReason !== status.unsupportedReason && (
+                    <p role='status' className='rounded-lg border p-3 text-sm'>
+                        {tr(`errors.${status.rebuildBlockedReason}`)}
+                    </p>
+                )}
+            {status.active && !status.canRebuild && (
+                <p className='text-sm text-muted-foreground'>
+                    {tr('rebuild.denied')}
+                </p>
+            )}
             <p className='text-xs text-muted-foreground'>
                 {tr(status.active ? 'activeHint' : 'startHint')}
             </p>
+            {!status.active &&
+                !building &&
+                status.generations.some(
+                    (generation) => generation.status !== 'CLEANED'
+                ) && (
+                    <p role='status' className='text-sm'>
+                        {tr('rebuild.startNeedsDiscard')}
+                    </p>
+                )}
             <IndexError error={action.error} />
             {probe && (
                 <dl className='grid gap-3 rounded-lg bg-muted p-4 text-sm sm:grid-cols-2'>
@@ -125,38 +222,13 @@ export function IndexControls({
                     temporary: status.usage.temporaryLimit,
                 })}
             </p>
-            {status.generations.length === 0 ? (
-                <p>{tr('noGeneration')}</p>
-            ) : (
-                <ul className='space-y-3'>
-                    {status.generations.map((generation) => (
-                        <li
-                            key={generation.id}
-                            className='rounded-lg border p-3 text-sm'
-                        >
-                            <p className='font-medium'>
-                                {tr(`generationStatus.${generation.status}`)} ·{' '}
-                                {generation.model} ·{' '}
-                                {tr('dimensions', {
-                                    count: generation.dimensions,
-                                })}
-                            </p>
-                            <p>
-                                {tr('generationProgress', {
-                                    revision: generation.configurationRevision,
-                                    published: generation.publishedDocuments,
-                                    total: generation.totalDocuments,
-                                    chunks: generation.projectedChunks,
-                                })}
-                            </p>
-                            {generation.errorCode && (
-                                <p role='alert'>
-                                    {tr(`errors.${generation.errorCode}`)}
-                                </p>
-                            )}
-                        </li>
-                    ))}
-                </ul>
+            <IndexGenerations collection={collection} status={status} />
+            {review && (
+                <RebuildDialog
+                    review={review}
+                    blockedReason={status.rebuildBlockedReason}
+                    onClose={() => setReview(null)}
+                />
             )}
         </section>
     );

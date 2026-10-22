@@ -57,6 +57,11 @@ export function IndexTasks({
                                     {tr(`taskKinds.${task.kind}`)} ·{' '}
                                     {tr(`taskStatus.${task.status}`)}
                                 </p>
+                                <p className='break-all text-xs text-muted-foreground'>
+                                    {tr('rebuild.generation', {
+                                        id: task.generationId,
+                                    })}
+                                </p>
                                 <p>
                                     {tr('taskProgress', {
                                         attempts: task.attempts,

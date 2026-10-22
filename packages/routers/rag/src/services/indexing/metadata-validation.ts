@@ -42,3 +42,15 @@ export function validateMetadata(fieldsValue: unknown, valuesValue: unknown) {
     }
     return normalized;
 }
+
+/** Each immutable generation sees only its declared keys; the accepted collection event retains the complete metadata snapshot. */
+export function projectMetadata(fieldsValue: unknown, valuesValue: unknown) {
+    const fields = metadataFields.parse(fieldsValue);
+    const values = documentMetadata.parse(valuesValue);
+    return validateMetadata(
+        fields,
+        Object.fromEntries(
+            Object.entries(values).filter(([key]) => key in fields)
+        )
+    );
+}

@@ -49,7 +49,18 @@ function livePublications(
             },
         },
         extraction: { discardedAt: null },
-        sourceHold: { state: 'LIVE' },
+        sourceHold: {
+            OR: [
+                { state: 'LIVE' },
+                { state: 'RETIRED', retainUntil: { gt: new Date() } },
+            ],
+        },
+        generation: {
+            OR: [
+                { status: 'ACTIVE' },
+                { status: 'RETIRED', cleanupAfter: { gt: new Date() } },
+            ],
+        },
     };
 }
 

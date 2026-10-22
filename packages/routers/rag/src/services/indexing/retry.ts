@@ -3,7 +3,7 @@ import type { AuthorizedContext } from '@routers/utils/authorized';
 import { runSerializableTransaction } from '@routers/utils/transactions';
 import { ragActor, requireCollection } from '../access';
 import { audit } from '../mutation';
-import { requireIndexCleanup } from './access';
+import { requireIndexCleanup, requireIndexRebuild } from './access';
 
 /** Requeue accepted work without replacing its immutable source or releasing unconfirmed reservations. */
 export function retryIndexTask(
@@ -17,7 +17,7 @@ export function retryIndexTask(
                 organizationId: context.organizationId,
                 collectionId: input.collectionId,
             },
-            include: { indexedDocument: true },
+            include: { indexedDocument: true, generation: true },
         });
         if (!task) throw new ORPCError('NOT_FOUND');
         const cleanup =
@@ -46,6 +46,20 @@ export function retryIndexTask(
                 input.collectionId,
                 'manageDocuments'
             );
+        const pendingRebuild =
+            Boolean(task.generation.previousGenerationId) &&
+            ['PROVISIONING', 'BUILDING', 'FAILED'].includes(
+                task.generation.status
+            );
+        if (!cleanup && pendingRebuild)
+            await requireIndexRebuild(context, input.collectionId, tx);
+        if (
+            !cleanup &&
+            !['PROVISIONING', 'BUILDING', 'ACTIVE', 'FAILED'].includes(
+                task.generation.status
+            )
+        )
+            throw new ORPCError('CONFLICT');
         if (task.status !== 'FAILED')
             throw new ORPCError('CONFLICT', {
                 message: 'This indexing task is not waiting for a retry.',
@@ -96,6 +110,11 @@ export function retryIndexTask(
                 lastErrorCode: null,
             },
         });
+        if (!cleanup && pendingRebuild)
+            await tx.indexGeneration.update({
+                where: { id: task.generationId },
+                data: { authorityUserId: actor.userId },
+            });
         await audit(tx, actor, 'collection.index.retry', input.collectionId, {
             taskId: task.id,
             generationId: task.generationId,

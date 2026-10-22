@@ -2,6 +2,7 @@ import { oc } from '@orpc/contract';
 import { z } from 'zod';
 import { id, page, success } from './common';
 import { documentSource } from './documents';
+import { collectionView } from './collections';
 import {
     verifiedEmbedding,
     indexFailure,
@@ -77,6 +78,26 @@ export const indexingContract = {
             })
         )
         .output(z.object({ generationId: id })),
+    rebuild: oc
+        .route({
+            method: 'POST',
+            path: '/collections/{collectionId}/index-rebuilds',
+        })
+        .input(
+            reference.extend({
+                expectedRevision: z.number().int().positive(),
+                expectedActiveGenerationId: id,
+                requestId: z.uuid(),
+            })
+        )
+        .output(z.object({ generationId: id })),
+    discard: oc
+        .route({
+            method: 'POST',
+            path: '/collections/{collectionId}/index-generations/{generationId}/discard',
+        })
+        .input(reference.extend({ generationId: id }))
+        .output(success),
     status: oc
         .route({
             method: 'GET',
@@ -89,6 +110,10 @@ export const indexingContract = {
                 deletedAt: z.date().nullable(),
                 canManage: z.boolean(),
                 canRead: z.boolean(),
+                canRebuild: z.boolean(),
+                rebuildBlockedReason: indexFailure.nullable(),
+                activeConfiguration:
+                    collectionView.shape.configuration.nullable(),
                 unsupportedReason: indexFailure.nullable(),
                 active: indexGeneration.nullable(),
                 generations: z.array(indexGeneration).max(10),
@@ -170,6 +195,7 @@ export const indexingContract = {
                 collectionId: id,
                 documentId: id.optional(),
                 publicationId: id.optional(),
+                generationId: id.optional(),
             })
         )
         .output(

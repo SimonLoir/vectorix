@@ -206,14 +206,14 @@ export async function lifecycleTests(t: TestContext) {
                 { headers: f.owner.headers() }
             );
             assert.equal(response.status, 200);
-            assert.equal(response.headers.get('Vectorix-API-Revision'), '7');
+            assert.equal(response.headers.get('Vectorix-API-Revision'), '8');
             assert.equal(
                 (await response.json()).total,
                 (await f.owner.rag.collections.list({})).total
             );
             const spec = await (await app.request('/spec/v1.json')).json();
             const alias = await (await app.request('/spec.json')).json();
-            assert.equal(spec.info.version, '1.7.0');
+            assert.equal(spec.info.version, '1.8.0');
             assert.deepEqual(alias, spec);
             for (const provider of ['OPENAI', 'MISTRAL'])
                 assert.ok(
@@ -242,7 +242,7 @@ export async function lifecycleTests(t: TestContext) {
             const discovery = await (
                 await app.request('/api-versions.json')
             ).json();
-            assert.ok(JSON.stringify(discovery).includes('"revision":7'));
+            assert.ok(JSON.stringify(discovery).includes('"revision":8'));
             assert.equal(
                 (await app.request('/api/v1/admin/rag/collections')).status,
                 401

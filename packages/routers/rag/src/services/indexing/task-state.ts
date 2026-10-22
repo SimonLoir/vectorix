@@ -10,6 +10,7 @@ import { permits } from '@repo/auth/permissions';
 import { getMemberPermissions } from '@repo/auth/permissions/resolve';
 import { indexFailure } from '@repo/api-contracts/v1/rag/indexing-types';
 import { grantWhere } from '../access';
+import { requireIndexRebuildAuthority } from './access';
 import { runSerializableTransaction } from '@routers/utils/transactions';
 
 export const INDEX_LEASE_MS = 120_000;
@@ -90,7 +91,10 @@ export async function renewIndexClaim(
 /** Recheck the initiating member and document-management grant before provider cost and publication. */
 export async function requireIndexAuthority(
     db: Prisma.TransactionClient,
-    task: Pick<IndexTask, 'organizationId' | 'collectionId' | 'requestedBy'>
+    task: Pick<
+        IndexTask,
+        'organizationId' | 'collectionId' | 'generationId' | 'requestedBy'
+    >
 ) {
     const member = await getMemberPermissions(
         task.organizationId,
@@ -120,6 +124,28 @@ export async function requireIndexAuthority(
         },
     });
     if (!collection) throw new IndexingError('ACCESS_REVOKED');
+    const generation = await db.indexGeneration.findFirst({
+        where: {
+            id: task.generationId,
+            organizationId: task.organizationId,
+            collectionId: task.collectionId,
+        },
+        select: {
+            previousGenerationId: true,
+            authorityUserId: true,
+            createdBy: true,
+            status: true,
+        },
+    });
+    if (!generation) throw new IndexingError('ACCESS_REVOKED');
+    if (
+        generation.previousGenerationId &&
+        ['PROVISIONING', 'BUILDING', 'FAILED'].includes(generation.status)
+    )
+        await requireIndexRebuildAuthority(db, {
+            ...task,
+            requestedBy: generation.authorityUserId ?? generation.createdBy,
+        });
     return collection;
 }
 
@@ -144,20 +170,20 @@ export function indexErrorCode(error: unknown): IndexFailure {
         ].includes(error.code)
             ? 'VECTOR_BINDING_CHANGED'
             : 'VECTOR_UNAVAILABLE';
-    if (error instanceof ORPCError) {
-        if (
-            error.data &&
-            typeof error.data === 'object' &&
-            'errorCode' in error.data
-        ) {
-            const diagnostic = indexFailure.safeParse(error.data.errorCode);
-            if (diagnostic.success) return diagnostic.data;
-        }
-        return error.code === 'FORBIDDEN' || error.code === 'NOT_FOUND'
-            ? 'ACCESS_REVOKED'
-            : 'CREDENTIALS_INVALID';
-    }
+    if (error instanceof ORPCError)
+        return rpcIndexErrorCode(error.data, error.code);
     return 'PROCESSING_FAILED';
+}
+
+/** Preserve typed domain diagnostics while keeping untrusted RPC details out of durable worker state. */
+function rpcIndexErrorCode(data: unknown, code: unknown): IndexFailure {
+    if (data && typeof data === 'object' && 'errorCode' in data) {
+        const diagnostic = indexFailure.safeParse(data.errorCode);
+        if (diagnostic.success) return diagnostic.data;
+    }
+    return code === 'FORBIDDEN' || code === 'NOT_FOUND'
+        ? 'ACCESS_REVOKED'
+        : 'CREDENTIALS_INVALID';
 }
 
 /** Retry transient work with bounded backoff; terminal failures remain inspectable and explicitly retryable. */

@@ -1,5 +1,6 @@
 'use client';
 import { useState } from 'react';
+import type { z } from 'zod';
 import { useTranslations } from 'next-intl';
 import { useQueryClient } from '@tanstack/react-query';
 import { indexFailure } from '@repo/api-contracts/v1/rag/indexing-types';
@@ -10,14 +11,16 @@ export function useIndexAction() {
     const tr = useTranslations('rag.indexing');
     const cache = useQueryClient();
     const [busy, setBusy] = useState(false);
-    const [error, setError] = useState<string | null>(null);
+    const [errorCode, setErrorCode] = useState<
+        z.infer<typeof indexFailure> | 'UNKNOWN' | null
+    >(null);
     async function run<T>(
         action: () => Promise<T>,
         done?: (value: T) => void,
         invalidate = true
     ) {
         setBusy(true);
-        setError(null);
+        setErrorCode(null);
         try {
             const value = await action();
             if (invalidate) await cache.invalidateQueries();
@@ -31,11 +34,16 @@ export function useIndexAction() {
                 data && typeof data === 'object' && 'errorCode' in data
                     ? indexFailure.safeParse(data.errorCode)
                     : null;
-            setError(code?.success ? tr(`errors.${code.data}`) : tr('failed'));
+            setErrorCode(code?.success ? code.data : 'UNKNOWN');
         } finally {
             setBusy(false);
         }
     }
+    const error = errorCode
+        ? errorCode === 'UNKNOWN'
+            ? tr('failed')
+            : tr(`errors.${errorCode}`)
+        : null;
     return { busy, error, run };
 }
 export function IndexError({ error }: Readonly<{ error: string | null }>) {

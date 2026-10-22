@@ -88,6 +88,10 @@ model IndexGeneration {
   collection Collection @relation("CollectionGenerations", fields: [organizationId, collectionId], references: [organizationId, id], onDelete: Cascade)
   requestId String
   configurationRevision Int
+  previousGenerationId String?
+  authorityUserId String?
+  previousGeneration IndexGeneration? @relation("GenerationPredecessor", fields: [organizationId, collectionId, previousGenerationId], references: [organizationId, collectionId, id], onDelete: NoAction, onUpdate: NoAction)
+  replacementGenerations IndexGeneration[] @relation("GenerationPredecessor")
   vectorConnectionId String
   configuration CollectionConfigRevision @relation("GenerationConfiguration", fields: [organizationId, collectionId, configurationRevision, vectorConnectionId], references: [organizationId, collectionId, revision, vectorConnectionId], onDelete: NoAction)
   vectorConnection VectorConnection @relation(fields: [organizationId, vectorConnectionId], references: [organizationId, id], onDelete: NoAction)
@@ -119,6 +123,7 @@ model IndexGeneration {
   @@unique([organizationId, requestId])
   @@unique([vectorConnectionId, vectorSchema, tableName])
   @@index([organizationId, collectionId, status])
+  @@index([organizationId, collectionId, previousGenerationId])
 }
 
 // Bounded per-generation document state. Retained after detach so monotonically

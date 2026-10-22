@@ -11,6 +11,7 @@ import { documentMetadata } from '@repo/api-contracts/v1/rag/indexing-types';
 import { acquireSourceHold } from './source-holds';
 import { indexError } from './errors';
 import { retireIndexedDocument } from './publication-state';
+import { projectMetadata } from './metadata-validation';
 
 type ReadyVersion = DocumentVersion & { extraction: DocumentExtraction };
 export interface DocumentSnapshot {
@@ -30,7 +31,8 @@ function candidateData(
     generation: IndexGeneration,
     source: DocumentSnapshot,
     buildRevision: number,
-    sequence: bigint
+    sequence: bigint,
+    fields: unknown
 ) {
     return {
         id: randomUUID(),
@@ -48,7 +50,7 @@ function candidateData(
         mediaType: source.version.mediaType,
         language: source.association.language,
         tags: source.association.tags,
-        metadata: documentMetadata.parse(source.association.metadata),
+        metadata: projectMetadata(fields, source.association.metadata),
         documentCreatedAt: source.document.createdAt,
         sourceCreatedAt: source.version.createdAt,
     };
@@ -66,6 +68,16 @@ export async function stageInitialSnapshot(
     requestedBy: string
 ) {
     if (!documents.length) return;
+    const profile = await tx.collectionConfigRevision.findUniqueOrThrow({
+        where: {
+            ['organizationId_collectionId_revision']: {
+                organizationId: generation.organizationId,
+                collectionId: generation.collectionId,
+                revision: generation.configurationRevision,
+            },
+        },
+        select: { metadataFields: true },
+    });
     const versionIds = [
         ...new Set(documents.map((source) => source.version.id)),
     ];
@@ -81,7 +93,13 @@ export async function stageInitialSnapshot(
     if (sources.count !== versionIds.length)
         throw indexError('SOURCE_UNAVAILABLE');
     const candidates = documents.map((source) =>
-        candidateData(generation, source, 1, generation.snapshotSequence)
+        candidateData(
+            generation,
+            source,
+            1,
+            generation.snapshotSequence,
+            profile.metadataFields
+        )
     );
     await tx.generationDocument.createMany({
         data: documents.map((source) => ({
@@ -125,6 +143,16 @@ async function stageChangedDocument(
     sequence: bigint,
     requestedBy: string
 ) {
+    const profile = await tx.collectionConfigRevision.findUniqueOrThrow({
+        where: {
+            ['organizationId_collectionId_revision']: {
+                organizationId: generation.organizationId,
+                collectionId: generation.collectionId,
+                revision: generation.configurationRevision,
+            },
+        },
+        select: { metadataFields: true },
+    });
     const desired = await tx.generationDocument.upsert({
         where: {
             ['generationId_documentId']: {
@@ -168,7 +196,8 @@ async function stageChangedDocument(
             generation,
             source,
             desired.buildRevision,
-            sequence
+            sequence,
+            profile.metadataFields
         ),
     });
     if (
@@ -188,7 +217,14 @@ async function stageChangedDocument(
             changeSequence: sequence,
             kind: 'INDEX_DOCUMENT',
             dedupeKey: `index:${candidate.id}`,
-            requestedBy,
+            // The accepted rebuild owns its full catch-up snapshot. A library
+            // writer can replace a shared source without administering every
+            // linked collection; recheck B's durable controller instead.
+            requestedBy:
+                generation.previousGenerationId &&
+                ['PROVISIONING', 'BUILDING', 'FAILED'].includes(generation.status)
+                    ? generation.authorityUserId ?? generation.createdBy
+                    : requestedBy,
         },
     });
 }

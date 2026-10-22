@@ -1,7 +1,8 @@
 import { ORPCError } from '@orpc/server';
 import type { AuthorizedContext } from '@routers/utils/authorized';
-import type { Prisma } from '@repo/db';
+import type { Prisma, IndexTask } from '@repo/db';
 import { permits } from '@repo/auth/permissions';
+import { getMemberPermissions } from '@repo/auth/permissions/resolve';
 import {
     ragActor,
     requireCollection,
@@ -64,42 +65,122 @@ export async function requireIndexRead(
     return { actor, collection };
 }
 
+/** Rebuilding or discarding changes both a profile's execution and its document work; require both explicit grants and a current session. */
+export async function requireIndexRebuild(
+    context: AuthorizedContext,
+    collectionId: string,
+    db: Prisma.TransactionClient = context.db
+) {
+    const actor = await ragActor(
+        context,
+        db,
+        { ragCollection: ['update', 'manageDocuments'] },
+        true
+    );
+    const collection = await db.collection.findFirst({
+        where: {
+            AND: [
+                { id: collectionId },
+                grantWhere(actor, 'administer'),
+                grantWhere(actor, 'manageDocuments'),
+            ],
+        },
+    });
+    if (!collection) throw new ORPCError('NOT_FOUND');
+    return { actor, collection };
+}
+
+/** Recheck the accepted rebuild's human principal before provider work and activation; global administration is not an explicit collection grant. */
+export async function requireIndexRebuildAuthority(
+    db: Prisma.TransactionClient,
+    task: Pick<IndexTask, 'organizationId' | 'collectionId' | 'requestedBy'>
+) {
+    const membership = await getMemberPermissions(
+        task.organizationId,
+        task.requestedBy,
+        db
+    );
+    if (
+        !membership ||
+        !permits(membership.permissions, {
+            ragCollection: ['update', 'manageDocuments'],
+        })
+    )
+        throw new ORPCError('FORBIDDEN', {
+            data: { errorCode: 'ACCESS_REVOKED' },
+        });
+    const actor: RagActor = {
+        organizationId: task.organizationId,
+        userId: task.requestedBy,
+        memberId: membership.member.id,
+        keyId: null,
+        permissions: membership.permissions,
+    };
+    const collection = await db.collection.findFirst({
+        where: {
+            AND: [
+                { id: task.collectionId, organization: { isActive: true } },
+                grantWhere(actor, 'administer'),
+                grantWhere(actor, 'manageDocuments'),
+            ],
+        },
+    });
+    if (!collection)
+        throw new ORPCError('FORBIDDEN', {
+            data: { errorCode: 'ACCESS_REVOKED' },
+        });
+    return collection;
+}
+
 /** Status metadata is visible to authorized catalog viewers; documents require a content or management grant. */
 export async function indexCapabilities(
     context: AuthorizedContext,
-    collectionId: string
+    collectionId: string,
+    db: Prisma.TransactionClient = context.db
 ) {
-    const actor = await ragActor(context, context.db, {});
-    const deleted = await context.db.collection.findFirst({
+    const actor = await ragActor(context, db, {});
+    const deleted = await db.collection.findFirst({
         where: { AND: [{ id: collectionId }, indexCleanupWhere(actor)] },
     });
     if (deleted)
-        return { actor, collection: deleted, canRead: false, canManage: true };
+        return {
+            actor,
+            collection: deleted,
+            canRead: false,
+            canManage: true,
+            canRebuild: false,
+        };
     const collection = await requireCollection(
-        context.db,
+        db,
         actor,
         collectionId,
         'metadata'
     );
-    const hasGrant = async (action: 'read' | 'manageDocuments') =>
-        permits(actor.permissions, { ragCollection: [action] }) &&
+    const hasGrant = async (
+        action: 'read' | 'manageDocuments' | 'administer'
+    ) =>
+        permits(actor.permissions, {
+            ragCollection: [action === 'administer' ? 'update' : action],
+        }) &&
         Boolean(
-            await context.db.collection.findFirst({
+            await db.collection.findFirst({
                 where: {
                     AND: [{ id: collectionId }, grantWhere(actor, action)],
                 },
                 select: { id: true },
             })
         );
-    const [read, manage] = await Promise.all([
+    const [read, manage, administer] = await Promise.all([
         hasGrant('read'),
         hasGrant('manageDocuments'),
+        hasGrant('administer'),
     ]);
     return {
         actor,
         collection,
         canRead: read && permits(actor.permissions, { ragLibrary: ['read'] }),
         canManage: manage && !actor.keyId,
+        canRebuild: manage && administer && !actor.keyId,
     };
 }
 

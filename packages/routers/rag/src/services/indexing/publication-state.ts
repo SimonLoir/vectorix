@@ -79,7 +79,8 @@ export async function retireIndexedDocument(
     tx: Prisma.TransactionClient,
     candidate: IndexedDocument,
     requestedBy: string,
-    immediate = false
+    immediate = false,
+    absoluteRetainUntil?: Date
 ) {
     if (['CLEANING', 'CLEANED'].includes(candidate.status)) return;
     const alreadyRetired = candidate.status === 'RETIRED';
@@ -88,6 +89,10 @@ export async function retireIndexedDocument(
             id: candidate.collectionId,
             activeGenerationId: candidate.generationId,
         },
+    });
+    const generation = await tx.indexGeneration.findUniqueOrThrow({
+        where: { id: candidate.generationId },
+        select: { activatedAt: true },
     });
     if (!alreadyRetired && candidate.status === 'PUBLISHED' && activeGeneration)
         await tx.collectionIndexAccounting.update({
@@ -98,11 +103,21 @@ export async function retireIndexedDocument(
                 revision: { increment: 1 },
             },
         });
+    const requestedDeadline =
+        absoluteRetainUntil ??
+        new Date(
+            Date.now() +
+                (!generation.activatedAt ||
+                (immediate && candidate.status !== 'PUBLISHED')
+                    ? 0
+                    : SOURCE_RETIRE_GRACE_MS)
+        );
+    const hold = await tx.documentSourceHold.findUnique({
+        where: { indexedDocumentId: candidate.id },
+        select: { retainUntil: true },
+    });
     const deadline = new Date(
-        Date.now() +
-            (immediate && candidate.status !== 'PUBLISHED'
-                ? 0
-                : SOURCE_RETIRE_GRACE_MS)
+        Math.max(requestedDeadline.getTime(), hold?.retainUntil?.getTime() ?? 0)
     );
     if (!alreadyRetired) {
         await tx.indexedDocument.update({

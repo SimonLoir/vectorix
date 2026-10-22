@@ -1,4 +1,5 @@
 'use client';
+import { useState } from 'react';
 import { useTranslations } from 'next-intl';
 import { useQuery } from '@tanstack/react-query';
 import { useORPC } from '@/hooks/use-orpc';
@@ -9,7 +10,8 @@ import {
 } from '../catalog-controls';
 import { IndexQueryState } from './index-state';
 import { sourcePosition } from './source-label';
-import type { IndexChunk } from './types';
+import { SelectField } from '../form-fields';
+import type { IndexChunk, IndexStatus } from './types';
 
 export function ChunkSources({ chunk }: Readonly<{ chunk: IndexChunk }>) {
     const tr = useTranslations('rag');
@@ -33,27 +35,116 @@ export function ChunkSources({ chunk }: Readonly<{ chunk: IndexChunk }>) {
 }
 export function IndexChunks({
     collectionId,
-}: Readonly<{ collectionId: string }>) {
+    status,
+}: Readonly<{ collectionId: string; status: IndexStatus }>) {
     const tr = useTranslations('rag.indexing');
-    const { orpc } = useORPC();
-    const page = useCatalogPagination();
-    const query = useQuery({
-        ...orpc.admin.rag.indexing.chunks.queryOptions({
-            input: {
-                collectionId,
-                query: page.query,
-                offset: page.offset,
-                limit: page.limit,
-            },
-        }),
-        retry: false,
-        staleTime: 0,
-    });
-    const data = query.isError ? undefined : query.data;
+    const [selected, setSelected] = useState('active');
+    const candidates = status.canManage
+        ? status.generations.filter(
+              (generation) =>
+                  generation.id !== status.active?.id &&
+                  ['PROVISIONING', 'BUILDING', 'FAILED'].includes(
+                      generation.status
+                  )
+          )
+        : [];
+    const selectedCandidate = candidates.find(
+        (generation) => generation.id === selected
+    );
+    const generation = selectedCandidate ?? status.active;
     return (
         <section className='space-y-4 rounded-xl border p-5'>
             <h3 className='font-semibold'>{tr('chunks')}</h3>
             <p className='text-sm text-muted-foreground'>{tr('chunksHint')}</p>
+            {status.canManage && candidates.length > 0 && (
+                <SelectField
+                    label={tr('rebuild.previewGeneration')}
+                    value={selectedCandidate?.id ?? 'active'}
+                    onChange={(event) => setSelected(event.currentTarget.value)}
+                >
+                    <option value='active'>
+                        {tr('rebuild.activePreview', {
+                            revision: status.active?.configurationRevision ?? 0,
+                        })}
+                    </option>
+                    {candidates.map((candidate) => (
+                        <option key={candidate.id} value={candidate.id}>
+                            {tr('rebuild.candidatePreview', {
+                                revision: candidate.configurationRevision,
+                                status: tr(
+                                    `generationStatus.${candidate.status}`
+                                ),
+                                id: candidate.id,
+                            })}
+                        </option>
+                    ))}
+                </SelectField>
+            )}
+            {generation ? (
+                <>
+                    <p className='break-all text-xs text-muted-foreground'>
+                        {tr('rebuild.generation', { id: generation.id })}
+                    </p>
+                    {selectedCandidate && (
+                        <p
+                            role='status'
+                            className='rounded-lg border p-3 text-sm'
+                        >
+                            {tr('rebuild.previewOnly')}
+                        </p>
+                    )}
+                    <GenerationChunks
+                        key={generation.id}
+                        collectionId={collectionId}
+                        generation={generation}
+                    />
+                </>
+            ) : (
+                <p role='status'>{tr('searchNotReady')}</p>
+            )}
+        </section>
+    );
+}
+
+/** Pin preview requests to one generation so an activation cannot silently mix the displayed chunks. */
+function GenerationChunks({
+    collectionId,
+    generation,
+}: Readonly<{
+    collectionId: string;
+    generation: IndexStatus['generations'][number];
+}>) {
+    const tr = useTranslations('rag.indexing');
+    const { orpc } = useORPC();
+    const page = useCatalogPagination();
+    const options = orpc.admin.rag.indexing.chunks.queryOptions({
+        input: {
+            collectionId,
+            generationId: generation.id,
+            query: page.query,
+            offset: page.offset,
+            limit: page.limit,
+        },
+    });
+    const query = useQuery({
+        ...options,
+        queryKey: [
+            ...options.queryKey,
+            'generation',
+            generation.id,
+            generation.status,
+        ],
+        retry: false,
+        staleTime: 0,
+        refetchInterval: (query) =>
+            query.state.error ||
+            !['PROVISIONING', 'BUILDING'].includes(generation.status)
+                ? false
+                : 3000,
+    });
+    const data = query.isError ? undefined : query.data;
+    return (
+        <div className='space-y-4'>
             <CatalogSearch
                 value={page.query}
                 onChange={page.search}
@@ -72,6 +163,11 @@ export function IndexChunks({
                                     {chunk.documentName} ·{' '}
                                     {tr('version', { version: chunk.version })}
                                 </h4>
+                                <p className='text-xs text-muted-foreground'>
+                                    {tr('rebuild.generation', {
+                                        id: chunk.generationId,
+                                    })}
+                                </p>
                                 <p className='text-xs text-muted-foreground'>
                                     {tr('chunkInfo', {
                                         ordinal: chunk.ordinal + 1,
@@ -102,6 +198,6 @@ export function IndexChunks({
                     />
                 </>
             )}
-        </section>
+        </div>
     );
 }

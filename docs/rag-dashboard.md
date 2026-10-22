@@ -1,6 +1,6 @@
 # Catalog dashboard — M1
 
-M1 exposes the existing RAG catalog as usable web and administration workflows. It stores configuration and permissions; it does not upload documents, call embedding providers, build vector tables, or offer search. Those actions remain in the [delivery plan](rag-implementation-plan.md#9-dashboard-testable-delivery-milestones), beginning with M2a (TXT/Markdown library upload and inspection).
+M1 exposes the existing RAG catalog as usable web and administration workflows. It stores configuration and permissions; it does not upload documents, call embedding providers, build vector tables, or offer search. Those actions were outside M1. The [document library](rag-document-library.md), [rich extraction](rag-rich-documents.md) and [M3 indexing/search journey](rag-first-search.md) are now implemented; [M4 profile changes/rebuilds](rag-index-rebuild.md) have a separate implementation and acceptance record. M5–M7 remain in the [delivery plan](rag-implementation-plan.md#9-dashboard-testable-delivery-milestones).
 
 ## Entry points
 
@@ -12,11 +12,11 @@ M1 exposes the existing RAG catalog as usable web and administration workflows. 
 | Web     | `/dashboard/account/api-keys`                              | Configure explicit collection scopes intersected with the key permissions and issuer's effective access.                                                                 |
 | Web     | `/dashboard/settings/usage`                                | Read recorded usage and effective quota policies.                                                                                                                        |
 | Web     | `/dashboard/settings/audit`                                | Inspect filtered, paginated catalog events without secrets.                                                                                                              |
-| Admin   | `/organizations/{id}`, **RAG quotas** tab                  | Read deployment defaults or organization overrides and edit all five quota limits.                                                                                       |
+| Admin   | `/organizations/{id}`, **RAG quotas** tab                  | Read deployment defaults or organization overrides and edit collection, document, original-size, storage, active-passage and temporary-passage limits.                   |
 
 Use the normal account/organization setup in [README](../README.md#local-development). A superadmin account is required for the admin panel. Creating a collection requires an available organization or environment configuration for its embedding provider. Saving configuration does not verify provider connectivity or model availability.
 
-Catalog screens, page headings, dashboard navigation, home cards, and API-key scope controls use `next-intl` messages in English, French, and Belgian Dutch. Counts use ICU plurals and numbers follow the selected locale. The admin quota editor, organization tabs, and navigation use the same languages and a language selector. Both applications share cookie/header locale resolution from `packages/dashboard-core/src/i18n/locale.ts`. Existing admin screens outside this catalog workflow and API-supplied diagnostic messages retain their previous language behavior.
+Catalog screens, page headings, dashboard navigation, home cards, and API-key scope controls use `next-intl` messages in English, French, and Belgian Dutch. Counts use ICU plurals and numbers follow the selected locale. The admin quota editor, organization tabs, and navigation use the same languages and a language selector. Both applications share cookie/header locale resolution from `packages/dashboard-core/src/i18n/locale.ts`. M3 also localized the core admin workflows. The historical M1 results below cover only the catalog journey; later milestones record their own locale and error-state checks.
 
 ## Interaction and access rules
 
@@ -26,7 +26,7 @@ Organization credentials take precedence over deployment defaults only for new b
 
 Catalog administration and content reading are separate. Global catalog managers can manage metadata; a member with an explicit administration or document-management grant can inspect the relevant metadata when their organization permissions also allow it. Content reading still requires explicit read access. API keys cannot use session-only principal selectors, cannot exceed their issuer's rights, and remain bound to current membership. Historical keys without an issuer binding need replacement to receive RAG scopes.
 
-Only collection creation currently enforces its resource quota. Document/storage/chunk policies are displayed accurately as configuration for upcoming ingestion work. Reducing a quota does not delete existing records. Audit writes remain in the catalog mutation transaction.
+M1 introduced collection-count enforcement. The later library/indexing journeys also enforce document-count, original-size, retained-storage and active/temporary passage quotas. Capacity remains charged until physical cleanup is acknowledged. Reducing a quota does not delete existing records. Audit writes remain in the catalog mutation transaction.
 
 ```mermaid
 flowchart LR

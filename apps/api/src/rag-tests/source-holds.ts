@@ -226,6 +226,12 @@ export async function sourceHoldTests(t: TestContext) {
                         where: { id: doc.candidate.id },
                         data: { status: 'PUBLISHED', publishedAt: new Date() },
                     });
+                    // Citation renewals belong to a serving or gracefully retired
+                    // generation, never an unprovisioned build fixture.
+                    await prisma.indexGeneration.update({
+                        where: { id: doc.gen.id },
+                        data: { status: 'ACTIVE', activatedAt: new Date() },
+                    });
                     const charged = (await f.owner.rag.quota({})).usage
                         .storageBytes;
                     await remove(doc);

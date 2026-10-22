@@ -13,6 +13,7 @@ import { sourceHoldTests } from './rag-tests/source-holds';
 import { indexSearchTests } from './rag-tests/index-search';
 import { indexWorkerTests } from './rag-tests/index-worker';
 import { indexingOutboxTests } from './rag-tests/indexing-outbox';
+import { indexRebuildTests } from './rag-tests/index-rebuild';
 
 after(cleanup);
 void test('RAG catalog with real PostgreSQL and HTTP transports', async (t) => {
@@ -30,4 +31,5 @@ void test('RAG catalog with real PostgreSQL and HTTP transports', async (t) => {
     await indexWorkerTests(t);
     await indexSearchTests(t);
     await indexingOutboxTests(t);
+    await indexRebuildTests(t);
 });

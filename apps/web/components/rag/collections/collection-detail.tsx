@@ -30,6 +30,28 @@ export function CollectionDetail({ id }: Readonly<{ id: string }>) {
             staleTime: 0,
         })
     );
+    const statusAllowed = canOperation('admin.rag.indexing.status');
+    const statusQuery = useQuery({
+        ...orpc.admin.rag.indexing.status.queryOptions({
+            input: { collectionId: id },
+        }),
+        enabled: Boolean(query.data) && statusAllowed,
+        retry: false,
+        staleTime: 0,
+        refetchInterval: (query) => (query.state.error ? false : 3000),
+    });
+    const indexStatus = statusQuery.data;
+    const profileLocked =
+        statusAllowed &&
+        (!indexStatus ||
+            statusQuery.isError ||
+            indexStatus.generations.some(
+                (generation) =>
+                    generation.id !== indexStatus.active?.id &&
+                    ['PROVISIONING', 'BUILDING', 'FAILED'].includes(
+                        generation.status
+                    )
+            ));
     if (query.isPending || query.isError)
         return <CatalogQueryState query={query} />;
     const item = query.data;
@@ -53,7 +75,17 @@ export function CollectionDetail({ id }: Readonly<{ id: string }>) {
                     </div>
                 </div>
 
-                <ProfileSummary configuration={item.configuration} />
+                <section className='space-y-4'>
+                    <h3 className='font-semibold'>
+                        {tr('indexing.rebuild.savedProfile', {
+                            revision: item.configurationRevision,
+                        })}
+                    </h3>
+                    <p className='text-sm text-muted-foreground'>
+                        {tr('indexing.rebuild.savedProfileHint')}
+                    </p>
+                    <ProfileSummary configuration={item.configuration} />
+                </section>
                 <div className='flex flex-wrap gap-2'>
                     {item.permissions.administer &&
                         canOperation('admin.rag.collections.update') && (
@@ -92,6 +124,7 @@ export function CollectionDetail({ id }: Readonly<{ id: string }>) {
             {editing && (
                 <CollectionForm
                     existing={editing}
+                    profileLocked={profileLocked}
                     onClose={() => setEditing(null)}
                 />
             )}
