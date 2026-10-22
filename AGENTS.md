@@ -21,6 +21,7 @@ Vectorix is a multi-tenant application foundation. Preserve its reusable authent
 - Resolve organization identity through authenticated context and scope database reads and writes accordingly. Validate related identifiers within the same organization; possession of an identifier never grants access.
 - Register private operations in `packages/auth/src/permissions/`, including compound effects. Unknown private operations must fail closed. UI visibility is not an authorization check.
 - Preserve session-only restrictions and explicit API key scopes. Key creation or updates must not grant permissions the issuer does not hold, and initialization must not grant existing keys automatic privileges.
+- On every organization API-key admission, intersect stored permissions with the bound issuer's current roles; reject missing membership, unbound and legacy keys, and keep key contexts sessionless.
 - Preserve organization suspension checks, member removal behavior, explicit feature grants, and audit records. Licensing provider failure or expiration must not grant access.
 - Keep `credentials: 'include'` in the web oRPC fetch link at `apps/web/contexts/orpc.tsx`.
 - Never log secrets, raw credentials, session tokens, or unsanitized provider responses. Reuse `encrypt()` and `decrypt()` in `packages/routers/utils/src/utils/encryption.ts` for recoverable provider secrets, with `ENCRYPTION_SECRET` configured on the server.
