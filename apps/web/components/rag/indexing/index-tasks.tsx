@@ -86,6 +86,11 @@ export function IndexTasks({
                                         {tr(`semanticStages.${task.stage}`)}
                                     </p>
                                 )}
+                                {task.stage === 'SEALING_LAYOUT' && (
+                                    <p role='status'>
+                                        {tr('parentSealingStage')}
+                                    </p>
+                                )}
                                 {task.semantic && (
                                     <SemanticProgress
                                         progress={task.semantic}

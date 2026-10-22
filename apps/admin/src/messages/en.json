@@ -18,7 +18,7 @@
             "originalBytes": "Maximum file size (bytes)",
             "storageBytes": "Retained storage (bytes)",
             "chunksPerCollection": "Passages per collection",
-            "hint": "1 MiB = 1,048,576 bytes. Storage and active/temporary passage limits apply to new reservations. Reducing a quota does not delete existing data.",
+            "hint": "1 MiB = 1,048,576 bytes. Storage and active/temporary passage limits apply to new reservations. Passage limits count searchable children; parent context adds bounded application storage and is not embedded. Reducing a quota does not delete existing data.",
             "save": "Save quotas",
             "saving": "Saving…",
             "temporaryChunksPerCollection": "Temporary passages per collection",

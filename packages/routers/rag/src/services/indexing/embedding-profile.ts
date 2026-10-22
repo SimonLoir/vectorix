@@ -102,7 +102,6 @@ export function supportsIndexProfile(profile: IndexProfile) {
         ['DOCUMENT_STRUCTURE', 'TOKEN_WINDOW', 'SEMANTIC'].includes(
             profile.chunkingStrategy
         ) &&
-        !profile.parentChild &&
         ((profile.provider === 'OLLAMA' &&
             ['GENERIC', 'EMBEDDING_GEMMA'].includes(preset)) ||
             (['COHERE', 'VOYAGE', 'OPENAI', 'MISTRAL'].includes(

@@ -255,6 +255,12 @@ export const indexingContract = {
                 strategy: z.enum(['HYBRID', 'LEXICAL', 'VECTOR']),
                 results: z.array(searchResult).max(50),
                 vectorUnderfilled: z.boolean(),
+                parentUnderfilled: z
+                    .boolean()
+                    .describe(
+                        'The bounded child candidate window yielded fewer distinct parents than requested; this does not establish corpus exhaustion.'
+                    )
+                    .optional(),
                 durationMs: z.number().nonnegative(),
             })
         ),

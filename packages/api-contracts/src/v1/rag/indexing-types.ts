@@ -88,6 +88,7 @@ export const indexGeneration = z.object({
     ]),
     configurationRevision: z.number().int(),
     previousGenerationId: id.nullable(),
+    parentContextVersion: z.string().min(1).max(100).nullable().optional(),
     model: z.string(),
     dimensions: z.number().int(),
     modelIdentity: z.string(),
@@ -133,6 +134,28 @@ export const chunkSpan = z.object({
     start: z.number().int().nonnegative(),
     end: z.number().int().nonnegative(),
 });
+/** Optional application-owned context; the matched passage retains its identity and source receipt. */
+export const parentContext = z
+    .object({
+        id,
+        ordinal: z.number().int().nonnegative(),
+        text: z.string().max(49_152),
+        startOffset: z
+            .number()
+            .int()
+            .min(0)
+            .max(25 * 1024 * 1024),
+        endOffset: z
+            .number()
+            .int()
+            .positive()
+            .max(25 * 1024 * 1024),
+        tokenCount: z.number().int().positive(),
+        tokenCountIsEstimate: z.boolean(),
+        sourceSpans: z.array(chunkSpan).max(64),
+        sourceSpansTruncated: z.boolean(),
+    })
+    .refine((value) => value.endOffset > value.startOffset);
 export const chunkView = z.object({
     id,
     generationId: id,
@@ -147,6 +170,21 @@ export const chunkView = z.object({
     language: contentLanguage,
     sourceSpans: z.array(chunkSpan).max(64),
     sourceSpansTruncated: z.boolean(),
+    startOffset: z
+        .number()
+        .int()
+        .min(0)
+        .max(25 * 1024 * 1024)
+        .nullable()
+        .optional(),
+    endOffset: z
+        .number()
+        .int()
+        .positive()
+        .max(25 * 1024 * 1024)
+        .nullable()
+        .optional(),
+    parentContext: parentContext.optional(),
     published: z.boolean(),
 });
 export const searchFilters = z

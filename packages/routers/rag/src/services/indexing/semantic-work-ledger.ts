@@ -18,6 +18,7 @@ import {
 import { runSerializableTransaction } from '@routers/utils/transactions';
 import { semanticQuotaLimits } from '../semantic-quotas';
 import { matchesEmbeddingIdentity } from './embedding-profile';
+import { resolveParentContextVersion } from './generation-profile';
 import {
     requireCurrentCandidate,
     CandidateObsolete,
@@ -117,6 +118,7 @@ export async function dispatchSemanticWork(
                 },
             },
         });
+        resolveParentContextVersion(profile, generation.parentContextVersion);
         const identity = modelIdentity.safeParse(generation.capabilitySnapshot);
         if (
             !plan ||
@@ -126,7 +128,6 @@ export async function dispatchSemanticWork(
                 (context.purpose === 'BOUNDARY' ? 'PLANNING' : 'READY') ||
             generation.chunkerVersion !== SEMANTIC_CHUNKER_VERSION ||
             profile.chunkingStrategy !== 'SEMANTIC' ||
-            profile.parentChild ||
             plan.configurationRevision !== generation.configurationRevision ||
             plan.chunkerVersion !== generation.chunkerVersion ||
             plan.unitizerVersion !== SEMANTIC_UNITIZER_VERSION ||

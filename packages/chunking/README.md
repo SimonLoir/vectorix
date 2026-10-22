@@ -67,3 +67,26 @@ Use `quantizeSemanticVector` before distance computation and checkpointing. It c
 `chunkDocumentSemantic(artifact, options, {units, distances, unitManifestHash})` validates the complete state before yielding. For each window it prefers the last eligible boundary at/above the effective minimum and before the target; otherwise the first eligible boundary after target within the hard maximum; otherwise a safe target cut. The verified model cap always wins. A short final suffix may coalesce only within hard caps, while useful short tails remain. Overlap is bounded and advances. Every intersecting source span is clipped exactly, without assigning one source's heading to the whole chunk.
 
 Seal the final `{ordinal, start, end}` array with `semanticPlanHash(state, options, ranges)`, which binds all distances, the unit manifest, execution settings and final ranges. `validateSemanticPlan` reconstructs and compares the canonical plan once per claim. Orchestration owns immutable sealing, cost reservations, idempotent provider batches, database publication and retries; none of these pure functions performs provider, database or object I/O. Corrupt semantic state raises only `SemanticStateError` with `INVALID_SEMANTIC_STATE`; invalid profiles and bounded-work exhaustion retain `INVALID_CHUNK_PROFILE` and `CHUNK_LIMIT`.
+
+## Pure parent context layout
+
+`planParentContext(artifact, children, {parentMaxTokens})` adds the separate `parent-context-utf8-v1` layout after any complete child plan. This pure helper does not enable parent mode in the application or establish a dashboard journey. It never changes existing structure, token-window or semantic child algorithms, text, ordinals, estimates or source spans.
+
+```ts
+import { planParentContext } from '@repo/chunking';
+
+const layout = planParentContext(artifact, children, {
+    parentMaxTokens: profile.chunking.parentMaxTokens,
+});
+// layout.parents use suffix ordinals children.length + parentIndex.
+// layout.childParentOrdinals[child.ordinal] identifies that child's parent.
+// Persist the layout version separately from the unchanged child version.
+```
+
+Children require contiguous ordinals, monotone starts, safe surrogate boundaries, exact canonical text and clipped provenance, and the existing UTF-8/3 estimates. A child with no intersecting source is rejected, so the layout cannot return an unattributed row that persistence would refuse. Ends may repeat or decrease in valid historical contained windows. Greedy parents start at the first child's start and end at the **maximum** child end in the group. A parent retains intervening canonical gaps, every intersecting source and useful final tails; it does not normalize NFD text, promise grapheme boundaries or invent one shared heading. Inputs remain unchanged.
+
+`parentMaxTokens` is a safe integer from 32 through 32,768. Each parent fits `min(parentMaxTokens * 3, 49_152)` actual UTF-8 bytes, independently of the model context. A child that cannot fit is rejected rather than split. The caller separately validates the saved profile's existing `parentMaxTokens >= maxTokens` rule. Parent text is context only: callers embed and count searchable children, and never fabricate provider work for a parent.
+
+The helper bounds the combined child-plus-parent layout to 200,000 rows, 128 MiB of duplicated UTF-8 text and 32 MiB of JSON-serialized source-span arrays. Callers may lower these through `maxRows`, `maxTextBytes` and `maxSourceSpanBytes`; they cannot raise the hard caps. Children remain limited to 100,000 and the validated extraction to 25 Mi UTF-16 code units and 5,000 ordered sources. The monotone source sweep and incremental span charging avoid rescanning all sources per child; byte accounting scans newly extended parent suffixes rather than repeatedly scanning the whole union. Full internal provenance is retained; retrieval must separately apply its bounded source projection before loading/transmitting content.
+
+Invalid options, canonical geometry, child text or provenance raise sanitized `INVALID_CHUNK_PROFILE`; exhausted row/text/provenance bounds raise `CHUNK_LIMIT`. No partial layout is returned. Callers must finish grouping before accepting final materialization or final-child embedding/vector I/O. Semantic boundary embeddings necessarily precede this helper because they determine the complete child plan; this helper makes no claim to avoid that prior work or to replace source/access/lease checks.

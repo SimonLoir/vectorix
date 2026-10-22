@@ -435,8 +435,8 @@
             "minimum": "Minimum size (tokens)",
             "maximum": "Maximum size (tokens)",
             "percentile": "Semantic threshold (percentile)",
-            "parentChild": "Search child passages and return parent context (planned)",
-            "parentMaximum": "Maximum parent size (tokens)",
+            "parentChild": "Search child passages and return parent context",
+            "parentMaximum": "Maximum parent context size (estimated tokens)",
             "binding": "Credential binding",
             "platformConfiguration": "Platform configuration",
             "destination": "Vector destination",
@@ -454,9 +454,10 @@
             "tokenEstimationHint": "Sizes are estimates: UTF-8 bytes divided by {bytesPerToken, number}, rounded up. They do not use the model’s tokenizer. An independent byte limit from the verified model profile also bounds each passage.",
             "tokenWindowHint": "Token windows follow canonical text order and may cross headings, paragraphs or pages. Their source spans retain the exact canonical offsets of the indexed extraction.",
             "tokenWindowTailHint": "A short final passage is merged only when the maximum size and model byte limit allow it; otherwise it remains short. The minimum never causes a final passage to be discarded.",
-            "plannedChunkingHint": "Parent/child context is planned. This profile can be saved, but indexing is unavailable while parent/child expansion is enabled.",
             "semanticHint": "The percentile uses the nearest rank of adjacent embedding distances. All positive ties at the threshold can create a boundary; it is not an exact percentage of splits. The size, overlap and verified model byte caps still apply.",
-            "semanticWorkHint": "Boundary planning adds document-role embedding calls using this saved model, dimensions, preparation, preset and credential binding. Accepted progress is persisted; a sealed plan keeps the same boundaries on retry. This may consume more provider usage than other chunking strategies."
+            "semanticWorkHint": "Boundary planning adds document-role embedding calls using this saved model, dimensions, preparation, preset and credential binding. Accepted progress is persisted; a sealed plan keeps the same boundaries on retry. This may consume more provider usage than other chunking strategies.",
+            "parentContextHint": "Group consecutive child passages into larger context from the same indexed document. Search ranks children; the parent context is not embedded.",
+            "parentSizeHint": "The parent limit uses UTF-8 bytes divided by {bytesPerToken, number}, rounded up, with a separate cap of {maxBytes, number} bytes. It must cover the maximum child size. Parents do not use the embedding model’s context limit."
         },
         "access": {
             "title": "Collection access",
@@ -550,7 +551,7 @@
             "policies": "Saved policies",
             "fileMaximum": "Maximum file size",
             "chunks": "Passages per collection",
-            "policyHint": "Uploads reserve original and extraction capacity. Indexing reserves active and temporary passages; retained publications count until cleanup completes. Only a platform administrator can change quotas.",
+            "policyHint": "Uploads reserve original and extraction capacity. Indexing reserves active and temporary searchable child passages; retained publications count until cleanup completes. Parent context adds bounded application storage and is not embedded. Only a platform administrator can change quotas.",
             "temporaryChunks": "Temporary passages per collection"
         },
         "audit": {
@@ -715,7 +716,7 @@
             "working": "Working…",
             "readDenied": "Reading this collection is not granted. Catalog administration alone does not grant content access.",
             "manageDenied": "You can inspect the index but cannot manage it.",
-            "profileGate": "Indexing supports Ollama, Cohere, Voyage, OpenAI and Mistral with document-structure, token-window or semantic chunking. Parent/child expansion remains a saved draft.",
+            "profileGate": "Indexing supports Ollama, Cohere, Voyage, OpenAI and Mistral with document-structure, token-window or semantic children and optional parent context.",
             "preset": "Embedding input preset",
             "presetHint": "Choose a preset explicitly. Generic sends raw text; EmbeddingGemma uses its documented document and query prefixes.",
             "preparationHint": "Preparation is a literal prefix followed by a newline for both documents and queries. It is not a template.",
@@ -752,7 +753,7 @@
             "taskSearch": "Filter background tasks",
             "taskProgress": "{attempts, plural, one {# attempt} other {# attempts}} · {chunks, plural, one {# completed chunk} other {# completed chunks}} / {reserved, plural, one {# reserved chunk} other {# reserved chunks}} · updated {updated}.",
             "retryTask": "Retry task",
-            "chunksHint": "Inspect bounded passages and their immutable canonical source offsets for this generation. Estimated token counts use UTF-8 bytes divided by three, not the model’s tokenizer. Token windows may cross structural boundaries; source spans show their origin.",
+            "chunksHint": "Inspect searchable child passages and optional parent context from this generation. Estimated token counts use UTF-8 bytes divided by three, not the model’s tokenizer. Token windows may cross structural boundaries; source spans show their origin.",
             "chunkSearch": "Search chunk text",
             "version": "Version {version, number}",
             "chunkInfo": "Passage {ordinal, number} · {tokens, number} tokens {estimate, select, yes {(estimated)} other {(counted)}} · {published, select, yes {published} other {not published}}.",
@@ -861,7 +862,7 @@
             },
             "errors": {
                 "ACCESS_REVOKED": "Current membership or collection access no longer permits this operation.",
-                "PROFILE_UNSUPPORTED": "This saved profile is not supported for indexing. Use Ollama, Cohere, Voyage, OpenAI or Mistral with document-structure, token-window or semantic chunking and no parent/child expansion. Cohere, Voyage, OpenAI and Mistral require Generic input.",
+                "PROFILE_UNSUPPORTED": "This saved model or chunking profile is not supported for indexing. Use Ollama, Cohere, Voyage, OpenAI or Mistral with document-structure, token-window or semantic children and an optional supported parent layout. Cohere, Voyage, OpenAI and Mistral require Generic input.",
                 "CREDENTIALS_INVALID": "The saved embedding credentials or approved endpoint are unavailable. Check the collection binding.",
                 "MODEL_NOT_FOUND": "The saved model was not found or is not available at the configured provider.",
                 "MODEL_UNSUPPORTED": "The model does not expose the required native embedding capability or preset.",
@@ -958,7 +959,18 @@
                 "SEMANTIC_PLANNING": "Planning semantic boundaries. Accepted unit progress is saved between worker continuations.",
                 "WAITING_FOR_EMBEDDING_CAPACITY": "Waiting for organization embedding capacity. The worker resumes automatically when capacity is available; waiting does not consume failure retries.",
                 "WAITING_FOR_EMBEDDING_WORK": "Waiting for dispatched embedding work to settle or reach its deadline before cleanup can finish."
-            }
+            },
+            "sourcePositions": "Source positions",
+            "matchedPassage": "Matched child passage",
+            "parentContextTitle": "Parent context",
+            "parentContextToggle": "{expanded, select, yes {Hide parent context} other {Show parent context}}",
+            "parentContextInfo": "{tokens, plural, one {# token} other {# tokens}} {estimate, select, yes {(estimated)} other {(counted)}} · canonical characters {start, number}–{end, number}. The end position is exclusive.",
+            "parentContextSourceHint": "Context and matched passage come from the same exact indexed version. Source access is checked again when opened.",
+            "parentUnderfilled": "The bounded child candidate window yielded fewer distinct parent contexts than requested. More eligible contexts may exist.",
+            "parentSearchHint": "Each returned context keeps its strongest child match from the bounded candidate window. Displayed scores belong to that passage; sibling scores are not added.",
+            "parentContextVersion": "Parent layout: {version}",
+            "parentAccountingHint": "Passage counters and quotas count searchable children. Parent context adds bounded stored text and is not embedded.",
+            "parentSealingStage": "Verifying and sealing the complete child and parent layout before writing vectors."
         },
         "semantic": {
             "title": "Semantic planning and embedding work",

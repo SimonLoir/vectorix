@@ -18,7 +18,7 @@
             "originalBytes": "Taille maximale d’un fichier (octets)",
             "storageBytes": "Stockage conservé (octets)",
             "chunksPerCollection": "Passages par collection",
-            "hint": "1 Mio = 1 048 576 octets. Les limites de stockage et de passages actifs ou temporaires s’appliquent aux nouvelles réservations. Réduire un quota ne supprime pas les données existantes.",
+            "hint": "1 Mio = 1 048 576 octets. Les limites de stockage et de passages actifs ou temporaires s’appliquent aux nouvelles réservations. Les limites de passages comptent les enfants recherchables ; le contexte parent ajoute du stockage applicatif borné et ne reçoit pas d’embedding. Réduire un quota ne supprime pas les données existantes.",
             "save": "Enregistrer les quotas",
             "saving": "Enregistrement…",
             "temporaryChunksPerCollection": "Passages temporaires par collection",

@@ -101,6 +101,8 @@ model IndexGeneration {
   modelIdentity String
   capabilitySnapshot Json
   chunkerVersion String
+  // Separate application context layout; historical child-only generations stay null.
+  parentContextVersion String? @db.VarChar(100)
   status IndexGenerationStatus @default(PROVISIONING)
   snapshotSequence BigInt @default(0)
   appliedSequence BigInt @default(0)
@@ -216,8 +218,12 @@ model Chunk {
   kind RagChunkKind @default(CHILD)
   text String
   textHash String
-  embeddingInputHash String
+  // Context-only parents are never prepared for embedding; children retain a hash.
+  embeddingInputHash String?
   sourceSpans Json
+  // Canonical UTF-16 bounds; historical source-span gaps are not backfilled.
+  startOffset Int?
+  endOffset Int?
   language RagContentLanguage
   tokenCount Int
   tokenCountIsEstimate Boolean @default(true)

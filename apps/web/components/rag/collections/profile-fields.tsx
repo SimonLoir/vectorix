@@ -20,12 +20,15 @@ export function ProfileFields({
         configuration?.chunkingStrategy ?? 'DOCUMENT_STRUCTURE'
     );
     const [parent, setParent] = useState(configuration?.parentChild ?? false);
+    const [maximum, setMaximum] = useState(
+        String(configuration?.chunking.maxTokens ?? 768)
+    );
     const estimateHintId = useId();
     const windowHintId = useId();
     const tailHintId = useId();
-    const plannedHintId = useId();
-    const planned = parent;
     const semanticHintId = useId();
+    const parentHintId = useId();
+    const parentSizeHintId = useId();
     return (
         <div className='space-y-5'>
             <EmbeddingFields
@@ -68,7 +71,6 @@ export function ProfileFields({
                     estimateHintId,
                     ...(strategy === 'TOKEN_WINDOW' ? [windowHintId] : []),
                     ...(strategy === 'SEMANTIC' ? [semanticHintId] : []),
-                    ...(planned ? [plannedHintId] : []),
                 ].join(' ')}
                 onChange={(event) => {
                     const value = event.target.value;
@@ -103,15 +105,6 @@ export function ProfileFields({
                     <p>{tr('profile.semanticHint')}</p>
                     <p>{tr('profile.semanticWorkHint')}</p>
                 </div>
-            )}
-            {planned && (
-                <p
-                    id={plannedHintId}
-                    role='status'
-                    className='rounded-lg border p-3 text-sm'
-                >
-                    {tr('profile.plannedChunkingHint')}
-                </p>
             )}
             <div className='grid gap-4 sm:grid-cols-2'>
                 <TextField
@@ -155,7 +148,8 @@ export function ProfileFields({
                     required
                     min={32}
                     max={16_384}
-                    defaultValue={configuration?.chunking.maxTokens ?? 768}
+                    value={maximum}
+                    onChange={(event) => setMaximum(event.target.value)}
                     aria-describedby={estimateHintId}
                 />
             </div>
@@ -177,18 +171,36 @@ export function ProfileFields({
                 name='parentChild'
                 checked={parent}
                 onChange={(event) => setParent(event.target.checked)}
-                aria-describedby={planned ? plannedHintId : undefined}
+                aria-describedby={parentHintId}
             />
+            <p id={parentHintId} className='text-sm text-muted-foreground'>
+                {tr('profile.parentContextHint')}
+            </p>
             <TextField
                 label={tr('profile.parentMaximum')}
                 name='parentMaxTokens'
                 type='number'
                 required
-                min={32}
+                min={parent ? Math.max(32, Number(maximum)) : 32}
                 max={32_768}
                 readOnly={!parent}
                 defaultValue={configuration?.chunking.parentMaxTokens ?? 2048}
+                aria-describedby={[
+                    parentHintId,
+                    ...(parent ? [parentSizeHintId] : []),
+                ].join(' ')}
             />
+            {parent && (
+                <p
+                    id={parentSizeHintId}
+                    className='text-sm text-muted-foreground'
+                >
+                    {tr('profile.parentSizeHint', {
+                        maxBytes: 49_152,
+                        bytesPerToken: 3,
+                    })}
+                </p>
+            )}
         </div>
     );
 }

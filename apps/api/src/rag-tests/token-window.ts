@@ -741,54 +741,6 @@ export async function tokenWindowTests(t: TestContext) {
                 }
             }
         );
-
-        await t.test(
-            'parent-child drafts remain explicitly unsupported before provider probing',
-            async () => {
-                for (const unsupported of [
-                    { parentChild: true },
-                ]) {
-                    const draft = await f.owner.rag.collections.create({
-                        name: 'Future chunking remains gated',
-                        profile: { ...profile, ...unsupported },
-                    });
-                    const calls = fixture.state.embedCalls;
-                    assert.equal(
-                        (
-                            await f.owner.rag.indexing.status({
-                                collectionId: draft.id,
-                            })
-                        ).unsupportedReason,
-                        'PROFILE_UNSUPPORTED'
-                    );
-                    await assert.rejects(
-                        f.owner.rag.indexing.start({
-                            collectionId: draft.id,
-                            expectedRevision: 1,
-                            requestId: randomUUID(),
-                        }),
-                        (error: unknown) => {
-                            assert(
-                                error &&
-                                    typeof error === 'object' &&
-                                    'data' in error
-                            );
-                            assert.deepEqual(error.data, {
-                                errorCode: 'PROFILE_UNSUPPORTED',
-                            });
-                            return true;
-                        }
-                    );
-                    assert.equal(fixture.state.embedCalls, calls);
-                    assert.equal(
-                        await prisma.indexGeneration.count({
-                            where: { collectionId: draft.id },
-                        }),
-                        0
-                    );
-                }
-            }
-        );
     } finally {
         await fixture.close();
         f.org = previous.organization;

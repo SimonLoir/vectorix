@@ -9,30 +9,9 @@ import {
     useCatalogPagination,
 } from '../catalog-controls';
 import { IndexQueryState } from './index-state';
-import { sourcePosition } from './source-label';
+import { ChunkContent } from './chunk-content';
 import { SelectField } from '../form-fields';
-import type { IndexChunk, IndexStatus } from './types';
-
-export function ChunkSources({ chunk }: Readonly<{ chunk: IndexChunk }>) {
-    const tr = useTranslations('rag');
-    return (
-        <ul className='space-y-1 text-xs text-muted-foreground'>
-            {chunk.sourceSpans.map((span, index) => (
-                <li key={`${span.source.index}-${index}`}>
-                    {sourcePosition(span.source, tr)}
-                    {' · '}
-                    {tr('indexing.sourceOffsets', {
-                        start: span.start,
-                        end: span.end,
-                    })}
-                </li>
-            ))}
-            {chunk.sourceSpansTruncated && (
-                <li>{tr('indexing.moreSources')}</li>
-            )}
-        </ul>
-    );
-}
+import type { IndexStatus } from './types';
 export function IndexChunks({
     collectionId,
     status,
@@ -85,6 +64,16 @@ export function IndexChunks({
                     <p className='break-all text-xs text-muted-foreground'>
                         {tr('rebuild.generation', { id: generation.id })}
                     </p>
+                    {generation.parentContextVersion && (
+                        <div className='space-y-2 text-sm text-muted-foreground'>
+                            <p className='break-all text-xs'>
+                                {tr('parentContextVersion', {
+                                    version: generation.parentContextVersion,
+                                })}
+                            </p>
+                            <p>{tr('parentAccountingHint')}</p>
+                        </div>
+                    )}
                     {selectedCandidate && (
                         <p
                             role='status'
@@ -180,13 +169,7 @@ function GenerationChunks({
                                             : 'no',
                                     })}
                                 </p>
-                                <pre
-                                    tabIndex={0}
-                                    className='max-h-64 overflow-auto whitespace-pre-wrap break-words rounded bg-muted p-3 text-sm'
-                                >
-                                    {chunk.text}
-                                </pre>
-                                <ChunkSources chunk={chunk} />
+                                <ChunkContent chunk={chunk} />
                             </li>
                         ))}
                     </ul>

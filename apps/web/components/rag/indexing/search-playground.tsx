@@ -11,7 +11,7 @@ import { IndexError, useIndexAction } from './index-state';
 import { SearchDocumentFilter } from './search-document-filter';
 import { MetadataFilters } from './metadata-filters';
 import { typedMetadataValue } from './document-metadata';
-import { ChunkSources } from './index-chunks';
+import { ChunkContent } from './chunk-content';
 import { SearchSource } from './search-source';
 import type { MetadataFields, SearchResponse, SearchResult } from './types';
 
@@ -273,6 +273,21 @@ export function SearchPlayground({
                             {tr('underfilled')}
                         </p>
                     )}
+                    {response.parentUnderfilled && (
+                        <p
+                            role='status'
+                            className='rounded-lg border p-3 text-sm'
+                        >
+                            {tr('parentUnderfilled')}
+                        </p>
+                    )}
+                    {response.results.some(
+                        (result) => result.parentContext
+                    ) && (
+                        <p className='text-sm text-muted-foreground'>
+                            {tr('parentSearchHint')}
+                        </p>
+                    )}
                     {response.results.length === 0 && <p>{tr('noResults')}</p>}
                     <ol className='space-y-4'>
                         {response.results.map((result, index) => (
@@ -287,13 +302,7 @@ export function SearchPlayground({
                                         version: result.version,
                                     })}
                                 </h4>
-                                <pre
-                                    tabIndex={0}
-                                    className='max-h-72 overflow-auto whitespace-pre-wrap break-words rounded-lg bg-muted p-3 text-sm'
-                                >
-                                    {result.text}
-                                </pre>
-                                <ChunkSources chunk={result} />
+                                <ChunkContent chunk={result} />
                                 <p className='text-xs text-muted-foreground'>
                                     {tr('scores', {
                                         lexical: result.scores.lexicalRank ?? 0,

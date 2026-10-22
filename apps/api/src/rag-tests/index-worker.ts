@@ -71,7 +71,7 @@ export async function indexWorkerTests(t: TestContext) {
                         (chunk) =>
                             chunk.tokenCountIsEstimate &&
                             chunk.textHash.length === 64 &&
-                            chunk.embeddingInputHash.length === 64
+                            chunk.embeddingInputHash?.length === 64
                     )
                 );
                 const usage =

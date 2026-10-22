@@ -71,9 +71,15 @@ export function ProfileSummary({
                 </div>
             )}
             {c.parentChild && (
-                <p role='status' className='rounded-lg border p-3'>
-                    {tr('profile.plannedChunkingHint')}
-                </p>
+                <div className='space-y-2 text-muted-foreground'>
+                    <p>{tr('profile.parentContextHint')}</p>
+                    <p>
+                        {tr('profile.parentSizeHint', {
+                            maxBytes: 49_152,
+                            bytesPerToken: 3,
+                        })}
+                    </p>
+                </div>
             )}
             <dl className='grid gap-4 sm:grid-cols-2'>
                 {fields.map(([key, value]) => (

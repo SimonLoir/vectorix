@@ -233,6 +233,12 @@ export async function publishIndexedCandidate(
         candidate.chunkCount < 1
     )
         throw new IndexingError('PROCESSING_FAILED');
+    if (
+        generation.parentContextVersion !== null &&
+        (candidate.manifestHash !== manifestHash ||
+            !['SEALED', 'PUBLISHED'].includes(candidate.status))
+    )
+        throw new IndexingError('PROCESSING_FAILED');
     if (desired.publishedIndexedDocumentId === candidate.id) {
         await completeIndexClaim(tx, claim);
         return;
