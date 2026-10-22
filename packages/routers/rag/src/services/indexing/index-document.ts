@@ -9,7 +9,6 @@ import {
 } from '@repo/chunking';
 import {
     modelIdentity,
-    canonicalOllamaModel,
     embeddingInputByteLimit,
     prepareEmbeddingInput,
     embedDocuments,
@@ -22,7 +21,8 @@ import { runSerializableTransaction } from '@routers/utils/transactions';
 import { boundStorage, contentHash } from '../documents/storage';
 import {
     boundEmbeddingConfiguration,
-    assertM3Profile,
+    assertSupportedIndexProfile,
+    matchesEmbeddingIdentity,
 } from './embedding-profile';
 import { generationVectorAdapter } from './generation-adapter';
 import {
@@ -58,12 +58,13 @@ export async function executeDocumentIndex(
     );
     const identity = modelIdentity.parse(binding.generation.capabilitySnapshot);
     const profile = binding.configuration;
-    assertM3Profile(profile);
+    assertSupportedIndexProfile(profile);
     if (
-        identity.digest !== binding.generation.modelIdentity ||
-        identity.model !== canonicalOllamaModel(profile.model) ||
-        identity.dimensions !== profile.dimensions ||
-        identity.preset !== profile.embeddingPreset ||
+        !matchesEmbeddingIdentity(
+            identity,
+            profile,
+            binding.generation.modelIdentity
+        ) ||
         binding.generation.chunkerVersion !== STRUCTURE_CHUNKER_VERSION
     )
         throw new IndexingError('MODEL_CHANGED');

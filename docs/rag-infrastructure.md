@@ -1,6 +1,6 @@
 # RAG infrastructure — phase 1
 
-This original phase 1 supplies the development infrastructure and its automated acceptance checks. Collection and credential APIs exist in the [catalog backend foundation](rag-catalog-access.md), with an implemented [catalog dashboard](rag-dashboard.md). Document uploads, indexing, and search remain planned as complete dashboard journeys in the revised [implementation plan](rag-implementation-plan.md).
+This original phase 1 supplies the development infrastructure and its automated acceptance checks. Collection and credential APIs exist in the [catalog backend foundation](rag-catalog-access.md), with an implemented [catalog dashboard](rag-dashboard.md). The [document library](rag-document-library.md), [first indexing/search journey](rag-first-search.md) and [zero-downtime rebuilds](rag-index-rebuild.md) are now implemented. [Native Cohere](rag-cohere-embeddings.md) is implemented with controlled dashboard acceptance complete and live paid-provider verification pending. The revised [implementation plan](rag-implementation-plan.md) separates these journeys from the remaining planned providers, chunking/context and operational acceptance.
 
 ## Services and data boundaries
 

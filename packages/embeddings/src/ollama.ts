@@ -4,9 +4,9 @@ import { requestJson, operationSignal } from './http';
 import { prepareEmbeddingInput } from './preparation';
 import {
     EmbeddingError,
-    modelIdentity,
+    ollamaModelIdentity,
     type OllamaConfiguration,
-    type ModelIdentity,
+    type OllamaModelIdentity,
     type ModelSummary,
     type RequestOptions,
     type VerifyEmbeddingOptions,
@@ -90,7 +90,7 @@ function selectModel(models: ModelSummary[], name: string) {
 }
 async function assertManifest(
     config: OllamaConfiguration,
-    identity: Pick<ModelIdentity, 'model' | 'digest'>,
+    identity: Pick<OllamaModelIdentity, 'model' | 'digest'>,
     signal: AbortSignal
 ) {
     const selected = selectModel(await models(config, signal), identity.model);
@@ -136,7 +136,7 @@ export async function verifyEmbeddingModel(
     config: OllamaConfiguration,
     input: VerifyEmbeddingOptions,
     options: RequestOptions = {}
-): Promise<ModelIdentity> {
+): Promise<OllamaModelIdentity> {
     const signal = operationSignal(options);
     const selected = selectModel(await models(config, signal), input.model);
     const detail = parse(
@@ -166,7 +166,7 @@ export async function verifyEmbeddingModel(
     const dimensions = gemma ? [128, 256, 512, 768] : [defaultDimensions];
     if (!dimensions.includes(input.dimensions))
         throw new EmbeddingError('DIMENSIONS_UNSUPPORTED');
-    const candidate = modelIdentity.safeParse({
+    const candidate = ollamaModelIdentity.safeParse({
         schemaVersion: 1,
         provider: 'OLLAMA',
         model: selected.model,
@@ -217,12 +217,12 @@ export async function verifyEmbeddingModel(
 }
 async function embed(
     config: OllamaConfiguration,
-    saved: ModelIdentity,
+    saved: OllamaModelIdentity,
     values: EmbeddingDocument[],
     kind: 'document' | 'query',
     options: EmbeddingOptions
 ): Promise<EmbeddingResult> {
-    const identity = parse(modelIdentity, saved);
+    const identity = parse(ollamaModelIdentity, saved);
     if (values.length < 1 || values.length > 4096)
         throw new EmbeddingError('INPUT_TOO_LARGE');
     const signal = operationSignal(options);
@@ -291,7 +291,7 @@ async function embed(
 /** Native document embedding uses the immutable generation identity and explicit saved preparation. */
 export function embedDocuments(
     config: OllamaConfiguration,
-    identity: ModelIdentity,
+    identity: OllamaModelIdentity,
     values: EmbeddingDocument[],
     options: EmbeddingOptions = {}
 ) {
@@ -300,7 +300,7 @@ export function embedDocuments(
 /** Query embedding is a distinct role; GENERIC remains raw input and EmbeddingGemma applies its documented query task. */
 export function embedQuery(
     config: OllamaConfiguration,
-    identity: ModelIdentity,
+    identity: OllamaModelIdentity,
     text: string,
     options: EmbeddingOptions = {}
 ) {

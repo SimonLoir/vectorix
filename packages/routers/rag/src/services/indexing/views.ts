@@ -19,6 +19,7 @@ import {
     requireIndexRead,
 } from './access';
 import { publicIndexFailure } from './errors';
+import { supportsIndexProfile } from './embedding-profile';
 
 type Page = {
     collectionId: string;
@@ -139,11 +140,7 @@ async function readIndexStatus(
             errorCode: publicIndexFailure(generation.lastErrorCode),
         }))
     );
-    const unsupported =
-        !configuration ||
-        configuration.provider !== 'OLLAMA' ||
-        configuration.chunkingStrategy !== 'DOCUMENT_STRUCTURE' ||
-        configuration.parentChild;
+    const unsupported = !configuration || !supportsIndexProfile(configuration);
     const candidateStates: IndexGenerationStatus[] = [
         'PROVISIONING',
         'BUILDING',

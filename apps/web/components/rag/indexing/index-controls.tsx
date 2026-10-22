@@ -1,11 +1,12 @@
 'use client';
 import { useState } from 'react';
-import { useFormatter, useTranslations } from 'next-intl';
+import { useTranslations } from 'next-intl';
 import { Button } from '@repo/ui/button';
 import { useORPC } from '@/hooks/use-orpc';
 import { useVectorixPermissions } from '@/contexts/vectorix-permissions';
 import { RebuildDialog, type RebuildReview } from './rebuild-dialog';
 import { IndexGenerations } from './index-generations';
+import { ModelVerification } from './model-verification';
 import { ProfileSummary } from '../collections/profile-summary';
 import { IndexError, useIndexAction } from './index-state';
 import type { Collection, RagOutputs } from '../types';
@@ -16,13 +17,13 @@ export function IndexControls({
     status,
 }: Readonly<{ collection: Collection; status: IndexStatus }>) {
     const tr = useTranslations('rag.indexing');
-    const format = useFormatter();
     const { client } = useORPC();
     const { canOperation } = useVectorixPermissions();
     const action = useIndexAction();
-    const [probe, setProbe] = useState<RagOutputs['indexing']['probe'] | null>(
-        null
-    );
+    const [probe, setProbe] = useState<{
+        revision: number;
+        result: RagOutputs['indexing']['probe'];
+    } | null>(null);
     const [review, setReview] = useState<RebuildReview | null>(null);
     const building = status.generations.some((generation) =>
         ['PROVISIONING', 'BUILDING'].includes(generation.status)
@@ -79,7 +80,12 @@ export function IndexControls({
                                             expectedRevision:
                                                 collection.configurationRevision,
                                         }),
-                                    setProbe,
+                                    (result) =>
+                                        setProbe({
+                                            revision:
+                                                collection.configurationRevision,
+                                            result,
+                                        }),
                                     false
                                 )
                             }
@@ -184,35 +190,13 @@ export function IndexControls({
                     </p>
                 )}
             <IndexError error={action.error} />
-            {probe && (
-                <dl className='grid gap-3 rounded-lg bg-muted p-4 text-sm sm:grid-cols-2'>
-                    <div>
-                        <dt>{tr('verifiedModel')}</dt>
-                        <dd className='break-all font-medium'>{probe.model}</dd>
-                    </div>
-                    <div>
-                        <dt>{tr('verifiedDimensions')}</dt>
-                        <dd>
-                            {tr('dimensionChoices', {
-                                current: probe.dimensions,
-                                choices: probe.supportedDimensions
-                                    .map((value) => format.number(value))
-                                    .join(', '),
-                            })}
-                        </dd>
-                    </div>
-                    <div>
-                        <dt>{tr('context')}</dt>
-                        <dd>{tr('tokens', { count: probe.contextTokens })}</dd>
-                    </div>
-                    <div>
-                        <dt>{tr('digest')}</dt>
-                        <dd className='break-all font-mono text-xs'>
-                            {probe.digest}
-                        </dd>
-                    </div>
-                </dl>
-            )}
+            {probe?.revision === collection.configurationRevision &&
+                probe.result.provider === collection.configuration.provider && (
+                    <ModelVerification
+                        result={probe.result}
+                        revision={probe.revision}
+                    />
+                )}
             <p className='text-sm'>
                 {tr('usage', {
                     active: status.usage.activeChunks,

@@ -3,82 +3,34 @@ import { useTranslations } from 'next-intl';
 import { useState } from 'react';
 import { TextField, SelectField, CheckField, AreaField } from '../form-fields';
 import { MetadataFields } from './metadata-fields';
-import { ModelDiscovery } from './model-discovery';
+import { EmbeddingFields } from './embedding-fields';
 import type { Collection } from '../types';
 
 export function ProfileFields({
     configuration,
     collectionId,
+    configurationRevision,
 }: Readonly<{
     configuration?: Collection['configuration'];
     collectionId?: string;
+    configurationRevision?: number;
 }>) {
     const tr = useTranslations('rag');
-    const [model, setModel] = useState(
-        configuration?.model ?? 'embeddinggemma'
-    );
     const [strategy, setStrategy] = useState(
         configuration?.chunkingStrategy ?? 'DOCUMENT_STRUCTURE'
     );
     const [parent, setParent] = useState(configuration?.parentChild ?? false);
     return (
         <div className='space-y-5'>
-            <div className='grid gap-4 sm:grid-cols-2'>
-                <SelectField
-                    label={tr('profile.provider')}
-                    name='provider'
-                    defaultValue={configuration?.provider ?? 'OLLAMA'}
-                >
-                    <option value='OLLAMA'>Ollama</option>
-                    <option value='COHERE'>Cohere</option>
-                    <option value='VOYAGE'>Voyage</option>
-                    <option value='OPENAI'>OpenAI</option>
-                    <option value='MISTRAL'>Mistral</option>
-                </SelectField>
-                <TextField
-                    label={tr('profile.model')}
-                    name='model'
-                    required
-                    maxLength={200}
-                    value={model}
-                    onChange={(event) => setModel(event.target.value)}
-                    placeholder={tr('profile.modelPlaceholder')}
-                />
-            </div>
-            {collectionId && (
-                <ModelDiscovery
-                    collectionId={collectionId}
-                    onSelect={setModel}
-                />
-            )}
+            <EmbeddingFields
+                configuration={configuration}
+                collectionId={collectionId}
+                configurationRevision={configurationRevision}
+            />
             <p className='text-sm text-muted-foreground'>
                 {tr('indexing.profileGate')}
             </p>
-            <SelectField
-                label={tr('indexing.preset')}
-                name='embeddingPreset'
-                defaultValue={configuration?.embeddingPreset ?? 'GENERIC'}
-            >
-                <option value='GENERIC'>
-                    {tr('indexing.presets.GENERIC')}
-                </option>
-                <option value='EMBEDDING_GEMMA'>
-                    {tr('indexing.presets.EMBEDDING_GEMMA')}
-                </option>
-            </SelectField>
-            <p className='text-sm text-muted-foreground'>
-                {tr('indexing.presetHint')}
-            </p>
             <div className='grid gap-4 sm:grid-cols-2'>
-                <TextField
-                    label={tr('profile.dimensions')}
-                    name='dimensions'
-                    type='number'
-                    required
-                    min={1}
-                    max={16_000}
-                    defaultValue={configuration?.dimensions ?? 768}
-                />
                 <SelectField
                     label={tr('profile.index')}
                     name='indexType'

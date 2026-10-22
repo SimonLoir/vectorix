@@ -1,5 +1,9 @@
 import type { Prisma } from '@repo/db';
-import type { OllamaConfiguration } from '@repo/embeddings';
+import {
+    canonicalEmbeddingModel,
+    type EmbeddingConfiguration,
+    type ModelIdentity,
+} from '@repo/embeddings';
 import {
     resolveCollectionCredential,
     resolveCredential,
@@ -19,9 +23,12 @@ function normalizeEndpoint(value: string) {
     return url.href.replace(/\/$/, '');
 }
 /** Network destinations require an exact operator-approved URL; organization credentials alone never authorize SSRF. */
-export function assertEmbeddingEndpoint(endpoint: string) {
+export function assertEmbeddingEndpoint(
+    endpoint: string,
+    provider: 'OLLAMA' | 'COHERE' = 'OLLAMA'
+) {
     const allowed = [
-        process.env.VECTORIX_DEFAULT_OLLAMA_ENDPOINT,
+        process.env[`VECTORIX_DEFAULT_${provider}_ENDPOINT`],
         ...(process.env.VECTORIX_EMBEDDING_ALLOWED_ENDPOINTS ?? '').split(','),
     ].filter((value): value is string => Boolean(value?.trim()));
     try {
@@ -44,7 +51,7 @@ export async function boundEmbeddingConfiguration(
     organizationId: string,
     collectionId: string,
     revision: number
-): Promise<OllamaConfiguration> {
+): Promise<EmbeddingConfiguration> {
     const resolved = await resolveCollectionCredential(
         db,
         organizationId,
@@ -53,16 +60,19 @@ export async function boundEmbeddingConfiguration(
     ).catch(() => {
         throw indexError('CREDENTIALS_INVALID');
     });
-    if (resolved.data.provider !== 'OLLAMA')
+    if (
+        resolved.data.provider !== 'OLLAMA' &&
+        resolved.data.provider !== 'COHERE'
+    )
         throw indexError('PROFILE_UNSUPPORTED');
-    assertEmbeddingEndpoint(resolved.data.endpoint);
+    assertEmbeddingEndpoint(resolved.data.endpoint, resolved.data.provider);
     return resolved.data;
 }
 /** Discovery resolves one complete active configuration using the same organization-first policy as revisions. */
 export async function currentEmbeddingConfiguration(
     db: Prisma.TransactionClient,
     organizationId: string
-): Promise<OllamaConfiguration> {
+): Promise<EmbeddingConfiguration> {
     const resolved = await resolveCredential(
         db,
         organizationId,
@@ -75,20 +85,47 @@ export async function currentEmbeddingConfiguration(
     assertEmbeddingEndpoint(resolved.data.endpoint);
     return resolved.data;
 }
-/** Unsupported planned profiles remain editable catalog drafts, but cannot start a partially supported indexing journey. */
-export function assertM3Profile(profile: {
+type IndexProfile = {
     provider: string;
     chunkingStrategy: string;
     parentChild: boolean;
     embeddingPreset?: string;
-}) {
-    if (
-        profile.provider !== 'OLLAMA' ||
-        profile.chunkingStrategy !== 'DOCUMENT_STRUCTURE' ||
-        profile.parentChild ||
-        !['GENERIC', 'EMBEDDING_GEMMA'].includes(
-            profile.embeddingPreset ?? 'GENERIC'
-        )
-    )
-        throw indexError('PROFILE_UNSUPPORTED');
+};
+
+/** Catalog drafts remain editable; execution opens only complete provider/chunker journeys. */
+export function supportsIndexProfile(profile: IndexProfile) {
+    const preset = profile.embeddingPreset ?? 'GENERIC';
+    return (
+        profile.chunkingStrategy === 'DOCUMENT_STRUCTURE' &&
+        !profile.parentChild &&
+        ((profile.provider === 'OLLAMA' &&
+            ['GENERIC', 'EMBEDDING_GEMMA'].includes(preset)) ||
+            (profile.provider === 'COHERE' && preset === 'GENERIC'))
+    );
+}
+
+/** Fail before provider I/O for a profile whose full indexing/search path is unavailable. */
+export function assertSupportedIndexProfile(profile: IndexProfile) {
+    if (!supportsIndexProfile(profile)) throw indexError('PROFILE_UNSUPPORTED');
+}
+
+/** A saved manifest must match provider as well as model; hosted fingerprints do not assert weight immutability. */
+export function matchesEmbeddingIdentity(
+    identity: ModelIdentity,
+    profile: {
+        provider: string;
+        model: string;
+        dimensions: number;
+        embeddingPreset: string;
+    },
+    fingerprint: string
+) {
+    return (
+        identity.provider === profile.provider &&
+        identity.digest === fingerprint &&
+        identity.model ===
+            canonicalEmbeddingModel(identity.provider, profile.model) &&
+        identity.dimensions === profile.dimensions &&
+        identity.preset === profile.embeddingPreset
+    );
 }

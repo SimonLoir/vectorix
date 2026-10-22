@@ -1,6 +1,6 @@
 # Catalog dashboard — M1
 
-M1 exposes the existing RAG catalog as usable web and administration workflows. It stores configuration and permissions; it does not upload documents, call embedding providers, build vector tables, or offer search. Those actions were outside M1. The [document library](rag-document-library.md), [rich extraction](rag-rich-documents.md) and [M3 indexing/search journey](rag-first-search.md) are now implemented; [M4 profile changes/rebuilds](rag-index-rebuild.md) have a separate implementation and acceptance record. M5–M7 remain in the [delivery plan](rag-implementation-plan.md#9-dashboard-testable-delivery-milestones).
+M1 exposes the existing RAG catalog as usable web and administration workflows. It stores configuration and permissions; it does not upload documents, call embedding providers, build vector tables, or offer search. Those actions were outside M1. The [document library](rag-document-library.md), [rich extraction](rag-rich-documents.md) and [M3 indexing/search journey](rag-first-search.md) are now implemented; [M4 profile changes/rebuilds](rag-index-rebuild.md) have a separate implementation and acceptance record. [M5a native Cohere](rag-cohere-embeddings.md) is implemented with controlled dashboard acceptance complete and live paid-provider verification pending; the remaining providers and M6/M7 remain in the [delivery plan](rag-implementation-plan.md#9-dashboard-testable-delivery-milestones).
 
 ## Entry points
 

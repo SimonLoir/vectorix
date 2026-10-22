@@ -10,26 +10,40 @@ import type { RagOutputs } from '../types';
 export function ModelDiscovery({
     collectionId,
     onSelect,
-}: Readonly<{ collectionId: string; onSelect: (model: string) => void }>) {
+    saved,
+    selected,
+}: Readonly<{
+    collectionId: string;
+    onSelect: (model: string) => void;
+    saved: { provider: string; model: string; revision: number };
+    selected: { provider: string; model: string };
+}>) {
     const tr = useTranslations('rag.indexing');
     const { client } = useORPC();
     const action = useIndexAction();
     const { canOperation } = useVectorixPermissions();
     const [models, setModels] = useState<
-        RagOutputs['indexing']['models']['items'] | null
+        RagOutputs['indexing']['models'] | null
     >(null);
+    const matchesSaved =
+        saved.provider === selected.provider && saved.model === selected.model;
+    const supported =
+        saved.provider === 'OLLAMA' || saved.provider === 'COHERE';
     if (!canOperation('admin.rag.indexing.models')) return null;
     return (
         <div className='space-y-3 sm:col-span-2'>
             <Button
                 type='button'
                 variant='outline'
-                disabled={action.busy}
+                disabled={action.busy || !matchesSaved || !supported}
                 onClick={() =>
                     void action.run(
                         () =>
-                            client.admin.rag.indexing.models({ collectionId }),
-                        (data) => setModels(data.items),
+                            client.admin.rag.indexing.models({
+                                collectionId,
+                                expectedRevision: saved.revision,
+                            }),
+                        setModels,
                         false
                     )
                 }
@@ -37,15 +51,31 @@ export function ModelDiscovery({
                 {action.busy ? tr('discovering') : tr('discoverModels')}
             </Button>
             <p className='text-xs text-muted-foreground'>
+                {tr('savedDiscoveryHint', {
+                    revision: saved.revision,
+                    provider: saved.provider,
+                })}
+            </p>
+            {!matchesSaved && (
+                <p role='status' className='text-xs text-muted-foreground'>
+                    {tr('discoverySaveFirst')}
+                </p>
+            )}
+            <p className='text-xs text-muted-foreground'>
                 {tr('discoveryHint')}
             </p>
+            {models?.discoverySource && matchesSaved && (
+                <p className='text-xs text-muted-foreground'>
+                    {tr(`discoverySources.${models.discoverySource}`)}
+                </p>
+            )}
             <IndexError error={action.error} />
-            {models && (
+            {models && matchesSaved && supported && (
                 <div className='max-h-48 space-y-2 overflow-auto rounded-lg border p-3'>
-                    {models.length === 0 ? (
+                    {models.items.length === 0 ? (
                         <p>{tr('noModels')}</p>
                     ) : (
-                        models.map((model) => (
+                        models.items.map((model) => (
                             <Button
                                 key={model.model}
                                 type='button'

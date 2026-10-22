@@ -5,9 +5,19 @@ export type OllamaConfiguration = {
     endpoint: string;
     apiKey: string | null;
 };
+export type CohereConfiguration = {
+    provider: 'COHERE';
+    endpoint: string;
+    apiKey: string;
+};
+export type EmbeddingConfiguration = OllamaConfiguration | CohereConfiguration;
+export type EmbeddingProvider = EmbeddingConfiguration['provider'];
+export type EmbeddingIdentityKind = 'WEIGHTS_DIGEST' | 'CAPABILITY_PROFILE';
+export type EmbeddingDiscoverySource = 'LOCAL_RUNTIME' | 'HOSTED_CATALOG';
 export const embeddingPreset = z.enum(['GENERIC', 'EMBEDDING_GEMMA']);
 export type EmbeddingPreset = z.infer<typeof embeddingPreset>;
-export const modelIdentity = z
+/** Existing persisted Ollama generations retain their original schema and digest semantics. */
+export const ollamaModelIdentity = z
     .object({
         schemaVersion: z.literal(1),
         provider: z.literal('OLLAMA'),
@@ -28,12 +38,68 @@ export const modelIdentity = z
     .refine((value) => value.supportedDimensions.includes(value.dimensions), {
         message: 'Unsupported embedding dimensions.',
     });
+export type OllamaModelIdentity = z.infer<typeof ollamaModelIdentity>;
+/** A hosted provider exposes a named capability profile, not a verifiable weights manifest. */
+export const cohereModelIdentity = z
+    .object({
+        schemaVersion: z.literal(2),
+        provider: z.literal('COHERE'),
+        identityKind: z.literal('CAPABILITY_PROFILE'),
+        model: z.enum([
+            'embed-v4.0',
+            'embed-english-v3.0',
+            'embed-multilingual-v3.0',
+        ]),
+        digest: z.string().regex(/^[a-f0-9]{64}$/),
+        family: z.literal('cohere-embed'),
+        contextTokens: z.number().int().min(64).max(128_000),
+        defaultDimensions: z.number().int().min(1).max(1536),
+        dimensions: z.number().int().min(1).max(1536),
+        supportedDimensions: z
+            .array(z.number().int().min(1).max(1536))
+            .min(1)
+            .max(4),
+        capabilities: z.array(z.string().min(1).max(100)).max(32),
+        preset: z.literal('GENERIC'),
+        documentInputType: z.literal('search_document'),
+        queryInputType: z.literal('search_query'),
+        embeddingType: z.literal('float'),
+        truncate: z.literal('NONE'),
+    })
+    .strict()
+    .refine((value) => value.supportedDimensions.includes(value.dimensions), {
+        message: 'Unsupported embedding dimensions.',
+    });
+export type CohereModelIdentity = z.infer<typeof cohereModelIdentity>;
+export const modelIdentity = z.union([
+    ollamaModelIdentity,
+    cohereModelIdentity,
+]);
 export type ModelIdentity = z.infer<typeof modelIdentity>;
-export type ModelSummary = { model: string; digest: string; family: string };
+export type ModelSummary = {
+    model: string;
+    digest: string;
+    family: string;
+    identityKind?: EmbeddingIdentityKind;
+    discoverySource?: EmbeddingDiscoverySource;
+    defaultDimensions?: number;
+    supportedDimensions?: number[];
+    contextTokens?: number;
+};
+/** Legacy schemaVersion:1 has no kind field; its digest remains the native Ollama weights manifest. */
+export function embeddingIdentityKind(
+    identity: ModelIdentity
+): EmbeddingIdentityKind {
+    return identity.provider === 'OLLAMA'
+        ? 'WEIGHTS_DIGEST'
+        : identity.identityKind;
+}
 export type EmbeddingDocument = { text: string; title?: string };
 export type EmbeddingUsage = {
-    /** Ollama's aggregate prompt_eval_count. Null means at least one batch omitted it. */
+    /** Provider-reported model input tokens. Null means at least one batch omitted them. */
     providerInputTokens: number | null;
+    /** Separately reported billed input tokens; never substituted for model/tokenizer usage. */
+    billedInputTokens?: number | null;
     /** Explicit estimate, never represented as provider billing or exact tokens. */
     estimatedInputTokens: number;
     /** Successful embedding requests, excluding manifest checks and failed HTTP attempts. */
