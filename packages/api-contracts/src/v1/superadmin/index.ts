@@ -8,6 +8,7 @@ import { z } from 'zod';
 import { setOrganizationLegacyAccessV1Contract } from './legacy-access';
 import { superAdminUsersV1Contract } from './users';
 import { setLegacyFeaturesV1Contract } from './legacy-features';
+import { getOperationsContract } from './operations';
 
 const featureKeyV1Schema = z
     .string()
@@ -231,6 +232,7 @@ export const superAdminV1Contract = {
             ),
     },
     organizations: {
+        getOperations: getOperationsContract,
         setRagQuota: setRagQuotaContract,
         getRagQuota: getRagQuotaContract,
         getSemanticQuota: getSemanticQuotaContract,

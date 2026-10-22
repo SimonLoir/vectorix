@@ -1,6 +1,6 @@
 # Collection freshness and synchronization recovery
 
-**M7a implementation, automated validation and real Ollama dashboard acceptance are complete.** This slice makes updates from the shared document library converge under an explicitly configured collection-generation controller and makes blocked work recoverable from the dashboard. It reuses existing fields and lease fencing; no new schema definition or migration is required. Operational telemetry, worker health, backup/restore, relevance and load acceptance remain separate M7 work.
+**M7a implementation, automated validation and real Ollama dashboard acceptance are complete.** Delivered in [PR #41](https://github.com/SimonLoir/vectorix/pull/41), squash-merged as ca6dd80 after both required checks passed on d78eeb7. This slice makes updates from the shared document library converge under an explicitly configured collection-generation controller and makes blocked work recoverable from the dashboard. It reuses existing fields and lease fencing; no new schema definition or migration is required. Operational telemetry, worker health, backup/restore, relevance and load acceptance remain separate M7 work.
 
 ## Actors and current authority
 

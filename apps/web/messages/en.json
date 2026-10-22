@@ -1060,6 +1060,72 @@
             "confirmedBatches": "Confirmed successful batches",
             "uncertainBatches": "Unresolved batches",
             "taskHint": "Planning adds document-role embedding work under the saved profile. Continuations do not consume failure retries. Usage may settle after a task loses its lease; stale results cannot advance its plan or publish content."
+        },
+        "operations": {
+            "title": "Operations",
+            "description": "Find waiting or failed work and open its existing recovery workspace.",
+            "scope": "These totals cover outstanding durable work across the organization, including items you cannot inspect. Detail filters do not change the organization totals.",
+            "unmeasured": "Worker health, search activity, throughput and phase latency are not measured in this view.",
+            "observedAt": "Snapshot observed at {date}",
+            "total": "{count, plural, one {# outstanding task} other {# outstanding tasks}}",
+            "categories": {
+                "INGESTION": "Document ingestion",
+                "DOCUMENT_CLEANUP": "Original and extraction cleanup",
+                "INDEXING": "Collection indexing and cleanup"
+            },
+            "counts": {
+                "uploading": "Upload pending",
+                "due": "Due for a scan",
+                "scheduled": "Scheduled",
+                "leased": "Valid processing claim",
+                "expired": "No valid processing lease",
+                "failed": "Failed"
+            },
+            "oldestAccepted": "Oldest outstanding work accepted: {date}",
+            "noAcceptedWork": "No outstanding work in this category.",
+            "detailsTitle": "Work you can inspect",
+            "detailsHint": "Only items allowed by your current document or collection access appear below. Open a workspace to inspect eligible recovery controls; this list does not grant recovery rights.",
+            "category": "Work category",
+            "state": "Scheduling state",
+            "search": "Filter by document or collection name",
+            "refresh": "Refresh snapshot",
+            "states": {
+                "ALL": "All outstanding states",
+                "UPLOADING": "Upload pending",
+                "DUE": "Due for a scan",
+                "SCHEDULED": "Scheduled",
+                "LEASED": "Valid processing claim",
+                "EXPIRED": "Processing claim without a valid lease",
+                "FAILED": "Failed"
+            },
+            "timingHint": "Age includes upload, queue wait, backoff and retries; it is not execution time. Due work still needs access, source and capacity checks. Scheduled cleanup may be waiting for retention. A processing claim does not prove a worker is active.",
+            "visibleTotal": "{count, plural, one {# matching item visible to you} other {# matching items visible to you}}",
+            "empty": "No visible work matches these filters. Organization totals may include work you cannot inspect.",
+            "kinds": {
+                "INGESTION": "Upload and extraction",
+                "DOCUMENT_CLEANUP": "Private file cleanup",
+                "PROVISION": "Prepare collection index",
+                "INDEX_DOCUMENT": "Index document",
+                "REMOVE_DOCUMENT": "Remove indexed document",
+                "CLEAN_PUBLICATION": "Clean retained publication",
+                "CLEAN_GENERATION": "Clean index generation"
+            },
+            "version": "Source version {version, number}",
+            "deletedTarget": "Deleted item · cleanup workspace only",
+            "accepted": "Accepted: {date}",
+            "age": "Age at this snapshot: {minutes, plural, =0 {less than a minute} one {# minute} other {# minutes}}",
+            "attempts": "{count, plural, one {# recorded attempt} other {# recorded attempts}}",
+            "available": "Scheduled for: {date}",
+            "leaseDeadline": "Processing lease deadline: {date}",
+            "unknownFailure": "A failure was recorded. Open the workspace to inspect the current safe diagnostic.",
+            "errors": {
+                "CLEANUP_FAILED": "Private file cleanup failed. Inspect its lifecycle workspace before retrying."
+            },
+            "openRecovery": "Open workspace",
+            "openNamedWorkspace": "Open the workspace for {name}",
+            "inspectCleanup": "Inspect collection cleanup",
+            "inspectNamedCleanup": "Inspect cleanup for deleted collection {name}",
+            "paginationLimited": "Paging covers the first {count, number} matching items. Narrow the filters to inspect further work."
         }
     },
     "dashboard": {
@@ -1076,7 +1142,8 @@
             "roles": "Roles and permissions",
             "apiKeys": "API keys",
             "licenses": "Licenses",
-            "documents": "Documents"
+            "documents": "Documents",
+            "operations": "Operations"
         },
         "home": {
             "eyebrow": "WORKSPACE",

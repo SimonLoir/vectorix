@@ -56,11 +56,13 @@ import { listAudit } from './audit';
 import { listRevisions } from './collections/revisions';
 import { listGrantCandidates } from './collections/grantCandidates';
 import { listMemberCandidates } from './groups/memberCandidates';
+import { operationsOverviewHandler } from './operations/overview';
 
 export const ragRouter = authorized
     .prefix('/rag')
     .tag('RAG catalog')
     .router({
+        operations: { overview: operationsOverviewHandler },
         indexing: {
             models: modelsIndexHandler,
             probe: probeIndexHandler,

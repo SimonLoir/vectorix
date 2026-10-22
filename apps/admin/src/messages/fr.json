@@ -30,7 +30,8 @@
             "organization": "Organisation",
             "rag": "Quotas RAG",
             "members": "Membres",
-            "features": "Licences et fonctionnalités"
+            "features": "Licences et fonctionnalités",
+            "operations": "Opérations"
         },
         "shell": {
             "dashboard": "Tableau de bord",
@@ -406,6 +407,33 @@
             "loadFailed": "Les limites et l’usage sémantiques n’ont pas pu être chargés. Vérifiez votre accès à la plateforme et réessayez.",
             "saveFailed": "Les quotas sémantiques n’ont pas pu être enregistrés. Vérifiez les valeurs et votre accès à la plateforme, puis réessayez.",
             "invalid": "Saisissez des nombres entiers sûrs respectant les limites indiquées. La capacité de planification de l’organisation doit couvrir un document et chaque capacité de calcul en cours doit couvrir le budget complet d’un candidat."
+        },
+        "operations": {
+            "unmeasured": "Cette vue ne mesure ni la santé des workers, ni l’activité de recherche, ni le débit, ni la latence par phase.",
+            "observedAt": "Instantané observé le {date}",
+            "total": "{count, plural, one {# tâche en cours} other {# tâches en cours}}",
+            "categories": {
+                "INGESTION": "Traitement des documents",
+                "DOCUMENT_CLEANUP": "Nettoyage des originaux et extractions",
+                "INDEXING": "Indexation et nettoyage des collections"
+            },
+            "counts": {
+                "uploading": "Dépôt en attente",
+                "due": "Éligible au prochain scan",
+                "scheduled": "Planifié",
+                "leased": "Prise en charge valide",
+                "expired": "Sans bail de traitement valide",
+                "failed": "En échec"
+            },
+            "oldestAccepted": "Plus ancienne tâche en cours acceptée le : {date}",
+            "noAcceptedWork": "Aucune tâche en cours dans cette catégorie.",
+            "timingHint": "L’ancienneté comprend le dépôt, l’attente, les délais entre tentatives et les relances ; ce n’est pas le temps d’exécution. Les tâches éligibles nécessitent encore des contrôles d’accès, de source et de capacité. Un nettoyage planifié peut attendre la fin de la conservation. Une prise en charge ne prouve pas qu’un worker est actif.",
+            "refresh": "Actualiser l’instantané",
+            "title": "Opérations de l’organisation",
+            "scope": "Totaux techniques de toute l’organisation. L’accès au contenu et la récupération restent soumis aux droits dans l’organisation.",
+            "loading": "Chargement des opérations…",
+            "loadFailed": "Les opérations n’ont pas pu être chargées. Vérifiez votre accès à la plateforme puis réessayez.",
+            "retry": "Réessayer"
         }
     }
 }

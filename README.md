@@ -134,9 +134,13 @@ Automated validation is complete, including all 206 HTTP/catalog tests and six c
 
 ### Collection synchronization recovery (M7a)
 
-The current implementation branch adds configured automatic synchronization and an explicit **Adopt synchronization** action. New indexes save their accepting manager as controller for later shared-library changes. Current membership and collection management rights are rechecked before work; a pending rebuild also needs profile administration. Historical null-controller generations retain their event-actor behavior until adoption; an initial provisioning/indexing retry also preserves its established activation-authority transfer.
+The application provides configured automatic synchronization and an explicit **Adopt synchronization** action. New indexes save their accepting manager as controller for later shared-library changes. Current membership and collection management rights are rechecked before work; a pending rebuild also needs profile administration. Historical null-controller generations retain their event-actor behavior until adoption; an initial provisioning/indexing retry also preserves its established activation-authority transfer.
 
 Adoption fences current runnable task leases and binds them to the adopting manager without resetting progress or usage. Failed work keeps its separate task retry. The dashboard adds desired/indexed versions, current freshness and authorized document retry. No new configuration or migration is needed. Compatible API revision 1.16.0, automated validation and real Ollama dashboard acceptance are complete. See the [synchronization policy and acceptance status](docs/rag-sync-freshness.md). This is not a claim that M7 operational readiness is complete.
+
+### Organization operations triage (M7b.1)
+
+The Operations page adds a bounded view of current ingestion, indexing and cleanup across the organization, with current-access links to existing recovery screens and technical totals in admin. It reuses durable task state without a migration. Compatible API revision 1.17.0, automated validation and real Ollama dashboard acceptance are complete. Acceptance age includes queue wait, backoff and retries; scheduled cleanup and processing claims do not establish worker health. See the [operations scope and acceptance](docs/rag-operations.md). Historical usage, phase latency and durable worker observations remain planned.
 
 ### Rebuild an active collection
 

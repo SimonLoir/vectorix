@@ -30,7 +30,8 @@
             "organization": "Organization",
             "rag": "RAG quotas",
             "members": "Members",
-            "features": "Licenses and features"
+            "features": "Licenses and features",
+            "operations": "Operations"
         },
         "shell": {
             "dashboard": "Dashboard",
@@ -406,6 +407,33 @@
             "loadFailed": "Semantic limits and usage could not be loaded. Check your platform access and retry.",
             "saveFailed": "Semantic quotas could not be saved. Check your values and platform access, then retry.",
             "invalid": "Enter safe whole numbers within the displayed limits. Organization planning capacity must cover one document allowance, and each outstanding work cap must cover a complete candidate allowance."
+        },
+        "operations": {
+            "unmeasured": "Worker health, search activity, throughput and phase latency are not measured in this view.",
+            "observedAt": "Snapshot observed at {date}",
+            "total": "{count, plural, one {# outstanding task} other {# outstanding tasks}}",
+            "categories": {
+                "INGESTION": "Document ingestion",
+                "DOCUMENT_CLEANUP": "Original and extraction cleanup",
+                "INDEXING": "Collection indexing and cleanup"
+            },
+            "counts": {
+                "uploading": "Upload pending",
+                "due": "Due for a scan",
+                "scheduled": "Scheduled",
+                "leased": "Valid processing claim",
+                "expired": "No valid processing lease",
+                "failed": "Failed"
+            },
+            "oldestAccepted": "Oldest outstanding work accepted: {date}",
+            "noAcceptedWork": "No outstanding work in this category.",
+            "timingHint": "Age includes upload, queue wait, backoff and retries; it is not execution time. Due work still needs access, source and capacity checks. Scheduled cleanup may be waiting for retention. A processing claim does not prove a worker is active.",
+            "refresh": "Refresh snapshot",
+            "title": "Organization operations",
+            "scope": "Organization-wide technical totals. Content access and recovery remain subject to organization permissions.",
+            "loading": "Loading operations…",
+            "loadFailed": "Operations could not be loaded. Check your platform access and try again.",
+            "retry": "Try again"
         }
     }
 }

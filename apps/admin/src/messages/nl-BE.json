@@ -30,7 +30,8 @@
             "organization": "Organisatie",
             "rag": "RAG-quota",
             "members": "Leden",
-            "features": "Licenties en functies"
+            "features": "Licenties en functies",
+            "operations": "Operaties"
         },
         "shell": {
             "dashboard": "Dashboard",
@@ -406,6 +407,33 @@
             "loadFailed": "Semantische limieten en gebruik konden niet worden geladen. Controleer uw platformtoegang en probeer opnieuw.",
             "saveFailed": "Semantische quota konden niet worden opgeslagen. Controleer de waarden en uw platformtoegang en probeer opnieuw.",
             "invalid": "Voer veilige gehele getallen binnen de getoonde limieten in. De planningscapaciteit van de organisatie moet één document dekken en elke openstaande werkcapaciteit moet een volledig kandidaatbudget dekken."
+        },
+        "operations": {
+            "unmeasured": "Deze weergave meet geen workergezondheid, zoekactiviteit, doorvoer of latentie per fase.",
+            "observedAt": "Momentopname waargenomen op {date}",
+            "total": "{count, plural, one {# uitstaande taak} other {# uitstaande taken}}",
+            "categories": {
+                "INGESTION": "Documentverwerking",
+                "DOCUMENT_CLEANUP": "Opruimen van originelen en extracties",
+                "INDEXING": "Collectie-indexering en opruiming"
+            },
+            "counts": {
+                "uploading": "Upload wacht",
+                "due": "Komt in aanmerking voor een scan",
+                "scheduled": "Gepland",
+                "leased": "Geldige verwerkingsclaim",
+                "expired": "Geen geldige verwerkingslease",
+                "failed": "Mislukt"
+            },
+            "oldestAccepted": "Oudste uitstaande werk aanvaard op: {date}",
+            "noAcceptedWork": "Geen uitstaand werk in deze categorie.",
+            "timingHint": "De ouderdom omvat upload, wachttijd, uitstel en nieuwe pogingen; dit is geen uitvoeringstijd. Werk dat aan de beurt is, vereist nog toegangs-, bron- en capaciteitscontroles. Geplande opruiming kan op het einde van de bewaartermijn wachten. Een verwerkingsclaim bewijst niet dat een worker actief is.",
+            "refresh": "Momentopname vernieuwen",
+            "title": "Organisatieoperaties",
+            "scope": "Technische totalen voor de hele organisatie. Toegang tot inhoud en herstel blijven onderworpen aan organisatierechten.",
+            "loading": "Operaties laden…",
+            "loadFailed": "De operaties konden niet worden geladen. Controleer uw platformtoegang en probeer opnieuw.",
+            "retry": "Opnieuw proberen"
         }
     }
 }

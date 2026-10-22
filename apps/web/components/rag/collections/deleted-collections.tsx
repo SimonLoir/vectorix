@@ -9,8 +9,7 @@ import {
     CatalogPagination,
     useCatalogPagination,
 } from '../catalog-controls';
-import { CatalogDialog } from '../catalog-dialog';
-import { IndexTasks } from '../indexing/index-tasks';
+import { DeletedCollectionCleanupDialog } from './deleted-collection-cleanup-dialog';
 import { IndexQueryState } from '../indexing/index-state';
 
 export function DeletedCollections() {
@@ -87,15 +86,10 @@ export function DeletedCollections() {
                 </>
             )}
             {selected && (
-                <CatalogDialog
-                    title={tr('inspectCleanup')}
-                    description={tr('deletedCleanupHint', {
-                        name: selected.name,
-                    })}
+                <DeletedCollectionCleanupDialog
+                    collection={selected}
                     onClose={() => setSelected(null)}
-                >
-                    <IndexTasks collectionId={selected.id} canManage />
-                </CatalogDialog>
+                />
             )}
         </section>
     );
