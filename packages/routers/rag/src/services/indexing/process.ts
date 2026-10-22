@@ -5,6 +5,7 @@ import {
     generationVectorAdapter,
 } from './generation-adapter';
 import { executeDocumentIndex } from './index-document';
+import { requireGenerationChunking } from './generation-profile';
 import { activateReadyGenerations } from './activation';
 import {
     executeDocumentRemoval,
@@ -98,6 +99,11 @@ export async function processCollectionIndexing(db: PrismaClient) {
 async function provision(db: PrismaClient, claim: IndexClaim, task: IndexTask) {
     await renewIndexClaim(db, claim, 'PROVISIONING');
     await requireIndexAuthority(db, task);
+    await requireGenerationChunking(
+        db,
+        claim.organizationId,
+        claim.generationId
+    );
     const binding = await generationVectorAdapter(
         db,
         claim.organizationId,

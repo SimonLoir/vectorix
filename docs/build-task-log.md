@@ -456,7 +456,7 @@ The scoped superadmin transaction work was delivered as `d0acb91` in [PR #36](ht
 - [x] Run workspace/backend/catalog/build/image validation and independent review.
 - [x] Verify an owned DST audit fixture with UTC versus a different process zone, invalid fallback, three languages/reload and a production web smoke.
 - [x] Finalize English documentation, diagrams and local links.
-- [ ] Deliver a separate PR from merged superadmin transactions.
+- [x] Deliver a separate PR from merged superadmin transactions.
 
 Implementation and actual acceptance are complete on `codex/admin-runtime-timezone`, based on merged PR #36 (`e6c60cd`). Touched files are the new shared helper/public subpath, two web server imports and removed duplicate helper, admin request/layout/provider, `.env.example`, repository/package documentation, the earlier transaction acceptance note and this log. No dependency, lockfile, schema, migration or API DTO changes are required. The resolver body retains the existing trimmed Intl validation and Brussels fallback. Only a validated public string crosses the server/client boundary; locale resolution and language persistence are unchanged. Unrelated legacy explicit-date formatters remain separate work.
 
@@ -467,3 +467,28 @@ Actual acceptance used production API/web/admin, four private disposable infrast
 The three previews, four owned infrastructure containers and two tabs were removed. No application database, external mail recipient or embedding provider was used. [Dashboard timezone configuration and acceptance](dashboard-timezones.md) and the [dashboard-core package guide](../packages/dashboard-core/README.md) record concrete entry points, lifecycle and component-specific limits.
 
 Final timezone documentation validation passed: six changed documents, two parsed Mermaid diagrams, 111 local Markdown file links, source/prose formatting and `git diff --check`. Independent documentation review found no material gap. Existing ICU dictionaries were unchanged.
+
+The timezone correction was delivered as `f3a8a8e` in [PR #37](https://github.com/SimonLoir/vectorix/pull/37). Both exact-head required CI checks passed, and it was squash-merged as `1527d7c`.
+
+## M6a — Token-window indexing and rebuilds
+
+- [x] Preserve the existing structure planner and add deterministic versioned token windows.
+- [x] Wire saved-profile admission, worker preflight, retry and search to the exact strategy/version pair.
+- [x] Add localized settings/help, explicit future-mode gates and canonical source inspection through the existing dashboard.
+- [x] Complete focused Unicode/provenance/work-bound tests and real disposable API/provider lifecycle tests.
+- [x] Run workspace/backend/catalog/build/image validation and independent review.
+- [x] Verify first index, rebuild, chunk inspection, search and exact sources in the production dashboard with real Ollama/EmbeddingGemma.
+- [x] Finalize English documentation, diagrams, local links and locale-message validation.
+- [ ] Deliver a separate PR.
+
+Implementation and automated/browser acceptance are complete on `codex/m6a-token-window`, based on merged timezone PR #37 (`1527d7c`). Touched areas are `packages/chunking`, indexing services, collection fields/summaries, EN/FR/nl-BE dictionaries, compatible API revision 1.13.0, real-transport regression tests and documentation. No schema or migration changes are planned. The structure-utf8-v1 planner remains unchanged. Semantic and parent/child execution remain planned. See [Token-window indexing](rag-token-windows.md) for semantics, concrete entry points, acceptance prerequisites and actual verification.
+
+M6a final validation passed: 23 workspace type checks, 23 lint tasks, 44 backend regressions, 23 chunking tests, 123 embedding-adapter tests, 162 disposable core/RAG HTTP journeys with fresh/upgrade/repeat/parity, four production builds and all six image/runtime/infrastructure checks. Twelve added HTTP journeys cover first indexing, canonical text/spans/estimates, accounting replay, current/foreign access, wrong-version/provisioning fences, quotas, replacement/rebuild retry, retained sources, future gates and all four hosted native protocols using controlled local vectors. Independent reciprocal source/planner/UI/test review found no remaining actionable P1/P2. The first catalog pass caught two stale revision assertions and a nonexistent task-field filter in the new fixture; test corrections, scoped API type/lint checks and the full final rerun passed. Production code was frozen before validation and was unchanged by those fixture repairs.
+
+Actual production dashboard acceptance used three application previews and five private disposable infrastructure/model containers. Ollama 0.40.8/EmbeddingGemma retrieval verified its retained weight digest, 128 dimensions and context 2048. Uploading the 1,223-byte FR/EN/NFD/emoji Markdown source produced seven token-window chunks with the chosen 64/8/16/96 settings. English hybrid, French vector and post-reload keyword searches returned the indexed passages; exact preview retained all 1,167 characters and original download matched SHA-256 `776e5a41d8754e65cb5144ac3381afab1286cf911fb179df47268d2a35fe4e0a`.
+
+A second collection reused that document, published two structure chunks and then saved token-window revision 2. The profile comparison was inspected, a keyword request after rebuild admission still returned A, and B activated with seven chunks/two retained old chunks/zero reservations. French hybrid search then returned B, while earlier results displayed the previous-generation notice. A source dialog captured before rebuilding downloaded the identical original after A retired. No retention clock was advanced or long retention soak claimed. Separate observation verified canonical ranges/hashes/estimates/byte bounds for all 14 token-window chunks across both active generations.
+
+New help/summaries were inspected in EN/FR/nl-BE, Belgian Dutch survived reload, and initial English was restored. Unsaved semantic/parent-child selections showed their planned-mode gate and were cancelled. Both consoles were empty. Replacement/provider-failure/retry, quota and permission-negative behavior were covered by automated HTTP tests, not separately repeated in the browser. All three owned previews, five owned containers, two tabs and verified downloads were removed; the existing model volume was preserved. No application database or paid provider was used.
+
+Final M6a documentation validation passed: seven changed documents, eight parsed Mermaid diagrams, 121 local Markdown file links, 3,570 ICU messages with locale key parity, source/prose formatting and `git diff --check`.

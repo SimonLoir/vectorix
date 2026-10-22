@@ -85,7 +85,7 @@ Deleting a collection hides its content immediately and schedules durable vector
 ## Integration entry points
 
 - Schemas: `packages/db/prisma/models/rag{,-indexing}.prisma`; approved migration `20261026000000_rag_indexing`.
-- Public API revision `1.7.0` introduced this slice; the current compatible revision is `1.12.0`: `packages/api-contracts/src/v1/rag/{indexing,indexing-types,collections}.ts`; one handler per file in `packages/routers/rag/src/indexing/`.
+- Public API revision `1.7.0` introduced this slice; the current compatible revision is `1.13.0`: `packages/api-contracts/src/v1/rag/{indexing,indexing-types,collections}.ts`; one handler per file in `packages/routers/rag/src/indexing/`.
 - Shared services: `packages/routers/rag/src/services/indexing/{start,changes,metadata,task-state,accounting,index-document,publication-state,cleanup-index,process}.ts`.
 - Retrieval: `services/indexing/{access,filters,lexical,search,views,receipts,sources,source-holds}.ts`; native packages `packages/{chunking,embeddings,vector-store}/`.
 - Scheduling: `packages/queues/src/index.ts` and `apps/workers/src/index.ts`; Redis carries identifiers and scan scheduling only.

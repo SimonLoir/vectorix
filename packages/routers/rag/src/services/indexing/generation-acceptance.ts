@@ -1,16 +1,13 @@
 import { randomUUID } from 'node:crypto';
 import type { Prisma, Collection } from '@repo/db';
 import { verifyEmbeddingModel } from '@repo/embeddings';
-import { STRUCTURE_CHUNKER_VERSION } from '@repo/chunking';
 import type { AuthorizedContext } from '@routers/utils/authorized';
 import { runSerializableTransaction } from '@routers/utils/transactions';
 import { ragActor, requireCollection, type RagActor } from '../access';
 import { audit } from '../mutation';
 import { requireIndexRebuild } from './access';
-import {
-    assertSupportedIndexProfile,
-    boundEmbeddingConfiguration,
-} from './embedding-profile';
+import { boundEmbeddingConfiguration } from './embedding-profile';
+import { resolveIndexChunking } from './generation-profile';
 import {
     prepareVectorDestination,
     bindVectorDestination,
@@ -173,7 +170,7 @@ export async function acceptIndexGeneration(
                     },
                 },
             });
-        assertSupportedIndexProfile(profile);
+        const chunker = resolveIndexChunking(profile);
         const configuration = await boundEmbeddingConfiguration(
             context.db,
             actor.organizationId,
@@ -289,7 +286,7 @@ export async function acceptIndexGeneration(
                             destination.destinationFingerprint,
                         modelIdentity: identity.digest,
                         capabilitySnapshot: identity,
-                        chunkerVersion: STRUCTURE_CHUNKER_VERSION,
+                        chunkerVersion: chunker.version,
                         snapshotSequence: locked.contentSequence,
                         appliedSequence: locked.contentSequence,
                         createdBy: currentActor.userId,

@@ -11,7 +11,7 @@
     "scripts": {
         "check-types": "tsc6 -p tsconfig.json --noEmit",
         "lint": "eslint",
-        "test": "tsx --test tests/structure.test.ts"
+        "test": "tsx --test tests/*.test.ts"
     },
     "dependencies": {
         "@repo/documents": "workspace:*"

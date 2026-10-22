@@ -49,6 +49,21 @@ export function ProfileSummary({
     ] as const;
     return (
         <div className='space-y-4 text-sm'>
+            {c.chunkingStrategy === 'TOKEN_WINDOW' && (
+                <div className='space-y-2 text-muted-foreground'>
+                    <p>
+                        {tr('profile.tokenEstimationHint', {
+                            bytesPerToken: 3,
+                        })}
+                    </p>
+                    <p>{tr('profile.tokenWindowHint')}</p>
+                </div>
+            )}
+            {(c.chunkingStrategy === 'SEMANTIC' || c.parentChild) && (
+                <p role='status' className='rounded-lg border p-3'>
+                    {tr('profile.plannedChunkingHint')}
+                </p>
+            )}
             <dl className='grid gap-4 sm:grid-cols-2'>
                 {fields.map(([key, value]) => (
                     <div key={key}>

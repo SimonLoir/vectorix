@@ -1,6 +1,6 @@
 'use client';
 import { useTranslations } from 'next-intl';
-import { useState } from 'react';
+import { useId, useState } from 'react';
 import { TextField, SelectField, CheckField, AreaField } from '../form-fields';
 import { MetadataFields } from './metadata-fields';
 import { EmbeddingFields } from './embedding-fields';
@@ -20,6 +20,11 @@ export function ProfileFields({
         configuration?.chunkingStrategy ?? 'DOCUMENT_STRUCTURE'
     );
     const [parent, setParent] = useState(configuration?.parentChild ?? false);
+    const estimateHintId = useId();
+    const windowHintId = useId();
+    const tailHintId = useId();
+    const plannedHintId = useId();
+    const planned = strategy === 'SEMANTIC' || parent;
     return (
         <div className='space-y-5'>
             <EmbeddingFields
@@ -58,6 +63,11 @@ export function ProfileFields({
                 label={tr('profile.chunking')}
                 name='chunkingStrategy'
                 value={strategy}
+                aria-describedby={[
+                    estimateHintId,
+                    ...(strategy === 'TOKEN_WINDOW' ? [windowHintId] : []),
+                    ...(planned ? [plannedHintId] : []),
+                ].join(' ')}
                 onChange={(event) => {
                     const value = event.target.value;
                     if (
@@ -74,6 +84,24 @@ export function ProfileFields({
                 <option value='TOKEN_WINDOW'>{tr('profile.tokens')}</option>
                 <option value='SEMANTIC'>{tr('profile.semantic')}</option>
             </SelectField>
+            <p id={estimateHintId} className='text-sm text-muted-foreground'>
+                {tr('profile.tokenEstimationHint', { bytesPerToken: 3 })}
+            </p>
+            {strategy === 'TOKEN_WINDOW' && (
+                <div className='space-y-2 text-sm text-muted-foreground'>
+                    <p id={windowHintId}>{tr('profile.tokenWindowHint')}</p>
+                    <p id={tailHintId}>{tr('profile.tokenWindowTailHint')}</p>
+                </div>
+            )}
+            {planned && (
+                <p
+                    id={plannedHintId}
+                    role='status'
+                    className='rounded-lg border p-3 text-sm'
+                >
+                    {tr('profile.plannedChunkingHint')}
+                </p>
+            )}
             <div className='grid gap-4 sm:grid-cols-2'>
                 <TextField
                     label={tr('profile.target')}
@@ -83,6 +111,7 @@ export function ProfileFields({
                     min={32}
                     max={8192}
                     defaultValue={configuration?.chunking.targetTokens ?? 512}
+                    aria-describedby={estimateHintId}
                 />
                 <TextField
                     label={tr('profile.overlap')}
@@ -92,6 +121,7 @@ export function ProfileFields({
                     min={0}
                     max={4096}
                     defaultValue={configuration?.chunking.overlapTokens ?? 64}
+                    aria-describedby={estimateHintId}
                 />
                 <TextField
                     label={tr('profile.minimum')}
@@ -101,6 +131,11 @@ export function ProfileFields({
                     min={1}
                     max={8192}
                     defaultValue={configuration?.chunking.minTokens ?? 128}
+                    aria-describedby={
+                        strategy === 'TOKEN_WINDOW'
+                            ? `${estimateHintId} ${tailHintId}`
+                            : estimateHintId
+                    }
                 />
                 <TextField
                     label={tr('profile.maximum')}
@@ -110,6 +145,7 @@ export function ProfileFields({
                     min={32}
                     max={16_384}
                     defaultValue={configuration?.chunking.maxTokens ?? 768}
+                    aria-describedby={estimateHintId}
                 />
             </div>
             <TextField
@@ -127,6 +163,7 @@ export function ProfileFields({
                 name='parentChild'
                 checked={parent}
                 onChange={(event) => setParent(event.target.checked)}
+                aria-describedby={planned ? plannedHintId : undefined}
             />
             <TextField
                 label={tr('profile.parentMaximum')}
