@@ -248,3 +248,9 @@ After the old-source proof, only the isolated fixture's retired generation/hold/
 - [ ] Exercise automatic active-index source updates when the library actor lacks that collection's management grant. M4 explicitly uses the accepted rebuild authority for pending candidates; the active-generation event-actor path still needs this operational coverage and any required current-authority handling.
 
 Final documentation checks passed: 16 documents, 18 parsed Mermaid diagrams, 92 local links and 3,453 ICU messages with locale/key parity. Temporary browser tabs, four application processes and four owned infrastructure containers were removed, and Ollama stopped while its named model volume was preserved. The historical-source download was checksum-verified and removed.
+
+### M4 CI PostgreSQL readiness correction
+
+- [x] Diagnose PR #24's Docker smoke failure: the Unix-socket probe accepted PostgreSQL's temporary initialization server before `vectorix_test` existed, and the next probe raced its intentional shutdown.
+- [x] Make application/vector readiness probes in `scripts/test-docker.sh` and `scripts/test-catalog.sh` use explicit loopback TCP. The entrypoint's temporary socket-only server cannot satisfy that check. Existing Compose health checks already use TCP and need no change.
+- [x] Verify shell syntax and whitespace, independently review the targeted diff, and rerun both suites from the isolated M4 checkout: all six production images/infrastructure checks and all 95 disposable catalog/core/RAG tests passed, including fresh/upgrade/repeat migrations and schema parity. No production application behavior changes.

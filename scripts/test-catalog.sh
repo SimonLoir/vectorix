@@ -14,8 +14,9 @@ docker run -d --name "$prefix-postgres" -p 127.0.0.1::5432 \
     -e POSTGRES_PASSWORD=catalog-test-password postgres:18-alpine >/dev/null
 docker run -d --name "$prefix-redis" -p 127.0.0.1::6379 redis:8-alpine >/dev/null
 ready=false
+# TCP excludes the entrypoint's temporary Unix-socket server during initialization.
 for attempt in {1..60}; do
-    if docker exec "$prefix-postgres" pg_isready -U postgres >/dev/null 2>&1; then ready=true; break; fi
+    if docker exec "$prefix-postgres" pg_isready -h 127.0.0.1 -U postgres >/dev/null 2>&1; then ready=true; break; fi
     sleep 1
 done
 [[ "$ready" == true ]]
@@ -95,7 +96,7 @@ docker run -d --name "$prefix-vector" -p 127.0.0.1::5432 \
     "${VECTOR_POSTGRES_IMAGE:-pxdv.be/vectorix/postgres-vector:local}" >/dev/null
 ready=false
 for attempt in {1..60}; do
-    if docker exec "$prefix-vector" pg_isready -U postgres -d vectorix_catalog_vectors_test >/dev/null 2>&1; then ready=true; break; fi
+    if docker exec "$prefix-vector" pg_isready -h 127.0.0.1 -U postgres -d vectorix_catalog_vectors_test >/dev/null 2>&1; then ready=true; break; fi
     sleep 1
 done
 [[ "$ready" == true ]]
