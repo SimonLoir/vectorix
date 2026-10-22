@@ -18,6 +18,8 @@ jobs:
             - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
               with:
                   node-version: '24'
+            - name: Install bounded PDF parser runtime
+              run: sudo apt-get update && sudo apt-get install --yes poppler-utils util-linux
             - name: Install pinned package manager and dependencies
               run: |
                   npm install --global pnpm@11.25.0
@@ -29,5 +31,6 @@ jobs:
                   pnpm check-types
                   pnpm lint
                   pnpm test
+                  pnpm test:documents
             - name: Test migrations and authorization on isolated databases
               run: pnpm test:catalog

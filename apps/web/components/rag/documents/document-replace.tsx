@@ -30,7 +30,7 @@ export function DocumentReplace({
         selection &&
         selection.file.size > 0 &&
         selection.file.size <= 25 * 1024 * 1024 &&
-        /\.(txt|md|markdown)$/i.test(selection.file.name);
+        /\.(txt|md|markdown|pdf|docx)$/i.test(selection.file.name);
     return (
         <CatalogDialog
             title={tr('documents.lifecycle.replace')}
@@ -62,7 +62,8 @@ export function DocumentReplace({
                     <Input
                         id='replacement-file'
                         type='file'
-                        accept='.txt,.md,.markdown'
+                        accept='.txt,.md,.markdown,.pdf,.docx'
+                        aria-describedby='replacement-file-budget'
                         required
                         disabled={action.busy}
                         onChange={(event) => {
@@ -74,6 +75,12 @@ export function DocumentReplace({
                             );
                         }}
                     />
+                    <p
+                        id='replacement-file-budget'
+                        className='text-sm text-muted-foreground'
+                    >
+                        {tr('documents.extractionBudgetHint')}
+                    </p>
                 </div>
                 {selection && !validFile && (
                     <p role='alert'>{tr('documents.invalidFile')}</p>

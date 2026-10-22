@@ -54,6 +54,29 @@ for app in api workers; do
     '
 done
 
+# Verify the bundled native PDF and isolated DOCX parser as the runtime user,
+# with no development loader and no API/frontend parser dependencies.
+docker run --rm --entrypoint node -v "$PWD/tests/documents/fixtures:/fixtures:ro" "$prefix-workers:test" --input-type=module -e '
+    import assert from "node:assert/strict";
+    import { readFile } from "node:fs/promises";
+    import { parseRichDocument, PDF_MEDIA_TYPE, DOCX_MEDIA_TYPE } from "/app/dist/document-parser.mjs";
+    for (const [file, type, format, count] of [["text-fr-en.pdf", PDF_MEDIA_TYPE, "PDF", 2], ["structure-fr-en.docx", DOCX_MEDIA_TYPE, "DOCX", 7]]) {
+        const result = await parseRichDocument(await readFile(`/fixtures/${file}`), type);
+        assert.equal(result.format, format);
+        assert.equal(result.sources.length, count);
+        assert.ok(result.text.includes("français"));
+    }
+    await assert.rejects(parseRichDocument(await readFile("/fixtures/scanned.pdf"), PDF_MEDIA_TYPE), {code: "PDF_OCR_UNAVAILABLE"});
+    await assert.rejects(parseRichDocument(await readFile("/fixtures/zipbomb.docx"), DOCX_MEDIA_TYPE), {code: "PARSER_LIMIT"});
+    console.log("Production PDF and DOCX parsers passed");
+'
+docker run --rm --entrypoint node "$prefix-api:test" --input-type=module -e '
+    import assert from "node:assert/strict";
+    import { readdirSync, existsSync } from "node:fs";
+    assert.deepEqual(readdirSync("/app/node_modules/.pnpm").filter(name => /^(yauzl@|saxes@)/.test(name)), []);
+    assert.equal(existsSync("/usr/bin/pdftotext"), false);
+'
+
 docker network create "$network" >/dev/null
 containers+=("$prefix-postgres" "$prefix-redis")
 docker run -d --name "$prefix-postgres" --network "$network" --network-alias postgres \

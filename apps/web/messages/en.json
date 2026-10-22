@@ -572,10 +572,10 @@
             "search": "Search documents",
             "upload": "Upload document",
             "empty": "No documents found",
-            "emptyHint": "Upload a TXT or Markdown file, or ask a manager to add documents to an authorized collection.",
-            "uploadHint": "Choose a UTF-8 TXT or Markdown file, up to 25 MiB. Extraction runs in the background.",
+            "emptyHint": "Upload a TXT, Markdown, PDF or DOCX file, or ask a manager to add documents to an authorized collection.",
+            "uploadHint": "Choose UTF-8 TXT/Markdown, a text-based PDF or a DOCX file, up to 25 MiB. Extraction runs in the background. OCR is not available.",
             "file": "Document file",
-            "invalidFile": "Choose a non-empty TXT or Markdown file of at most 25 MiB.",
+            "invalidFile": "Choose a non-empty TXT, Markdown, PDF or DOCX file of at most 25 MiB.",
             "uploadFailed": "Upload failed. Check your storage configuration, permissions and available quota, then try again.",
             "uploading": "Uploading…",
             "loadFailed": "This document data could not be loaded. Check your access and try again.",
@@ -626,7 +626,7 @@
                 "deletedTitle": "Deleted document",
                 "deletedDescription": "Inspect retained version metadata and follow private file cleanup.",
                 "replace": "Replace document",
-                "replaceHint": "Upload a new UTF-8 TXT or Markdown file, up to 25 MiB. The published original stays available until the replacement is ready. Collection links are preserved.",
+                "replaceHint": "Upload UTF-8 TXT/Markdown, a text-based PDF or a DOCX file, up to 25 MiB. The published original stays available until the replacement is ready. Collection links are preserved.",
                 "confirmReplace": "Upload replacement",
                 "replaceFailed": "The replacement could not be submitted. Reload to check the latest version, permissions, storage and available quota, then try again.",
                 "retentionLabel": "File retention delay in days",
@@ -655,6 +655,43 @@
                 "cleanupErrors": {
                     "STORAGE_UNAVAILABLE": "Private storage is unavailable. Check its saved credentials and allowed endpoint, then retry cleanup.",
                     "CLEANUP_FAILED": "File cleanup failed. Retry or contact an administrator."
+                }
+            },
+            "extractionBudgetHint": "PDF and DOCX files reserve an additional 10 MiB for extraction while processing. Storage usage is adjusted after extraction completes.",
+            "diagnostics": {
+                "PDF_OCR_UNAVAILABLE": "No usable text was found in this PDF. Scanned documents need OCR, which is not available.",
+                "PDF_ENCRYPTED": "This PDF is encrypted. Upload an unencrypted copy to extract its text.",
+                "FILE_INVALID": "The file is damaged or does not match its format. Export a valid copy and upload it again.",
+                "PARSER_LIMIT": "This document exceeds the extraction limits for pages, paragraphs or extracted data. Split or simplify it and upload it again.",
+                "PARSER_TIMEOUT": "Extraction took too long and was stopped. Try a smaller document or contact an administrator.",
+                "PARSER_UNAVAILABLE": "The document parser is unavailable. Ask an administrator to check the worker, then retry extraction."
+            },
+            "sources": {
+                "title": "Source preview",
+                "hint": "Navigate PDF pages or DOCX sections, paragraphs, headers, footers and notes. Text is shown as plain text, in segments of up to 20,000 characters.",
+                "navigation": "Document source navigation",
+                "position": "Source {current, number} of {total, number}",
+                "pdfPage": "PDF page {page, number}",
+                "docxSectionParagraph": "Section {section, number} · Paragraph {paragraph, number}",
+                "docxParagraph": "Paragraph {paragraph, number}",
+                "heading": "Heading: {heading}",
+                "previous": "Previous source",
+                "next": "Next source",
+                "jumpLabel": "Source number",
+                "jump": "Go to source",
+                "jumpHint": "Enter a whole number from 1 to {total, number}.",
+                "textNavigation": "Text segments in this source",
+                "previousText": "Previous text segment",
+                "nextText": "Next text segment",
+                "changedVersion": "The published document changed. Reload its details to inspect the current source.",
+                "warnings": "{count, plural, one {# source has no extractable text.} other {# sources have no extractable text.}}",
+                "emptyPage": "No extractable text was found on this PDF page. It may be blank or contain only images. OCR is not available.",
+                "emptyParagraph": "No extractable text was found in this DOCX paragraph.",
+                "parts": {
+                    "header": "Header · Paragraph {paragraph, number} · Part {part, number}",
+                    "footer": "Footer · Paragraph {paragraph, number} · Part {part, number}",
+                    "footnote": "Footnotes · Paragraph {paragraph, number} · Part {part, number}",
+                    "endnote": "Endnotes · Paragraph {paragraph, number} · Part {part, number}"
                 }
             }
         }

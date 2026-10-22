@@ -37,7 +37,13 @@ export async function ingestionMayWrite(
 /** Publish in one transaction; a failed replacement leaves the previous ready version readable. */
 export function publishExtraction(
     db: PrismaClient,
-    input: { versionId: string; token: string; key: string; byteSize: number }
+    input: {
+        versionId: string;
+        token: string;
+        key: string;
+        byteSize: number;
+        extractorVersion?: string;
+    }
 ) {
     return runSerializableTransaction(db, async (tx) => {
         if (!(await ingestionMayWrite(tx, input.versionId, input.token)))
@@ -70,7 +76,7 @@ export function publishExtraction(
                 storageLocationId: task.version.storageLocationId,
                 objectKey: input.key,
                 byteSize: BigInt(input.byteSize),
-                extractorVersion: 'utf8-text-v1',
+                extractorVersion: input.extractorVersion ?? 'utf8-text-v1',
                 language: 'und',
             },
             update: {},

@@ -175,6 +175,24 @@ A later UI-only deleted-page cache guard passed scoped web types/lint and a stan
 - [x] Independently review PR #5 before merging; reproduce the race where a later request revoked an active cleanup token and promised a later retention deadline after S3 deletion had started.
 - [x] Preserve existing replacement cleanup deadlines and in-flight cleanup tokens; allow deletion only to accelerate unstarted cleanup. Explain this retained-deadline policy in all three locale hints and lifecycle documentation.
 - [x] Exercise three real RustFS DELETE/deadline regressions; 45 isolated integration tests, 19 type checks, 19 lint tasks, 22 backend regressions and all four application builds pass.
-- [ ] Merge the reviewed head after its updated GitHub checks pass.
+- [x] Merge the independently reviewed head after both updated GitHub checks pass.
 
 The correction lives in `packages/routers/rag/src/services/documents/retention.ts`. PostgreSQL fencing cannot undo an external deletion, so later requests must not postpone an already accepted retirement schedule.
+
+## M2b — PDF/DOCX upload and source inspection
+
+- [x] Squash-merge the independently reviewed PR #5 after catalog and six-image checks passed; base `codex/rag-pdf-docx` on merged main.
+- [x] Add a lightweight shared extraction artifact package, compatible V1 revision 1.6.0 source previews and parser diagnostics.
+- [x] Add original-plus-10-MiB rich reservations to upload, replacement, retry and late-write reconciliation; retain legacy TXT/Markdown objects and confirmed cleanup semantics.
+- [x] Add bounded native PDF and isolated DOCX parsing only in workers, immutable page/paragraph ranges and localized dashboard source navigation.
+- [x] Complete real/adversarial parser, HTTP/S3, authorization, cleanup and quota verification; final production container checks are recorded below.
+- [x] Run types, lint, backend regressions, builds, documentation/diagram checks and production dashboard acceptance.
+- [ ] Independently review, commit, push and open the product PR; merge only after its checks pass.
+
+Entry points and the full acceptance recipe/results are in [PDF/DOCX library](rag-rich-documents.md). No database change is required. Validation passed: Prisma, 20 type-check and 20 lint tasks (non-blocking warnings), 22 backend regressions, all four application builds, 43 parser tests, independent verification of 37 deterministic binaries, and 64 real core/RAG integration tests plus migration fresh/upgrade/repeat/schema parity. Independent review corrected prototype-extension acceptance and orphaned DOCX story/note extraction; seven targeted reference regressions were independently rerun.
+
+Production browser checks cover real bilingual PDF upload/page navigation/source jump/original checksum; DOCX headings/sections, current headers/footnotes and 28,818-character bounded pagination; scanned replacement failure retaining the prior source; mixed-PDF blank-page warning; collection reader visibility, revoked-grant and cross-organization direct-URL denial; EN/FR/nl-BE and locale persistence; dashboard deletion followed by completed cleanup, confirmed S3 object absence and zero version reservation. No embedding, vector indexing or retrieval is claimed by this extraction milestone.
+
+Final container validation after the active-reference correction: all six images and infrastructure checks passed, including the real bundled native PDF and isolated DOCX parser, API dependency exclusion, standalone web/admin assets, worker startup, fresh/repeated migrations, HNSW/DiskANN roles and private S3 restart persistence. Ten Mermaid diagrams, 47 local links and 111 document messages in all three locales validate. No application database was used.
+
+The final fresh manager tab had no console warnings/errors. Temporary tabs, web/API/workers, their disposable PostgreSQL/Redis/RustFS and the checksum-verified test download were cleaned up. The pre-existing admin route-type import modification is preserved outside this commit.

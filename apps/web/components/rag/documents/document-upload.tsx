@@ -22,7 +22,7 @@ export function DocumentUpload({ onClose }: Readonly<{ onClose: () => void }>) {
         selection &&
         selection.file.size > 0 &&
         selection.file.size <= 25 * 1024 * 1024 &&
-        /\.(txt|md|markdown)$/i.test(selection.file.name);
+        /\.(txt|md|markdown|pdf|docx)$/i.test(selection.file.name);
     return (
         <CatalogDialog
             title={tr('documents.upload')}
@@ -51,7 +51,8 @@ export function DocumentUpload({ onClose }: Readonly<{ onClose: () => void }>) {
                     <Input
                         id='document-file'
                         type='file'
-                        accept='.txt,.md,.markdown'
+                        accept='.txt,.md,.markdown,.pdf,.docx'
+                        aria-describedby='document-file-budget'
                         required
                         disabled={action.busy}
                         onChange={(event) => {
@@ -63,6 +64,12 @@ export function DocumentUpload({ onClose }: Readonly<{ onClose: () => void }>) {
                             );
                         }}
                     />
+                    <p
+                        id='document-file-budget'
+                        className='text-sm text-muted-foreground'
+                    >
+                        {tr('documents.extractionBudgetHint')}
+                    </p>
                 </div>
                 {selection && !valid && (
                     <p role='alert'>{tr('documents.invalidFile')}</p>

@@ -1,3 +1,4 @@
+import { extractionReservation } from '@repo/documents';
 import type { Prisma, PrismaClient } from '@repo/db';
 import { runSerializableTransaction } from '@routers/utils/transactions';
 
@@ -113,7 +114,12 @@ export async function reconcileUnpublishedWrite(
         if (version.cleanup?.status === 'COMPLETE')
             await tx.documentIngestion.updateMany({
                 where: { versionId },
-                data: { reservedBytes: version.byteSize },
+                data: {
+                    reservedBytes: extractionReservation(
+                        version.mediaType,
+                        version.byteSize
+                    ),
+                },
             });
         await tx.documentVersion.update({
             where: { id: versionId },

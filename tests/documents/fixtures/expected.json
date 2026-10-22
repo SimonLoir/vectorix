@@ -1,0 +1,308 @@
+{
+    "text-fr-en.pdf": {
+        "pages": [
+            "English source - page one.\nVectorix preserves PDF page references.",
+            "Bonjour équipe - page deux.\nTexte français : été, élève et façade."
+        ]
+    },
+    "scanned.pdf": {
+        "pages": [""],
+        "expectedError": "PDF_OCR_UNAVAILABLE"
+    },
+    "mixed.pdf": {
+        "pages": [
+            "English source - page one.\nVectorix preserves PDF page references.",
+            ""
+        ],
+        "noTextPages": [2]
+    },
+    "blank-page.pdf": {
+        "pages": [
+            "English source - page one.\nVectorix preserves PDF page references.",
+            ""
+        ],
+        "noTextPages": [2]
+    },
+    "encrypted.pdf": {
+        "expectedError": "PDF_ENCRYPTED",
+        "fixturePassword": "vectorix-fixture"
+    },
+    "corrupt.pdf": {
+        "expectedError": "FILE_INVALID"
+    },
+    "page-limit.pdf": {
+        "expectedError": "PARSER_LIMIT",
+        "pageCount": 501
+    },
+    "structure-fr-en.docx": {
+        "paragraphs": [
+            {
+                "paragraph": 1,
+                "section": 1,
+                "heading": "Guide français",
+                "text": "Guide français"
+            },
+            {
+                "paragraph": 2,
+                "section": 1,
+                "text": "Bonjour équipe. English paragraph.\tAprès tabulation.\nSecond line."
+            },
+            {
+                "paragraph": 3,
+                "section": 1,
+                "text": "End of section one."
+            },
+            {
+                "paragraph": 4,
+                "section": 2,
+                "heading": "English section",
+                "text": "English section"
+            },
+            {
+                "paragraph": 5,
+                "section": 2,
+                "text": "Visible text. Inserted text."
+            },
+            {
+                "paragraph": 6,
+                "section": 2,
+                "text": "Cellule française"
+            },
+            {
+                "paragraph": 7,
+                "section": 2,
+                "text": "English table cell"
+            }
+        ],
+        "excludedText": ["DELETED SECRET", "INSTRUCTION SECRET"]
+    },
+    "zipbomb.docx": {
+        "expectedError": "PARSER_LIMIT",
+        "mainXmlBytesOver": 8388608
+    },
+    "declared-zipbomb.docx": {
+        "expectedError": "PARSER_LIMIT",
+        "declaredBytes": 105906176
+    },
+    "paragraph-limit.docx": {
+        "expectedError": "PARSER_LIMIT",
+        "paragraphs": 5001
+    },
+    "entry-limit.docx": {
+        "expectedError": "PARSER_LIMIT",
+        "entries": 2001
+    },
+    "malformed.docx": {
+        "expectedError": "FILE_INVALID"
+    },
+    "doctype.docx": {
+        "expectedError": "FILE_INVALID"
+    },
+    "external-relationship.docx": {
+        "expectedError": "FILE_INVALID"
+    },
+    "macro.docx": {
+        "expectedError": "FILE_INVALID"
+    },
+    "duplicate-entry.docx": {
+        "expectedError": "FILE_INVALID"
+    },
+    "traversal-entry.docx": {
+        "expectedError": "FILE_INVALID"
+    },
+    "empty.docx": {
+        "expectedError": "FILE_INVALID"
+    },
+    "crc-mismatch.docx": {
+        "expectedError": "FILE_INVALID"
+    },
+    "encrypted-entry.docx": {
+        "expectedError": "FILE_INVALID"
+    },
+    "partial-corrupt.pdf": {
+        "expectedError": "FILE_INVALID"
+    },
+    "alternate-content.docx": {
+        "expectedError": "FILE_INVALID"
+    },
+    "historical-section.docx": {
+        "paragraphs": [
+            {
+                "paragraph": 1,
+                "section": 1,
+                "text": "Paragraph one."
+            },
+            {
+                "paragraph": 2,
+                "section": 1,
+                "text": "Paragraph two same current section."
+            }
+        ]
+    },
+    "subdocument.docx": {
+        "expectedError": "FILE_INVALID"
+    },
+    "wrong-package-root.docx": {
+        "expectedError": "FILE_INVALID"
+    },
+    "hyperlinks.docx": {
+        "paragraphs": [
+            {
+                "paragraph": 1,
+                "section": 1,
+                "part": "body",
+                "partIndex": 1,
+                "text": "Open the English source."
+            },
+            {
+                "paragraph": 2,
+                "section": 1,
+                "part": "body",
+                "partIndex": 1,
+                "text": "Lien français et adresse email."
+            }
+        ],
+        "excludedText": ["never-dereference", "example.invalid", "127.0.0.1"]
+    },
+    "stories.docx": {
+        "paragraphs": [
+            {
+                "paragraph": 1,
+                "section": 1,
+                "part": "body",
+                "partIndex": 1,
+                "text": "Main body — corps principal."
+            },
+            {
+                "paragraph": 2,
+                "section": 1,
+                "part": "body",
+                "partIndex": 1,
+                "text": ""
+            },
+            {
+                "paragraph": 1,
+                "part": "endnote",
+                "partIndex": 2,
+                "text": "English endnote."
+            },
+            {
+                "paragraph": 1,
+                "part": "footer",
+                "partIndex": 3,
+                "text": "English footer."
+            },
+            {
+                "paragraph": 1,
+                "part": "footnote",
+                "partIndex": 4,
+                "text": "Note de bas de page française."
+            },
+            {
+                "paragraph": 1,
+                "part": "header",
+                "partIndex": 5,
+                "text": "En-tête français."
+            }
+        ],
+        "noTextSourceIndices": [1],
+        "excludedText": ["OMIT FOOTNOTE", "OMIT ENDNOTE", "OMIT COMMENT"]
+    },
+    "story-paragraph-limit.docx": {
+        "expectedError": "PARSER_LIMIT"
+    },
+    "spoofed-encrypted-title.pdf": {
+        "pages": ["Unencrypted metadata spoof regression."]
+    },
+    "live-references.docx": {
+        "paragraphs": [
+            {
+                "paragraph": 1,
+                "section": 1,
+                "part": "body",
+                "partIndex": 1,
+                "text": "Current main text."
+            },
+            {
+                "paragraph": 2,
+                "section": 1,
+                "part": "body",
+                "partIndex": 1,
+                "text": ""
+            },
+            {
+                "paragraph": 3,
+                "section": 1,
+                "part": "body",
+                "partIndex": 1,
+                "text": "Current section remains visible."
+            },
+            {
+                "paragraph": 1,
+                "part": "endnote",
+                "partIndex": 2,
+                "text": "Current endnote."
+            },
+            {
+                "paragraph": 1,
+                "part": "footer",
+                "partIndex": 3,
+                "text": "Current footer."
+            },
+            {
+                "paragraph": 1,
+                "part": "footnote",
+                "partIndex": 4,
+                "text": "Current footnote."
+            },
+            {
+                "paragraph": 2,
+                "part": "footnote",
+                "partIndex": 4,
+                "text": "Header footnote."
+            },
+            {
+                "paragraph": 1,
+                "part": "header",
+                "partIndex": 5,
+                "text": "Current header."
+            },
+            {
+                "paragraph": 2,
+                "part": "header",
+                "partIndex": 5,
+                "text": ""
+            }
+        ],
+        "noTextSourceIndices": [1, 8],
+        "excludedText": [
+            "ORPHAN HEADER SECRET",
+            "ORPHAN FOOTER SECRET",
+            "HISTORICAL HEADER SECRET",
+            "DELETED HEADER REFERENCE SECRET",
+            "ORPHAN FOOTNOTE SECRET",
+            "ORPHAN ENDNOTE SECRET",
+            "DELETED FOOTNOTE REFERENCE SECRET",
+            "DELETED ENDNOTE REFERENCE SECRET",
+            "DELETED BODY SECRET"
+        ]
+    },
+    "missing-note-reference.docx": {
+        "expectedError": "FILE_INVALID"
+    },
+    "missing-header-reference.docx": {
+        "expectedError": "FILE_INVALID"
+    },
+    "wrong-header-role.docx": {
+        "expectedError": "FILE_INVALID"
+    },
+    "ambiguous-header-reference.docx": {
+        "expectedError": "FILE_INVALID"
+    },
+    "orphan-crc-mismatch.docx": {
+        "expectedError": "FILE_INVALID"
+    },
+    "cross-note-reference.docx": {
+        "expectedError": "FILE_INVALID"
+    }
+}

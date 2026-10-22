@@ -39,7 +39,7 @@ FROM node:24-alpine AS runner
 
 ENV NODE_ENV=production
 
-RUN apk add --no-cache libc6-compat openssl
+RUN apk add --no-cache libc6-compat openssl poppler-utils util-linux-misc
 RUN adduser -D workers
 
 WORKDIR /app

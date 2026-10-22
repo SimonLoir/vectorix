@@ -25,6 +25,28 @@ export const document = z.object({
     createdAt: z.date(),
     updatedAt: z.date(),
 });
+export const parserDiagnostic = z.enum([
+    'PDF_OCR_UNAVAILABLE',
+    'PDF_ENCRYPTED',
+    'FILE_INVALID',
+    'PARSER_LIMIT',
+    'PARSER_TIMEOUT',
+    'PARSER_UNAVAILABLE',
+]);
+export const documentSource = z.object({
+    kind: z.enum(['text', 'pdf-page', 'docx-paragraph']),
+    index: z.number().int().min(0).max(4999),
+    start: z.number().int().min(0),
+    end: z.number().int().min(0),
+    page: z.number().int().min(1).max(500).optional(),
+    paragraph: z.number().int().min(1).max(5000).optional(),
+    section: z.number().int().min(1).max(5000).optional(),
+    heading: z.string().max(200).optional(),
+    part: z
+        .enum(['body', 'header', 'footer', 'footnote', 'endnote'])
+        .optional(),
+    partIndex: z.number().int().min(1).max(2000).optional(),
+});
 export const documentDetails = z.object({
     document,
     canManage: z.boolean(),
@@ -50,6 +72,7 @@ export const documentDetails = z.object({
                     ]),
                     attempts: z.number().int(),
                     errorCode: ingestionError.nullable(),
+                    diagnostic: parserDiagnostic.nullable().optional(),
                 })
                 .nullable(),
         })
@@ -86,6 +109,41 @@ export const documentLifecycle = z.object({
 const retentionDays = z.number().int().min(0).max(365);
 const reference = z.object({ id }).strict();
 export const documentsContract = {
+    sourcePreview: oc
+        .route({ method: 'GET', path: '/documents/{id}/source-preview' })
+        .input(
+            z
+                .object({
+                    id,
+                    sourceIndex: z.number().int().min(0).max(4999).default(0),
+                    offset: z
+                        .number()
+                        .int()
+                        .min(0)
+                        .max(MAX_DOCUMENT_BYTES)
+                        .default(0),
+                })
+                .strict()
+        )
+        .output(
+            z.object({
+                format: z.enum(['TEXT', 'MARKDOWN', 'PDF', 'DOCX']),
+                version: z.number().int(),
+                source: documentSource,
+                totalSources: z.number().int().min(1).max(5000),
+                text: z.string().max(20_000),
+                nextOffset: z.number().int().nullable(),
+                totalCharacters: z.number().int(),
+                warnings: z
+                    .array(
+                        z.object({
+                            code: z.literal('NO_TEXT'),
+                            sourceIndex: z.number().int().min(0).max(4999),
+                        })
+                    )
+                    .max(5000),
+            })
+        ),
     replace: oc
         .route({ method: 'POST', path: '/documents/{id}/replacements' })
         .input(

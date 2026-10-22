@@ -29,6 +29,7 @@ export const operationPermissions: Record<string, PermissionSet> = {
     'admin.rag.documents.list': { ragLibrary: ['read'] },
     'admin.rag.documents.get': { ragLibrary: ['read'] },
     'admin.rag.documents.details': { ragLibrary: ['read'] },
+    'admin.rag.documents.sourcePreview': { ragLibrary: ['read'] },
     'admin.rag.documents.preview': { ragLibrary: ['read'] },
     'admin.rag.documents.download': { ragLibrary: ['read'] },
     'admin.rag.documents.replace': { ragLibrary: ['read', 'readAll', 'write'] },

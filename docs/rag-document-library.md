@@ -1,6 +1,6 @@
 # Document library — M2a.1
 
-M2a.1 implements a first dashboard journey for TXT/Markdown: private original upload, durable extraction, plain-text preview, authenticated download, and collection associations. The [M2a.2 lifecycle](rag-document-lifecycle.md) adds replacement and deletion/retention controls; it is implemented and browser-verified. PDF/DOCX remain M2b. No embeddings or vector tables are created by this journey.
+M2a.1 implements a first dashboard journey for TXT/Markdown: private original upload, durable extraction, plain-text preview, authenticated download, and collection associations. The [M2a.2 lifecycle](rag-document-lifecycle.md) adds replacement and deletion/retention controls; it is implemented and browser-verified. [PDF/DOCX extraction](rag-rich-documents.md) is implemented and browser-verified in M2b. No embeddings or vector tables are created by this journey.
 
 ## Schema review
 

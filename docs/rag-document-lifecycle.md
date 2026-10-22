@@ -1,6 +1,6 @@
 # Document replacement and deletion — M2a.2
 
-M2a.2 adds dashboard replacement, version history, deletion, retention delays and durable private-object cleanup to the [TXT/Markdown library](rag-document-library.md). The implementation is complete and browser-verified against production application builds and disposable infrastructure. PDF/DOCX extraction, embeddings, vector indexing and search remain planned.
+M2a.2 adds dashboard replacement, version history, deletion, retention delays and durable private-object cleanup to the [TXT/Markdown library](rag-document-library.md). The implementation is complete and browser-verified against production application builds and disposable infrastructure. [PDF/DOCX extraction](rag-rich-documents.md) is implemented and browser-verified; embeddings, vector indexing and search remain planned.
 
 ## Schema and deployment
 
@@ -12,7 +12,7 @@ Archived version metadata, document tombstones and audit records remain after ph
 
 ## Replacement and publication
 
-A library manager selects **Replace document**, chooses another non-empty UTF-8 TXT/Markdown file of at most 25 MiB, and selects a whole-day retention delay from 0 through 365 days. Replacement defaults to seven days. Its deadline starts when the replacement request is accepted, rather than when extraction finishes. A subsequent replacement applies its selected delay only to versions that have not already been scheduled for cleanup; earlier cleanup schedules are preserved.
+A library manager selects **Replace document**, chooses another supported file of at most 25 MiB (TXT/Markdown in M2a, with [PDF/DOCX support](rag-rich-documents.md) added by M2b), and selects a whole-day retention delay from 0 through 365 days. Replacement defaults to seven days. Its deadline starts when the replacement request is accepted, rather than when extraction finishes. A subsequent replacement applies its selected delay only to versions that have not already been scheduled for cleanup; earlier cleanup schedules are preserved.
 
 The request includes an expected latest version and an organization-scoped idempotency key. A stale dialog, concurrent replacement or attempt to start another replacement while the latest one is processing receives a conflict. Original and extraction capacity are reserved before the immutable original is written using the selected organization or platform S3 binding. A replacement does not consume another document-count slot.
 

@@ -32,6 +32,7 @@
         "@routers/utils": "workspace:*",
         "@repo/db": "workspace:*",
         "zod": "^4.6.5",
-        "@repo/storage": "workspace:*"
+        "@repo/storage": "workspace:*",
+        "@repo/documents": "workspace:*"
     }
 }
