@@ -79,6 +79,12 @@ export const indexingContract = {
                 discoverySource: z
                     .enum(['LOCAL_RUNTIME', 'HOSTED_CATALOG'])
                     .optional(),
+                reviewedCatalog: z
+                    .boolean()
+                    .describe(
+                        'A reviewed local capability catalog; listing does not test provider access.'
+                    )
+                    .optional(),
             })
         ),
     probe: oc

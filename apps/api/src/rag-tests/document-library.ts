@@ -300,7 +300,7 @@ export async function documentLibraryTests(t: TestContext) {
                 );
                 assert.equal(
                     response.headers.get('Vectorix-API-Revision'),
-                    '9'
+                    '10'
                 );
             }
         );

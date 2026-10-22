@@ -10,11 +10,16 @@ const MAX_RESPONSE_BYTES = 8 * 1024 * 1024;
 const MAX_JSON_DEPTH = 16;
 const MAX_REQUEST_BYTES = 2 * 1024 * 1024;
 type NativePath =
-    'api/tags' | 'api/show' | 'api/embed' | 'v1/models' | 'v2/embed';
+    | 'api/tags'
+    | 'api/show'
+    | 'api/embed'
+    | 'v1/models'
+    | 'v2/embed'
+    | 'v1/embeddings';
 
-function isCohereConfigurationValid(config: EmbeddingConfiguration, url: URL) {
+function isHostedConfigurationValid(config: EmbeddingConfiguration, url: URL) {
     return (
-        config.provider !== 'COHERE' ||
+        config.provider === 'OLLAMA' ||
         (url.pathname === '/' &&
             typeof config.apiKey === 'string' &&
             Boolean(config.apiKey.trim()))
@@ -37,13 +42,13 @@ export function configurationUrl(config: EmbeddingConfiguration) {
     try {
         const url = new URL(config.endpoint);
         if (
-            !['OLLAMA', 'COHERE'].includes(config.provider) ||
+            !['OLLAMA', 'COHERE', 'VOYAGE'].includes(config.provider) ||
             !['http:', 'https:'].includes(url.protocol) ||
             url.username ||
             url.password ||
             url.search ||
             url.hash ||
-            !isCohereConfigurationValid(config, url) ||
+            !isHostedConfigurationValid(config, url) ||
             (config.apiKey !== null &&
                 (config.apiKey.length > 8192 || /[\r\n]/.test(config.apiKey)))
         )
@@ -64,7 +69,9 @@ function nativeUrl(
     const paths =
         config.provider === 'OLLAMA'
             ? ['api/tags', 'api/show', 'api/embed']
-            : ['v1/models', 'v2/embed'];
+            : config.provider === 'COHERE'
+              ? ['v1/models', 'v2/embed']
+              : ['v1/embeddings'];
     if (!paths.includes(path))
         throw new EmbeddingError('INVALID_CONFIGURATION');
     if (!query) return url;
@@ -153,7 +160,9 @@ export async function requestJson(
 ) {
     const url = nativeUrl(config, path, query);
     if (
-        ['api/show', 'api/embed', 'v2/embed'].includes(path) !==
+        ['api/show', 'api/embed', 'v2/embed', 'v1/embeddings'].includes(
+            path
+        ) !==
         (body !== undefined)
     )
         throw new EmbeddingError('INVALID_CONFIGURATION');

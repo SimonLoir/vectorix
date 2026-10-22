@@ -544,7 +544,7 @@ await test('snapshot or provider mismatches fail before embedding and do not dow
             'embeddinggemma:latest'
         );
         assert.throws(
-            () => canonicalEmbeddingModel('VOYAGE', 'model'),
+            () => canonicalEmbeddingModel('UNKNOWN', 'model'),
             errorCode('INVALID_CONFIGURATION')
         );
     }));

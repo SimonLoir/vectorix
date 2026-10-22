@@ -25,7 +25,7 @@ function normalizeEndpoint(value: string) {
 /** Network destinations require an exact operator-approved URL; organization credentials alone never authorize SSRF. */
 export function assertEmbeddingEndpoint(
     endpoint: string,
-    provider: 'OLLAMA' | 'COHERE' = 'OLLAMA'
+    provider: 'OLLAMA' | 'COHERE' | 'VOYAGE' = 'OLLAMA'
 ) {
     const allowed = [
         process.env[`VECTORIX_DEFAULT_${provider}_ENDPOINT`],
@@ -62,7 +62,8 @@ export async function boundEmbeddingConfiguration(
     });
     if (
         resolved.data.provider !== 'OLLAMA' &&
-        resolved.data.provider !== 'COHERE'
+        resolved.data.provider !== 'COHERE' &&
+        resolved.data.provider !== 'VOYAGE'
     )
         throw indexError('PROFILE_UNSUPPORTED');
     assertEmbeddingEndpoint(resolved.data.endpoint, resolved.data.provider);
@@ -100,7 +101,8 @@ export function supportsIndexProfile(profile: IndexProfile) {
         !profile.parentChild &&
         ((profile.provider === 'OLLAMA' &&
             ['GENERIC', 'EMBEDDING_GEMMA'].includes(preset)) ||
-            (profile.provider === 'COHERE' && preset === 'GENERIC'))
+            (['COHERE', 'VOYAGE'].includes(profile.provider) &&
+                preset === 'GENERIC'))
     );
 }
 

@@ -11,7 +11,8 @@ export function ModelVerification({
     const format = useFormatter();
     const hosted =
         result.identityKind === 'CAPABILITY_PROFILE' ||
-        result.provider === 'COHERE';
+        result.provider === 'COHERE' ||
+        result.provider === 'VOYAGE';
     return (
         <section
             className='space-y-3 rounded-lg bg-muted p-4 text-sm'
@@ -47,6 +48,11 @@ export function ModelVerification({
                     </dd>
                 </div>
             </dl>
+            {result.reviewedCatalog && (
+                <p className='text-xs text-muted-foreground'>
+                    {tr('reviewedProbeHint')}
+                </p>
+            )}
             {result.discoverySource && (
                 <p className='text-xs text-muted-foreground'>
                     {tr(`discoverySources.${result.discoverySource}`)}

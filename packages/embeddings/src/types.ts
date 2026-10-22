@@ -10,7 +10,13 @@ export type CohereConfiguration = {
     endpoint: string;
     apiKey: string;
 };
-export type EmbeddingConfiguration = OllamaConfiguration | CohereConfiguration;
+export type VoyageConfiguration = {
+    provider: 'VOYAGE';
+    endpoint: string;
+    apiKey: string;
+};
+export type EmbeddingConfiguration =
+    OllamaConfiguration | CohereConfiguration | VoyageConfiguration;
 export type EmbeddingProvider = EmbeddingConfiguration['provider'];
 export type EmbeddingIdentityKind = 'WEIGHTS_DIGEST' | 'CAPABILITY_PROFILE';
 export type EmbeddingDiscoverySource = 'LOCAL_RUNTIME' | 'HOSTED_CATALOG';
@@ -71,9 +77,46 @@ export const cohereModelIdentity = z
         message: 'Unsupported embedding dimensions.',
     });
 export type CohereModelIdentity = z.infer<typeof cohereModelIdentity>;
+/** Voyage's reviewed hosted capabilities are versioned independently of earlier provider snapshots. */
+export const voyageModelIdentity = z
+    .object({
+        schemaVersion: z.literal(3),
+        provider: z.literal('VOYAGE'),
+        identityKind: z.literal('CAPABILITY_PROFILE'),
+        model: z.enum(['voyage-4', 'voyage-4-lite', 'voyage-4-large']),
+        digest: z.string().regex(/^[a-f0-9]{64}$/),
+        family: z.literal('voyage-4'),
+        contextTokens: z.literal(32_000),
+        defaultDimensions: z.literal(1024),
+        dimensions: z.union([
+            z.literal(256),
+            z.literal(512),
+            z.literal(1024),
+            z.literal(2048),
+        ]),
+        supportedDimensions: z.array(z.number().int().positive()).length(4),
+        capabilities: z.array(z.string().min(1).max(100)).max(32),
+        preset: z.literal('GENERIC'),
+        documentInputType: z.literal('document'),
+        queryInputType: z.literal('query'),
+        outputDtype: z.literal('float'),
+        truncation: z.literal(false),
+        maxBatchInputs: z.literal(1000),
+        maxBatchTokens: z.union([
+            z.literal(120_000),
+            z.literal(320_000),
+            z.literal(1_000_000),
+        ]),
+    })
+    .strict()
+    .refine((value) => value.supportedDimensions.includes(value.dimensions), {
+        message: 'Unsupported embedding dimensions.',
+    });
+export type VoyageModelIdentity = z.infer<typeof voyageModelIdentity>;
 export const modelIdentity = z.union([
     ollamaModelIdentity,
     cohereModelIdentity,
+    voyageModelIdentity,
 ]);
 export type ModelIdentity = z.infer<typeof modelIdentity>;
 export type ModelSummary = {
@@ -85,6 +128,8 @@ export type ModelSummary = {
     defaultDimensions?: number;
     supportedDimensions?: number[];
     contextTokens?: number;
+    /** Local supported catalog only; it does not claim a provider listing or credential readiness. */
+    reviewedCatalog?: boolean;
 };
 /** Legacy schemaVersion:1 has no kind field; its digest remains the native Ollama weights manifest. */
 export function embeddingIdentityKind(

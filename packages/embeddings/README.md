@@ -1,16 +1,17 @@
 # Native embeddings
 
-`@repo/embeddings` implements native Ollama and Cohere text embeddings. It accepts a complete resolved `EmbeddingConfiguration`: `{ provider: 'OLLAMA', endpoint, apiKey: string | null }` or `{ provider: 'COHERE', endpoint, apiKey: string }`. It never reads environment variables, chooses organization credentials, downloads models, or accesses application databases. Voyage, OpenAI and Mistral remain planned adapters.
+`@repo/embeddings` implements native Ollama, Cohere and Voyage text embeddings. It accepts a complete resolved `EmbeddingConfiguration`: `{ provider: 'OLLAMA', endpoint, apiKey: string | null }` or `{ provider: 'COHERE' | 'VOYAGE', endpoint, apiKey: string }`. It never reads environment variables, chooses organization credentials, downloads models, or accesses application databases. OpenAI and Mistral remain planned adapters.
 
 The RAG layer resolves credentials and enforces exact operator-approved endpoints in [`embedding-profile.ts`](../routers/rag/src/services/indexing/embedding-profile.ts). Saved collection revisions retain their credential and destination binding. Invalid configured bindings fail without falling back to platform defaults.
 
 ## Entry points
 
 - `discoverModels(config, options?)` calls the resolved native service. Ollama returns installed canonical names, manifest digests and families, bounded to 512 models. Cohere queries its authenticated `/v1/models` catalog, follows at most five pages of 100 entries and intersects results with the reviewed text-model allowlist. Cohere summaries include `discoverySource: 'HOSTED_CATALOG'`, `identityKind: 'CAPABILITY_PROFILE'`, context and dimension choices. Optional catalog metadata may be absent or null: unnamed and unrelated entries are skipped, explicitly non-embedding entries are excluded, and reviewed names can use the endpoint-filtered listing when optional endpoint metadata is absent. Invalid non-null field types fail closed. Listing is not an embedding probe.
+- Voyage discovery returns the bounded local `VOYAGE_MODELS` catalog without HTTP. Its summaries set `reviewedCatalog: true` and omit `discoverySource`; they do not assert hosted listing, model availability, valid credentials or embedding readiness. Verification performs actual document/query probes.
 - `verifyEmbeddingModel(config, { model, dimensions, preset, preparation? }, options?)` validates the supported profile and native vectors at the selected dimensions. Ollama checks its installed manifest and model metadata; Cohere probes both retrieval roles using synthetic text without organization content. Unsupported reductions and presets fail explicitly.
 - `embedDocuments(config, identity, [{ text, title? }], options?)` and `embedQuery(config, identity, text, options?)` dispatch only when the configuration and saved identity belong to the same provider.
 - `canonicalEmbeddingModel(provider, model)` applies provider-specific normalization. Ollama adds its implicit `:latest` tag; hosted model IDs remain exact and case-sensitive. The original `canonicalOllamaModel` export remains available.
-- `modelIdentity` parses both persisted identity formats. `embeddingIdentityKind(identity)` exposes `WEIGHTS_DIGEST` for legacy Ollama snapshots and `CAPABILITY_PROFILE` for Cohere.
+- `modelIdentity` parses all three persisted identity formats. `embeddingIdentityKind(identity)` exposes `WEIGHTS_DIGEST` for legacy Ollama snapshots and `CAPABILITY_PROFILE` for Cohere/Voyage.
 - `embeddingInputByteLimit(identity, { kind?, title?, preparation? })` supplies the conservative content byte budget used by chunking. `prepareEmbeddingInput` applies the same accounting at the provider boundary. `COHERE_MODELS` exposes the reviewed server-side capability catalog; this package contains Node.js integrations and must not be imported into browser components.
 
 ```mermaid
@@ -18,10 +19,13 @@ flowchart LR
     R["Complete resolved configuration and saved profile"] --> D["Provider dispatch"]
     D --> O["Ollama: installed manifest and native capability probe"]
     D --> C["Cohere: authenticated catalog and both retrieval probes"]
+    D --> VY["Voyage: reviewed local catalog, then native probes"]
     O --> W["Schema 1: native weights digest"]
     C --> P["Schema 2: capability-profile fingerprint"]
+    VY --> VP["Schema 3: Voyage capability-profile fingerprint"]
     W --> E["Native role-specific embedding"]
     P --> E
+    VP --> E
     E --> V["Bounded float32-compatible vector validation"]
     V --> U["Vectors, reported usage and separate estimate"]
 ```
@@ -52,23 +56,41 @@ A Cohere `schemaVersion: 2` identity records the exact model ID, dimensions, doc
 
 Ollama `schemaVersion: 1` snapshots retain their original shape and digest meaning. No migration, backfill or invented `identityKind` field is added to those stored objects; the exported helper supplies their public kind.
 
+## Voyage
+
+Use the provider root `https://api.voyageai.com` and a nonempty key. Versioned/path-prefixed endpoints are rejected. The adapter posts only to native `/v1/embeddings`; it does not use an OpenAI-compatible protocol or invent a model-list endpoint. The reviewed general-purpose catalog contains these models:
+
+| Model            | Context tokens | Dimensions (default 1,024) | Native aggregate tokens/request |
+| ---------------- | -------------- | -------------------------- | ------------------------------- |
+| `voyage-4`       | 32,000         | 256, 512, 1,024, 2,048     | 320,000                         |
+| `voyage-4-lite`  | 32,000         | 256, 512, 1,024, 2,048     | 1,000,000                       |
+| `voyage-4-large` | 32,000         | 256, 512, 1,024, 2,048     | 120,000                         |
+
+Only the `GENERIC` preset executes. `input_type` is explicitly `document` or `query`, `truncation` is `false`, and `output_dimension`/`output_dtype: 'float'` are explicit. Voyage supplies its own retrieval-role prompts; the adapter does not prepend them. Optional preparation remains a literal prefix. Code/domain/multimodal and other model families remain unsupported. See [Voyage's native API](https://docs.voyageai.com/reference/embeddings-api) and [model guide](https://docs.voyageai.com/docs/embeddings).
+
+A `schemaVersion: 3` immutable capability profile records the model, dimensions, context, native roles, truncation, float output and aggregate request constraints. Its SHA-256 fingerprint is a configuration identity, not a provider-weights checksum. Replay validates the complete saved semantics; Ollama schema 1 and Cohere schema 2 snapshots remain unchanged.
+
+Voyage accepts at most 1,000 inputs natively. Internal batches are smaller: `min(1000, floor(7 MiB / (dimensions * 32)))` allows at most 896/448/224/112 inputs at 256/512/1,024/2,048 dimensions. A separate 1 MiB encoded-input ceiling bounds requests, and prepared UTF-8 bytes plus a conservative 64-token role allowance per input stay within the model's aggregate limit. These are deliberately conservative admission bounds, not tokenizer counts or promised full-context throughput. Native truncation remains disabled. The shared response ceiling is 8 MiB.
+
+Returned rows must form an exact unique integer-index permutation; vectors are restored to original input order across rows and batches. Model, count, dimensions and finite nonzero float32 representation are checked. `usage.total_tokens` supplies aggregate provider input tokens; omitted usage remains `null`, and no separate billing count is invented.
+
 ## Bounds, preparation and usage
 
 Optional preparation is a literal prefix followed by a newline on both roles. It is never interpreted as a template. Complete input, including any applicable preparation/title/preset prefix, must fit within the context-token count minus 32 bytes, capped at 64 KiB. This conservative byte bound avoids assuming a tokenizer and may produce smaller chunks than the provider's token maximum. Native truncation is disabled and remains authoritative.
 
-One operation deadline covers discovery, probes, all batches, retries and applicable manifest checks. Request JSON is bounded to 2 MiB, response JSON to 8 MiB and 16 nesting levels. Ollama requests contain at most 128 inputs; Cohere requests contain at most 96. Additional batching bounds prepared request bytes. Vector counts and exact dimensions must match; components must remain finite as float32 and the rounded vector must be nonzero. Valid provider precision is preserved rather than normalized or silently sliced.
+One operation deadline covers discovery, probes, all batches, retries and applicable manifest checks. Request JSON is bounded to 2 MiB, response JSON to 8 MiB and 16 nesting levels. Ollama requests contain at most 128 inputs; Cohere requests contain at most 96; Voyage uses the dimension/byte/aggregate bounds above. Vector counts and exact dimensions must match; components must remain finite as float32 and the rounded vector must be nonzero. Valid provider precision is preserved rather than normalized or silently sliced.
 
 HTTP 429 and 5xx responses receive at most three attempts with bounded backoff. Other error statuses are not retried. Redirects fail closed. Only fixed provider-specific native paths receive the resolved credentials. Errors expose stable domain codes without URLs, credentials, provider bodies or original exceptions. Endpoint approval and organization authorization remain the caller's responsibility.
 
 `EmbeddingUsage` keeps three quantities separate:
 
-- `providerInputTokens`: Ollama's aggregate `prompt_eval_count`, or Cohere's `meta.tokens.input_tokens`; `null` if any successful batch omits it.
+- `providerInputTokens`: Ollama's aggregate `prompt_eval_count`, Cohere's `meta.tokens.input_tokens`, or Voyage's `usage.total_tokens`; `null` if any successful batch omits it.
 - `billedInputTokens`: optional Cohere aggregate `meta.billed_units.input_tokens`, independently `null` when unavailable. Billed units never replace model input-token counts.
 - `estimatedInputTokens`: the explicitly labeled prepared UTF-8 byte estimate, plus `requests` for successful embedding requests. Estimates are neither exact tokenizer counts nor provider billing.
 
 ## Validation
 
-Run `pnpm --filter @repo/embeddings test` for controlled loopback HTTP fixtures covering native payloads, both retrieval roles, supported dimensions, catalog pagination, immutable identity compatibility, ordering, batching, truthful usage, invalid float32 vectors, retries, cancellation, response limits, redirects and input preparation. These fixtures do not establish live Cohere connectivity or product dashboard acceptance.
+Run `pnpm --filter @repo/embeddings test` for controlled loopback HTTP fixtures covering native payloads, both retrieval roles, supported dimensions, catalog pagination/no-I/O catalogs, immutable identity compatibility, indexed ordering, batching, truthful usage, invalid float32 vectors, retries, cancellation, response limits, redirects and input preparation. These fixtures do not establish live Cohere/Voyage connectivity or product dashboard acceptance.
 
 The [Ollama and EmbeddingGemma reproduction guide](../../docs/rag-ollama-embeddinggemma.md) provides the executed CPU container/version, model digest, installation and native probe commands, credential/network configuration and actual live evidence. For a separate live Ollama check, create a disposable official CPU-only container, install `embeddinggemma`, then run from this directory:
 
@@ -76,7 +98,7 @@ The [Ollama and EmbeddingGemma reproduction guide](../../docs/rag-ollama-embeddi
 node --import tsx tests/live.mts http://127.0.0.1:PORT
 ```
 
-The script accepts only an explicit loopback endpoint and never reads `.env`. It verifies all four dimensions and French query retrieval against French/English documents. Live provider checks and dashboard acceptance must be recorded separately by each product milestone; no live Cohere request is claimed by the controlled package tests.
+The script accepts only an explicit loopback endpoint and never reads `.env`. It verifies all four dimensions and French query retrieval against French/English documents. Live provider checks and dashboard acceptance must be recorded separately by each product milestone; no live hosted-provider request is claimed by the controlled package tests.
 
 ## Primary references
 
@@ -87,3 +109,4 @@ The script accepts only an explicit loopback endpoint and never reads `.env`. It
 - [Cohere embedding API](https://docs.cohere.com/reference/embed) and [semantic search guide](https://docs.cohere.com/v2/docs/semantic-search-embed): native roles, float output, truncation, dimensions and the 96-text limit.
 - [Cohere model capabilities](https://docs.cohere.com/v2/docs/cohere-embed) and [native model listing](https://docs.cohere.com/reference/list-models): reviewed context/dimension choices and authenticated discovery.
 - Cohere's official SDK distinguishes [model input tokens](https://github.com/cohere-ai/cohere-python/blob/main/src/cohere/types/api_meta_tokens.py) from [billed input units](https://github.com/cohere-ai/cohere-python/blob/main/src/cohere/types/api_meta_billed_units.py).
+- [Voyage native embedding API](https://docs.voyageai.com/reference/embeddings-api), [text models](https://docs.voyageai.com/docs/embeddings) and [official response schema](https://github.com/voyage-ai/openapi/blob/main/voyage-openapi.yml): retrieval roles, dimensions, current model-specific aggregate limits, indexed responses and token usage. The API/model pages are authoritative for current input/model limits; the older OpenAPI description still names older models and a lower batch limit.

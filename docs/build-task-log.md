@@ -263,7 +263,7 @@ Final documentation checks passed: 16 documents, 18 parsed Mermaid diagrams, 92 
 - [x] Validate controlled native-wire provider/API journeys, production dashboard flow, checks/builds/containers and independent review; record live-provider limitations.
 - [x] Verify the final fresh browser console and remove owned preview resources.
 - [x] Complete final documentation accuracy, formatting, local-link, Mermaid and locale checks.
-- [ ] Deliver a dedicated reviewed PR from merged M4.
+- [x] Deliver [PR #28](https://github.com/SimonLoir/vectorix/pull/28) after both catalog and Docker image CI checks passed; squash-merged as `9715138`.
 
 Design and configuration: [Native Cohere embeddings](rag-cohere-embeddings.md). No Prisma schema or migration change is required; generation snapshots already store versioned JSON and credentials already support Cohere. New public identity metadata is optional in compatible V1 revision 1.9.0. Paid-provider credentials will be added by the user to an organization later; do not present controlled HTTP results as live Cohere acceptance.
 
@@ -275,4 +275,27 @@ Actual dashboard acceptance uses a deterministic controlled Cohere HTTP fixture,
 
 The final fresh Belgian Dutch browser tab had no console warnings/errors and preserved its locale. All four product previews, the controlled Cohere server, four owned infrastructure containers and their temporary tabs were stopped/removed; ports 3100/3101/3006 and the controlled provider port are unbound. The downloaded synthetic original was checksum-verified before removal. The retained named Ollama model volume remains available for later milestones.
 
-Final M5a documentation validation passed: 17 documents, 20 parsed Mermaid diagrams, 111 local Markdown links and all 3,495 web/admin ICU messages with English/French/Belgian Dutch key parity. Formatting and whitespace checks passed. The acceptance record distinguishes controlled Cohere from real Ollama/infrastructure and leaves paid-provider availability, retrieval quality and retention-soak claims pending. PR delivery remains pending.
+Final M5a documentation validation passed: 17 documents, 20 parsed Mermaid diagrams, 111 local Markdown links and all 3,495 web/admin ICU messages with English/French/Belgian Dutch key parity. Formatting and whitespace checks passed. The acceptance record distinguishes controlled Cohere from real Ollama/infrastructure and leaves paid-provider availability, retrieval quality and retention-soak claims pending. PR #28 passed both CI checks and was squash-merged as `9715138`.
+
+## M5b — Voyage provider
+
+- [x] Review current primary provider documentation, fixed model capabilities and native wire semantics; no documented model-list endpoint exists.
+- [x] Add a bounded native Voyage adapter and schema-version-3 capability identity, preserving saved Ollama/Cohere snapshots.
+- [x] Wire compatible optional local-catalog metadata and V1 revision 1.10.0 through saved-revision API checks, indexing, rebuild and search.
+- [x] Deliver coherent, localized Voyage profile controls and explicitly unverified local model listing.
+- [x] Run meaningful controlled protocol/integration tests, workspace checks, production builds and all six images; independently review the final change.
+- [x] Execute the dashboard acceptance recipe with controlled native Voyage, record exact sources, credential failures, rebuild and language results, and clean owned resources.
+- [x] Validate final documentation, diagrams, local links and locale parity after dashboard acceptance is recorded.
+- [ ] Deliver a dedicated reviewed PR from merged M5a.
+
+Implementation and controlled dashboard acceptance are complete on `codex/rag-voyage-provider`, based on merged M5a PR #28 (`9715138`). Design, concrete acceptance recipe and actual results are in [Native Voyage embeddings](rag-voyage-embeddings.md). No Prisma schema change or new migration is required. Live-provider verification remains pending organization credentials supplied by the user later; listing a reviewed local model catalog is not credential verification.
+
+Automated validation passed: 69 controlled native embedding HTTP tests, 107 disposable core/RAG catalog tests, 23 workspace type checks, 23 lint tasks, 23 backend regressions, four production builds and all six image/runtime/infrastructure checks. Independent review found no remaining P1/P2 issue. These results do not establish live paid-provider connectivity or retrieval quality.
+
+Actual dashboard acceptance used production web/API/workers, four disposable infrastructure services and a deterministic native Voyage HTTP fixture; this run made no Ollama or hosted-provider calls. Local listing showed three reviewed models with explicitly unverified access and all provider counters unchanged at zero. Native document/query verification succeeded at 256 dimensions. A bilingual 562-byte Markdown original produced three chunks. With indexing alone paused, a saved 512-dimensional draft and accepted rebuild left A256 searchable; resume activated B512. A captured old French hybrid source reopened and downloaded with matching SHA-256 after the switch. New English vector and French hybrid retrieval used B; the hybrid result exposed both ranks. Keyword-only retrieval returned two passages with every fixture counter unchanged at 11 organization and zero platform requests.
+
+A newly selected invalid synthetic credential bound a new collection, whose local catalog still showed three unverified models. Actual verification failed with sanitized `PROVIDER_REJECTED`, without creating a generation, despite a configured valid platform fallback. The existing B profile retained its original valid binding and verified at 512 dimensions after that selection. The provider/API had exited successfully before the final counter fetch, so no additional post-invalid-key zero-platform-counter proof was collected; explicit failure behavior and integration tests cover the fallback contract. Reactive English/French/Belgian Dutch errors, date/number/profile labels and persisted Belgian Dutch passed. The final fresh tab had no console warnings or errors.
+
+Owned previews/provider, four infrastructure containers, temporary tabs and the checksum-verified download were removed; ports 3100/3101/3006 and the controlled provider port were unbound. A's three chunks remained retained on the normal 17-minute grace at the last dashboard observation. No M5b clock advancement, physical-retirement soak or live paid-service quality/availability claim is made.
+
+Final documentation validation passed: 18 documents, 21 parsed Mermaid diagrams, 128 local Markdown links and all 3,513 web/admin ICU messages with English/French/Belgian Dutch key parity. Prettier formatting and `git diff --check` passed. The record explicitly separates controlled Voyage from live paid-service verification and notes the uncollected final invalid-key counter snapshot. PR delivery remains pending.

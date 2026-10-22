@@ -50,6 +50,12 @@ export const verifiedEmbedding = z.object({
     preset: z.enum(['GENERIC', 'EMBEDDING_GEMMA']),
     identityKind: z.enum(['WEIGHTS_DIGEST', 'CAPABILITY_PROFILE']).optional(),
     discoverySource: z.enum(['LOCAL_RUNTIME', 'HOSTED_CATALOG']).optional(),
+    reviewedCatalog: z
+        .boolean()
+        .describe(
+            'Capabilities originate in the reviewed local catalog; this response follows actual embedding probes.'
+        )
+        .optional(),
 });
 export const indexGeneration = z.object({
     id,
