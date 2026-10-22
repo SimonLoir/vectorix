@@ -80,6 +80,8 @@ Account registration and organization creation are enabled in the local example.
 
 Email requires Resend or SMTP. Without a provider, notifications remain pending and fail after five attempts; users can still sign in. Web Push is disabled by default and requires a VAPID key pair and `ENCRYPTION_SECRET` for encrypted subscriptions. These transports are not simulated in production.
 
+Web and admin resolve `VECTORIX_TIME_ZONE` on the server at runtime and pass its validated value to their next-intl providers. Missing, empty or invalid values use `Europe/Brussels`; each user's language remains independent. Restart consumers after changing deployment configuration. See [Dashboard timezones](docs/dashboard-timezones.md) for the shared boundary, acceptance recipe and component-specific limits.
+
 Redis URL usernames and passwords must be percent-encoded once per component. The API and workers decode them once before connecting; a standalone `REDIS_PASSWORD` is a raw fallback only when the URL has no non-empty password. Invalid URL/credential encoding fails with a sanitized configuration error. See [Redis connections](docs/redis-connections.md) for precedence, examples and disposable authentication tests.
 
 Password-reset links require a valid server-configured `VECTORIX_WEB_URL` (legacy `WEB_URL`/`APP_URL` remain lower-priority fallbacks when the preceding variables are empty). Set an explicit HTTP(S) base, with an optional served path prefix and no credentials, query or fragment. Missing or invalid selected configuration returns a sanitized 503 before account lookup or token creation; request headers and implicit localhost cannot choose a destination. Other sign-in flows remain available. See [Canonical password-reset links](docs/password-reset-links.md) for configuration, native reset boundaries and validation.
@@ -197,6 +199,7 @@ Implement changes on a dedicated `codex/*` branch and open a pull request agains
 ## Documentation
 
 - [Repository conventions](AGENTS.md): architecture, authorization, API compatibility, development, and validation rules.
+- [Dashboard timezones](docs/dashboard-timezones.md): shared server validation, public provider configuration and locale-independent runtime dates.
 - [Superadmin transactions](docs/superadmin-transactions.md): atomic mutations/audits, current actor checks, audit address provenance and remaining native owner-guard work.
 - [Redis connections](docs/redis-connections.md): encoded URL credentials, raw fallback precedence and isolated queue/worker acceptance.
 - [Canonical password-reset links](docs/password-reset-links.md): server-only destinations, strict configuration precedence and reset-request acceptance.

@@ -23,7 +23,8 @@
         "./contexts/auth": "./src/contexts/auth.tsx",
         "./utils/date-utils": "./src/utils/date-utils.ts",
         "./lib/auth-client": "./src/lib/auth-client.ts",
-        "./i18n/locale": "./src/i18n/locale.ts"
+        "./i18n/locale": "./src/i18n/locale.ts",
+        "./i18n/time-zone": "./src/i18n/time-zone.ts"
     },
     "scripts": {
         "check-types": "tsc6 -p tsconfig.json --noEmit",

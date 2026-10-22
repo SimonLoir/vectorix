@@ -15,13 +15,18 @@ export async function generateMetadata(): Promise<Metadata> {
 export default async function RootLayout({
     children,
 }: Readonly<{ children: React.ReactNode }>) {
-    const { locale, messages } = await getAdminIntl();
+    const { locale, messages, timeZone } = await getAdminIntl();
     const apiUrl = process.env.API_URL ?? 'http://localhost:3001';
 
     return (
         <html lang={locale} suppressHydrationWarning>
             <body>
-                <Providers apiUrl={apiUrl} locale={locale} messages={messages}>
+                <Providers
+                    apiUrl={apiUrl}
+                    locale={locale}
+                    messages={messages}
+                    timeZone={timeZone}
+                >
                     {children}
                 </Providers>
             </body>
