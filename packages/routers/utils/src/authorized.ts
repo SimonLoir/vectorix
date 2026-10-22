@@ -1,9 +1,8 @@
-import { auth } from '@repo/auth'; // Your Better Auth instance
+import { auth } from '@repo/auth';
 import { base } from './base';
 import { onError, ORPCError } from '@orpc/server';
 import type { Logger } from 'pino';
 import type { ApiContext } from './base';
-import { prisma } from '@repo/db';
 import { getMemberPermissions } from '@repo/auth/permissions/resolve';
 import type { PermissionSet } from '@repo/auth/permissions';
 import { requireOperationPermissions, requirePermissions } from './permissions';
@@ -12,8 +11,13 @@ import {
     requireExpectedOrganization,
     resolveExpectedOrganizationAccess,
 } from './expected-organization';
+import { resolveCurrentApiKeyAccess } from './api-key-access';
 
-const authorize = async (headers: Headers, logger: Logger) => {
+const authorize = async (
+    headers: Headers,
+    logger: Logger,
+    db: ApiContext['db']
+) => {
     const apiKey = headers.get('x-api-key');
     if (apiKey) {
         const result = await auth.api.verifyApiKey({
@@ -28,20 +32,15 @@ const authorize = async (headers: Headers, logger: Logger) => {
                 { authMethod: 'api-key' },
                 'API key authentication rejected'
             );
-            throw new ORPCError('INVALID_API_KEY');
+            throw new ORPCError('INVALID_API_KEY', { status: 401 });
         }
 
         requireExpectedOrganization(headers, result.key.referenceId);
 
-        const storedKey = await prisma.apikey.findUnique({
-            where: { id: result.key.id },
+        const permissions = await resolveCurrentApiKeyAccess(db, {
+            keyId: result.key.id,
+            organizationId: result.key.referenceId,
         });
-        if (
-            !storedKey ||
-            storedKey.configId !== 'org' ||
-            storedKey.referenceId !== result.key.referenceId
-        )
-            throw new ORPCError('INVALID_API_KEY');
 
         logger.debug(
             {
@@ -57,11 +56,8 @@ const authorize = async (headers: Headers, logger: Logger) => {
             session: null,
             user: null,
             organizationId: result.key.referenceId,
-            permissions:
-                !storedKey.vectorixLegacyFullAccess && storedKey.permissions
-                    ? (JSON.parse(storedKey.permissions) as PermissionSet)
-                    : {},
-            legacyApiKey: storedKey.vectorixLegacyFullAccess,
+            permissions,
+            legacyApiKey: false,
         } as const;
     }
 
@@ -89,7 +85,8 @@ const authorize = async (headers: Headers, logger: Logger) => {
         headers,
         sessionData.session.activeOrganizationId,
         sessionData.user.id,
-        getMemberPermissions
+        (organizationId, userId) =>
+            getMemberPermissions(organizationId, userId, db)
     );
 
     logger.debug(
@@ -124,7 +121,11 @@ export type AuthorizedContext = ApiContext & {
 
 export const authMiddleware = base.middleware(
     async ({ context, next, path }, input) => {
-        const access = await authorize(context.headers, context.logger);
+        const access = await authorize(
+            context.headers,
+            context.logger,
+            context.db
+        );
         const organization = await context.db.organization.findUnique({
             where: { id: access.organizationId },
             select: { isActive: true },

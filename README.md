@@ -40,7 +40,7 @@ pnpm admin:grant your-email@example.com
 ## Included features
 
 - Password and passkey authentication, password reset, TOTP two-factor authentication and recovery codes, session management, and account deletion.
-- Organizations, members, invitations, and custom roles. Permissions are rechecked by the API; API keys are restricted to explicit permissions.
+- Organizations, members, invitations, and custom roles. Organization API-key permissions are intersected with the issuing member's current roles on every admission.
 - Sign-in notifications: inbox, read/unread status, personal preferences, email, and Web Push. Workers process durable delivery receipts with bounded retries.
 - A licensed feature catalog, an optional external provider, and explicit manual grants by a super administrator. Provider outages or expired entitlements never grant feature access.
 - User and organization administration, organization suspension, permission management, and audit logging.
@@ -49,6 +49,8 @@ pnpm admin:grant your-email@example.com
 - Native Ollama, Cohere, Voyage, OpenAI and Mistral indexing with document-structure chunks, filtered FR/EN hybrid, lexical and vector search, and exact authorized source versions. The M4 implementation adds draft profile comparison, rebuild progress/retry/discard, catch-up, atomic activation and retained-generation cleanup while the serving index stays available.
 
 The initial feature catalog is empty. No business domain or demo data is installed. The catalog migration adds empty RAG tables without granting existing API keys access.
+
+Organization API keys remain separate from user sessions. Removed issuers, unbound historical keys and legacy full-access keys fail closed; they require supported scoped reissue rather than automatic attribution to another member. See [API-key authorization and reissue](docs/api-key-authorization.md) for the permission rule, compatibility behavior and dashboard acceptance recipe. Revocation applies to subsequent admissions and does not cancel requests already admitted.
 
 ## Repository structure
 
@@ -187,6 +189,7 @@ Implement changes on a dedicated `codex/*` branch and open a pull request agains
 ## Documentation
 
 - [Repository conventions](AGENTS.md): architecture, authorization, API compatibility, development, and validation rules.
+- [API-key authorization](docs/api-key-authorization.md): current issuer permissions, key/session separation, historical key reissue and role-revocation acceptance.
 - [RAG catalog and access](docs/rag-catalog-access.md): implemented backend foundation, schema, credentials, authorization, quotas, validation, and outstanding dashboard checklist.
 - [RAG infrastructure](docs/rag-infrastructure.md): phase 1 services, connection settings, role boundaries, and isolated acceptance tests.
 - [RAG implementation plan](docs/rag-implementation-plan.md): agreed V1 scope, architecture diagrams, proposed defaults, implementation status and dashboard acceptance scenarios. M1–M3 are implemented; M4 is implemented and browser-verified; M5a is implemented with controlled acceptance complete; M5b is implemented with controlled dashboard acceptance complete. M5c OpenAI is implemented with automated validation and controlled dashboard acceptance complete. M5d Mistral is implemented with automated validation and controlled dashboard acceptance complete. Live paid-provider verification and M6/M7 remain pending.

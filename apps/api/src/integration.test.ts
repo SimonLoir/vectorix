@@ -9,6 +9,7 @@ import { initializeVectorixPermissions } from '@repo/auth/permissions/rollout';
 import { enqueueAccountSignInNotifications } from '@routers/utils/notifications';
 import { processNotifications } from '../../workers/src/notifications/process';
 import { app } from './app';
+import { apiKeyIssuerRevocationTests } from './api-key-issuer-revocation';
 
 if (
     !new URL(
@@ -69,7 +70,7 @@ function browser() {
             })
         );
     }
-    return { post, client };
+    return { post, client, headers };
 }
 const a = browser();
 const b = browser();
@@ -372,4 +373,12 @@ void test('core journeys with real PostgreSQL and the HTTP transports', async (t
             );
         }
     );
+    await apiKeyIssuerRevocationTests(t, {
+        owner: a,
+        foreign: b,
+        createBrowser: browser,
+        organizationId: organizationIds[0]!,
+        foreignOrganizationId: organizationIds[1]!,
+        registerUser: (id) => userIds.push(id),
+    });
 });
