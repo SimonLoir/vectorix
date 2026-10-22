@@ -10,11 +10,12 @@ import {
     lockSemanticAccounting,
 } from './semantic-work';
 import { DocumentParserError } from '@repo/documents';
-import { permits } from '@repo/auth/permissions';
-import { getMemberPermissions } from '@repo/auth/permissions/resolve';
 import { indexFailure } from '@repo/api-contracts/v1/rag/indexing-types';
-import { grantWhere } from '../access';
-import { requireIndexRebuildAuthority } from './access';
+import {
+    requireIndexDocumentAuthority,
+    requireIndexRebuildAuthority,
+} from './access';
+import { isPendingRebuild } from './sync-authority';
 import { runSerializableTransaction } from '@routers/utils/transactions';
 
 export const INDEX_LEASE_MS = 120_000;
@@ -94,7 +95,7 @@ export async function renewIndexClaim(
     if (!updated.count) throw new IndexLeaseLost();
 }
 
-/** Recheck the initiating member and document-management grant before provider cost and publication. */
+/** Recheck the accepted task executor and current grants; a task-scoped retry need not adopt future synchronization. */
 export async function requireIndexAuthority(
     db: Prisma.TransactionClient,
     task: Pick<
@@ -102,57 +103,38 @@ export async function requireIndexAuthority(
         'organizationId' | 'collectionId' | 'generationId' | 'requestedBy'
     >
 ) {
-    const member = await getMemberPermissions(
-        task.organizationId,
-        task.requestedBy,
-        db
-    );
-    if (
-        !member ||
-        !permits(member.permissions, { ragCollection: ['manageDocuments'] })
-    )
-        throw new IndexingError('ACCESS_REVOKED');
-    const collection = await db.collection.findFirst({
-        where: {
-            AND: [
-                { id: task.collectionId, organization: { isActive: true } },
-                grantWhere(
-                    {
-                        organizationId: task.organizationId,
-                        userId: task.requestedBy,
-                        memberId: member.member.id,
-                        keyId: null,
-                        permissions: member.permissions,
-                    },
-                    'manageDocuments'
-                ),
-            ],
-        },
-    });
-    if (!collection) throw new IndexingError('ACCESS_REVOKED');
-    const generation = await db.indexGeneration.findFirst({
-        where: {
-            id: task.generationId,
-            organizationId: task.organizationId,
-            collectionId: task.collectionId,
-        },
-        select: {
-            previousGenerationId: true,
-            authorityUserId: true,
-            createdBy: true,
-            status: true,
-        },
-    });
-    if (!generation) throw new IndexingError('ACCESS_REVOKED');
-    if (
-        generation.previousGenerationId &&
-        ['PROVISIONING', 'BUILDING', 'FAILED'].includes(generation.status)
-    )
-        await requireIndexRebuildAuthority(db, {
-            ...task,
-            requestedBy: generation.authorityUserId ?? generation.createdBy,
+    try {
+        const collection = await requireIndexDocumentAuthority(db, task);
+        const generation = await db.indexGeneration.findFirst({
+            where: {
+                id: task.generationId,
+                organizationId: task.organizationId,
+                collectionId: task.collectionId,
+            },
+            select: {
+                previousGenerationId: true,
+                authorityUserId: true,
+                createdBy: true,
+                status: true,
+            },
         });
-    return collection;
+        if (!generation) throw new IndexingError('ACCESS_REVOKED');
+        if (isPendingRebuild(generation))
+            await requireIndexRebuildAuthority(db, {
+                ...task,
+                requestedBy: generation.authorityUserId ?? generation.createdBy,
+            });
+        return collection;
+    } catch (error) {
+        // Late semantic usage must commit before a known authority denial is
+        // surfaced; keep this boundary's existing domain error classification.
+        if (
+            error instanceof ORPCError &&
+            (error.code === 'FORBIDDEN' || error.code === 'NOT_FOUND')
+        )
+            throw new IndexingError('ACCESS_REVOKED');
+        throw error;
+    }
 }
 
 /** Whitelist diagnostic codes; raw provider, storage, Prisma and driver messages are never persisted. */

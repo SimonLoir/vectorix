@@ -6,8 +6,8 @@ import type {
 } from '@repo/db';
 import { runSerializableTransaction } from '@routers/utils/transactions';
 import { acknowledgeGenerationChange } from './publication-state';
-import { requireIndexAuthority, indexErrorCode } from './task-state';
-import { requireIndexRebuildAuthority } from './access';
+import { indexErrorCode } from './task-state';
+import { requireSynchronizationActivationAuthority } from './sync-authority';
 import { retireGenerationSourceHolds } from './source-holds';
 import { SOURCE_RETIRE_GRACE_MS } from './source-retention';
 import { MAX_INDEXED_DOCUMENTS_PER_COLLECTION } from './limits';
@@ -154,14 +154,11 @@ export async function activateReadyGenerations(db: PrismaClient) {
                 )
                     return;
                 try {
-                    await (generation.previousGenerationId
-                        ? requireIndexRebuildAuthority(tx, {
-                              ...principal,
-                              requestedBy:
-                                  generation.authorityUserId ??
-                                  generation.createdBy,
-                          })
-                        : requireIndexAuthority(tx, principal));
+                    await requireSynchronizationActivationAuthority(
+                        tx,
+                        generation,
+                        principal
+                    );
                 } catch (error) {
                     if (indexErrorCode(error) !== 'ACCESS_REVOKED') throw error;
                     await activationFailure(

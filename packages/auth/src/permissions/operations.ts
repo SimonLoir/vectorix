@@ -12,6 +12,9 @@ export const operationPermissions: Record<string, PermissionSet> = {
         ragCollection: ['update', 'manageDocuments'],
     },
     'admin.rag.indexing.retry': { ragCollection: ['manageDocuments'] },
+    'admin.rag.indexing.adoptSynchronization': {
+        ragCollection: ['manageDocuments'],
+    },
     'admin.rag.indexing.updateMetadata': { ragCollection: ['manageDocuments'] },
     'admin.rag.indexing.status': {},
     'admin.rag.indexing.tasks': {},

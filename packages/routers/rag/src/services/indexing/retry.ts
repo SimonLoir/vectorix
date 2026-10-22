@@ -4,6 +4,8 @@ import { runSerializableTransaction } from '@routers/utils/transactions';
 import { ragActor, requireCollection } from '../access';
 import { audit } from '../mutation';
 import { requireIndexCleanup, requireIndexRebuild } from './access';
+import { automaticIndexUser, isPendingRebuild } from './sync-authority';
+import { transferSynchronizationController } from './synchronization-fence';
 
 /** Requeue accepted work without replacing its immutable source or releasing unconfirmed reservations. */
 export function retryIndexTask(
@@ -46,11 +48,7 @@ export function retryIndexTask(
                 input.collectionId,
                 'manageDocuments'
             );
-        const pendingRebuild =
-            Boolean(task.generation.previousGenerationId) &&
-            ['PROVISIONING', 'BUILDING', 'FAILED'].includes(
-                task.generation.status
-            );
+        const pendingRebuild = isPendingRebuild(task.generation);
         if (!cleanup && pendingRebuild)
             await requireIndexRebuild(context, input.collectionId, tx);
         if (
@@ -86,6 +84,40 @@ export function retryIndexTask(
                         'This task was superseded by a newer document change.',
                 });
         }
+        const pendingGeneration =
+            !cleanup &&
+            (pendingRebuild ||
+                task.kind === 'PROVISION' ||
+                task.kind === 'INDEX_DOCUMENT') &&
+            ['PROVISIONING', 'BUILDING', 'FAILED'].includes(
+                task.generation.status
+            );
+        const transfersController =
+            pendingGeneration &&
+            (pendingRebuild
+                ? automaticIndexUser(task.generation, task.generation.createdBy)
+                : task.generation.authorityUserId) !== actor.userId;
+        let transferred:
+            | { reboundPendingTasks: number; interruptedTasks: number }
+            | undefined;
+        if (transfersController) {
+            // Preserve initial/rebuild retry activation authority while
+            // fencing all its old runnable epochs before changing authority.
+            await tx.collection.update({
+                where: {
+                    ['organizationId_id']: {
+                        organizationId: actor.organizationId,
+                        id: input.collectionId,
+                    },
+                },
+                data: { contentSequence: { increment: 0 } },
+            });
+            transferred = await transferSynchronizationController(
+                tx,
+                task.generation,
+                actor.userId
+            );
+        }
         await tx.indexTask.update({
             where: { id: task.id },
             data: {
@@ -111,7 +143,7 @@ export function retryIndexTask(
                 lastErrorCode: null,
             },
         });
-        if (!cleanup && pendingRebuild)
+        if (pendingGeneration && !transfersController)
             await tx.indexGeneration.update({
                 where: { id: task.generationId },
                 data: { authorityUserId: actor.userId },
@@ -119,6 +151,9 @@ export function retryIndexTask(
         await audit(tx, actor, 'collection.index.retry', input.collectionId, {
             taskId: task.id,
             generationId: task.generationId,
+            ...(transferred
+                ? { synchronizationTransferred: true, ...transferred }
+                : {}),
         });
         return { success: true as const };
     });

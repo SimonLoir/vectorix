@@ -3,6 +3,7 @@ import { randomUUID } from 'node:crypto';
 import type { TestContext } from 'node:test';
 import { S3Client, DeleteObjectCommand } from '@aws-sdk/client-s3';
 import { prisma } from '@repo/db';
+import { VECTORIX_API_V1 } from '@repo/api/versioning';
 import { processDocumentIngestions } from '@routers/rag/ingestion';
 import { fixture as f, profile, readGrant, rpc } from './fixtures';
 import { app } from '../app';
@@ -300,7 +301,7 @@ export async function documentLibraryTests(t: TestContext) {
                 );
                 assert.equal(
                     response.headers.get('Vectorix-API-Revision'),
-                    '15'
+                    String(VECTORIX_API_V1.revision)
                 );
             }
         );

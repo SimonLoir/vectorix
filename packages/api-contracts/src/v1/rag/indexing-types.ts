@@ -75,6 +75,17 @@ export const verifiedEmbedding = z.object({
         )
         .optional(),
 });
+/** Current synchronization metadata; an omitted authority ID cannot be used as a CAS token. */
+export const synchronizationStatus = z.object({
+    authorityUserId: id.nullable().optional(),
+    authorityState: z.enum(['AUTHORIZED', 'ACCESS_REVOKED', 'UNADOPTED']),
+    isCurrentUser: z.boolean(),
+    canAdopt: z.boolean(),
+    pendingDocuments: z.number().int().nonnegative(),
+    blockedTasks: z.number().int().nonnegative(),
+    oldestPendingAt: z.date().nullable(),
+    lastPublishedAt: z.date().nullable(),
+});
 export const indexGeneration = z.object({
     id,
     status: z.enum([
@@ -100,6 +111,7 @@ export const indexGeneration = z.object({
     totalDocuments: z.number().int().nonnegative(),
     publishedDocuments: z.number().int().nonnegative(),
     errorCode: indexFailure.nullable(),
+    synchronization: synchronizationStatus.optional(),
 });
 export const indexTask = z.object({
     id,

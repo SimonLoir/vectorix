@@ -560,7 +560,8 @@
             "search": "Search actions",
             "empty": "No actions to display.",
             "actor": "Actor: {type} · {id}",
-            "target": "Target: {id}"
+            "target": "Target: {id}",
+            "synchronizationAdopted": "Index synchronization adopted"
         },
         "keys": {
             "title": "Collection scope",
@@ -970,7 +971,57 @@
             "parentSearchHint": "Each returned context keeps its strongest child match from the bounded candidate window. Displayed scores belong to that passage; sibling scores are not added.",
             "parentContextVersion": "Parent layout: {version}",
             "parentAccountingHint": "Passage counters and quotas count searchable children. Parent context adds bounded stored text and is not embedded.",
-            "parentSealingStage": "Verifying and sealing the complete child and parent layout before writing vectors."
+            "parentSealingStage": "Verifying and sealing the complete child and parent layout before writing vectors.",
+            "synchronization": {
+                "title": "Automatic synchronization",
+                "states": {
+                    "AUTHORIZED": "Controller currently authorized",
+                    "ACCESS_REVOKED": "Controller access revoked",
+                    "UNADOPTED": "No synchronization controller configured"
+                },
+                "yourAccount": "Your account is the configured synchronization controller.",
+                "hints": {
+                    "AUTHORIZED": "New automatic indexing tasks use this controller’s current permissions. Existing tasks still require their own executor’s current access.",
+                    "ACCESS_REVOKED": "The configured controller no longer has the required access. Adopt synchronization with an authorized account to resume future automatic work. Existing searchable publications remain available to authorized readers.",
+                    "UNADOPTED": "This older generation has no saved controller. Initial and serving generations retain their historical document-change actor until adoption. Before first activation, retrying provisioning or document indexing can also configure the controller."
+                },
+                "counts": "{pending, plural, one {# document awaiting publication} other {# documents awaiting publication}} · {blocked, plural, one {# failed task} other {# failed tasks}}",
+                "oldestPending": "Oldest current indexing candidate: {date}",
+                "noPendingDate": "No current pending candidate date is available.",
+                "lastPublished": "Most recent document publication: {date}",
+                "neverPublished": "No document publication recorded yet.",
+                "metadataHint": "These indicators describe this generation’s indexing state. They do not grant access to document content or guarantee that a worker is running.",
+                "adopt": "Use my account for synchronization",
+                "dialogTitle": "Adopt synchronization",
+                "dialogDescription": "Use your current permissions for future automatic updates and pending indexing work in this generation.",
+                "generation": "Generation: {id}",
+                "pendingWork": "Pending tasks will be assigned to your account. Running attempts will be interrupted and may repeat provider work, including billable requests.",
+                "failedUnchanged": "Failed tasks stay failed. Retry them individually from the document list or background tasks after reviewing their errors. Adoption alone does not restart a failed activation.",
+                "rebuildRights": "This pending rebuild requires both collection administration and document management access.",
+                "profileUnchanged": "The saved profile, read grants and document retention remain unchanged.",
+                "stale": "The controller or your permissions changed. Close this dialog and review the refreshed state before adopting.",
+                "failed": "Adoption could not be confirmed. The state has been refreshed; close this dialog and review it before trying again. A timed-out request may already have completed.",
+                "success": "Synchronization adopted: {pending, plural, one {# pending task reassigned} other {# pending tasks reassigned}}; {interrupted, plural, one {# running attempt interrupted} other {# running attempts interrupted}}. Failed tasks still need an individual retry.",
+                "confirm": "Adopt with my account",
+                "cancel": "Cancel",
+                "close": "Close",
+                "working": "Adopting…",
+                "retryHint": "Before first activation, retrying provisioning or document indexing also assigns synchronization to your account. Retrying work in a pending rebuild also transfers synchronization and requires collection administration and document management, except for cleanup tasks. In the serving generation, retries apply only to the selected task."
+            },
+            "freshness": {
+                "scope": "This list follows the serving generation, or the initial generation before activation. A pending rebuild has its own progress above. Publication dates and candidate dates describe indexing, not the latest library upload.",
+                "states": {
+                    "NOT_INDEXED": "No indexing target yet",
+                    "CURRENT": "Searchable version is current",
+                    "PENDING": "Publication update pending",
+                    "BLOCKED": "Publication update blocked by a failed task"
+                },
+                "desiredVersion": "Target version: {version, number}",
+                "publishedAt": "Document publication: {date}",
+                "pendingSince": "Current indexing candidate created: {date}",
+                "retry": "Retry the current failed indexing task for {name}",
+                "retryDocument": "Retry document indexing"
+            }
         },
         "semantic": {
             "title": "Semantic planning and embedding work",

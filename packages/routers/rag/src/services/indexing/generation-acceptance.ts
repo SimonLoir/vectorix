@@ -278,7 +278,7 @@ export async function acceptIndexGeneration(
                         previousGenerationId: rebuild
                             ? input.expectedActiveGenerationId
                             : null,
-                        authorityUserId: rebuild ? currentActor.userId : null,
+                        authorityUserId: currentActor.userId,
                         vectorConnectionId: profile.vectorConnectionId,
                         vectorSchema: destination.schema,
                         tableName: `g_${id.replaceAll('-', '')}`,

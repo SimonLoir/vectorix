@@ -90,7 +90,48 @@ export async function requireIndexRebuild(
     return { actor, collection };
 }
 
-/** Recheck the accepted rebuild's human principal before provider work and activation; global administration is not an explicit collection grant. */
+/** Recheck a human executor before document work; global catalog administration never replaces a collection grant. */
+export async function requireIndexDocumentAuthority(
+    db: Prisma.TransactionClient,
+    task: Pick<IndexTask, 'organizationId' | 'collectionId' | 'requestedBy'>
+) {
+    const membership = await getMemberPermissions(
+        task.organizationId,
+        task.requestedBy,
+        db
+    );
+    if (
+        !membership ||
+        !permits(membership.permissions, {
+            ragCollection: ['manageDocuments'],
+        })
+    )
+        throw new ORPCError('FORBIDDEN', {
+            data: { errorCode: 'ACCESS_REVOKED' },
+        });
+    const actor: RagActor = {
+        organizationId: task.organizationId,
+        userId: task.requestedBy,
+        memberId: membership.member.id,
+        keyId: null,
+        permissions: membership.permissions,
+    };
+    const collection = await db.collection.findFirst({
+        where: {
+            AND: [
+                { id: task.collectionId, organization: { isActive: true } },
+                grantWhere(actor, 'manageDocuments'),
+            ],
+        },
+    });
+    if (!collection)
+        throw new ORPCError('FORBIDDEN', {
+            data: { errorCode: 'ACCESS_REVOKED' },
+        });
+    return collection;
+}
+
+/** Rebuild admission and activation additionally require current profile administration. */
 export async function requireIndexRebuildAuthority(
     db: Prisma.TransactionClient,
     task: Pick<IndexTask, 'organizationId' | 'collectionId' | 'requestedBy'>

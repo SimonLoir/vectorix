@@ -38,7 +38,10 @@ export function RagAuditList() {
                             <li className='space-y-2 p-5' key={item.id}>
                                 <div className='flex flex-wrap justify-between gap-2'>
                                     <h2 className='font-medium'>
-                                        {item.action}
+                                        {item.action ===
+                                        'collection.index.synchronization.adopted'
+                                            ? tr('audit.synchronizationAdopted')
+                                            : item.action}
                                     </h2>
                                     <span className='text-sm text-muted-foreground'>
                                         <LocalizedDate

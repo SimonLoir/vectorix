@@ -6,6 +6,7 @@ import { useORPC } from '@/hooks/use-orpc';
 import { useVectorixPermissions } from '@/contexts/vectorix-permissions';
 import { CatalogDialog } from '../catalog-dialog';
 import { IndexError, useIndexAction } from './index-state';
+import { SynchronizationStatus } from './synchronization-status';
 import type { Collection } from '../types';
 import type { IndexStatus } from './types';
 
@@ -104,6 +105,11 @@ export function IndexGenerations({
                                     {tr(`errors.${generation.errorCode}`)}
                                 </p>
                             )}
+                            <SynchronizationStatus
+                                collectionId={collection.id}
+                                generation={generation}
+                                canRebuild={status.canRebuild}
+                            />
                             {discardable && canDiscard && (
                                 <Button
                                     variant='outline'

@@ -89,6 +89,8 @@ model IndexGeneration {
   requestId String
   configurationRevision Int
   previousGenerationId String?
+  // Current human controller for new automatic work; permissions are always rechecked.
+  // Historical null initial/active generations retain event-actor behavior until adoption.
   authorityUserId String?
   previousGeneration IndexGeneration? @relation("GenerationPredecessor", fields: [organizationId, collectionId, previousGenerationId], references: [organizationId, collectionId, id], onDelete: NoAction, onUpdate: NoAction)
   replacementGenerations IndexGeneration[] @relation("GenerationPredecessor")

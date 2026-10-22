@@ -11,8 +11,9 @@ import {
     CatalogPagination,
     useCatalogPagination,
 } from '../catalog-controls';
-import { IndexQueryState } from './index-state';
+import { IndexQueryState, IndexError, useIndexAction } from './index-state';
 import { DocumentMetadata } from './document-metadata';
+import { DocumentFreshness } from './document-freshness';
 import type { IndexDocument, MetadataFields } from './types';
 
 export function IndexDocuments({
@@ -25,9 +26,10 @@ export function IndexDocuments({
     canManage: boolean;
 }>) {
     const tr = useTranslations('rag.indexing');
-    const { orpc } = useORPC();
+    const { orpc, client } = useORPC();
     const { canOperation } = useVectorixPermissions();
     const [editing, setEditing] = useState<IndexDocument | null>(null);
+    const action = useIndexAction();
     const page = useCatalogPagination();
     const query = useQuery({
         ...orpc.admin.rag.indexing.documents.queryOptions({
@@ -49,6 +51,14 @@ export function IndexDocuments({
             <p className='text-sm text-muted-foreground'>
                 {tr('documentsHint')}
             </p>
+            <p className='text-sm text-muted-foreground'>
+                {tr('freshness.scope')}
+            </p>
+            {canManage && canOperation('admin.rag.indexing.retry') && (
+                <p className='text-sm text-muted-foreground'>
+                    {tr('synchronization.retryHint')}
+                </p>
+            )}
             <Link href='/dashboard/documents' className='text-sm underline'>
                 {tr('openLibrary')}
             </Link>
@@ -58,6 +68,7 @@ export function IndexDocuments({
                 label={tr('documentSearch')}
             />
             <IndexQueryState query={query} />
+            <IndexError error={action.error} />
             {data && (
                 <>
                     <ul className='space-y-3'>
@@ -75,12 +86,13 @@ export function IndexDocuments({
                                         indexed: item.indexedVersion ?? 0,
                                     })}
                                 </p>
+                                <DocumentFreshness document={item} />
                                 <p>
                                     {tr(`languages.${item.language}`)}
                                     {item.tags.length > 0 &&
                                         ` · ${item.tags.join(', ')}`}
                                 </p>
-                                {item.pending && (
+                                {item.pending && !item.freshness && (
                                     <p role='status'>{tr('documentPending')}</p>
                                 )}
                                 {item.errorCode && (
@@ -88,6 +100,34 @@ export function IndexDocuments({
                                         {tr(`errors.${item.errorCode}`)}
                                     </p>
                                 )}
+                                {item.retryTaskId &&
+                                    canManage &&
+                                    canOperation(
+                                        'admin.rag.indexing.retry'
+                                    ) && (
+                                        <Button
+                                            size='sm'
+                                            variant='outline'
+                                            disabled={action.busy}
+                                            aria-label={tr('freshness.retry', {
+                                                name: item.name,
+                                            })}
+                                            onClick={() => {
+                                                const taskId = item.retryTaskId;
+                                                if (taskId)
+                                                    void action.run(() =>
+                                                        client.admin.rag.indexing.retry(
+                                                            {
+                                                                collectionId,
+                                                                taskId,
+                                                            }
+                                                        )
+                                                    );
+                                            }}
+                                        >
+                                            {tr('freshness.retryDocument')}
+                                        </Button>
+                                    )}
                                 {canManage &&
                                     canOperation(
                                         'admin.rag.indexing.updateMetadata'

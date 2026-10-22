@@ -7,6 +7,7 @@ import { discardIndexHandler } from './indexing/discard';
 import { statusIndexHandler } from './indexing/status';
 import { tasksIndexHandler } from './indexing/tasks';
 import { retryIndexHandler } from './indexing/retry';
+import { adoptSynchronizationHandler } from './indexing/adoptSynchronization';
 import { documentsIndexHandler } from './indexing/documents';
 import { updateMetadataIndexHandler } from './indexing/updateMetadata';
 import { chunksIndexHandler } from './indexing/chunks';
@@ -69,6 +70,7 @@ export const ragRouter = authorized
             status: statusIndexHandler,
             tasks: tasksIndexHandler,
             retry: retryIndexHandler,
+            adoptSynchronization: adoptSynchronizationHandler,
             documents: documentsIndexHandler,
             updateMetadata: updateMetadataIndexHandler,
             chunks: chunksIndexHandler,

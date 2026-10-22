@@ -23,6 +23,13 @@ import { supportsIndexProfile } from './embedding-profile';
 import { semanticTaskProgress } from './semantic-progress';
 import { readProjectedChunks, type ProjectedChunk } from './chunk-projection';
 import { resolveParentContextVersion } from './generation-profile';
+import { isPendingRebuild } from './sync-authority';
+import {
+    documentFreshness,
+    isCurrentSynchronizationGeneration,
+    liveGenerationSynchronization,
+    type DocumentFreshness,
+} from './synchronization-views';
 
 type Page = {
     collectionId: string;
@@ -123,6 +130,16 @@ async function readIndexStatus(
             generations.unshift(active);
         }
     }
+    const synchronization = await liveGenerationSynchronization(
+        db,
+        generations,
+        {
+            collection: access.collection,
+            canManage: access.canManage,
+            canRebuild: access.canRebuild,
+            actorUserId: context.key ? null : access.actor.userId,
+        }
+    );
     const items = await Promise.all(
         generations.map(async (generation) => ({
             id: generation.id,
@@ -148,6 +165,9 @@ async function readIndexStatus(
                 },
             }),
             errorCode: publicIndexFailure(generation.lastErrorCode),
+            ...(synchronization.has(generation.id)
+                ? { synchronization: synchronization.get(generation.id)! }
+                : {}),
         }))
     );
     const unsupported = !configuration || !supportsIndexProfile(configuration);
@@ -296,10 +316,8 @@ export async function listIndexDocuments(
     context: AuthorizedContext,
     input: Page
 ) {
-    const { actor, collection } = await requireIndexDocuments(
-        context,
-        input.collectionId
-    );
+    const access = await requireIndexDocuments(context, input.collectionId);
+    const { actor, collection } = access;
     if (collection.deletedAt) throw new ORPCError('NOT_FOUND');
     const profile = await context.db.collectionConfigRevision.findUniqueOrThrow(
         {
@@ -313,19 +331,30 @@ export async function listIndexDocuments(
             select: { metadataFields: true },
         }
     );
-    const generation =
-        collection.activeGenerationId ??
-        (
-            await context.db.indexGeneration.findFirst({
-                where: {
-                    organizationId: actor.organizationId,
-                    collectionId: input.collectionId,
-                    status: { in: ['PROVISIONING', 'BUILDING', 'FAILED'] },
-                },
-                orderBy: [{ createdAt: 'desc' }, { id: 'desc' }],
-                select: { id: true },
-            })
-        )?.id;
+    const generation = await context.db.indexGeneration.findFirst({
+        where: {
+            organizationId: actor.organizationId,
+            collectionId: input.collectionId,
+            ...(collection.activeGenerationId
+                ? { id: collection.activeGenerationId, status: 'ACTIVE' }
+                : {
+                      previousGenerationId: null,
+                      status: {
+                          in: ['PROVISIONING', 'BUILDING', 'FAILED'],
+                      },
+                  }),
+        },
+        orderBy: [{ createdAt: 'desc' }, { id: 'desc' }],
+        select: {
+            id: true,
+            organizationId: true,
+            collectionId: true,
+            authorityUserId: true,
+            createdBy: true,
+            previousGenerationId: true,
+            status: true,
+        },
+    });
     const where: Prisma.CollectionDocumentWhereInput = {
         organizationId: actor.organizationId,
         collectionId: input.collectionId,
@@ -353,7 +382,7 @@ export async function listIndexDocuments(
                             take: 1,
                         },
                         indexManifests: {
-                            where: { generationId: generation ?? '' },
+                            where: { generationId: generation?.id ?? '' },
                             take: 1,
                             include: {
                                 publishedIndexedDocument: {
@@ -367,18 +396,63 @@ export async function listIndexDocuments(
         }),
         context.db.collectionDocument.count({ where }),
     ]);
+    const freshness = generation
+        ? await documentFreshness(context.db, {
+              organizationId: actor.organizationId,
+              collectionId: collection.id,
+              generationId: generation.id,
+              documentIds: rows.map((row) => row.documentId),
+          })
+        : new Map<string, DocumentFreshness>();
+    const currentAccess = await requireIndexDocuments(
+        context,
+        input.collectionId
+    );
+    const currentGeneration = generation
+        ? await context.db.indexGeneration.findFirst({
+              where: {
+                  id: generation.id,
+                  organizationId: actor.organizationId,
+                  collectionId: collection.id,
+              },
+              select: {
+                  id: true,
+                  organizationId: true,
+                  collectionId: true,
+                  authorityUserId: true,
+                  createdBy: true,
+                  previousGenerationId: true,
+                  status: true,
+              },
+          })
+        : null;
+    const canRetry = Boolean(
+        currentAccess.canManage &&
+        currentGeneration &&
+        isCurrentSynchronizationGeneration(
+            currentGeneration,
+            currentAccess.collection
+        ) &&
+        (!isPendingRebuild(currentGeneration) || currentAccess.canRebuild)
+    );
     return {
         total,
         items: rows.map((row) => {
             const current = row.document.versions[0];
             const state = row.document.indexManifests[0];
             const indexed = state?.publishedIndexedDocument;
+            const observed = freshness.get(row.documentId);
             return {
                 documentId: row.documentId,
                 name: row.document.name,
                 mediaType: current?.mediaType ?? indexed?.mediaType ?? '',
                 libraryVersion: current?.version ?? null,
                 indexedVersion: indexed?.sourceVersion.version ?? null,
+                desiredVersion: observed?.desiredVersion ?? null,
+                indexedAt: observed?.indexedAt ?? null,
+                pendingSince: observed?.pendingSince ?? null,
+                freshness: observed?.freshness ?? ('NOT_INDEXED' as const),
+                retryTaskId: canRetry ? (observed?.retryTaskId ?? null) : null,
                 metadataRevision: row.metadataRevision,
                 language: row.language,
                 tags: row.tags,

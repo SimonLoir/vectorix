@@ -33,6 +33,11 @@ import { parentLifecycleTests } from './rag-tests/parent-lifecycle';
 import { parentRetryTests } from './rag-tests/parent-retry';
 import { parentProvenanceTests } from './rag-tests/parent-provenance';
 import { parentPreviewRaceTests } from './rag-tests/parent-preview-race';
+import { syncAuthorityActiveTests } from './rag-tests/sync-authority-active';
+import { syncAuthorityRecoveryTests } from './rag-tests/sync-authority-recovery';
+import { syncAuthorityRaceTests } from './rag-tests/sync-authority-races';
+import { syncAuthorityLedgerTests } from './rag-tests/sync-authority-ledger';
+import { syncAuthorityActivationTests } from './rag-tests/sync-authority-activation';
 
 after(cleanup);
 void test('RAG catalog with real PostgreSQL and HTTP transports', async (t) => {
@@ -70,4 +75,9 @@ void test('RAG catalog with real PostgreSQL and HTTP transports', async (t) => {
     await parentRetryTests(t);
     await parentProvenanceTests(t);
     await parentPreviewRaceTests(t);
+    await syncAuthorityActiveTests(t);
+    await syncAuthorityRecoveryTests(t);
+    await syncAuthorityRaceTests(t);
+    await syncAuthorityLedgerTests(t);
+    await syncAuthorityActivationTests(t);
 });
