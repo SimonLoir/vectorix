@@ -12,7 +12,8 @@ export function ModelVerification({
     const hosted =
         result.identityKind === 'CAPABILITY_PROFILE' ||
         result.provider === 'COHERE' ||
-        result.provider === 'VOYAGE';
+        result.provider === 'VOYAGE' ||
+        result.provider === 'OPENAI';
     return (
         <section
             className='space-y-3 rounded-lg bg-muted p-4 text-sm'
@@ -29,12 +30,19 @@ export function ModelVerification({
                 <div>
                     <dt>{tr('verifiedDimensions')}</dt>
                     <dd>
-                        {tr('dimensionChoices', {
-                            current: result.dimensions,
-                            choices: result.supportedDimensions
-                                .map((value) => format.number(value))
-                                .join(', '),
-                        })}
+                        {result.dimensionCapability?.kind === 'RANGE'
+                            ? tr('dimensionRange', {
+                                  current: result.dimensions,
+                                  minimum: result.dimensionCapability.minimum,
+                                  maximum: result.dimensionCapability.maximum,
+                                  step: result.dimensionCapability.step,
+                              })
+                            : tr('dimensionChoices', {
+                                  current: result.dimensions,
+                                  choices: result.supportedDimensions
+                                      .map((value) => format.number(value))
+                                      .join(', '),
+                              })}
                     </dd>
                 </div>
                 <div>
@@ -56,6 +64,11 @@ export function ModelVerification({
             {result.discoverySource && (
                 <p className='text-xs text-muted-foreground'>
                     {tr(`discoverySources.${result.discoverySource}`)}
+                </p>
+            )}
+            {result.dimensionCapability?.kind === 'RANGE' && (
+                <p className='text-xs text-muted-foreground'>
+                    {tr('rangeProbeHint')}
                 </p>
             )}
             {hosted && (

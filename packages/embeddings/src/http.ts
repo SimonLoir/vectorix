@@ -15,12 +15,14 @@ type NativePath =
     | 'api/embed'
     | 'v1/models'
     | 'v2/embed'
-    | 'v1/embeddings';
+    | 'v1/embeddings'
+    | 'models'
+    | 'embeddings';
 
 function isHostedConfigurationValid(config: EmbeddingConfiguration, url: URL) {
     return (
         config.provider === 'OLLAMA' ||
-        (url.pathname === '/' &&
+        ((config.provider === 'OPENAI' || url.pathname === '/') &&
             typeof config.apiKey === 'string' &&
             Boolean(config.apiKey.trim()))
     );
@@ -42,7 +44,9 @@ export function configurationUrl(config: EmbeddingConfiguration) {
     try {
         const url = new URL(config.endpoint);
         if (
-            !['OLLAMA', 'COHERE', 'VOYAGE'].includes(config.provider) ||
+            !['OLLAMA', 'COHERE', 'VOYAGE', 'OPENAI'].includes(
+                config.provider
+            ) ||
             !['http:', 'https:'].includes(url.protocol) ||
             url.username ||
             url.password ||
@@ -71,7 +75,9 @@ function nativeUrl(
             ? ['api/tags', 'api/show', 'api/embed']
             : config.provider === 'COHERE'
               ? ['v1/models', 'v2/embed']
-              : ['v1/embeddings'];
+              : config.provider === 'VOYAGE'
+                ? ['v1/embeddings']
+                : ['models', 'embeddings'];
     if (!paths.includes(path))
         throw new EmbeddingError('INVALID_CONFIGURATION');
     if (!query) return url;
@@ -160,9 +166,13 @@ export async function requestJson(
 ) {
     const url = nativeUrl(config, path, query);
     if (
-        ['api/show', 'api/embed', 'v2/embed', 'v1/embeddings'].includes(
-            path
-        ) !==
+        [
+            'api/show',
+            'api/embed',
+            'v2/embed',
+            'v1/embeddings',
+            'embeddings',
+        ].includes(path) !==
         (body !== undefined)
     )
         throw new EmbeddingError('INVALID_CONFIGURATION');

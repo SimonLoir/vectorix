@@ -1,6 +1,6 @@
 # Native embeddings
 
-`@repo/embeddings` implements native Ollama, Cohere and Voyage text embeddings. It accepts a complete resolved `EmbeddingConfiguration`: `{ provider: 'OLLAMA', endpoint, apiKey: string | null }` or `{ provider: 'COHERE' | 'VOYAGE', endpoint, apiKey: string }`. It never reads environment variables, chooses organization credentials, downloads models, or accesses application databases. OpenAI and Mistral remain planned adapters.
+`@repo/embeddings` implements native Ollama, Cohere, Voyage and OpenAI text embeddings. It accepts a complete resolved `EmbeddingConfiguration`: `{ provider: 'OLLAMA', endpoint, apiKey: string | null }` or `{ provider: 'COHERE' | 'VOYAGE' | 'OPENAI', endpoint, apiKey: string }`. It never reads environment variables, chooses organization credentials, downloads models, or accesses application databases. Mistral remains a planned adapter.
 
 The RAG layer resolves credentials and enforces exact operator-approved endpoints in [`embedding-profile.ts`](../routers/rag/src/services/indexing/embedding-profile.ts). Saved collection revisions retain their credential and destination binding. Invalid configured bindings fail without falling back to platform defaults.
 
@@ -8,10 +8,11 @@ The RAG layer resolves credentials and enforces exact operator-approved endpoint
 
 - `discoverModels(config, options?)` calls the resolved native service. Ollama returns installed canonical names, manifest digests and families, bounded to 512 models. Cohere queries its authenticated `/v1/models` catalog, follows at most five pages of 100 entries and intersects results with the reviewed text-model allowlist. Cohere summaries include `discoverySource: 'HOSTED_CATALOG'`, `identityKind: 'CAPABILITY_PROFILE'`, context and dimension choices. Optional catalog metadata may be absent or null: unnamed and unrelated entries are skipped, explicitly non-embedding entries are excluded, and reviewed names can use the endpoint-filtered listing when optional endpoint metadata is absent. Invalid non-null field types fail closed. Listing is not an embedding probe.
 - Voyage discovery returns the bounded local `VOYAGE_MODELS` catalog without HTTP. Its summaries set `reviewedCatalog: true` and omit `discoverySource`; they do not assert hosted listing, model availability, valid credentials or embedding readiness. Verification performs actual document/query probes.
+- OpenAI discovery calls native `GET models` under the complete saved API base and intersects at most 1,000 entries with its two reviewed text models. Summaries set `discoverySource: 'HOSTED_CATALOG'` and expose range metadata rather than an exhaustive size list. Catalog access and embedding readiness remain separate: verification directly probes the embedding endpoint without requiring discovery first.
 - `verifyEmbeddingModel(config, { model, dimensions, preset, preparation? }, options?)` validates the supported profile and native vectors at the selected dimensions. Ollama checks its installed manifest and model metadata; Cohere probes both retrieval roles using synthetic text without organization content. Unsupported reductions and presets fail explicitly.
 - `embedDocuments(config, identity, [{ text, title? }], options?)` and `embedQuery(config, identity, text, options?)` dispatch only when the configuration and saved identity belong to the same provider.
 - `canonicalEmbeddingModel(provider, model)` applies provider-specific normalization. Ollama adds its implicit `:latest` tag; hosted model IDs remain exact and case-sensitive. The original `canonicalOllamaModel` export remains available.
-- `modelIdentity` parses all three persisted identity formats. `embeddingIdentityKind(identity)` exposes `WEIGHTS_DIGEST` for legacy Ollama snapshots and `CAPABILITY_PROFILE` for Cohere/Voyage.
+- `modelIdentity` parses all four persisted identity formats. `embeddingIdentityKind(identity)` exposes `WEIGHTS_DIGEST` for legacy Ollama snapshots and `CAPABILITY_PROFILE` for Cohere/Voyage/OpenAI.
 - `embeddingInputByteLimit(identity, { kind?, title?, preparation? })` supplies the conservative content byte budget used by chunking. `prepareEmbeddingInput` applies the same accounting at the provider boundary. `COHERE_MODELS` exposes the reviewed server-side capability catalog; this package contains Node.js integrations and must not be imported into browser components.
 
 ```mermaid
@@ -20,12 +21,15 @@ flowchart LR
     D --> O["Ollama: installed manifest and native capability probe"]
     D --> C["Cohere: authenticated catalog and both retrieval probes"]
     D --> VY["Voyage: reviewed local catalog, then native probes"]
+    D --> OA["OpenAI: native catalog and shared-input probes"]
     O --> W["Schema 1: native weights digest"]
     C --> P["Schema 2: capability-profile fingerprint"]
     VY --> VP["Schema 3: Voyage capability-profile fingerprint"]
-    W --> E["Native role-specific embedding"]
+    OA --> OP["Schema 4: OpenAI capability profile and dimension range"]
+    W --> E["Native provider input semantics"]
     P --> E
     VP --> E
+    OP --> E
     E --> V["Bounded float32-compatible vector validation"]
     V --> U["Vectors, reported usage and separate estimate"]
 ```
@@ -74,23 +78,42 @@ Voyage accepts at most 1,000 inputs natively. Internal batches are smaller: `min
 
 Returned rows must form an exact unique integer-index permutation; vectors are restored to original input order across rows and batches. Model, count, dimensions and finite nonzero float32 representation are checked. `usage.total_tokens` supplies aggregate provider input tokens; omitted usage remains `null`, and no separate billing count is invented.
 
+## OpenAI
+
+Set the complete API base, normally `https://api.openai.com/v1`, and supply a nonempty API key. The adapter appends fixed relative `models` and `embeddings` paths. An operator-approved base such as `https://proxy.example/openai/v1` remains under that exact prefix; the adapter never inserts another `/v1` or resets the destination to its origin. A configured root is treated literally as the complete base. Existing collection credential and destination bindings remain authoritative.
+
+| Reviewed model           | Context tokens | Default dimensions | Reviewed integer shortening policy |
+| ------------------------ | -------------- | ------------------ | ---------------------------------- |
+| `text-embedding-3-small` | 8,192          | 1,536              | 1–1,536, step 1                    |
+| `text-embedding-3-large` | 8,192          | 3,072              | 1–3,072, step 1                    |
+
+The API reference documents a minimum of 1 dimension, while the guide describes shortening the natural output sizes above. The maximums in this table are this adapter's reviewed shortening policy, not a separately documented provider maximum. Verification tests the exact selected size, including nonstandard reductions such as 257. Older models, custom/fine-tuned models and other families are not supported; no substitution occurs. The RAG layer's separate float32 HNSW limit remains 2,000 dimensions, so a 3,072-dimensional profile needs DiskANN or a smaller selected size.
+
+Native `POST embeddings` sends only `input: string[]`, the exact `model`, selected `dimensions` and `encoding_format: 'float'`. OpenAI has no native retrieval-role or truncation parameter. Both application paths use the same protocol with the `GENERIC` preset, optional literal preparation, and no inferred document title, role prefix or end-user identifier. Over-budget inputs fail locally; no local slicing or automatic truncation is performed.
+
+A strict immutable `schemaVersion: 4` profile includes the selected size, `dimensionCapability: { kind: 'RANGE', minimum: 1, maximum, step: 1 }`, context, native semantics and request limits. `supportedDimensions: [selectedSize]` remains a compatibility hint for the exact selected/probed size, **not an exhaustive set of allowed dimensions**. Discovery omits that optional legacy list and returns the range instead. Consumers should prefer range metadata when present. Saved execution reconstructs and compares the complete profile and fingerprint before I/O. This configuration fingerprint cannot verify hosted weights or detect an unannounced change under the same model ID. Schemas 1–3 retain their original formats and meaning.
+
+Native limits are 2,048 inputs and 300,000 aggregate input tokens per request. Internal batches use `min(2048, floor(7 MiB / (dimensions * 32)))`, at most 149/74 inputs at natural 1,536/3,072 dimensions, to leave room below the 8 MiB JSON response limit. Prepared UTF-8 bytes plus 32 reserved tokens per input bound aggregate admission conservatively; encoded input JSON has a separate 1 MiB ceiling. The shared per-input context byte bound applies as well. These safety limits are not exact tokenizer counts or guaranteed full-context throughput.
+
+Responses must carry the exact model and a complete unique integer-index permutation. Vectors return in input order across rows and batches; count, dimensions, finite float32 values and nonzero rounded norms are validated without normalizing provider precision. `usage.prompt_tokens` supplies provider input usage, with `null` propagated if any successful batch omits it. `total_tokens` is validated independently and cannot be below a reported prompt count; it is not substituted for input tokens or represented as separately reported billing.
+
 ## Bounds, preparation and usage
 
-Optional preparation is a literal prefix followed by a newline on both roles. It is never interpreted as a template. Complete input, including any applicable preparation/title/preset prefix, must fit within the context-token count minus 32 bytes, capped at 64 KiB. This conservative byte bound avoids assuming a tokenizer and may produce smaller chunks than the provider's token maximum. Native truncation is disabled and remains authoritative.
+Optional preparation is a literal prefix followed by a newline on both application paths. It is never interpreted as a template. Complete input, including any applicable preparation/title/preset prefix, must fit within the context-token count minus 32 bytes, capped at 64 KiB. This conservative byte bound avoids assuming a tokenizer and may produce smaller chunks than the provider's token maximum. Native truncation is disabled where the provider exposes that control; OpenAI has no truncation parameter.
 
-One operation deadline covers discovery, probes, all batches, retries and applicable manifest checks. Request JSON is bounded to 2 MiB, response JSON to 8 MiB and 16 nesting levels. Ollama requests contain at most 128 inputs; Cohere requests contain at most 96; Voyage uses the dimension/byte/aggregate bounds above. Vector counts and exact dimensions must match; components must remain finite as float32 and the rounded vector must be nonzero. Valid provider precision is preserved rather than normalized or silently sliced.
+One operation deadline covers discovery, probes, all batches, retries and applicable manifest checks. Request JSON is bounded to 2 MiB, response JSON to 8 MiB and 16 nesting levels. Ollama requests contain at most 128 inputs; Cohere requests contain at most 96; Voyage and OpenAI use the dimension/byte/aggregate bounds above. Vector counts and exact dimensions must match; components must remain finite as float32 and the rounded vector must be nonzero. Valid provider precision is preserved rather than normalized or silently sliced.
 
 HTTP 429 and 5xx responses receive at most three attempts with bounded backoff. Other error statuses are not retried. Redirects fail closed. Only fixed provider-specific native paths receive the resolved credentials. Errors expose stable domain codes without URLs, credentials, provider bodies or original exceptions. Endpoint approval and organization authorization remain the caller's responsibility.
 
 `EmbeddingUsage` keeps three quantities separate:
 
-- `providerInputTokens`: Ollama's aggregate `prompt_eval_count`, Cohere's `meta.tokens.input_tokens`, or Voyage's `usage.total_tokens`; `null` if any successful batch omits it.
+- `providerInputTokens`: Ollama's aggregate `prompt_eval_count`, Cohere's `meta.tokens.input_tokens`, Voyage's `usage.total_tokens`, or OpenAI's `usage.prompt_tokens`; `null` if any successful batch omits it.
 - `billedInputTokens`: optional Cohere aggregate `meta.billed_units.input_tokens`, independently `null` when unavailable. Billed units never replace model input-token counts.
 - `estimatedInputTokens`: the explicitly labeled prepared UTF-8 byte estimate, plus `requests` for successful embedding requests. Estimates are neither exact tokenizer counts nor provider billing.
 
 ## Validation
 
-Run `pnpm --filter @repo/embeddings test` for controlled loopback HTTP fixtures covering native payloads, both retrieval roles, supported dimensions, catalog pagination/no-I/O catalogs, immutable identity compatibility, indexed ordering, batching, truthful usage, invalid float32 vectors, retries, cancellation, response limits, redirects and input preparation. These fixtures do not establish live Cohere/Voyage connectivity or product dashboard acceptance.
+Run `pnpm --filter @repo/embeddings test` for controlled loopback HTTP fixtures covering native payloads, retrieval semantics, dimension choices/ranges, catalog pagination/no-I/O catalogs, immutable identity compatibility, indexed ordering, batching, truthful usage, invalid float32 vectors, retries, cancellation, response limits, redirects and input preparation. These fixtures do not establish live Cohere/Voyage/OpenAI connectivity or product dashboard acceptance.
 
 The [Ollama and EmbeddingGemma reproduction guide](../../docs/rag-ollama-embeddinggemma.md) provides the executed CPU container/version, model digest, installation and native probe commands, credential/network configuration and actual live evidence. For a separate live Ollama check, create a disposable official CPU-only container, install `embeddinggemma`, then run from this directory:
 
@@ -110,3 +133,4 @@ The script accepts only an explicit loopback endpoint and never reads `.env`. It
 - [Cohere model capabilities](https://docs.cohere.com/v2/docs/cohere-embed) and [native model listing](https://docs.cohere.com/reference/list-models): reviewed context/dimension choices and authenticated discovery.
 - Cohere's official SDK distinguishes [model input tokens](https://github.com/cohere-ai/cohere-python/blob/main/src/cohere/types/api_meta_tokens.py) from [billed input units](https://github.com/cohere-ai/cohere-python/blob/main/src/cohere/types/api_meta_billed_units.py).
 - [Voyage native embedding API](https://docs.voyageai.com/reference/embeddings-api), [text models](https://docs.voyageai.com/docs/embeddings) and [official response schema](https://github.com/voyage-ai/openapi/blob/main/voyage-openapi.yml): retrieval roles, dimensions, current model-specific aggregate limits, indexed responses and token usage. The API/model pages are authoritative for current input/model limits; the older OpenAPI description still names older models and a lower batch limit.
+- [OpenAI native embedding API](https://developers.openai.com/api/reference/resources/embeddings/methods/create), [embedding guide](https://developers.openai.com/api/docs/guides/embeddings) and [native model listing](https://developers.openai.com/api/reference/resources/models/methods/list): exact request/response fields, dimensions minimum, default output sizes and shortening, per-input/aggregate limits and authenticated discovery. No paid-provider request is claimed by the controlled fixtures.

@@ -1,6 +1,6 @@
 # M5a — Native Cohere embeddings
 
-Delivered in [PR #28](https://github.com/SimonLoir/vectorix/pull/28), squash-merged as `9715138` after both CI checks passed, and verified through controlled native-wire API/dashboard journeys. The Ollama journey and zero-downtime rebuild are implemented; this slice adds Cohere through the same collection, worker, search and exact-source flow. Live Cohere validation remains pending organization test credentials. [M5b Voyage](rag-voyage-embeddings.md) is implemented with controlled dashboard acceptance complete; OpenAI and Mistral remain planned M5c–M5d slices.
+Delivered in [PR #28](https://github.com/SimonLoir/vectorix/pull/28), squash-merged as `9715138` after both CI checks passed, and verified through controlled native-wire API/dashboard journeys. The Ollama journey and zero-downtime rebuild are implemented; this slice adds Cohere through the same collection, worker, search and exact-source flow. Live Cohere validation remains pending organization test credentials. [M5b Voyage](rag-voyage-embeddings.md) is implemented with controlled dashboard acceptance complete; [M5c OpenAI](rag-openai-embeddings.md) is also implemented with controlled dashboard acceptance complete. Mistral remains planned in M5d.
 
 ## Configuration and capabilities
 

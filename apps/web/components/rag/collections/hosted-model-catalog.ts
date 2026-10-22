@@ -1,21 +1,43 @@
-interface HostedModel {
-    model: string;
-    dimensions: readonly number[];
-    defaultDimensions: number;
+interface DimensionRange {
+    kind: 'RANGE';
+    minimum: number;
+    maximum: number;
+    step: 1;
 }
+type HostedModel = {
+    model: string;
+    defaultDimensions: number;
+} & (
+    | { dimensions: readonly number[]; dimensionCapability?: never }
+    | { dimensions?: never; dimensionCapability: DimensionRange }
+);
 interface HostedCatalog {
     models: readonly HostedModel[];
 }
 
 /**
- * Browser-only profile choices, aligned with the reviewed native Cohere/Voyage
+ * Browser-only profile choices, aligned with the reviewed native hosted
  * catalogs in @repo/embeddings. Never import that Node-only package into clients.
- * This list neither discovers model availability nor validates credentials.
+ * OpenAI ranges describe Vectorix's reviewed shortening policy, not a claimed
+ * provider hard maximum. This list never verifies availability or credentials.
  */
 export function hostedModelCatalog(provider: string): HostedCatalog | null {
     if (provider === 'COHERE') return cohereCatalog;
     if (provider === 'VOYAGE') return voyageCatalog;
+    if (provider === 'OPENAI') return openaiCatalog;
     return null;
+}
+
+/** Preserve any compatible saved/user-selected size, including nonstandard range values. */
+export function supportsHostedDimensions(model: HostedModel, value: number) {
+    if (!Number.isInteger(value)) return false;
+    if (model.dimensionCapability) {
+        return (
+            value >= model.dimensionCapability.minimum &&
+            value <= model.dimensionCapability.maximum
+        );
+    }
+    return model.dimensions.includes(value);
 }
 
 const cohereCatalog: HostedCatalog = {
@@ -53,6 +75,30 @@ const voyageCatalog: HostedCatalog = {
             model: 'voyage-4-large',
             dimensions: [256, 512, 1024, 2048],
             defaultDimensions: 1024,
+        },
+    ],
+};
+const openaiCatalog: HostedCatalog = {
+    models: [
+        {
+            model: 'text-embedding-3-small',
+            dimensionCapability: {
+                kind: 'RANGE',
+                minimum: 1,
+                maximum: 1536,
+                step: 1,
+            },
+            defaultDimensions: 1536,
+        },
+        {
+            model: 'text-embedding-3-large',
+            dimensionCapability: {
+                kind: 'RANGE',
+                minimum: 1,
+                maximum: 3072,
+                step: 1,
+            },
+            defaultDimensions: 3072,
         },
     ],
 };

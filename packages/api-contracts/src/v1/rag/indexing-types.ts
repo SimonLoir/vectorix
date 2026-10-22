@@ -38,6 +38,16 @@ export const documentMetadata = z
     )
     .refine((value) => Object.keys(value).length <= 20);
 export const documentTags = z.array(z.string().trim().min(1).max(64)).max(20);
+/** Optional range metadata takes precedence over the legacy finite-size list. */
+export const dimensionCapability = z
+    .object({
+        kind: z.literal('RANGE'),
+        minimum: z.number().int().positive().max(16_000),
+        maximum: z.number().int().positive().max(16_000),
+        step: z.literal(1),
+    })
+    .strict()
+    .refine((value) => value.maximum >= value.minimum);
 export const verifiedEmbedding = z.object({
     provider: embeddingProvider,
     model: z.string(),
@@ -46,7 +56,13 @@ export const verifiedEmbedding = z.object({
     contextTokens: z.number().int().positive(),
     defaultDimensions: z.number().int().positive(),
     dimensions: z.number().int().positive(),
-    supportedDimensions: z.array(z.number().int().positive()).max(16),
+    supportedDimensions: z
+        .array(z.number().int().positive())
+        .max(16)
+        .describe(
+            'Reviewed finite choices, or the exact probed size when dimensionCapability is present.'
+        ),
+    dimensionCapability: dimensionCapability.optional(),
     preset: z.enum(['GENERIC', 'EMBEDDING_GEMMA']),
     identityKind: z.enum(['WEIGHTS_DIGEST', 'CAPABILITY_PROFILE']).optional(),
     discoverySource: z.enum(['LOCAL_RUNTIME', 'HOSTED_CATALOG']).optional(),

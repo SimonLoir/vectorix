@@ -708,7 +708,7 @@
             "working": "Traitement…",
             "readDenied": "La lecture de cette collection n’est pas autorisée. L’administration du catalogue ne donne pas accès au contenu.",
             "manageDenied": "Vous pouvez consulter l’index mais pas le gérer.",
-            "profileGate": "L’indexation prend en charge Ollama, Cohere et Voyage avec un découpage selon la structure du document, sans expansion parent-enfant. Les autres fournisseurs et découpages restent des brouillons enregistrés.",
+            "profileGate": "L’indexation prend en charge Ollama, Cohere, Voyage et OpenAI avec un découpage selon la structure du document, sans extension parent-enfant. Les autres fournisseurs et profils de découpage restent des brouillons enregistrés.",
             "preset": "Préparation propre au modèle",
             "presetHint": "Choisissez explicitement une préparation. Le mode générique envoie le texte brut ; EmbeddingGemma utilise ses préfixes document et requête documentés.",
             "preparationHint": "La préparation est un préfixe littéral suivi d’un saut de ligne, pour les documents comme pour les requêtes. Ce n’est pas un modèle de substitution.",
@@ -932,7 +932,14 @@
             "voyageUnsupportedPresetHint": "Ce préréglage enregistré n’est pas pris en charge par Voyage. Choisissez Générique pour préparer une révision exécutable.",
             "reviewedCatalogHint": "Ces choix proviennent d’un catalogue local documenté. Les afficher ne contacte pas le fournisseur et ne vérifie pas les identifiants. Vérifiez le modèle enregistré avant de lancer l’indexation.",
             "reviewedProbeHint": "Les capacités proviennent du catalogue local documenté. Cette vérification a testé les types d’entrée natifs document et query avec la configuration du fournisseur enregistrée.",
-            "reviewedModels": "Voir le catalogue des modèles documentés"
+            "reviewedModels": "Voir le catalogue des modèles documentés",
+            "openaiCatalogHint": "Choisissez un modèle d’embedding OpenAI parmi ces choix locaux documentés. Enregistrez le profil, découvrez les modèles auprès du fournisseur enregistré, puis vérifiez la taille enregistrée. Ces choix locaux ne vérifient pas l’accès.",
+            "openaiPresetHint": "OpenAI utilise le même protocole natif d’embedding de texte pour les documents et les requêtes. Le préréglage générique n’ajoute aucun préfixe de texte propre au modèle.",
+            "openaiUnsupportedPresetHint": "Ce préréglage enregistré n’est pas pris en charge par OpenAI. Choisissez Générique pour préparer une révision exécutable.",
+            "openaiDimensionsHint": "Tailles entières documentées : {minimum, number}–{maximum, number}, par pas de {step, number}. Valeur native par défaut : {defaultDimensions, number}. Il s’agit de la politique de réduction de Vectorix ; vérifiez la taille enregistrée avant l’indexation.",
+            "dimensionRange": "{current, number} sélectionnées · plage documentée : {minimum, number}–{maximum, number} · pas de {step, number}",
+            "dimensionRangeInvalid": "Saisissez un nombre entier entre {minimum, number} et {maximum, number}.",
+            "rangeProbeHint": "Cette plage décrit la politique de réduction documentée de Vectorix, sans constituer une mesure indépendante du maximum du fournisseur. Cette vérification a testé uniquement la taille sélectionnée."
         }
     },
     "dashboard": {

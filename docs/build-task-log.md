@@ -286,7 +286,7 @@ Final M5a documentation validation passed: 17 documents, 20 parsed Mermaid diagr
 - [x] Run meaningful controlled protocol/integration tests, workspace checks, production builds and all six images; independently review the final change.
 - [x] Execute the dashboard acceptance recipe with controlled native Voyage, record exact sources, credential failures, rebuild and language results, and clean owned resources.
 - [x] Validate final documentation, diagrams, local links and locale parity after dashboard acceptance is recorded.
-- [ ] Deliver a dedicated reviewed PR from merged M5a.
+- [x] Deliver a dedicated reviewed PR from merged M5a.
 
 Implementation and controlled dashboard acceptance are complete on `codex/rag-voyage-provider`, based on merged M5a PR #28 (`9715138`). Design, concrete acceptance recipe and actual results are in [Native Voyage embeddings](rag-voyage-embeddings.md). No Prisma schema change or new migration is required. Live-provider verification remains pending organization credentials supplied by the user later; listing a reviewed local model catalog is not credential verification.
 
@@ -298,4 +298,25 @@ A newly selected invalid synthetic credential bound a new collection, whose loca
 
 Owned previews/provider, four infrastructure containers, temporary tabs and the checksum-verified download were removed; ports 3100/3101/3006 and the controlled provider port were unbound. A's three chunks remained retained on the normal 17-minute grace at the last dashboard observation. No M5b clock advancement, physical-retirement soak or live paid-service quality/availability claim is made.
 
-Final documentation validation passed: 18 documents, 21 parsed Mermaid diagrams, 128 local Markdown links and all 3,513 web/admin ICU messages with English/French/Belgian Dutch key parity. Prettier formatting and `git diff --check` passed. The record explicitly separates controlled Voyage from live paid-service verification and notes the uncollected final invalid-key counter snapshot. PR delivery remains pending.
+Final documentation validation passed: 18 documents, 21 parsed Mermaid diagrams, 128 local Markdown links and all 3,513 web/admin ICU messages with English/French/Belgian Dutch key parity. Prettier formatting and `git diff --check` passed. The record explicitly separates controlled Voyage from live paid-service verification and notes the uncollected final invalid-key counter snapshot. [PR #29](https://github.com/SimonLoir/vectorix/pull/29) passed both CI checks and was squash-merged as `bb32977`.
+
+## M5c — OpenAI provider
+
+- [x] Review current official OpenAI embedding/model documentation and compatible dimension-range representation through the OpenAI Docs skill.
+- [x] Add the native adapter, reviewed shortening ranges, bounded catalog/probes/batches and strict schema-version-4 identity while preserving versions 1–3.
+- [x] Wire optional range metadata, compatible V1 revision 1.11.0 and complete saved API bases through indexing/rebuild/search.
+- [x] Deliver localized numeric range controls, truthful discovery/verification and inspectable unsupported saved values.
+- [x] Run package/integration/workspace checks, production builds, six images and independent review on the final source.
+- [x] Execute the dashboard recipe with controlled native OpenAI, record sources/rebuild/credentials/locales and clean owned resources.
+- [x] Validate English documentation, Mermaid, links and ICU parity.
+- [ ] Deliver a dedicated reviewed PR from merged M5b.
+
+Implementation, automated checks and controlled dashboard acceptance are complete on `codex/rag-openai-provider`; [native OpenAI design and acceptance](rag-openai-embeddings.md) describes the current scope. No Prisma schema or migration change is planned. The user will configure paid-provider keys in an organization later; controlled results must not be presented as live provider acceptance. Voyage [PR #29](https://github.com/SimonLoir/vectorix/pull/29) passed both CI checks and was squash-merged as `bb32977`; this branch now uses that merged tree.
+
+Validation passed: 95 native controlled HTTP tests (26 OpenAI plus 69 existing), 114 disposable catalog/core/RAG tests with seven-migration fresh/upgrade/replay/schema parity, 23 workspace type checks, 23 lint tasks, 23 backend regressions, four production builds and all six images/runtime/infrastructure checks. The first catalog run failed on a fixture's invalid direct IndexTask.documentId filter; the corrected relational filter and complete rerun passed. Independent production and UI/contract review found no remaining P1/P2 issue. No migration added.
+
+Actual dashboard acceptance used production web/API/workers, disposable PostgreSQL/vector/Redis/private RustFS and a deterministic native OpenAI fixture, without Ollama or paid-service calls. A saved small/257 profile discovered two reviewed native catalog models, verified exact dimensions and published three bilingual Markdown passages. Arbitrary 257 remained valid across explicit model changes. Pausing only indexing kept A searchable while a large/3072 DiskANN draft and rebuild were accepted; resume activated B. A captured old French source reopened after the switch and downloaded with the identical SHA-256 recorded in the provider guide. New English vector and Markdown-filtered French hybrid searches used B, with both ranks 1 for the French passage.
+
+Keyword-only retrieval returned the French passage without changing any fixture counter. A new invalid organization key rejected native discovery and actual verification for another collection, while B retained its original valid binding and continued probing/searching. Durable final counters were 16 successful organization requests, 2 rejected invalid-key requests and 0 platform calls despite a valid fallback. English/French/Belgian Dutch reactive errors, range/profile/date/number formatting and persisted Belgian Dutch passed; a fresh final tab had no console warnings/errors. Owned previews/provider, four infrastructure containers, all three temporary tabs and the checksum-verified download were removed; preview/provider ports are unbound. A's three chunks remained on the ordinary 17-minute grace; no M5c retirement soak or live paid-provider claim is made.
+
+Final documentation validation passed: 19 documents, 22 parsed Mermaid diagrams, 143 local Markdown links and all 3,534 web/admin ICU messages with English/French/Belgian Dutch key parity. Formatting and whitespace checks passed; current API revision references and earlier provider introductions now include OpenAI. PR delivery remains pending.
