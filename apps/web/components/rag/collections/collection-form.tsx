@@ -8,12 +8,18 @@ import { CatalogDialog } from '../catalog-dialog';
 import { IndexError, useIndexAction } from '../indexing/index-state';
 import { TextField, AreaField, CheckField } from '../form-fields';
 import { ProfileFields } from './profile-fields';
+import { ProfileSummary } from './profile-summary';
 import type { Collection } from '../types';
 
 export function CollectionForm({
     existing,
+    profileLocked = false,
     onClose,
-}: Readonly<{ existing?: Collection; onClose: () => void }>) {
+}: Readonly<{
+    existing?: Collection;
+    profileLocked?: boolean;
+    onClose: () => void;
+}>) {
     const tr = useTranslations('rag');
     const { client } = useORPC();
     const router = useRouter();
@@ -33,32 +39,48 @@ export function CollectionForm({
                     let savedId: string | undefined;
                     void mutation.run(
                         async () => {
-                            if (data.get('metadataFieldsValid') !== 'true')
+                            if (
+                                !(profileLocked && existing) &&
+                                data.get('metadataFieldsValid') !== 'true'
+                            )
                                 throw new Error(tr('indexing.invalidFields'));
                             const number = (key: string) =>
                                 Number(data.get(key));
-                            const profile = collectionProfile.parse({
-                                provider: data.get('provider'),
-                                model: data.get('model'),
-                                dimensions: number('dimensions'),
-                                indexType: data.get('indexType'),
-                                preparation: data.get('preparation'),
-                                embeddingPreset: data.get('embeddingPreset'),
-                                metadataFields: JSON.parse(
-                                    String(data.get('metadataFields') ?? '{}')
-                                ) as unknown,
-                                chunkingStrategy: data.get('chunkingStrategy'),
-                                parentChild: data.has('parentChild'),
-                                chunking: {
-                                    targetTokens: number('targetTokens'),
-                                    overlapTokens: number('overlapTokens'),
-                                    minTokens: number('minTokens'),
-                                    maxTokens: number('maxTokens'),
-                                    semanticPercentile:
-                                        number('semanticPercentile'),
-                                    parentMaxTokens: number('parentMaxTokens'),
-                                },
-                            });
+                            const profile =
+                                profileLocked && existing
+                                    ? collectionProfile
+                                          .strip()
+                                          .parse(existing.configuration)
+                                    : collectionProfile.parse({
+                                          provider: data.get('provider'),
+                                          model: data.get('model'),
+                                          dimensions: number('dimensions'),
+                                          indexType: data.get('indexType'),
+                                          preparation: data.get('preparation'),
+                                          embeddingPreset:
+                                              data.get('embeddingPreset'),
+                                          metadataFields: JSON.parse(
+                                              String(
+                                                  data.get('metadataFields') ??
+                                                      '{}'
+                                              )
+                                          ) as unknown,
+                                          chunkingStrategy:
+                                              data.get('chunkingStrategy'),
+                                          parentChild: data.has('parentChild'),
+                                          chunking: {
+                                              targetTokens:
+                                                  number('targetTokens'),
+                                              overlapTokens:
+                                                  number('overlapTokens'),
+                                              minTokens: number('minTokens'),
+                                              maxTokens: number('maxTokens'),
+                                              semanticPercentile:
+                                                  number('semanticPercentile'),
+                                              parentMaxTokens:
+                                                  number('parentMaxTokens'),
+                                          },
+                                      });
                             const input = {
                                 name: String(data.get('name')),
                                 description: String(data.get('description')),
@@ -103,10 +125,21 @@ export function CollectionForm({
                         defaultValue={existing?.description ?? ''}
                         rows={2}
                     />
-                    <ProfileFields
-                        configuration={existing?.configuration}
-                        collectionId={existing?.id}
-                    />
+                    {profileLocked && existing ? (
+                        <section className='space-y-4 rounded-lg border p-4'>
+                            <p role='status' className='text-sm'>
+                                {tr('indexing.rebuild.profileLocked')}
+                            </p>
+                            <ProfileSummary
+                                configuration={existing.configuration}
+                            />
+                        </section>
+                    ) : (
+                        <ProfileFields
+                            configuration={existing?.configuration}
+                            collectionId={existing?.id}
+                        />
+                    )}
                     {!existing && (
                         <CheckField
                             name='grantCreatorRead'

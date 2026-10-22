@@ -1,4 +1,5 @@
 import type { Prisma } from '@repo/db';
+import { indexError } from './errors';
 
 interface SourceHoldIdentity {
     organizationId: string;
@@ -122,6 +123,21 @@ export async function renewSourceHold(
         },
     });
     if (!hold) return false;
+    const candidate = await tx.indexedDocument.findUniqueOrThrow({
+        where: { id: input.indexedDocumentId },
+        select: { generationId: true },
+    });
+    // The generation write serializes captured-source renewal with the exact
+    // moment a retired generation becomes destructively CLEANING.
+    const readableGeneration = await tx.indexGeneration.updateMany({
+        where: {
+            id: candidate.generationId,
+            organizationId: input.organizationId,
+            status: { in: ['ACTIVE', 'RETIRED'] },
+        },
+        data: { updatedAt: now },
+    });
+    if (!readableGeneration.count) return false;
     const publication = await tx.indexedDocument.updateMany({
         where: {
             organizationId: input.organizationId,
@@ -154,4 +170,43 @@ export async function renewSourceHold(
             },
         });
     return true;
+}
+
+/** Retire a replaced generation's LIVE receipts in bounded batches while preserving all larger existing deadlines. */
+export async function retireGenerationSourceHolds(
+    tx: Prisma.TransactionClient,
+    input: { organizationId: string; generationId: string; retainUntil: Date }
+) {
+    let cursor: string | undefined;
+    for (;;) {
+        const holds = await tx.documentSourceHold.findMany({
+            where: {
+                organizationId: input.organizationId,
+                state: 'LIVE',
+                indexedDocument: { generationId: input.generationId },
+                ...(cursor ? { id: { gt: cursor } } : {}),
+            },
+            select: { id: true, versionId: true },
+            orderBy: { id: 'asc' },
+            take: 100,
+        });
+        if (!holds.length) return;
+        const versions = [...new Set(holds.map((hold) => hold.versionId))];
+        const fenced = await tx.documentVersion.updateMany({
+            where: {
+                organizationId: input.organizationId,
+                id: { in: versions },
+                contentState: 'AVAILABLE',
+                discardedAt: null,
+            },
+            data: { contentFence: { increment: 1 } },
+        });
+        if (fenced.count !== versions.length)
+            throw indexError('SOURCE_UNAVAILABLE');
+        await tx.documentSourceHold.updateMany({
+            where: { id: { in: holds.map((hold) => hold.id) }, state: 'LIVE' },
+            data: { state: 'RETIRED', retainUntil: input.retainUntil },
+        });
+        cursor = holds.at(-1)!.id;
+    }
 }

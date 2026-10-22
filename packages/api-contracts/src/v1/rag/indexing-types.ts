@@ -22,6 +22,9 @@ export const indexFailure = z.enum([
     'CHUNK_LIMIT',
     'QUOTA_EXCEEDED',
     'PROCESSING_FAILED',
+    'REBUILD_IN_PROGRESS',
+    'GENERATION_CONFLICT',
+    'METADATA_INCOMPATIBLE',
 ]);
 export const contentLanguage = z.enum(['FR', 'EN', 'MIXED', 'UNDETERMINED']);
 export const metadataKey = z.string().regex(/^[a-z][a-z0-9_]{0,63}$/);
@@ -58,11 +61,14 @@ export const indexGeneration = z.object({
         'CLEANED',
     ]),
     configurationRevision: z.number().int(),
+    previousGenerationId: id.nullable(),
     model: z.string(),
     dimensions: z.number().int(),
     modelIdentity: z.string(),
     createdAt: z.date(),
     activatedAt: z.date().nullable(),
+    retiredAt: z.date().nullable(),
+    cleanupAfter: z.date().nullable(),
     projectedChunks: z.number().int().nonnegative(),
     totalDocuments: z.number().int().nonnegative(),
     publishedDocuments: z.number().int().nonnegative(),
@@ -102,6 +108,7 @@ export const chunkSpan = z.object({
 });
 export const chunkView = z.object({
     id,
+    generationId: id,
     publicationId: id,
     documentId: id,
     documentName: z.string(),

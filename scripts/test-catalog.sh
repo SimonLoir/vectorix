@@ -14,8 +14,9 @@ docker run -d --name "$prefix-postgres" -p 127.0.0.1::5432 \
     -e POSTGRES_PASSWORD=catalog-test-password postgres:18-alpine >/dev/null
 docker run -d --name "$prefix-redis" -p 127.0.0.1::6379 redis:8-alpine >/dev/null
 ready=false
+# TCP excludes the entrypoint's temporary Unix-socket server during initialization.
 for attempt in {1..60}; do
-    if docker exec "$prefix-postgres" pg_isready -U postgres >/dev/null 2>&1; then ready=true; break; fi
+    if docker exec "$prefix-postgres" pg_isready -h 127.0.0.1 -U postgres >/dev/null 2>&1; then ready=true; break; fi
     sleep 1
 done
 [[ "$ready" == true ]]
@@ -41,9 +42,13 @@ sql vectorix_upgrade_test < tests/catalog/lifecycle-upgrade-seed.sql
 sql vectorix_upgrade_test < packages/db/prisma/migrations/20261025000000_document_lifecycle/migration.sql
 pnpm --filter @repo/db exec prisma migrate resolve --applied 20261025000000_document_lifecycle
 sql vectorix_upgrade_test < tests/catalog/indexing-upgrade-seed.sql
+sql vectorix_upgrade_test < packages/db/prisma/migrations/20261026000000_rag_indexing/migration.sql
+pnpm --filter @repo/db exec prisma migrate resolve --applied 20261026000000_rag_indexing
+sql vectorix_upgrade_test < tests/catalog/indexing-upgrade-check.sql
+sql vectorix_upgrade_test < tests/catalog/rebuild-upgrade-seed.sql
 for attempt in 1 2; do pnpm --filter @repo/db migrate:deploy; done
 sql vectorix_upgrade_test < tests/catalog/lifecycle-upgrade-check.sql
-sql vectorix_upgrade_test < tests/catalog/indexing-upgrade-check.sql
+sql vectorix_upgrade_test < tests/catalog/rebuild-upgrade-check.sql
 sql vectorix_upgrade_test < tests/catalog/provider-upgrade-check.sql
 sql vectorix_upgrade_test < tests/catalog/document-upgrade-check.sql
 sql vectorix_upgrade_test < tests/catalog/upgrade-check.sql
@@ -91,7 +96,7 @@ docker run -d --name "$prefix-vector" -p 127.0.0.1::5432 \
     "${VECTOR_POSTGRES_IMAGE:-pxdv.be/vectorix/postgres-vector:local}" >/dev/null
 ready=false
 for attempt in {1..60}; do
-    if docker exec "$prefix-vector" pg_isready -U postgres -d vectorix_catalog_vectors_test >/dev/null 2>&1; then ready=true; break; fi
+    if docker exec "$prefix-vector" pg_isready -h 127.0.0.1 -U postgres -d vectorix_catalog_vectors_test >/dev/null 2>&1; then ready=true; break; fi
     sleep 1
 done
 [[ "$ready" == true ]]

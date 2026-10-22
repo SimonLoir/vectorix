@@ -82,11 +82,12 @@ containers+=("$prefix-postgres" "$prefix-redis")
 docker run -d --name "$prefix-postgres" --network "$network" --network-alias postgres \
     -e POSTGRES_PASSWORD=password -e POSTGRES_DB=vectorix_test postgres:18-alpine >/dev/null
 docker run -d --name "$prefix-redis" --network "$network" --network-alias redis redis:8-alpine >/dev/null
+# TCP excludes the entrypoint's temporary Unix-socket server during initialization.
 for attempt in {1..60}; do
-    if docker exec "$prefix-postgres" pg_isready -U postgres -d vectorix_test >/dev/null 2>&1; then break; fi
+    if docker exec "$prefix-postgres" pg_isready -h 127.0.0.1 -U postgres -d vectorix_test >/dev/null 2>&1; then break; fi
     sleep 1
 done
-docker exec "$prefix-postgres" pg_isready -U postgres -d vectorix_test
+docker exec "$prefix-postgres" pg_isready -h 127.0.0.1 -U postgres -d vectorix_test
 
 runtime_env=(
     -e DATABASE_URL=postgresql://postgres:password@postgres:5432/vectorix_test

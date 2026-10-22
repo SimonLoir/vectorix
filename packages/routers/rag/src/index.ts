@@ -2,6 +2,8 @@ import { sourcePreviewDocumentHandler } from './documents/sourcePreview';
 import { modelsIndexHandler } from './indexing/models';
 import { probeIndexHandler } from './indexing/probe';
 import { startIndexHandler } from './indexing/start';
+import { rebuildIndexHandler } from './indexing/rebuild';
+import { discardIndexHandler } from './indexing/discard';
 import { statusIndexHandler } from './indexing/status';
 import { tasksIndexHandler } from './indexing/tasks';
 import { retryIndexHandler } from './indexing/retry';
@@ -62,6 +64,8 @@ export const ragRouter = authorized
             models: modelsIndexHandler,
             probe: probeIndexHandler,
             start: startIndexHandler,
+            rebuild: rebuildIndexHandler,
+            discard: discardIndexHandler,
             status: statusIndexHandler,
             tasks: tasksIndexHandler,
             retry: retryIndexHandler,

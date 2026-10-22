@@ -81,13 +81,20 @@ export function CollectionIndexing({
                                 />
                             </TabsContent>
                             <TabsContent value='chunks'>
-                                <IndexChunks collectionId={collection.id} />
+                                <IndexChunks
+                                    collectionId={collection.id}
+                                    status={status}
+                                />
                             </TabsContent>
                             <TabsContent value='search'>
                                 <SearchPlayground
                                     collectionId={collection.id}
                                     fields={
-                                        collection.configuration.metadataFields
+                                        status.activeConfiguration
+                                            ?.metadataFields ?? {}
+                                    }
+                                    activeGenerationId={
+                                        status.active?.id ?? null
                                     }
                                     ready={
                                         Boolean(status.active) &&

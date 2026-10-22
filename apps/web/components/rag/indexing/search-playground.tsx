@@ -73,7 +73,13 @@ export function SearchPlayground({
     collectionId,
     fields,
     ready,
-}: Readonly<{ collectionId: string; fields: MetadataFields; ready: boolean }>) {
+    activeGenerationId,
+}: Readonly<{
+    collectionId: string;
+    fields: MetadataFields;
+    ready: boolean;
+    activeGenerationId: string | null;
+}>) {
     const tr = useTranslations('rag.indexing');
     const format = useFormatter();
     const { client } = useORPC();
@@ -89,6 +95,7 @@ export function SearchPlayground({
             </p>
             {!ready && <p role='status'>{tr('searchNotReady')}</p>}
             <form
+                key={activeGenerationId ?? 'none'}
                 className='space-y-4'
                 onSubmit={(event) => {
                     event.preventDefault();
@@ -235,6 +242,20 @@ export function SearchPlayground({
             </form>
             {response && (
                 <div className='space-y-4' aria-live='polite'>
+                    <p className='break-all text-xs text-muted-foreground'>
+                        {tr('rebuild.resultGeneration', {
+                            id: response.generationId,
+                            model: response.model,
+                        })}
+                    </p>
+                    {response.generationId !== activeGenerationId && (
+                        <p
+                            role='status'
+                            className='rounded-lg border p-3 text-sm'
+                        >
+                            {tr('rebuild.previousResults')}
+                        </p>
+                    )}
                     <p className='text-sm'>
                         {tr('searchSummary', {
                             count: response.results.length,

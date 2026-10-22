@@ -5,6 +5,12 @@ export const operationPermissions: Record<string, PermissionSet> = {
     'admin.rag.indexing.trash': {},
     'admin.rag.indexing.probe': { ragCollection: ['manageDocuments'] },
     'admin.rag.indexing.start': { ragCollection: ['manageDocuments'] },
+    'admin.rag.indexing.rebuild': {
+        ragCollection: ['update', 'manageDocuments'],
+    },
+    'admin.rag.indexing.discard': {
+        ragCollection: ['update', 'manageDocuments'],
+    },
     'admin.rag.indexing.retry': { ragCollection: ['manageDocuments'] },
     'admin.rag.indexing.updateMetadata': { ragCollection: ['manageDocuments'] },
     'admin.rag.indexing.status': {},

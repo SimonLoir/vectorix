@@ -12,6 +12,7 @@ import {
     renewIndexClaim,
     completeIndexClaim,
     type IndexClaim,
+    IndexingError,
 } from './task-state';
 
 async function deferCleanup(db: PrismaClient, claim: IndexClaim, until: Date) {
@@ -42,6 +43,11 @@ export async function executePublicationCleanup(
     const candidateId = task.indexedDocumentId;
     const prepared = await runSerializableTransaction(db, async (tx) => {
         await renewIndexClaim(tx, claim, 'CLEANING');
+        // Lock the same generation before its candidate as signed-source renewal.
+        await tx.indexGeneration.update({
+            where: { id: claim.generationId },
+            data: { updatedAt: new Date() },
+        });
         const candidate = await tx.indexedDocument.findUniqueOrThrow({
             where: { id: candidateId },
             include: { sourceHold: true },
@@ -202,24 +208,54 @@ export async function executeDocumentRemoval(
     );
 }
 
-/** Drop a destination only after publications and source holds have completed their durable cleanup. */
+/** Drop a destination only after all fenced publication cleanup has acknowledged physical removal. */
 export async function executeGenerationCleanup(
     db: PrismaClient,
     claim: IndexClaim,
     task: IndexTask
 ) {
-    await runSerializableTransaction(
+    const prepared = await runSerializableTransaction(
         db,
         async (tx) => {
             await renewIndexClaim(tx, claim, 'RETIRING_GENERATION');
-            const active = await tx.collection.findFirst({
-                where: {
-                    id: claim.collectionId,
-                    activeGenerationId: claim.generationId,
-                },
-                select: { id: true },
+            // Collection writes serialize activation/deletion; the generation write
+            // also serializes a retired generation's last citation renewal.
+            const collection = await tx.collection.update({
+                where: { id: claim.collectionId },
+                data: { contentSequence: { increment: 0 } },
             });
-            if (active) {
+            const generation = await tx.indexGeneration.update({
+                where: { id: claim.generationId },
+                data: { updatedAt: new Date() },
+            });
+            if (generation.status === 'CLEANED') {
+                await completeIndexClaim(tx, claim);
+                return { done: true as const };
+            }
+            if (
+                (generation.status === 'ACTIVE' ||
+                    collection.activeGenerationId === generation.id) &&
+                !collection.deletedAt
+            )
+                throw new IndexingError('GENERATION_CONFLICT');
+            if (generation.status === 'RETIRED') {
+                const held = await tx.documentSourceHold.aggregate({
+                    where: {
+                        organizationId: claim.organizationId,
+                        indexedDocument: { generationId: generation.id },
+                        state: 'RETIRED',
+                    },
+                    _max: { retainUntil: true },
+                });
+                const deadline = new Date(
+                    Math.max(
+                        generation.cleanupAfter?.getTime() ?? 0,
+                        held._max.retainUntil?.getTime() ?? 0
+                    )
+                );
+                if (deadline > new Date()) return { wait: deadline };
+            }
+            if (collection.activeGenerationId === generation.id) {
                 const accounting =
                     await tx.collectionIndexAccounting.findUniqueOrThrow({
                         where: { collectionId: claim.collectionId },
@@ -237,23 +273,36 @@ export async function executeGenerationCleanup(
                     data: { activeGenerationId: null },
                 });
             }
+            await tx.indexGeneration.update({
+                where: { id: generation.id },
+                data: {
+                    status: 'CLEANING',
+                    projectedChunks: 0,
+                    retiredAt: generation.retiredAt ?? new Date(),
+                },
+            });
             const candidates = await tx.indexedDocument.findMany({
                 where: {
-                    generationId: claim.generationId,
+                    generationId: generation.id,
                     status: { in: ['STAGING', 'SEALED', 'PUBLISHED'] },
                 },
                 orderBy: { id: 'asc' },
                 take: 100,
             });
+            // A serving generation already had a grace at the atomic switch;
+            // a discarded candidate never served searches. Honor either accepted
+            // deadline rather than manufacturing a fresh citation grace.
+            const absoluteDeadline = generation.cleanupAfter ?? undefined;
             for (const candidate of candidates)
                 await retireIndexedDocument(
                     tx,
                     candidate,
                     task.requestedBy,
-                    true
+                    true,
+                    absoluteDeadline
                 );
             await tx.generationDocument.updateMany({
-                where: { generationId: claim.generationId },
+                where: { generationId: generation.id },
                 data: {
                     desiredVersionId: null,
                     desiredExtractionId: null,
@@ -263,17 +312,9 @@ export async function executeGenerationCleanup(
                     removedAt: new Date(),
                 },
             });
-            await tx.indexGeneration.update({
-                where: { id: claim.generationId },
-                data: {
-                    status: 'CLEANING',
-                    projectedChunks: 0,
-                    retiredAt: new Date(),
-                },
-            });
             await tx.indexTask.updateMany({
                 where: {
-                    generationId: claim.generationId,
+                    generationId: generation.id,
                     kind: {
                         in: ['PROVISION', 'INDEX_DOCUMENT', 'REMOVE_DOCUMENT'],
                     },
@@ -281,28 +322,36 @@ export async function executeGenerationCleanup(
                 },
                 data: {
                     status: 'CANCELLED',
-                    stage: 'GENERATION_DELETED',
+                    stage: collection.deletedAt
+                        ? 'GENERATION_DELETED'
+                        : 'GENERATION_DISCARDED',
                     leaseToken: null,
                     leasedUntil: null,
+                    leaseEpoch: { increment: 1 },
                 },
             });
+            const effect = collection.deletedAt
+                ? ('COLLECTION_DELETED' as const)
+                : ('SUPERSEDED' as const);
             await tx.generationChange.updateMany({
-                where: { generationId: claim.generationId, status: 'PENDING' },
-                data: {
-                    status: 'APPLIED',
-                    effect: 'COLLECTION_DELETED',
-                    appliedAt: new Date(),
-                },
+                where: { generationId: generation.id, status: 'PENDING' },
+                data: { status: 'APPLIED', effect, appliedAt: new Date() },
             });
             await acknowledgeGenerationChange(
                 tx,
-                claim.generationId,
+                generation.id,
                 task.changeSequence,
-                'COLLECTION_DELETED'
+                effect
             );
+            return { ready: true as const };
         },
         { timeout: 30_000 }
     );
+    if ('done' in prepared) return;
+    if ('wait' in prepared) {
+        await deferCleanup(db, claim, prepared.wait!);
+        return;
+    }
     if (
         await db.indexedDocument.count({
             where: {
