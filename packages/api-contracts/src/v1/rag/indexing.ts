@@ -4,6 +4,7 @@ import { id, page, success } from './common';
 import { documentSource } from './documents';
 import { collectionView } from './collections';
 import {
+    dimensionCapability,
     verifiedEmbedding,
     indexFailure,
     indexGeneration,
@@ -63,6 +64,7 @@ export const indexingContract = {
                                 .array(z.number().int().positive())
                                 .max(16)
                                 .optional(),
+                            dimensionCapability: dimensionCapability.optional(),
                             defaultDimensions: z
                                 .number()
                                 .int()

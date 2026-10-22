@@ -1,6 +1,6 @@
 # M5b — Native Voyage embeddings
 
-Implemented on `codex/rag-voyage-provider`, with automated validation, independent review and controlled dashboard acceptance complete. PR delivery remains pending. This document describes the native contract, dashboard acceptance recipe and actual results. [M5a Cohere](rag-cohere-embeddings.md) and [real Ollama/EmbeddingGemma](rag-ollama-embeddinggemma.md) remain separate provider records. Live Voyage verification awaits the user's organization credentials.
+Implemented on `codex/rag-voyage-provider`, with automated validation, independent review and controlled dashboard acceptance complete. [PR #29](https://github.com/SimonLoir/vectorix/pull/29) passed both CI checks and was squash-merged as `bb32977`. This document describes the native contract, dashboard acceptance recipe and actual results. [M5a Cohere](rag-cohere-embeddings.md) and [real Ollama/EmbeddingGemma](rag-ollama-embeddinggemma.md) remain separate provider records. Live Voyage verification awaits the user's organization credentials.
 
 ## Configuration and reviewed capabilities
 
@@ -76,4 +76,4 @@ Controlled dashboard acceptance passed using production web/API/workers, disposa
 
 Owned application/provider processes, four infrastructure containers, downloaded originals and temporary browser tabs were removed. Ports 3100, 3101, 3006 and the controlled provider port were verified unbound. No clock advancement or physical-retirement soak was performed: A's three chunks remained retained on the ordinary grace at the last dashboard observation.
 
-Controlled native-wire and dashboard checks do not establish live paid-provider connectivity or retrieval quality. No live Voyage availability, quality, latency, capacity or retention-soak result is claimed. Final documentation checks are recorded in the [build log](build-task-log.md); PR delivery remains pending.
+Controlled native-wire and dashboard checks do not establish live paid-provider connectivity or retrieval quality. No live Voyage availability, quality, latency, capacity or retention-soak result is claimed. Final documentation checks are recorded in the [build log](build-task-log.md); [PR #29](https://github.com/SimonLoir/vectorix/pull/29) passed both CI checks and was squash-merged as `bb32977`.

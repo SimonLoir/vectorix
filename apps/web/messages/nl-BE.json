@@ -708,7 +708,7 @@
             "working": "Bezig…",
             "readDenied": "Je hebt geen leesrecht voor deze collectie. Catalogusbeheer geeft geen toegang tot de inhoud.",
             "manageDenied": "Je kunt de index bekijken, maar niet beheren.",
-            "profileGate": "Indexering ondersteunt Ollama, Cohere en Voyage met opdeling volgens de documentstructuur, zonder uitbreiding naar bovenliggende en onderliggende passages. Andere providers en opdelingen blijven opgeslagen concepten.",
+            "profileGate": "Indexering ondersteunt Ollama, Cohere, Voyage en OpenAI met documentstructuur als opdeling en zonder ouder-kinduitbreiding. Andere providers en opdelingsprofielen blijven opgeslagen concepten.",
             "preset": "Invoervoorinstelling voor embeddings",
             "presetHint": "Kies expliciet een voorinstelling. Generiek verstuurt ruwe tekst; EmbeddingGemma gebruikt de gedocumenteerde document- en zoekvoorvoegsels.",
             "preparationHint": "Voorbereiding is een letterlijk voorvoegsel met een regeleinde voor documenten en zoekopdrachten. Het is geen invulsjabloon.",
@@ -932,7 +932,14 @@
             "voyageUnsupportedPresetHint": "Deze opgeslagen voorinstelling wordt niet ondersteund voor Voyage. Kies Generiek om een uitvoerbare revisie voor te bereiden.",
             "reviewedCatalogHint": "Deze keuzes komen uit een gedocumenteerde lokale modelcatalogus. De lijst maakt geen verbinding met de provider en controleert geen inloggegevens. Controleer het opgeslagen model voordat je de indexering start.",
             "reviewedProbeHint": "De mogelijkheden komen uit de gedocumenteerde lokale catalogus. Deze controle heeft de ingebouwde document- en query-invoer getest met de opgeslagen providerconfiguratie.",
-            "reviewedModels": "Gedocumenteerde modellen bekijken"
+            "reviewedModels": "Gedocumenteerde modellen bekijken",
+            "openaiCatalogHint": "Kies een OpenAI-embeddingmodel uit deze gedocumenteerde lokale keuzes. Sla het profiel op, zoek modellen bij de opgeslagen provider en controleer daarna de opgeslagen grootte. Deze lokale keuzes controleren de toegang niet.",
+            "openaiPresetHint": "OpenAI gebruikt hetzelfde ingebouwde tekstembeddingprotocol voor documenten en zoekvragen. De generieke voorinstelling voegt geen modelspecifieke tekstprefixen toe.",
+            "openaiUnsupportedPresetHint": "Deze opgeslagen voorinstelling wordt niet ondersteund voor OpenAI. Kies Generiek om een uitvoerbare revisie voor te bereiden.",
+            "openaiDimensionsHint": "Gedocumenteerde gehele groottes: {minimum, number}–{maximum, number}, in stappen van {step, number}. Ingebouwde standaard: {defaultDimensions, number}. Dit is het verkortingsbeleid van Vectorix; controleer de opgeslagen grootte vóór de indexering.",
+            "dimensionRange": "{current, number} geselecteerd · gedocumenteerd bereik: {minimum, number}–{maximum, number} · stap {step, number}",
+            "dimensionRangeInvalid": "Voer een geheel getal van {minimum, number} tot {maximum, number} in.",
+            "rangeProbeHint": "Het bereik beschrijft het gedocumenteerde verkortingsbeleid van Vectorix, geen afzonderlijk gemeten maximum van de provider. Deze controle heeft alleen de geselecteerde grootte getest."
         }
     },
     "dashboard": {

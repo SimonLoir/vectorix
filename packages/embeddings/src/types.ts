@@ -15,8 +15,17 @@ export type VoyageConfiguration = {
     endpoint: string;
     apiKey: string;
 };
+export type OpenAIConfiguration = {
+    provider: 'OPENAI';
+    /** Complete API base, including any approved prefix and normally /v1. */
+    endpoint: string;
+    apiKey: string;
+};
 export type EmbeddingConfiguration =
-    OllamaConfiguration | CohereConfiguration | VoyageConfiguration;
+    | OllamaConfiguration
+    | CohereConfiguration
+    | VoyageConfiguration
+    | OpenAIConfiguration;
 export type EmbeddingProvider = EmbeddingConfiguration['provider'];
 export type EmbeddingIdentityKind = 'WEIGHTS_DIGEST' | 'CAPABILITY_PROFILE';
 export type EmbeddingDiscoverySource = 'LOCAL_RUNTIME' | 'HOSTED_CATALOG';
@@ -113,10 +122,54 @@ export const voyageModelIdentity = z
         message: 'Unsupported embedding dimensions.',
     });
 export type VoyageModelIdentity = z.infer<typeof voyageModelIdentity>;
+/** Reviewed integer shortening policy; selected dimensions still require a native probe. */
+export const dimensionCapability = z
+    .object({
+        kind: z.literal('RANGE'),
+        minimum: z.literal(1),
+        maximum: z.union([z.literal(1536), z.literal(3072)]),
+        step: z.literal(1),
+    })
+    .strict();
+export type DimensionCapability = z.infer<typeof dimensionCapability>;
+/** OpenAI uses a continuous integer range, not an invented exhaustive finite dimension list. */
+export const openAIModelIdentity = z
+    .object({
+        schemaVersion: z.literal(4),
+        provider: z.literal('OPENAI'),
+        identityKind: z.literal('CAPABILITY_PROFILE'),
+        model: z.enum(['text-embedding-3-small', 'text-embedding-3-large']),
+        digest: z.string().regex(/^[a-f0-9]{64}$/),
+        family: z.literal('openai-embedding-3'),
+        contextTokens: z.literal(8192),
+        defaultDimensions: z.union([z.literal(1536), z.literal(3072)]),
+        dimensions: z.number().int().min(1).max(3072),
+        dimensionCapability,
+        // Compatibility hint containing the exact selected/probed size, not every allowed integer.
+        supportedDimensions: z
+            .array(z.number().int().min(1).max(3072))
+            .length(1),
+        capabilities: z.array(z.string().min(1).max(100)).max(32),
+        preset: z.literal('GENERIC'),
+        retrievalRoles: z.literal('SHARED_INPUT'),
+        encodingFormat: z.literal('float'),
+        truncation: z.literal('UNSUPPORTED'),
+        maxBatchInputs: z.literal(2048),
+        maxBatchTokens: z.literal(300_000),
+    })
+    .strict()
+    .refine(
+        (value) =>
+            value.supportedDimensions[0] === value.dimensions &&
+            value.dimensions <= value.dimensionCapability.maximum,
+        { message: 'Unsupported embedding dimensions.' }
+    );
+export type OpenAIModelIdentity = z.infer<typeof openAIModelIdentity>;
 export const modelIdentity = z.union([
     ollamaModelIdentity,
     cohereModelIdentity,
     voyageModelIdentity,
+    openAIModelIdentity,
 ]);
 export type ModelIdentity = z.infer<typeof modelIdentity>;
 export type ModelSummary = {
@@ -127,6 +180,7 @@ export type ModelSummary = {
     discoverySource?: EmbeddingDiscoverySource;
     defaultDimensions?: number;
     supportedDimensions?: number[];
+    dimensionCapability?: DimensionCapability;
     contextTokens?: number;
     /** Local supported catalog only; it does not claim a provider listing or credential readiness. */
     reviewedCatalog?: boolean;

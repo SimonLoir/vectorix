@@ -1,9 +1,12 @@
 'use client';
-import { useState } from 'react';
+import { useId, useState } from 'react';
 import { useTranslations } from 'next-intl';
 import { SelectField, TextField } from '../form-fields';
 import { ModelDiscovery } from './model-discovery';
-import { hostedModelCatalog } from './hosted-model-catalog';
+import {
+    hostedModelCatalog,
+    supportsHostedDimensions,
+} from './hosted-model-catalog';
 import type { Collection } from '../types';
 
 type Configuration = Collection['configuration'];
@@ -34,14 +37,21 @@ export function EmbeddingFields({
     configurationRevision?: number;
 }>) {
     const tr = useTranslations('rag');
+    const dimensionsHintId = useId();
     const [draft, setDraft] = useState(() => initialDraft(configuration));
     const catalog = hostedModelCatalog(draft.provider);
     const hosted = catalog !== null;
-    const voyage = draft.provider === 'VOYAGE';
+    const hostedHintProvider =
+        draft.provider === 'VOYAGE'
+            ? 'voyage'
+            : draft.provider === 'OPENAI'
+              ? 'openai'
+              : 'cohere';
     const supportedModel = catalog?.models.find(
         (item) => item.model === draft.model
     );
     const executable = draft.provider === 'OLLAMA' || hosted;
+    const dimensionRange = supportedModel?.dimensionCapability;
     function selectModel(model: string) {
         setDraft((current) => {
             const next = hostedModelCatalog(current.provider)?.models.find(
@@ -53,7 +63,8 @@ export function EmbeddingFields({
                 ...(next
                     ? {
                           dimensions: String(
-                              next.dimensions.includes(
+                              supportsHostedDimensions(
+                                  next,
                                   Number(current.dimensions)
                               )
                                   ? Number(current.dimensions)
@@ -77,7 +88,15 @@ export function EmbeddingFields({
                 ? {
                       provider,
                       model: defaultModel.model,
-                      dimensions: String(defaultModel.defaultDimensions),
+                      dimensions: String(
+                          defaultModel.dimensionCapability &&
+                              supportsHostedDimensions(
+                                  defaultModel,
+                                  Number(draft.dimensions)
+                              )
+                              ? Number(draft.dimensions)
+                              : defaultModel.defaultDimensions
+                      ),
                       preset: 'GENERIC',
                   }
                 : provider === 'OLLAMA'
@@ -144,11 +163,7 @@ export function EmbeddingFields({
             </div>
             {hosted && (
                 <p className='text-sm text-muted-foreground'>
-                    {tr(
-                        voyage
-                            ? 'indexing.voyageCatalogHint'
-                            : 'indexing.cohereCatalogHint'
-                    )}
+                    {tr(`indexing.${hostedHintProvider}CatalogHint`)}
                 </p>
             )}
             {!executable && (
@@ -205,22 +220,16 @@ export function EmbeddingFields({
             <p className='text-sm text-muted-foreground'>
                 {tr(
                     hosted
-                        ? voyage
-                            ? 'indexing.voyagePresetHint'
-                            : 'indexing.coherePresetHint'
+                        ? `indexing.${hostedHintProvider}PresetHint`
                         : 'indexing.presetHint'
                 )}
             </p>
             {hosted && draft.preset !== 'GENERIC' && (
                 <p role='status' className='text-sm'>
-                    {tr(
-                        voyage
-                            ? 'indexing.voyageUnsupportedPresetHint'
-                            : 'indexing.cohereUnsupportedPresetHint'
-                    )}
+                    {tr(`indexing.${hostedHintProvider}UnsupportedPresetHint`)}
                 </p>
             )}
-            {hosted && supportedModel ? (
+            {supportedModel?.dimensions ? (
                 <SelectField
                     label={tr('profile.dimensions')}
                     name='dimensions'
@@ -232,7 +241,8 @@ export function EmbeddingFields({
                         }))
                     }
                 >
-                    {!supportedModel.dimensions.includes(
+                    {!supportsHostedDimensions(
+                        supportedModel,
                         Number(draft.dimensions)
                     ) && (
                         <option value={draft.dimensions}>
@@ -253,8 +263,12 @@ export function EmbeddingFields({
                     name='dimensions'
                     type='number'
                     required
-                    min={1}
-                    max={16_000}
+                    min={dimensionRange?.minimum ?? 1}
+                    max={dimensionRange?.maximum ?? 16_000}
+                    step={dimensionRange?.step ?? 1}
+                    aria-describedby={
+                        dimensionRange ? dimensionsHintId : undefined
+                    }
                     value={draft.dimensions}
                     onChange={(event) =>
                         setDraft((current) => ({
@@ -263,6 +277,30 @@ export function EmbeddingFields({
                         }))
                     }
                 />
+            )}
+            {dimensionRange && supportedModel && (
+                <div id={dimensionsHintId} className='space-y-2 text-sm'>
+                    <p className='text-muted-foreground'>
+                        {tr('indexing.openaiDimensionsHint', {
+                            minimum: dimensionRange.minimum,
+                            maximum: dimensionRange.maximum,
+                            step: dimensionRange.step,
+                            defaultDimensions: supportedModel.defaultDimensions,
+                        })}
+                    </p>
+                    {draft.dimensions !== '' &&
+                        !supportsHostedDimensions(
+                            supportedModel,
+                            Number(draft.dimensions)
+                        ) && (
+                            <p role='status'>
+                                {tr('indexing.dimensionRangeInvalid', {
+                                    minimum: dimensionRange.minimum,
+                                    maximum: dimensionRange.maximum,
+                                })}
+                            </p>
+                        )}
+                </div>
             )}
         </div>
     );

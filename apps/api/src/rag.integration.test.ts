@@ -16,6 +16,7 @@ import { indexingOutboxTests } from './rag-tests/indexing-outbox';
 import { indexRebuildTests } from './rag-tests/index-rebuild';
 import { cohereIndexingTests } from './rag-tests/cohere-indexing';
 import { voyageIndexingTests } from './rag-tests/voyage-indexing';
+import { openaiIndexingTests } from './rag-tests/openai-indexing';
 
 after(cleanup);
 void test('RAG catalog with real PostgreSQL and HTTP transports', async (t) => {
@@ -36,4 +37,5 @@ void test('RAG catalog with real PostgreSQL and HTTP transports', async (t) => {
     await indexRebuildTests(t);
     await cohereIndexingTests(t);
     await voyageIndexingTests(t);
+    await openaiIndexingTests(t);
 });

@@ -69,7 +69,8 @@ export async function listEmbeddingModels(
                 ? { reviewedCatalog: true }
                 : {
                       discoverySource:
-                          profile.provider === 'COHERE'
+                          profile.provider === 'COHERE' ||
+                          profile.provider === 'OPENAI'
                               ? ('HOSTED_CATALOG' as const)
                               : ('LOCAL_RUNTIME' as const),
                   }),
@@ -79,7 +80,7 @@ export async function listEmbeddingModels(
     }
 }
 
-/** Probe both native retrieval roles and dimensions without organization content; hosted fingerprints do not attest to weights. */
+/** Probe both document/query application paths and dimensions without organization content; hosted fingerprints do not attest to weights. */
 export async function probeEmbeddingModel(
     context: AuthorizedContext,
     input: {
@@ -118,7 +119,8 @@ export async function probeEmbeddingModel(
                 ? { reviewedCatalog: true }
                 : {
                       discoverySource:
-                          identity.provider === 'COHERE'
+                          identity.provider === 'COHERE' ||
+                          identity.provider === 'OPENAI'
                               ? ('HOSTED_CATALOG' as const)
                               : ('LOCAL_RUNTIME' as const),
                   }),
