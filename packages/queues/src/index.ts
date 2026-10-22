@@ -1,19 +1,14 @@
 import { Queue } from 'bullmq';
+import { buildRedisConnection } from './redis-connection';
 export const QueueName = {
     NOTIFICATIONS: 'notifications',
     DOCUMENTS: 'documents',
     INDEXING: 'indexing',
 } as const;
-const url = new URL(process.env.REDIS_URL ?? 'redis://localhost:6379');
-export const connection = {
-    host: url.hostname,
-    port: Number(url.port || 6379),
-    username: url.username || undefined,
-    password: url.password || (process.env.REDIS_PASSWORD ?? undefined),
-    db: Number(url.pathname.slice(1) || 0),
-    ...(url.protocol === 'rediss:' ? { tls: {} } : {}),
-    maxRetriesPerRequest: null,
-};
+export const connection = buildRedisConnection({
+    REDIS_URL: process.env.REDIS_URL,
+    REDIS_PASSWORD: process.env.REDIS_PASSWORD,
+});
 let queues:
     { notifications: Queue; documents: Queue; indexing: Queue } | undefined;
 /** Lazily create Redis connections so importing contracts never connects to infrastructure. */

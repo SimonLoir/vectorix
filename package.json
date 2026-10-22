@@ -22,7 +22,8 @@
         "test:infra": "bash scripts/test-infrastructure.sh",
         "test:documents": "pnpm --filter workers exec node --import tsx ../../tests/documents/parser.test.mts",
         "test:rag-primitives": "pnpm --filter @repo/chunking test && pnpm --filter @repo/embeddings test",
-        "test:catalog": "bash scripts/test-catalog.sh"
+        "test:catalog": "bash scripts/test-catalog.sh",
+        "test:queues": "bash scripts/test-redis.sh"
     },
     "devDependencies": {
         "@dotenvx/dotenvx": "^2.30.0",
