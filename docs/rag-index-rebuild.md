@@ -1,6 +1,6 @@
 # M4 — Change a profile and rebuild while searching
 
-Implemented and browser-verified on `codex/rag-zero-downtime-rebuild`, following the [M3 first-index journey](rag-first-search.md) delivered in PR #7. PR delivery is tracked in the [build log](build-task-log.md). The verification below uses real Ollama and isolated infrastructure; additional providers, chunking/context modes and operational acceptance remain M5–M7.
+Delivered in [PR #24](https://github.com/SimonLoir/vectorix/pull/24), squash-merged as `06f3366`, following the [M3 first-index journey](rag-first-search.md) delivered in PR #7. PR delivery is tracked in the [build log](build-task-log.md). The verification below uses real Ollama and isolated infrastructure. [M5a native Cohere](rag-cohere-embeddings.md) now implements a second provider through the same rebuild flow, with controlled dashboard acceptance complete and live paid-provider verification pending. Voyage/OpenAI/Mistral, additional chunking/context modes and operational acceptance remain M5b–M5d/M6/M7.
 
 ## Reviewed schema expansion
 

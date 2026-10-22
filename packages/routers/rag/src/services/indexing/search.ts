@@ -1,14 +1,13 @@
 import type { AuthorizedContext } from '@routers/utils/authorized';
 import { ORPCError } from '@orpc/server';
 import type { Prisma } from '@repo/db';
-import {
-    embedQuery,
-    modelIdentity,
-    canonicalOllamaModel,
-} from '@repo/embeddings';
+import { embedQuery, modelIdentity } from '@repo/embeddings';
 import { documentMetadata } from '@repo/api-contracts/v1/rag/indexing-types';
 import { requireIndexRead } from './access';
-import { boundEmbeddingConfiguration } from './embedding-profile';
+import {
+    boundEmbeddingConfiguration,
+    matchesEmbeddingIdentity,
+} from './embedding-profile';
 import { generationVectorAdapter } from './generation-adapter';
 import { publicationFilters, type SearchFilters } from './filters';
 import { lexicalSearch } from './lexical';
@@ -148,11 +147,11 @@ export async function searchCollection(
                 };
             const identity = modelIdentity.parse(generation.capabilitySnapshot);
             if (
-                identity.digest !== generation.modelIdentity ||
-                identity.model !==
-                    canonicalOllamaModel(generation.configuration.model) ||
-                identity.dimensions !== generation.configuration.dimensions ||
-                identity.preset !== generation.configuration.embeddingPreset
+                !matchesEmbeddingIdentity(
+                    identity,
+                    generation.configuration,
+                    generation.modelIdentity
+                )
             )
                 throw indexError('MODEL_CHANGED');
             const configuration = await boundEmbeddingConfiguration(

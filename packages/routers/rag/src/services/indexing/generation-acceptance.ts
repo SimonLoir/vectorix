@@ -8,7 +8,7 @@ import { ragActor, requireCollection, type RagActor } from '../access';
 import { audit } from '../mutation';
 import { requireIndexRebuild } from './access';
 import {
-    assertM3Profile,
+    assertSupportedIndexProfile,
     boundEmbeddingConfiguration,
 } from './embedding-profile';
 import {
@@ -173,7 +173,7 @@ export async function acceptIndexGeneration(
                     },
                 },
             });
-        assertM3Profile(profile);
+        assertSupportedIndexProfile(profile);
         const configuration = await boundEmbeddingConfiguration(
             context.db,
             actor.organizationId,

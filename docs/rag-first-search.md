@@ -1,10 +1,10 @@
 # M3 — First collection index and hybrid search
 
-Implemented and browser-verified on `codex/rag-first-search`, with the production dashboard acceptance and checks recorded below. The extraction milestones and this slice are merged; PR #7 passed both catalog and six-image checks and was squash-merged as `7143a44`. The [M4 profile-change/rebuild implementation](rag-index-rebuild.md) is present on `codex/rag-zero-downtime-rebuild`, with its final acceptance and delivery tracked separately. M5–M7 remain planned parts of the agreed V1. Customer-managed remote vector databases and OCR remain outside V1.
+Implemented and browser-verified on `codex/rag-first-search`, with the production dashboard acceptance and checks recorded below. The extraction milestones and this slice are merged; PR #7 passed both catalog and six-image checks and was squash-merged as `7143a44`. The [M4 profile-change/rebuild journey](rag-index-rebuild.md) is implemented and browser-verified. [M5a native Cohere](rag-cohere-embeddings.md) extends this flow; controlled dashboard acceptance is complete and live paid-provider verification remains pending. M5b–M5d, M6 and M7 remain planned parts of the agreed V1. Customer-managed remote vector databases and OCR remain outside V1.
 
 ## Executable scope and prerequisites
 
-This slice connects Ollama, document-structure chunking, one collection's first index, automatic document updates, filtered French/English hybrid retrieval and exact authorized sources. Existing profiles for other providers, strategies or parent/child expansion remain inspectable drafts; indexing rejects unsupported profiles explicitly. Native Cohere, Voyage, OpenAI and Mistral journeys follow in M5. Their organization credentials will be supplied later; no live calls to those services are claimed here.
+The original M3 slice connects Ollama, document-structure chunking, one collection's first index, automatic document updates, filtered French/English hybrid retrieval and exact authorized sources. The current runtime also supports native Cohere through [M5a](rag-cohere-embeddings.md), using the same durable indexing, rebuild and source flows. Voyage/OpenAI/Mistral, additional strategies and parent/child expansion remain inspectable drafts with explicit execution gates. The historical M3 results below use real Ollama; they do not claim live hosted-provider validation.
 
 Deploy `20261026000000_rag_indexing` before API/workers. Run the application database, independent vector database, Redis and private S3, then API, workers and web. Configure `VECTOR_DATABASE_{URL,PROVISIONING_URL,SCHEMA}` on workers; API needs the runtime URL/schema only. Workers initialize vector ledgers lazily, so unavailable vector configuration does not prevent unrelated notification or extraction work. Provisioning and runtime roles retain their separate permissions.
 
@@ -85,7 +85,7 @@ Deleting a collection hides its content immediately and schedules durable vector
 ## Integration entry points
 
 - Schemas: `packages/db/prisma/models/rag{,-indexing}.prisma`; approved migration `20261026000000_rag_indexing`.
-- Public API revision `1.7.0`: `packages/api-contracts/src/v1/rag/{indexing,indexing-types,collections}.ts`; one handler per file in `packages/routers/rag/src/indexing/`.
+- Public API revision `1.7.0` introduced this slice; the current compatible revision is `1.9.0`: `packages/api-contracts/src/v1/rag/{indexing,indexing-types,collections}.ts`; one handler per file in `packages/routers/rag/src/indexing/`.
 - Shared services: `packages/routers/rag/src/services/indexing/{start,changes,metadata,task-state,accounting,index-document,publication-state,cleanup-index,process}.ts`.
 - Retrieval: `services/indexing/{access,filters,lexical,search,views,receipts,sources,source-holds}.ts`; native packages `packages/{chunking,embeddings,vector-store}/`.
 - Scheduling: `packages/queues/src/index.ts` and `apps/workers/src/index.ts`; Redis carries identifiers and scan scheduling only.

@@ -48,6 +48,8 @@ export const verifiedEmbedding = z.object({
     dimensions: z.number().int().positive(),
     supportedDimensions: z.array(z.number().int().positive()).max(16),
     preset: z.enum(['GENERIC', 'EMBEDDING_GEMMA']),
+    identityKind: z.enum(['WEIGHTS_DIGEST', 'CAPABILITY_PROFILE']).optional(),
+    discoverySource: z.enum(['LOCAL_RUNTIME', 'HOSTED_CATALOG']).optional(),
 });
 export const indexGeneration = z.object({
     id,

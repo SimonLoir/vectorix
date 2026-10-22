@@ -2,13 +2,24 @@ import { Buffer } from 'node:buffer';
 import { setTimeout as delay } from 'node:timers/promises';
 import {
     EmbeddingError,
-    type OllamaConfiguration,
+    type EmbeddingConfiguration,
     type RequestOptions,
 } from './types';
 
 const MAX_RESPONSE_BYTES = 8 * 1024 * 1024;
 const MAX_JSON_DEPTH = 16;
 const MAX_REQUEST_BYTES = 2 * 1024 * 1024;
+type NativePath =
+    'api/tags' | 'api/show' | 'api/embed' | 'v1/models' | 'v2/embed';
+
+function isCohereConfigurationValid(config: EmbeddingConfiguration, url: URL) {
+    return (
+        config.provider !== 'COHERE' ||
+        (url.pathname === '/' &&
+            typeof config.apiKey === 'string' &&
+            Boolean(config.apiKey.trim()))
+    );
+}
 
 /** Every discovery/probe/batch operation shares one deadline, including retries and manifest checks. */
 export function operationSignal(options: RequestOptions = {}) {
@@ -22,16 +33,17 @@ export function operationSignal(options: RequestOptions = {}) {
 }
 
 /** Exact operator allowlisting belongs to the caller; this boundary rejects credentials/redirect tricks. */
-export function configurationUrl(config: OllamaConfiguration) {
+export function configurationUrl(config: EmbeddingConfiguration) {
     try {
         const url = new URL(config.endpoint);
         if (
-            config.provider !== 'OLLAMA' ||
+            !['OLLAMA', 'COHERE'].includes(config.provider) ||
             !['http:', 'https:'].includes(url.protocol) ||
             url.username ||
             url.password ||
             url.search ||
             url.hash ||
+            !isCohereConfigurationValid(config, url) ||
             (config.apiKey !== null &&
                 (config.apiKey.length > 8192 || /[\r\n]/.test(config.apiKey)))
         )
@@ -40,6 +52,34 @@ export function configurationUrl(config: OllamaConfiguration) {
     } catch {
         throw new EmbeddingError('INVALID_CONFIGURATION');
     }
+}
+
+/** Only the adapter's fixed native routes may inherit the resolved credentials. */
+function nativeUrl(
+    config: EmbeddingConfiguration,
+    path: NativePath,
+    query?: Readonly<Record<string, string>>
+) {
+    const url = new URL(path, configurationUrl(config));
+    const paths =
+        config.provider === 'OLLAMA'
+            ? ['api/tags', 'api/show', 'api/embed']
+            : ['v1/models', 'v2/embed'];
+    if (!paths.includes(path))
+        throw new EmbeddingError('INVALID_CONFIGURATION');
+    if (!query) return url;
+    if (path !== 'v1/models' || Object.keys(query).length > 3)
+        throw new EmbeddingError('INVALID_CONFIGURATION');
+    for (const [key, value] of Object.entries(query)) {
+        if (
+            !['endpoint', 'page_size', 'page_token'].includes(key) ||
+            typeof value !== 'string' ||
+            value.length > 512
+        )
+            throw new EmbeddingError('INVALID_CONFIGURATION');
+        url.searchParams.set(key, value);
+    }
+    return url;
 }
 
 function checkJsonDepth(text: string) {
@@ -105,12 +145,18 @@ async function boundedJson(response: Response) {
 }
 /** Bounded retry applies only to 429/5xx; redirects and provider text are never surfaced. */
 export async function requestJson(
-    config: OllamaConfiguration,
-    path: 'api/tags' | 'api/show' | 'api/embed',
+    config: EmbeddingConfiguration,
+    path: NativePath,
     signal: AbortSignal,
-    body?: unknown
+    body?: unknown,
+    query?: Readonly<Record<string, string>>
 ) {
-    const url = new URL(path, configurationUrl(config));
+    const url = nativeUrl(config, path, query);
+    if (
+        ['api/show', 'api/embed', 'v2/embed'].includes(path) !==
+        (body !== undefined)
+    )
+        throw new EmbeddingError('INVALID_CONFIGURATION');
     const encoded = body === undefined ? undefined : JSON.stringify(body);
     if (encoded && Buffer.byteLength(encoded) > MAX_REQUEST_BYTES)
         throw new EmbeddingError('INPUT_TOO_LARGE');

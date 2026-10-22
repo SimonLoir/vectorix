@@ -43,7 +43,11 @@ export const indexingContract = {
             method: 'GET',
             path: '/collections/{collectionId}/embedding-models',
         })
-        .input(reference)
+        .input(
+            reference.extend({
+                expectedRevision: z.number().int().positive().optional(),
+            })
+        )
         .output(
             z.object({
                 items: z
@@ -52,9 +56,29 @@ export const indexingContract = {
                             model: z.string(),
                             digest: z.string(),
                             family: z.string(),
+                            identityKind: z
+                                .enum(['WEIGHTS_DIGEST', 'CAPABILITY_PROFILE'])
+                                .optional(),
+                            supportedDimensions: z
+                                .array(z.number().int().positive())
+                                .max(16)
+                                .optional(),
+                            defaultDimensions: z
+                                .number()
+                                .int()
+                                .positive()
+                                .optional(),
+                            contextTokens: z
+                                .number()
+                                .int()
+                                .positive()
+                                .optional(),
                         })
                     )
                     .max(100),
+                discoverySource: z
+                    .enum(['LOCAL_RUNTIME', 'HOSTED_CATALOG'])
+                    .optional(),
             })
         ),
     probe: oc

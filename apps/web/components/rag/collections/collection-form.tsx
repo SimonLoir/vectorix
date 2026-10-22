@@ -138,6 +138,9 @@ export function CollectionForm({
                         <ProfileFields
                             configuration={existing?.configuration}
                             collectionId={existing?.id}
+                            configurationRevision={
+                                existing?.configurationRevision
+                            }
                         />
                     )}
                     {!existing && (

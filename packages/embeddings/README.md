@@ -1,45 +1,89 @@
 # Native embeddings
 
-`@repo/embeddings` currently implements native Ollama discovery, capability verification, and bounded document/query embedding. Other catalog providers remain planned adapters. The package accepts a complete resolved `{ provider: 'OLLAMA', endpoint, apiKey }` configuration. It never reads environment variables, chooses organization credentials, downloads models, or accesses application databases.
+`@repo/embeddings` implements native Ollama and Cohere text embeddings. It accepts a complete resolved `EmbeddingConfiguration`: `{ provider: 'OLLAMA', endpoint, apiKey: string | null }` or `{ provider: 'COHERE', endpoint, apiKey: string }`. It never reads environment variables, chooses organization credentials, downloads models, or accesses application databases. Voyage, OpenAI and Mistral remain planned adapters.
 
-The RAG layer resolves credentials and enforces exact operator-approved endpoints in [`embedding-profile.ts`](../routers/rag/src/services/indexing/embedding-profile.ts). Saved collection revisions retain their credential and destination binding. An invalid configured binding must fail; it must not fall back to platform defaults.
+The RAG layer resolves credentials and enforces exact operator-approved endpoints in [`embedding-profile.ts`](../routers/rag/src/services/indexing/embedding-profile.ts). Saved collection revisions retain their credential and destination binding. Invalid configured bindings fail without falling back to platform defaults.
 
 ## Entry points
 
-- `discoverModels(config, options?)` returns installed canonical model names, manifest digests, and families. Discovery is bounded to 512 models.
-- `verifyEmbeddingModel(config, { model, dimensions, preset, preparation? }, options?)` checks native embedding capabilities, context length, architecture, family, default dimensions, and actual finite nonzero probe vectors. Arbitrary dimension reduction is rejected. The original 300M EmbeddingGemma model supports the documented 768, 512, 256, and 128 dimensions; the selected choice is probed through the native API.
-- `embedDocuments(config, identity, [{ text, title? }], options?)` and `embedQuery(config, identity, text, options?)` use an immutable verified identity, explicit preparation, `truncate: false`, and native `/api/embed` requests.
-- `embeddingInputByteLimit(identity, { kind?, title?, preparation? })` supplies the conservative content byte budget used by chunking. `prepareEmbeddingInput` applies the same accounting at the provider boundary.
+- `discoverModels(config, options?)` calls the resolved native service. Ollama returns installed canonical names, manifest digests and families, bounded to 512 models. Cohere queries its authenticated `/v1/models` catalog, follows at most five pages of 100 entries and intersects results with the reviewed text-model allowlist. Cohere summaries include `discoverySource: 'HOSTED_CATALOG'`, `identityKind: 'CAPABILITY_PROFILE'`, context and dimension choices. Optional catalog metadata may be absent or null: unnamed and unrelated entries are skipped, explicitly non-embedding entries are excluded, and reviewed names can use the endpoint-filtered listing when optional endpoint metadata is absent. Invalid non-null field types fail closed. Listing is not an embedding probe.
+- `verifyEmbeddingModel(config, { model, dimensions, preset, preparation? }, options?)` validates the supported profile and native vectors at the selected dimensions. Ollama checks its installed manifest and model metadata; Cohere probes both retrieval roles using synthetic text without organization content. Unsupported reductions and presets fail explicitly.
+- `embedDocuments(config, identity, [{ text, title? }], options?)` and `embedQuery(config, identity, text, options?)` dispatch only when the configuration and saved identity belong to the same provider.
+- `canonicalEmbeddingModel(provider, model)` applies provider-specific normalization. Ollama adds its implicit `:latest` tag; hosted model IDs remain exact and case-sensitive. The original `canonicalOllamaModel` export remains available.
+- `modelIdentity` parses both persisted identity formats. `embeddingIdentityKind(identity)` exposes `WEIGHTS_DIGEST` for legacy Ollama snapshots and `CAPABILITY_PROFILE` for Cohere.
+- `embeddingInputByteLimit(identity, { kind?, title?, preparation? })` supplies the conservative content byte budget used by chunking. `prepareEmbeddingInput` applies the same accounting at the provider boundary. `COHERE_MODELS` exposes the reviewed server-side capability catalog; this package contains Node.js integrations and must not be imported into browser components.
 
-`GENERIC` sends raw text with no inferred model prefix. `EMBEDDING_GEMMA` applies Google's original EmbeddingGemma retrieval prompts to document and query inputs. Document titles are normalized and truncated at a valid UTF-8 boundary to 200 bytes; a missing title becomes `none`. Optional preparation is a literal prefix followed by a newline on both roles. It is never interpreted as a template.
+```mermaid
+flowchart LR
+    R["Complete resolved configuration and saved profile"] --> D["Provider dispatch"]
+    D --> O["Ollama: installed manifest and native capability probe"]
+    D --> C["Cohere: authenticated catalog and both retrieval probes"]
+    O --> W["Schema 1: native weights digest"]
+    C --> P["Schema 2: capability-profile fingerprint"]
+    W --> E["Native role-specific embedding"]
+    P --> E
+    E --> V["Bounded float32-compatible vector validation"]
+    V --> U["Vectors, reported usage and separate estimate"]
+```
 
-The complete input, including preparation, title, and preset prefix, must fit within the context-token count minus 32 bytes, capped at 64 KiB. This deliberately conservative byte bound avoids assuming a tokenizer. Native `truncate: false` still rejects inputs the model cannot encode.
+## Ollama
 
-## Identity and failure boundaries
+The native `/api/embed` request uses `truncate: false`. Verification checks embedding capability, context, architecture, family, default dimensions and actual finite nonzero vectors. The original 300M EmbeddingGemma model supports the documented 768, 512, 256 and 128 dimensions; the selected choice is probed through the native API.
 
-Every embedding batch checks the installed manifest digest before and after the native request. A normal model replacement fails with `MODEL_CHANGED`; a generation must not combine outputs from different saved identities. Ollama's native embedding response contains a model name and no cryptographic digest. These checks cannot detect a malicious or extremely fast A→B→A replacement between observations. Deploy trusted, stable Ollama services; the manifest check is an observable consistency guard, not remote attestation.
+`GENERIC` sends raw text with no inferred model prefix. `EMBEDDING_GEMMA` applies Google's original retrieval prompts to document and query inputs. Document titles are normalized and truncated at a valid UTF-8 boundary to 200 bytes; a missing title becomes `none`.
 
-One operation deadline covers discovery, probes, all batches, retries, and manifest checks. Request JSON is bounded to 2 MiB, response JSON to 8 MiB and 16 nesting levels. Embedding requests contain at most 128 inputs and additionally bound request bytes and expected vector-response size. HTTP 429 and 5xx responses receive at most three attempts with bounded backoff. Redirects fail closed. Errors expose only stable domain codes, never URLs, credentials, response bodies, or original exceptions.
+Every Ollama embedding batch checks the installed manifest digest before and after the native request. A normal replacement fails with `MODEL_CHANGED`. Its embedding response contains a model name and no cryptographic digest, so these observations cannot detect an A→B→A replacement between checks. Deploy trusted, stable Ollama services; this is a consistency guard rather than remote attestation.
 
-Usage contains aggregate provider `prompt_eval_count` as `providerInputTokens` (or `null` when unavailable), a separate `estimatedInputTokens` value computed from prepared UTF-8 bytes, and successful embedding request count. The estimate must never be presented as an exact tokenizer count or provider billing.
+## Cohere
+
+Set the endpoint to the service origin, normally `https://api.cohere.com`, and supply a nonempty API key. Versioned or path-prefixed bases such as `/v2` are rejected rather than silently retargeted. Native discovery uses `GET /v1/models`; embedding uses `POST /v2/embed`. These are Cohere's native APIs, not an OpenAI-compatible transport.
+
+| Supported model           | Context tokens | Supported dimensions   | Default dimensions |
+| ------------------------- | -------------- | ---------------------- | ------------------ |
+| `embed-v4.0`              | 128,000        | 256, 512, 1,024, 1,536 | 1,536              |
+| `embed-english-v3.0`      | 512            | 1,024                  | 1,024              |
+| `embed-multilingual-v3.0` | 512            | 1,024                  | 1,024              |
+
+The English v3 model is English-only; choose a multilingual model for French/English documents. Newer models, light variants, custom models, images and mixed-media inputs are not included in this reviewed text-only adapter. Model availability is checked against the bound native catalog; there is no automatic model substitution.
+
+Cohere accepts only the `GENERIC` literal-text preset here. Retrieval roles use native `input_type: 'search_document'` and `'search_query'`, with `embedding_types: ['float']` and `truncate: 'NONE'`. V4 requests include the exact `output_dimension`; fixed-dimension v3 requests omit that unsupported parameter. No title prompt or model-name prefix is invented. Each request contains at most 96 texts and also respects the shared request-byte limit.
+
+A Cohere `schemaVersion: 2` identity records the exact model ID, dimensions, documented capability profile and native input/output semantics. Its legacy-named `digest` is a deterministic SHA-256 fingerprint of that profile, explicitly tagged `identityKind: 'CAPABILITY_PROFILE'`. It is **not** a model-weights checksum. The API does not expose a verifiable weights manifest, so this adapter cannot detect an unannounced server-side weights change under the same ID. Saved profile semantics are checked before execution; future capability changes must retain compatible versioned identity parsing.
+
+Ollama `schemaVersion: 1` snapshots retain their original shape and digest meaning. No migration, backfill or invented `identityKind` field is added to those stored objects; the exported helper supplies their public kind.
+
+## Bounds, preparation and usage
+
+Optional preparation is a literal prefix followed by a newline on both roles. It is never interpreted as a template. Complete input, including any applicable preparation/title/preset prefix, must fit within the context-token count minus 32 bytes, capped at 64 KiB. This conservative byte bound avoids assuming a tokenizer and may produce smaller chunks than the provider's token maximum. Native truncation is disabled and remains authoritative.
+
+One operation deadline covers discovery, probes, all batches, retries and applicable manifest checks. Request JSON is bounded to 2 MiB, response JSON to 8 MiB and 16 nesting levels. Ollama requests contain at most 128 inputs; Cohere requests contain at most 96. Additional batching bounds prepared request bytes. Vector counts and exact dimensions must match; components must remain finite as float32 and the rounded vector must be nonzero. Valid provider precision is preserved rather than normalized or silently sliced.
+
+HTTP 429 and 5xx responses receive at most three attempts with bounded backoff. Other error statuses are not retried. Redirects fail closed. Only fixed provider-specific native paths receive the resolved credentials. Errors expose stable domain codes without URLs, credentials, provider bodies or original exceptions. Endpoint approval and organization authorization remain the caller's responsibility.
+
+`EmbeddingUsage` keeps three quantities separate:
+
+- `providerInputTokens`: Ollama's aggregate `prompt_eval_count`, or Cohere's `meta.tokens.input_tokens`; `null` if any successful batch omits it.
+- `billedInputTokens`: optional Cohere aggregate `meta.billed_units.input_tokens`, independently `null` when unavailable. Billed units never replace model input-token counts.
+- `estimatedInputTokens`: the explicitly labeled prepared UTF-8 byte estimate, plus `requests` for successful embedding requests. Estimates are neither exact tokenizer counts nor provider billing.
 
 ## Validation
 
-The [Ollama and EmbeddingGemma reproduction guide](../../docs/rag-ollama-embeddinggemma.md) provides the tested CPU container/version, model digest, installation and native probe commands, credential/network configuration, dashboard recipe and actual live evidence.
+Run `pnpm --filter @repo/embeddings test` for controlled loopback HTTP fixtures covering native payloads, both retrieval roles, supported dimensions, catalog pagination, immutable identity compatibility, ordering, batching, truthful usage, invalid float32 vectors, retries, cancellation, response limits, redirects and input preparation. These fixtures do not establish live Cohere connectivity or product dashboard acceptance.
 
-Run `pnpm --filter @repo/embeddings test` for local HTTP fixtures covering native requests, authorization, ordering, batching, usage, invalid vectors, model replacement, retries, cancellation, response limits, redirects, and input preparation.
-
-For a live check, create a disposable official CPU-only Ollama container, install `embeddinggemma`, then run from this directory:
+The [Ollama and EmbeddingGemma reproduction guide](../../docs/rag-ollama-embeddinggemma.md) provides the executed CPU container/version, model digest, installation and native probe commands, credential/network configuration and actual live evidence. For a separate live Ollama check, create a disposable official CPU-only container, install `embeddinggemma`, then run from this directory:
 
 ```sh
 node --import tsx tests/live.mts http://127.0.0.1:PORT
 ```
 
-The live script accepts only an explicit loopback endpoint, never reads `.env`, verifies all four dimensions, and checks French query retrieval against French/English documents. It does not establish a dashboard acceptance test; the product milestone must record that separately.
+The script accepts only an explicit loopback endpoint and never reads `.env`. It verifies all four dimensions and French query retrieval against French/English documents. Live provider checks and dashboard acceptance must be recorded separately by each product milestone; no live Cohere request is claimed by the controlled package tests.
 
 ## Primary references
 
-- [Ollama native embedding API](https://docs.ollama.com/api/embed): request dimensions, input batches, truncation, and provider input-token usage.
-- [Ollama installed model API](https://docs.ollama.com/api/tags) and [show API source documentation](https://github.com/ollama/ollama/blob/main/docs/api.md#show-model-information): model manifests and capability metadata.
-- [Google's original EmbeddingGemma 300M model card](https://huggingface.co/google/embeddinggemma-300m): retrieval query/document prompts, 2048-token context, and Matryoshka dimension choices.
-- [Official Ollama Docker setup](https://docs.ollama.com/docker): CPU container execution.
+- [Ollama native embedding API](https://docs.ollama.com/api/embed): dimensions, batches, truncation and input-token usage.
+- [Ollama installed model API](https://docs.ollama.com/api/tags) and [show API documentation](https://github.com/ollama/ollama/blob/main/docs/api.md#show-model-information): manifests and capability metadata.
+- [Google's original EmbeddingGemma 300M model card](https://huggingface.co/google/embeddinggemma-300m): retrieval prompts, context and dimension choices.
+- [Official Ollama Docker setup](https://docs.ollama.com/docker): CPU execution.
+- [Cohere embedding API](https://docs.cohere.com/reference/embed) and [semantic search guide](https://docs.cohere.com/v2/docs/semantic-search-embed): native roles, float output, truncation, dimensions and the 96-text limit.
+- [Cohere model capabilities](https://docs.cohere.com/v2/docs/cohere-embed) and [native model listing](https://docs.cohere.com/reference/list-models): reviewed context/dimension choices and authenticated discovery.
+- Cohere's official SDK distinguishes [model input tokens](https://github.com/cohere-ai/cohere-python/blob/main/src/cohere/types/api_meta_tokens.py) from [billed input units](https://github.com/cohere-ai/cohere-python/blob/main/src/cohere/types/api_meta_billed_units.py).
