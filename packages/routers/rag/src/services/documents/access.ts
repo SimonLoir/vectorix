@@ -19,15 +19,27 @@ export async function requireDocument(
 export async function contentDocument(context: AuthorizedContext, id: string) {
     const actor = await ragActor(context, context.db, { ragLibrary: ['read'] });
     const document = await requireDocument(context.db, actor, id);
-    const version = await context.db.documentVersion.findFirst({
+    const published = await context.db.documentVersion.findFirst({
         where: {
             organizationId: actor.organizationId,
             documentId: id,
             discardedAt: null,
+            status: 'READY',
         },
         orderBy: { version: 'desc' },
         include: { extraction: true, ingestion: true },
     });
+    const version =
+        published ??
+        (await context.db.documentVersion.findFirst({
+            where: {
+                organizationId: actor.organizationId,
+                documentId: id,
+                discardedAt: null,
+            },
+            orderBy: { version: 'desc' },
+            include: { extraction: true, ingestion: true },
+        }));
     if (!version) throw new ORPCError('NOT_FOUND');
     return { actor, document, version };
 }

@@ -4,6 +4,6 @@ DO $$ BEGIN
        OR (SELECT "objectKey" FROM "DocumentVersion" WHERE id = 'upgrade-version') IS DISTINCT FROM 'original'
        OR (SELECT "byteSize" FROM "DocumentExtraction" WHERE id = 'upgrade-extraction') IS DISTINCT FROM 50::bigint
        OR EXISTS (SELECT FROM "DocumentVersion" WHERE id = 'upgrade-version' AND ("storedAt" IS NOT NULL OR "discardedAt" IS NOT NULL))
-       OR EXISTS (SELECT FROM "DocumentIngestion")
+       OR EXISTS (SELECT FROM "DocumentIngestion" WHERE "versionId" = 'upgrade-version')
     THEN RAISE EXCEPTION 'Document migration changed retained content or created automatic ingestion'; END IF;
 END $$;

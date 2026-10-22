@@ -55,8 +55,91 @@ export const documentDetails = z.object({
         })
         .nullable(),
 });
+export const cleanupDetails = z.object({
+    status: z.enum(['PENDING', 'PROCESSING', 'FAILED', 'COMPLETE']),
+    reason: z.enum(['REPLACED', 'DELETED']),
+    scheduledAt: z.date(),
+    attempts: z.number().int(),
+    errorCode: z.enum(['STORAGE_UNAVAILABLE', 'CLEANUP_FAILED']).nullable(),
+    completedAt: z.date().nullable(),
+});
+export const documentLifecycle = z.object({
+    document,
+    deletedAt: z.date().nullable(),
+    publishedVersionId: id.nullable(),
+    latestVersionId: id.nullable(),
+    versions: z.array(
+        z.object({
+            id,
+            version: z.number().int(),
+            fileName: z.string(),
+            status: documentStatus,
+            byteSize: z.number().int(),
+            createdAt: z.date(),
+            discardedAt: z.date().nullable(),
+            task: documentDetails.shape.version.unwrap().shape.task,
+            cleanup: cleanupDetails.nullable(),
+        })
+    ),
+    total: z.number().int(),
+});
+const retentionDays = z.number().int().min(0).max(365);
 const reference = z.object({ id }).strict();
 export const documentsContract = {
+    replace: oc
+        .route({ method: 'POST', path: '/documents/{id}/replacements' })
+        .input(
+            z
+                .object({
+                    id,
+                    expectedVersionId: id,
+                    requestId: z.uuid(),
+                    file: z.file().min(1).max(MAX_DOCUMENT_BYTES),
+                    retentionDays: retentionDays.default(7),
+                })
+                .strict()
+        )
+        .output(z.object({ id, versionId: id })),
+    delete: oc
+        .route({ method: 'DELETE', path: '/documents/{id}' })
+        .input(
+            z
+                .object({
+                    id,
+                    expectedVersionId: id,
+                    retentionDays: retentionDays.default(0),
+                })
+                .strict()
+        )
+        .output(success),
+    trash: oc
+        .route({ method: 'GET', path: '/documents/deleted' })
+        .input(page)
+        .output(
+            z.object({
+                items: z.array(document.extend({ deletedAt: z.date() })),
+                total: z.number().int(),
+            })
+        ),
+    lifecycle: oc
+        .route({ method: 'GET', path: '/documents/{id}/lifecycle' })
+        .input(
+            z
+                .object({
+                    id,
+                    offset: z.number().int().min(0).default(0),
+                    limit: z.number().int().min(1).max(50).default(10),
+                })
+                .strict()
+        )
+        .output(documentLifecycle),
+    retryCleanup: oc
+        .route({
+            method: 'POST',
+            path: '/documents/{id}/versions/{versionId}/cleanup/retry',
+        })
+        .input(z.object({ id, versionId: id }).strict())
+        .output(success),
     list: oc
         .route({ method: 'GET', path: '/documents' })
         .input(page)

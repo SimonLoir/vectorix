@@ -1,3 +1,8 @@
+import { replaceDocumentHandler } from './documents/replace';
+import { deleteDocumentHandler } from './documents/delete';
+import { lifecycleDocumentHandler } from './documents/lifecycle';
+import { trashDocumentHandler } from './documents/trash';
+import { retryCleanupDocumentHandler } from './documents/retryCleanup';
 import { uploadDocumentHandler } from './documents/upload';
 import { detailsDocumentHandler } from './documents/details';
 import { previewDocumentHandler } from './documents/preview';
@@ -69,6 +74,11 @@ export const ragRouter = authorized
             removeGrant: removeGrantHandler,
         },
         documents: {
+            replace: replaceDocumentHandler,
+            delete: deleteDocumentHandler,
+            lifecycle: lifecycleDocumentHandler,
+            trash: trashDocumentHandler,
+            retryCleanup: retryCleanupDocumentHandler,
             list: listDocuments,
             get: getDocument,
             upload: uploadDocumentHandler,

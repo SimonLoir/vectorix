@@ -1,12 +1,11 @@
 import { randomUUID } from 'node:crypto';
 import { ORPCError } from '@orpc/server';
 import type { AuthorizedContext } from '@routers/utils/authorized';
-import { putObject } from '@repo/storage';
-import { MAX_DOCUMENT_BYTES } from '@repo/api-contracts/v1/rag/documents';
 import { mutate, audit } from '../mutation';
 import { quotaLimits, quotaUsage } from '../quotas';
 import { libraryWrite } from './access';
 import { contentHash, uploadStorage } from './storage';
+import { validateDocumentFile, transferOriginal } from './transfer';
 
 /** Reserve both objects before S3 I/O. A lost response can replay the same request ID without creating another document. */
 export async function uploadDocument(
@@ -14,23 +13,7 @@ export async function uploadDocument(
     input: { requestId: string; file: File }
 ) {
     const file = input.file;
-    if (
-        !/\.(txt|md|markdown)$/i.test(file.name) ||
-        [...file.name].some(
-            (character) =>
-                character.codePointAt(0)! < 32 ||
-                character.codePointAt(0)! === 127 ||
-                character === '/' ||
-                character === '\\'
-        ) ||
-        file.name.length > 200 ||
-        !file.size ||
-        file.size > MAX_DOCUMENT_BYTES
-    )
-        throw new ORPCError('BAD_REQUEST', {
-            message:
-                'Upload a non-empty TXT or Markdown file of at most 25 MiB with a valid filename.',
-        });
+    validateDocumentFile(file);
     const bytes = new Uint8Array(await file.arrayBuffer());
     const sha256 = contentHash(bytes);
     const documentId = randomUUID(),
@@ -49,7 +32,8 @@ export async function uploadDocument(
         if (existing) {
             if (
                 existing.version.sha256 !== sha256 ||
-                existing.version.document.name !== file.name ||
+                (existing.version.fileName ??
+                    existing.version.document.name) !== file.name ||
                 existing.version.byteSize !== BigInt(bytes.length) ||
                 existing.version.document.deletedAt
             )
@@ -92,6 +76,7 @@ export async function uploadDocument(
                 objectKey: key,
                 sha256,
                 byteSize: BigInt(bytes.length),
+                fileName: file.name,
                 mediaType: /\.txt$/i.test(file.name)
                     ? 'text/plain'
                     : 'text/markdown',
@@ -118,52 +103,13 @@ export async function uploadDocument(
             transfer: { config: storage.config, key },
         };
     });
-    if (accepted.transfer) {
-        try {
-            await putObject(
-                accepted.transfer.config,
-                accepted.transfer.key,
-                bytes,
-                sha256,
-                'application/octet-stream'
-            );
-        } catch {
-            // Keep the reservation until the worker proves the write absent or recovers it after the upload lease expires.
-            await context.db.documentIngestion.updateMany({
-                where: { versionId, leaseToken: token },
-                data: { errorCode: 'STORAGE_UNAVAILABLE' },
-            });
-            return { id: accepted.id, versionId: accepted.versionId };
-        }
-        await mutate(context, libraryWrite, async (db, actor) => {
-            const changed = await db.documentIngestion.updateMany({
-                where: {
-                    versionId,
-                    organizationId: actor.organizationId,
-                    status: 'UPLOADING',
-                    leaseToken: token,
-                },
-                data: {
-                    status: 'PENDING',
-                    leasedUntil: null,
-                    leaseToken: null,
-                    availableAt: new Date(),
-                    errorCode: null,
-                },
-            });
-            if (!changed.count) return;
-            await db.documentVersion.update({
-                where: { id: versionId },
-                data: { storedAt: new Date(), status: 'PROCESSING' },
-            });
-            await db.document.update({
-                where: { id: documentId },
-                data: { status: 'PROCESSING' },
-            });
-            await audit(db, actor, 'document.upload.stored', documentId, {
-                versionId,
-            });
+    if (accepted.transfer)
+        await transferOriginal(context, {
+            documentId,
+            versionId,
+            token,
+            bytes,
+            ...accepted.transfer,
         });
-    }
     return { id: accepted.id, versionId: accepted.versionId };
 }

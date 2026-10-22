@@ -613,6 +613,49 @@
                 "TEXT_EMPTY": "No text was found in this file.",
                 "ACCESS_REVOKED": "The requesting member no longer has access. A current manager can retry.",
                 "PROCESSING_FAILED": "Processing failed. Retry or contact an administrator."
+            },
+            "lifecycle": {
+                "title": "Versions and retention",
+                "description": "Manage replacements, retained versions and private file cleanup.",
+                "libraryViews": "Document library views",
+                "activeTab": "Active documents",
+                "deletedTab": "Deleted documents",
+                "deletedLibraryHint": "Deleted documents are inaccessible to readers. Their retained metadata and cleanup status remain visible to library managers.",
+                "deletedEmpty": "No deleted documents found",
+                "deletedEmptyHint": "Documents you delete will appear here with their private file cleanup status.",
+                "deletedTitle": "Deleted document",
+                "deletedDescription": "Inspect retained version metadata and follow private file cleanup.",
+                "replace": "Replace document",
+                "replaceHint": "Upload a new UTF-8 TXT or Markdown file, up to 25 MiB. The published original stays available until the replacement is ready. Collection links are preserved.",
+                "confirmReplace": "Upload replacement",
+                "replaceFailed": "The replacement could not be submitted. Reload to check the latest version, permissions, storage and available quota, then try again.",
+                "retentionLabel": "File retention delay in days",
+                "replaceRetentionHint": "Choose 0–365 days, counted from this request. Previous files are removed only after a newer version is published and this delay has passed. Retained files continue to count toward storage usage.",
+                "deleteRetentionHint": "Choose 0–365 days before private files can be removed. Zero schedules cleanup as soon as active processing has stopped. Storage usage is released after cleanup succeeds.",
+                "delete": "Delete document",
+                "deleteHint": "Delete “{name}” from the library and every linked collection.",
+                "deleteWarning": "Readers lose access immediately. This deletion cannot be undone from the dashboard, even during file retention. File removal runs in the background.",
+                "confirmDelete": "Confirm deletion",
+                "deleteFailed": "Deletion failed. Reload to check the latest version and your permissions, then try again.",
+                "published": "Published",
+                "latest": "Latest attempt",
+                "publishedHint": "Preview and download show the published version. A failed replacement leaves that version available.",
+                "unpublishedHint": "No version has been published yet. Follow processing or retry the latest failed attempt.",
+                "replacementPending": "A version is being uploaded or extracted. Wait for it to finish before submitting another replacement.",
+                "deletedAt": "Access was removed on {date}. File cleanup follows the retention deadline; retained metadata is for management only.",
+                "cleanupSchedule": "Eligible for cleanup from {date}. Active processing or an unavailable object store can delay removal.",
+                "discarded": "Private files removed on {date}.",
+                "retryCleanup": "Retry file cleanup",
+                "cleanup": {
+                    "PENDING": "Waiting for file cleanup.",
+                    "PROCESSING": "Removing private files.",
+                    "FAILED": "File cleanup stopped. Retained bytes still count toward storage usage.",
+                    "COMPLETE": "File cleanup complete. Storage reservations and retained file usage have been released."
+                },
+                "cleanupErrors": {
+                    "STORAGE_UNAVAILABLE": "Private storage is unavailable. Check its saved credentials and allowed endpoint, then retry cleanup.",
+                    "CLEANUP_FAILED": "File cleanup failed. Retry or contact an administrator."
+                }
             }
         }
     },

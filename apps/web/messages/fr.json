@@ -613,6 +613,49 @@
                 "TEXT_EMPTY": "Aucun texte trouvé dans ce fichier.",
                 "ACCESS_REVOKED": "Le membre à l’origine du traitement n’a plus les droits nécessaires. Un gestionnaire actuel peut relancer l’extraction.",
                 "PROCESSING_FAILED": "Le traitement a échoué. Réessayez ou contactez un administrateur."
+            },
+            "lifecycle": {
+                "title": "Versions et conservation",
+                "description": "Gérez les remplacements, les versions conservées et le nettoyage des fichiers privés.",
+                "libraryViews": "Vues de la bibliothèque de documents",
+                "activeTab": "Documents actifs",
+                "deletedTab": "Documents supprimés",
+                "deletedLibraryHint": "Les documents supprimés sont inaccessibles aux lecteurs. Leurs métadonnées conservées et leur état de nettoyage restent visibles aux gestionnaires.",
+                "deletedEmpty": "Aucun document supprimé trouvé",
+                "deletedEmptyHint": "Les documents que vous supprimez apparaîtront ici avec leur état de nettoyage des fichiers privés.",
+                "deletedTitle": "Document supprimé",
+                "deletedDescription": "Consultez les métadonnées des versions conservées et suivez le nettoyage des fichiers privés.",
+                "replace": "Remplacer le document",
+                "replaceHint": "Importez un nouveau fichier TXT ou Markdown UTF-8 de 25 Mio maximum. L’original publié reste disponible jusqu’à ce que le remplacement soit prêt. Les liens aux collections sont conservés.",
+                "confirmReplace": "Importer le remplacement",
+                "replaceFailed": "Le remplacement n’a pas pu être envoyé. Rechargez pour vérifier la dernière version, vos droits, le stockage et les quotas disponibles, puis réessayez.",
+                "retentionLabel": "Délai de conservation des fichiers en jours",
+                "replaceRetentionHint": "Choisissez de 0 à 365 jours, à compter de cette demande. Les anciens fichiers sont retirés uniquement après la publication d’une nouvelle version et l’expiration de ce délai. Les fichiers conservés restent comptabilisés dans le stockage.",
+                "deleteRetentionHint": "Choisissez de 0 à 365 jours avant le retrait des fichiers privés. Zéro planifie le nettoyage dès l’arrêt des traitements actifs. Le stockage est libéré après un nettoyage réussi.",
+                "delete": "Supprimer le document",
+                "deleteHint": "Supprimer « {name} » de la bibliothèque et de toutes les collections associées.",
+                "deleteWarning": "Les lecteurs perdent immédiatement l’accès. Cette action ne peut pas être restaurée depuis le tableau de bord, même pendant la conservation des fichiers. Le retrait des fichiers s’exécute en arrière-plan.",
+                "confirmDelete": "Confirmer la suppression",
+                "deleteFailed": "La suppression a échoué. Rechargez pour vérifier la dernière version et vos droits, puis réessayez.",
+                "published": "Publiée",
+                "latest": "Dernière tentative",
+                "publishedHint": "L’aperçu et le téléchargement utilisent la version publiée. Un remplacement en échec laisse cette version disponible.",
+                "unpublishedHint": "Aucune version n’est encore publiée. Suivez le traitement ou relancez la dernière tentative en échec.",
+                "replacementPending": "Une version est en cours d’import ou d’extraction. Attendez la fin du traitement avant d’envoyer un autre remplacement.",
+                "deletedAt": "L’accès a été retiré le {date}. Le nettoyage suit le délai de conservation ; les métadonnées conservées servent uniquement à la gestion.",
+                "cleanupSchedule": "Nettoyage possible à partir du {date}. Un traitement actif ou un stockage indisponible peut retarder le retrait.",
+                "discarded": "Fichiers privés retirés le {date}.",
+                "retryCleanup": "Relancer le nettoyage des fichiers",
+                "cleanup": {
+                    "PENDING": "En attente du nettoyage des fichiers.",
+                    "PROCESSING": "Retrait des fichiers privés en cours.",
+                    "FAILED": "Le nettoyage des fichiers est arrêté. Les octets conservés restent comptabilisés dans le stockage.",
+                    "COMPLETE": "Nettoyage des fichiers terminé. Les réservations et l’espace occupé par les fichiers conservés ont été libérés."
+                },
+                "cleanupErrors": {
+                    "STORAGE_UNAVAILABLE": "Le stockage privé est indisponible. Vérifiez ses identifiants enregistrés et son adresse autorisée, puis relancez le nettoyage.",
+                    "CLEANUP_FAILED": "Le nettoyage des fichiers a échoué. Réessayez ou contactez un administrateur."
+                }
             }
         }
     },

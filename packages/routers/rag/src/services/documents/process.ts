@@ -2,7 +2,6 @@ import { randomUUID } from 'node:crypto';
 import type { PrismaClient } from '@repo/db';
 import { getMemberPermissions } from '@repo/auth/permissions/resolve';
 import { permits } from '@repo/auth/permissions';
-import { runSerializableTransaction } from '@routers/utils/transactions';
 import {
     headObject,
     readObject,
@@ -14,10 +13,15 @@ import { MAX_DOCUMENT_BYTES } from '@repo/api-contracts/v1/rag/documents';
 import { boundStorage, contentHash } from './storage';
 import { libraryWrite } from './access';
 import { extractText, TextExtractionError } from './extract';
+import {
+    ingestionMayWrite,
+    publishExtraction,
+    recordIngestionFailure,
+} from './ingestion-state';
+import { reconcileUnpublishedWrite } from './retention';
 
 const LEASE_MS = 180_000;
-const RETRIES = 5;
-/** The queue carries no document body or credentials: PostgreSQL owns claims, retries, and terminal state. */
+/** PostgreSQL owns claims and retries; Redis messages contain no document content or secrets. */
 export async function processDocumentIngestions(db: PrismaClient) {
     const now = new Date();
     const eligible = {
@@ -52,12 +56,11 @@ export async function processDocumentIngestions(db: PrismaClient) {
                 attempts: { increment: 1 },
             },
         });
-        if (!claimed.count) continue;
-        await processClaim(db, task.versionId, token);
+        if (claimed.count) await processClaim(db, task.versionId, token);
     }
 }
 
-/** S3 writes are deterministic; a reclaimed worker cannot publish after losing its lease. */
+/** Both object writes and publication recheck authority; a rejected late write is queued for reconciliation. */
 async function processClaim(
     db: PrismaClient,
     versionId: string,
@@ -78,6 +81,8 @@ async function processClaim(
         },
     });
     const version = task.version;
+    let wrote = false,
+        published = false;
     try {
         const membership = await getMemberPermissions(
             task.organizationId,
@@ -91,6 +96,7 @@ async function processClaim(
             !permits(membership.permissions, libraryWrite)
         )
             throw new TextExtractionError('ACCESS_REVOKED');
+        if (!(await ingestionMayWrite(db, versionId, token))) return;
         const config = await boundStorage(
             db,
             task.organizationId,
@@ -104,53 +110,29 @@ async function processClaim(
                 object.sha256 !== version.sha256
             ) {
                 if (object) await deleteObject(config, version.objectKey);
-                await runSerializableTransaction(db, async (tx) => {
-                    const held = await tx.documentIngestion.updateMany({
-                        where: {
-                            versionId,
-                            leaseToken: token,
-                            leasedUntil: { gt: new Date() },
-                        },
-                        data: {
-                            status: 'FAILED',
-                            errorCode: 'UPLOAD_INCOMPLETE',
-                            reservedBytes: 0n,
-                            leaseToken: null,
-                            leasedUntil: null,
-                        },
-                    });
-                    if (!held.count) return;
-                    await tx.documentVersion.update({
-                        where: { id: versionId },
-                        data: { status: 'FAILED', discardedAt: new Date() },
-                    });
-                    await tx.document.update({
-                        where: { id: version.documentId },
-                        data: { status: 'FAILED' },
-                    });
+                await recordIngestionFailure(db, {
+                    versionId,
+                    token,
+                    code: 'UPLOAD_INCOMPLETE',
+                    terminal: true,
+                    delay: new Date(),
+                    discard: true,
                 });
                 return;
             }
-            const recovered = await runSerializableTransaction(
-                db,
-                async (tx) => {
-                    const held = await tx.documentIngestion.updateMany({
-                        where: {
-                            versionId,
-                            leaseToken: token,
-                            leasedUntil: { gt: new Date() },
-                        },
-                        data: { status: 'PROCESSING' },
-                    });
-                    if (!held.count) return false;
-                    await tx.documentVersion.update({
-                        where: { id: versionId },
-                        data: { storedAt: new Date() },
-                    });
-                    return true;
-                }
-            );
-            if (!recovered) return;
+            const recovered = await db.documentIngestion.updateMany({
+                where: {
+                    versionId,
+                    leaseToken: token,
+                    leasedUntil: { gt: new Date() },
+                },
+                data: { status: 'PROCESSING' },
+            });
+            if (!recovered.count) return;
+            await db.documentVersion.updateMany({
+                where: { id: versionId, document: { deletedAt: null } },
+                data: { storedAt: new Date() },
+            });
         }
         const original = await readObject(
             config,
@@ -161,6 +143,9 @@ async function processClaim(
         if (text.length > Number(task.reservedBytes))
             throw new TextExtractionError('TEXT_INVALID');
         const key = `${task.organizationId}/${version.documentId}/${versionId}/text.txt`;
+        if (!(await ingestionMayWrite(db, versionId, token))) return;
+        // Even a failed response may represent a completed remote PUT.
+        wrote = true;
         await putObject(
             config,
             key,
@@ -168,73 +153,20 @@ async function processClaim(
             contentHash(text),
             'text/plain; charset=utf-8'
         );
-        await runSerializableTransaction(db, async (tx) => {
-            const currentMembership = await getMemberPermissions(
-                task.organizationId,
-                task.requestedBy,
-                tx
-            );
-            const active = await tx.document.findFirst({
-                where: {
-                    id: version.documentId,
-                    organizationId: task.organizationId,
-                    deletedAt: null,
-                    organization: { isActive: true },
-                },
-            });
-            if (
-                !active ||
-                !currentMembership ||
-                !permits(currentMembership.permissions, libraryWrite)
-            )
-                throw new TextExtractionError('ACCESS_REVOKED');
-            const held = await tx.documentIngestion.updateMany({
-                where: {
-                    versionId,
-                    leaseToken: token,
-                    leasedUntil: { gt: new Date() },
-                },
-                data: {
-                    status: 'READY',
-                    reservedBytes: 0n,
-                    leaseToken: null,
-                    leasedUntil: null,
-                    errorCode: null,
-                },
-            });
-            if (!held.count) return;
-            await tx.documentExtraction.upsert({
-                where: { versionId },
-                create: {
-                    organizationId: task.organizationId,
-                    versionId,
-                    storageLocationId: version.storageLocationId,
-                    objectKey: key,
-                    byteSize: BigInt(text.length),
-                    extractorVersion: 'utf8-text-v1',
-                    language: 'und',
-                },
-                update: {},
-            });
-            await tx.documentVersion.update({
-                where: { id: versionId },
-                data: { status: 'READY' },
-            });
-            await tx.document.update({
-                where: { id: version.documentId },
-                data: { status: 'READY' },
-            });
-            await tx.ragAuditLog.create({
-                data: {
-                    organizationId: task.organizationId,
-                    actorType: 'worker',
-                    actorId: 'document-ingestion',
-                    action: 'document.extraction.ready',
-                    targetId: version.documentId,
-                    details: { versionId, bytes: text.length },
-                },
-            });
+        published = await publishExtraction(db, {
+            versionId,
+            token,
+            key,
+            byteSize: text.length,
         });
+        if (!published)
+            await recordIngestionFailure(db, {
+                versionId,
+                token,
+                code: 'ACCESS_REVOKED',
+                terminal: true,
+                delay: new Date(),
+            });
     } catch (error) {
         const code =
             error instanceof TextExtractionError
@@ -242,47 +174,17 @@ async function processClaim(
                 : error instanceof StorageError
                   ? 'STORAGE_UNAVAILABLE'
                   : 'PROCESSING_FAILED';
-        const terminal =
-            error instanceof TextExtractionError || task.attempts >= RETRIES;
-        const delay = new Date(
-            Date.now() + Math.min(300_000, 10_000 * 2 ** task.attempts)
-        );
-        await runSerializableTransaction(db, async (tx) => {
-            const latest = await tx.documentVersion.findUnique({
-                where: { id: versionId },
-                select: { storedAt: true },
-            });
-            // Retain capacity for a potentially written extraction until retry publishes it.
-            // Releasing it here would undercount an interrupted S3 write outside the transaction.
-            const held = await tx.documentIngestion.updateMany({
-                where: {
-                    versionId,
-                    leaseToken: token,
-                    leasedUntil: { gt: new Date() },
-                },
-                data: {
-                    status: terminal
-                        ? 'FAILED'
-                        : latest?.storedAt
-                          ? 'PENDING'
-                          : 'UPLOADING',
-                    errorCode: code,
-                    leaseToken: null,
-                    leasedUntil: terminal ? null : delay,
-                    availableAt: delay,
-                },
-            });
-            if (!held.count) return;
-            if (terminal) {
-                await tx.documentVersion.update({
-                    where: { id: versionId },
-                    data: { status: 'FAILED' },
-                });
-                await tx.document.update({
-                    where: { id: version.documentId },
-                    data: { status: 'FAILED' },
-                });
-            }
+        await recordIngestionFailure(db, {
+            versionId,
+            token,
+            code,
+            terminal:
+                error instanceof TextExtractionError || task.attempts >= 5,
+            delay: new Date(
+                Date.now() + Math.min(300_000, 10_000 * 2 ** task.attempts)
+            ),
         });
+    } finally {
+        if (wrote && !published) await reconcileUnpublishedWrite(db, versionId);
     }
 }

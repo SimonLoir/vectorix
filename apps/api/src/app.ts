@@ -52,6 +52,8 @@ for (const runtime of API_VERSION_RUNTIMES) {
     for (const uploadPath of [
         `${runtime.version.rpcPath}/admin/rag/documents/upload`,
         `${runtime.version.restPath}/admin/rag/documents/uploads`,
+        `${runtime.version.rpcPath}/admin/rag/documents/replace`,
+        `${runtime.version.restPath}/admin/rag/documents/:id/replacements`,
     ])
         app.use(uploadPath, bodyLimit({ maxSize: 26 * 1024 * 1024 }));
     const { version, rpcHandler, openApiHandler } = runtime;

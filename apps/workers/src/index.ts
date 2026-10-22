@@ -2,6 +2,7 @@ import { Worker } from 'bullmq';
 import { connection, getQueues, QueueName, closeQueues } from '@repo/queues';
 import { prisma } from '@repo/db';
 import { processDocumentIngestions } from '@routers/rag/ingestion';
+import { processDocumentCleanups } from '@routers/rag/cleanup';
 import { processNotifications } from './notifications/process';
 const worker = new Worker(
     QueueName.NOTIFICATIONS,
@@ -22,7 +23,10 @@ await getQueues().notifications.upsertJobScheduler(
 );
 const documentWorker = new Worker(
     QueueName.DOCUMENTS,
-    () => processDocumentIngestions(prisma),
+    async () => {
+        await processDocumentIngestions(prisma);
+        await processDocumentCleanups(prisma);
+    },
     { connection, concurrency: 1 }
 );
 documentWorker.on('error', () =>

@@ -11,7 +11,7 @@ export function retryDocument(context: AuthorizedContext, id: string) {
         const version = await db.documentVersion.findFirst({
             where: { organizationId: actor.organizationId, documentId: id },
             orderBy: { version: 'desc' },
-            include: { ingestion: true },
+            include: { ingestion: true, document: true },
         });
         if (
             !version?.ingestion ||
@@ -49,10 +49,11 @@ export function retryDocument(context: AuthorizedContext, id: string) {
             where: { id: version.id },
             data: { status: 'PROCESSING' },
         });
-        await db.document.update({
-            where: { id },
-            data: { status: 'PROCESSING' },
-        });
+        if (version.document.status !== 'READY')
+            await db.document.update({
+                where: { id },
+                data: { status: 'PROCESSING' },
+            });
         await audit(db, actor, 'document.extraction.retried', id, {
             versionId: version.id,
         });

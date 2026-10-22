@@ -613,6 +613,49 @@
                 "TEXT_EMPTY": "Er is geen tekst gevonden in dit bestand.",
                 "ACCESS_REVOKED": "Het aanvragende lid heeft geen toegang meer. Een huidige beheerder kan opnieuw proberen.",
                 "PROCESSING_FAILED": "Verwerking mislukt. Probeer opnieuw of neem contact op met een beheerder."
+            },
+            "lifecycle": {
+                "title": "Versies en bewaring",
+                "description": "Beheer vervangingen, bewaarde versies en het opruimen van privébestanden.",
+                "libraryViews": "Weergaven van de documentbibliotheek",
+                "activeTab": "Actieve documenten",
+                "deletedTab": "Verwijderde documenten",
+                "deletedLibraryHint": "Verwijderde documenten zijn niet toegankelijk voor lezers. Bibliotheekbeheerders zien de bewaarde metadata en de opruimstatus.",
+                "deletedEmpty": "Geen verwijderde documenten gevonden",
+                "deletedEmptyHint": "Documenten die je verwijdert, verschijnen hier met de opruimstatus van hun privébestanden.",
+                "deletedTitle": "Verwijderd document",
+                "deletedDescription": "Bekijk de bewaarde versiemetadata en volg het opruimen van privébestanden.",
+                "replace": "Document vervangen",
+                "replaceHint": "Upload een nieuw TXT- of Markdown-bestand in UTF-8 van maximaal 25 MiB. Het gepubliceerde origineel blijft beschikbaar tot de vervanging klaar is. Collectiekoppelingen blijven behouden.",
+                "confirmReplace": "Vervanging uploaden",
+                "replaceFailed": "De vervanging kon niet worden ingediend. Herlaad om de laatste versie, je rechten, de opslag en de beschikbare quota te controleren en probeer opnieuw.",
+                "retentionLabel": "Bewaartermijn voor bestanden in dagen",
+                "replaceRetentionHint": "Kies 0–365 dagen vanaf deze aanvraag. Vorige bestanden worden pas verwijderd nadat een nieuwere versie is gepubliceerd en deze termijn is verstreken. Bewaarde bestanden blijven meetellen voor het opslaggebruik.",
+                "deleteRetentionHint": "Kies 0–365 dagen voordat privébestanden mogen worden verwijderd. Nul plant het opruimen zodra actieve verwerking is gestopt. Opslag komt vrij nadat het opruimen is geslaagd.",
+                "delete": "Document verwijderen",
+                "deleteHint": "Verwijder “{name}” uit de bibliotheek en alle gekoppelde collecties.",
+                "deleteWarning": "Lezers verliezen onmiddellijk toegang. Deze actie kan niet worden hersteld via het dashboard, ook niet tijdens de bewaartermijn. Bestanden worden op de achtergrond verwijderd.",
+                "confirmDelete": "Verwijdering bevestigen",
+                "deleteFailed": "Verwijderen is mislukt. Herlaad om de laatste versie en je rechten te controleren en probeer opnieuw.",
+                "published": "Gepubliceerd",
+                "latest": "Laatste poging",
+                "publishedHint": "Voorbeeld en download tonen de gepubliceerde versie. Een mislukte vervanging laat die versie beschikbaar.",
+                "unpublishedHint": "Er is nog geen versie gepubliceerd. Volg de verwerking of probeer de laatste mislukte poging opnieuw.",
+                "replacementPending": "Een versie wordt geüpload of verwerkt. Wacht tot dit klaar is voordat je een andere vervanging indient.",
+                "deletedAt": "Toegang is verwijderd op {date}. Bestanden worden volgens de bewaartermijn opgeruimd; bewaarde metadata dient enkel voor beheer.",
+                "cleanupSchedule": "Opruimen mogelijk vanaf {date}. Actieve verwerking of onbeschikbare opslag kan het verwijderen vertragen.",
+                "discarded": "Privébestanden verwijderd op {date}.",
+                "retryCleanup": "Bestanden opnieuw opruimen",
+                "cleanup": {
+                    "PENDING": "Wachten op het opruimen van bestanden.",
+                    "PROCESSING": "Privébestanden worden verwijderd.",
+                    "FAILED": "Het opruimen van bestanden is gestopt. Bewaarde bytes blijven meetellen voor het opslaggebruik.",
+                    "COMPLETE": "Bestanden opgeruimd. Opslagreserveringen en het gebruik van bewaarde bestanden zijn vrijgegeven."
+                },
+                "cleanupErrors": {
+                    "STORAGE_UNAVAILABLE": "Privéopslag is niet beschikbaar. Controleer de opgeslagen toegangsgegevens en het toegestane adres en probeer het opruimen opnieuw.",
+                    "CLEANUP_FAILED": "Het opruimen van bestanden is mislukt. Probeer opnieuw of neem contact op met een beheerder."
+                }
             }
         }
     },

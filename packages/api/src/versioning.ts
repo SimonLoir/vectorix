@@ -17,7 +17,7 @@ export type VectorixApiVersion = Readonly<{
  */
 export const VECTORIX_API_V1 = {
     major: 1,
-    revision: 4,
+    revision: 5,
     status: 'current',
 } as const satisfies VectorixApiVersion;
 
