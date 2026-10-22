@@ -12,6 +12,7 @@ import { app } from './app';
 import { apiKeyIssuerRevocationTests } from './api-key-issuer-revocation';
 import { requestBodyIntegrationTests } from './request-body-integration';
 import { passwordResetIntegrationTests } from './password-reset-integration';
+import { superadminTransactionIntegrationTests } from './superadmin-transaction-integration';
 
 if (
     !new URL(
@@ -390,5 +391,12 @@ void test('core journeys with real PostgreSQL and the HTTP transports', async (t
     await passwordResetIntegrationTests(t, {
         createBrowser: browser,
         registerUser: (id) => userIds.push(id),
+    });
+    await superadminTransactionIntegrationTests(t, {
+        createBrowser: browser,
+        foreignOrganizationId: organizationIds[1]!,
+        registerUser: (id) => userIds.push(id),
+        registerOrganization: (id) => organizationIds.push(id),
+        registerFeature: (id) => featureIds.push(id),
     });
 });

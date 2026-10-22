@@ -411,7 +411,7 @@ Password-reset links were delivered in [PR #34](https://github.com/SimonLoir/vec
 - [x] Run workspace/catalog/build/image checks and independent review.
 - [x] Verify a production dashboard upload/extraction/download on encoded Redis ACL credentials and clean owned resources.
 - [x] Finish English documentation, Mermaid/link/format checks.
-- [ ] Deliver a separate PR.
+- [x] Deliver a separate PR.
 
 Implementation and automated/dashboard acceptance are complete on `codex/redis-url-credentials`, based on merged reset-link PR #34 (`571deab`). Touched files are the pure Redis configuration helper, unchanged public queue entry points, six focused tests, the real Redis integration test and owned-container runner, API/root test scripts, the catalog workflow, `.env.example`, root/package documentation and this log. No schema, migration, public DTO, dependency, lockfile or application container policy changes are required. The helper retains previous host, port, database, protocol/TLS and retry parsing policy; this is not a general Redis URL-policy redesign.
 
@@ -422,3 +422,26 @@ Actual dashboard acceptance used production web/API/workers and four private dis
 The initial host standalone preview omitted the `public` assets copied by the production Dockerfile, causing a service-worker 404. Copying public/static assets and restarting only that owned web preview corrected the test harness; a fresh final tab showed the persisted ready document with no console warnings/errors. No product change was needed. The three previews, four owned infrastructure containers, two temporary tabs and verified download were removed. No application database, external mail recipient or embedding provider was used. [Redis configuration and acceptance](redis-connections.md) records the reproducible recipe and boundaries.
 
 Final issue #23 documentation checks passed: four changed documents, one parsed Mermaid diagram, 82 local Markdown file links, Prettier/source formatting, shell syntax and `git diff --check`. No user-facing UI copy changed.
+
+Redis credentials were delivered as `6a18d67` in [PR #35](https://github.com/SimonLoir/vectorix/pull/35). Both exact-head required CI checks passed, and the PR was squash-merged as `5e01c8e`, closing issue #23.
+
+## Security follow-up — atomic superadmin mutations (issue #20, scoped slice)
+
+- [x] Confirm seven audit writes outside the mutation transaction and owner predicates outside their member writes.
+- [x] Group current-actor checks, scoped target reads, mutations, affected session cleanup and audits in retryable serializable transactions.
+- [x] Preserve native organization-deletion/RAG cleanup boundaries and stop treating request forwarding headers as verified audit IPs.
+- [x] Complete isolated audit-failure, success, actor-revocation, foreign-identifier and superadmin owner-concurrency tests.
+- [x] Run final workspace/catalog/build/image checks and independent review.
+- [x] Verify organization/feature mutations and audit inspection in production admin on private disposable infrastructure.
+- [x] Finalize English documentation/diagram/link checks.
+- [ ] Deliver a separate PR.
+
+The current implementation on `codex/superadmin-transaction-audit` uses the dedicated shared transaction helper and changes seven named handlers, two previously transactional actor checks and the audit helper. Root documentation links and this guide record the new boundary. No schema, migration, public DTO or dependency changes are planned. This slice protects concurrent superadmin owner operations only; the cross-path native owner/deletion protocol remains planned and issue #20 stays open. See [Superadmin transactions](superadmin-transactions.md) for concrete file references, the acceptance recipe, audit IP provenance and the deferred-guard design constraints.
+
+Issue #20 scoped validation passed: 23 workspace type checks, 23 lint tasks, 44 backend regressions, 150 disposable core/RAG HTTP tests with fresh/upgrade/repeat/parity, four production builds and all six image/runtime/infrastructure checks. Fourteen new HTTP journeys cover every affected mutation, audit rejection rollback, new/existing member paths, principal/session rollback, exactly one successful audit with null IP, foreign identifiers, three controlled superadmin owner races and actor revocation after real admission. Initial catalog setup failed because its admin-role target could not issue a key; the supported two-owner fixture fixed the test without weakening production guards. Scoped checks and the complete catalog rerun passed. Independent source/test review found no actionable P1/P2 in this slice. Full session/account comparisons avoid secret-bearing assertion diffs.
+
+Actual production API/admin acceptance created and renamed a synthetic empty organization, forced a targeted audit failure, displayed the translated save error and confirmed unchanged persisted name/two audits after rejection and reload. Removing that fault, creating an unused feature with no organization grants and disabling it produced exactly four successful actions in the journal. The before/after organization values and unknown IP were inspected; journal reload retained four actions. The existing admin next-intl `ENVIRONMENT_FALLBACK` appeared in the browser/server and remains a separate timezone follow-up; no clean-console claim is made. The two previews, four private containers, temporary fault and tab were removed. No application data, external recipient or provider was used.
+
+The separately reviewed [global owner-guard proposal](organization-owner-guard-proposal.md) remains design-only. It records the deferred native-deletion constraints, unvalidated post-initialization wrapping seam, role/snapshot/rollout limits and required cross-path matrix. No SQL migration or native guard was generated or applied; issue #20 remains open. The quoted migration-review rule will apply once a concrete supported wrapping seam and migration design are ready.
+
+Final scoped issue #20 documentation validation passed: five changed documents, two parsed Mermaid diagrams, 88 local Markdown file links, source/prose formatting and `git diff --check`. Independent documentation review found no material gap. The separate owner-guard proposal was independently reviewed and still requires a proven native transaction seam before migration approval is requested.

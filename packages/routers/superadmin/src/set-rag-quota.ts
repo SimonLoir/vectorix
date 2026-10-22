@@ -3,11 +3,13 @@ import { runSerializableTransaction } from '@routers/utils/transactions';
 import { superAdminV1 } from './v1-implementer';
 import { auditSuperAdminAction } from './audit';
 import { quotaLimits } from '@routers/rag/quotas';
+import { requireCurrentSuperAdmin } from './superadmin-transaction';
 
 /** Quotas are platform policy; organization members cannot increase their own allowances. */
 export const setRagQuota = superAdminV1.organizations.setRagQuota.handler(
     ({ context, input }) =>
         runSerializableTransaction(context.db, async (db) => {
+            await requireCurrentSuperAdmin(db, context.user.id);
             if (
                 !(await db.organization.findUnique({
                     where: { id: input.organizationId },
