@@ -120,6 +120,96 @@ for app in api web admin; do
     docker exec "$prefix-$app" node -e "fetch('http://127.0.0.1:$port$path').then(r=>{if(!r.ok)throw Error(r.status);console.log('$app ready')})"
 done
 
+# Exercise the packaged playground without installing Scalar in the runtime or
+# changing authentication, tenant state, build inputs or the six-image topology.
+docker exec "$prefix-api" node --input-type=module -e '
+    import assert from "node:assert/strict";
+    import { createHash } from "node:crypto";
+    import { readFileSync, readdirSync, statSync } from "node:fs";
+    import { createRequire } from "node:module";
+    const base = "http://127.0.0.1:3001";
+    const bundlePath = "/app/dist/scalar-api-reference.js";
+    const maximumBytes = 8 * 1024 * 1024;
+    const info = statSync(bundlePath);
+    assert.ok(info.isFile() && info.size > 0 && info.size <= maximumBytes, "The build must emit one bounded standalone bundle");
+    const bundle = readFileSync(bundlePath);
+    const sha256 = createHash("sha256").update(bundle).digest("hex");
+    const integrity = `sha384-${createHash("sha384").update(bundle).digest("base64")}`;
+    const expectedAsset = `/_playground/scalar/${sha256}.js`;
+    const require = createRequire("/app/package.json");
+    assert.throws(() => require.resolve("@scalar/api-reference"), { code: "MODULE_NOT_FOUND" });
+    assert.deepEqual(readdirSync("/app/node_modules/.pnpm").filter(name => name.startsWith("@scalar+api-reference@")), [], "Scalar is build-only, not a runtime dependency");
+
+    const quoted = value => String.fromCharCode(39) + value + String.fromCharCode(39);
+    const nonces = [];
+    for (let request = 0; request < 2; request++) {
+        const response = await fetch(base + "/", { redirect: "manual", signal: AbortSignal.timeout(10000) });
+        assert.equal(response.status, 200);
+        assert.equal(response.headers.get("cache-control"), "no-store");
+        assert.equal(response.headers.get("x-content-type-options"), "nosniff");
+        assert.equal(response.headers.get("etag"), null, "Nonce HTML must not reuse an asset validator");
+        const html = await response.text();
+        assert.ok(Buffer.byteLength(html) <= 64 * 1024);
+        const scripts = [...html.matchAll(/<script\b([^>]*)>([\s\S]*?)<\/script>/g)];
+        assert.equal(scripts.length, 2);
+        const nonce = /\bnonce="([A-Za-z0-9+/_=-]+)"/.exec(scripts[0][1])?.[1];
+        assert.ok(nonce && nonce.length >= 22, "The page needs a fresh cryptographic nonce");
+        nonces.push(nonce);
+        for (const script of scripts) assert.equal(/\bnonce="([^"]+)"/.exec(script[1])?.[1], nonce);
+        const external = scripts.filter(script => /\bsrc=/.test(script[1]));
+        assert.equal(external.length, 1);
+        assert.equal(/\bsrc="([^"]+)"/.exec(external[0][1])?.[1], expectedAsset);
+        assert.equal(/\bintegrity="([^"]+)"/.exec(external[0][1])?.[1], integrity);
+        assert.ok(scripts.some(script => script[2].includes("Scalar.createApiReference")));
+        const meta = /<meta\b[^>]*\bproperty="csp-nonce"[^>]*>/i.exec(html)?.[0];
+        assert.ok(meta);
+        assert.equal(/\bcontent="([^"]+)"/.exec(meta)?.[1], nonce);
+        const resources = [...html.matchAll(/<(?:script|link)\b[^>]*\b(?:src|href)="([^"]+)"/g)].map(match => match[1]);
+        assert.ok(resources.length >= 2 && resources.every(url => url.startsWith("/") && !url.startsWith("//")), "The initial playground must reference only local assets");
+        for (const remote of ["cdn.jsdelivr.net", "fonts.scalar.com", "orpc.dev/icon.svg"]) assert.ok(!html.includes(remote));
+        const csp = response.headers.get("content-security-policy");
+        assert.ok(csp);
+        const directives = new Map(csp.split(";").map(value => value.trim().split(/\s+/)).filter(tokens => tokens[0]).map(([name, ...values]) => [name, values]));
+        for (const name of ["default-src", "base-uri", "object-src", "frame-ancestors"]) assert.deepEqual(directives.get(name), [quoted("none")], name);
+        assert.deepEqual(directives.get("script-src"), [quoted(`nonce-${nonce}`)]);
+        assert.deepEqual(directives.get("connect-src"), [quoted("self")]);
+        assert.deepEqual(directives.get("form-action"), [quoted("self")]);
+        assert.deepEqual(directives.get("font-src"), [quoted("self")]);
+        assert.deepEqual(directives.get("img-src"), [quoted("self"), "data:"]);
+        assert.deepEqual(directives.get("style-src"), [quoted("self"), quoted("unsafe-inline")]);
+    }
+    assert.notEqual(nonces[0], nonces[1], "A new HTML response must receive a new nonce");
+
+    const asset = await fetch(base + expectedAsset, { redirect: "manual", signal: AbortSignal.timeout(10000) });
+    assert.equal(asset.status, 200);
+    assert.match(asset.headers.get("content-type") ?? "", /^(?:application|text)\/javascript(?:;|$)/i);
+    assert.equal(asset.headers.get("x-content-type-options"), "nosniff");
+    assert.equal(asset.headers.get("etag"), `"${sha256}"`);
+    assert.equal(asset.headers.get("cache-control"), "public, max-age=31536000, immutable");
+    const delivered = Buffer.from(await asset.arrayBuffer());
+    assert.ok(delivered.length <= maximumBytes);
+    assert.equal(delivered.length, bundle.length);
+    assert.equal(createHash("sha256").update(delivered).digest("hex"), sha256);
+    const cached = await fetch(base + expectedAsset, { headers: { "If-None-Match": `"${sha256}"` }, redirect: "manual", signal: AbortSignal.timeout(10000) });
+    assert.equal(cached.status, 304);
+    assert.equal(cached.headers.get("etag"), `"${sha256}"`);
+    assert.equal(cached.headers.get("cache-control"), "public, max-age=31536000, immutable");
+    assert.equal((await cached.arrayBuffer()).byteLength, 0);
+    const icon = await fetch(base + "/_playground/icon.svg", { redirect: "manual", signal: AbortSignal.timeout(10000) });
+    assert.equal(icon.status, 200);
+    assert.match(icon.headers.get("content-type") ?? "", /^image\/svg\+xml(?:;|$)/i);
+    assert.equal(icon.headers.get("x-content-type-options"), "nosniff");
+    assert.ok((await icon.arrayBuffer()).byteLength <= 4096);
+    const otherHash = (sha256[0] === "0" ? "1" : "0") + sha256.slice(1);
+    for (const path of [`/_playground/scalar/${otherHash}.js`, "/_playground/scalar/not-a-hash.js", expectedAsset + "/extra"]) {
+        const missing = await fetch(base + path, { redirect: "manual", signal: AbortSignal.timeout(10000) });
+        assert.equal(missing.status, 404, path);
+        assert.equal(missing.headers.get("location"), null, "Missing assets must not redirect to a CDN");
+        assert.ok(!(await missing.text()).includes("cdn.jsdelivr.net"));
+    }
+    console.log("Production Scalar asset, CSP, nonce and build-only dependency checks passed");
+'
+
 docker exec "$prefix-api" node --input-type=module -e '
     import assert from "node:assert/strict";
     const spec = await fetch("http://127.0.0.1:3001/spec.json");

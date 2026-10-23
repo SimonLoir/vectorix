@@ -15,7 +15,12 @@ import {
     getPublicApiVersions,
 } from './api-versioning/registry';
 import { API_VERSION_RUNTIMES } from './api-versioning/runtime';
-import { renderScalarHtml } from './api-versioning/scalar';
+import { createScalarPageHandler } from './api-versioning/scalar-page';
+import { createScalarAssetHandler } from './api-versioning/scalar-asset';
+import {
+    scalarIconHandler,
+    SCALAR_ICON_PATH,
+} from './api-versioning/scalar-icon';
 import { requestBodyLimit } from './http/request-body-limit';
 import { cookieCsrfProtection } from './http/cookie-csrf';
 import { resolveTrustedOrigins } from './http/trusted-origins';
@@ -84,4 +89,6 @@ app.get('/api-versions.json', (c) =>
         versions: getPublicApiVersions(),
     })
 );
-app.get('/', (c) => c.html(renderScalarHtml(getPublicApiVersions())));
+app.get(SCALAR_ICON_PATH, scalarIconHandler);
+app.get('/_playground/scalar/:file', createScalarAssetHandler());
+app.get('/', createScalarPageHandler(getPublicApiVersions()));

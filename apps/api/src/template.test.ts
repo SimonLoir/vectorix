@@ -12,7 +12,7 @@ import {
     VectorixNotificationActionV1Schema,
 } from '@repo/api-contracts/v1/notifications';
 
-void test('health and versioned OpenAPI expose the versioned API and RAG catalog', async () => {
+void test('health, local playground and versioned OpenAPI expose the same supported API registry', async () => {
     assert.equal((await app.request('/health')).status, 200);
     for (const version of API_VERSION_REGISTRY) {
         const result = await app.request(version.specPath);
@@ -54,6 +54,22 @@ void test('health and versioned OpenAPI expose the versioned API and RAG catalog
             ]
         ),
         API_VERSION_REGISTRY.map((version) => [version.major, version.revision])
+    );
+    const playground = await app.request('/');
+    assert.equal(playground.status, 200);
+    const html = await playground.text();
+    for (const version of API_VERSION_REGISTRY) {
+        assert.ok(html.includes(`"url":${JSON.stringify(version.specPath)}`));
+        assert.ok(html.includes(`"slug":"v${version.major}"`));
+        assert.ok(
+            html.includes(
+                `Vectorix API v${version.major} (revision ${version.revision})`
+            )
+        );
+    }
+    assert.match(
+        html,
+        /<script\b[^>]*\bsrc="\/_playground\/scalar\/[a-f0-9]{64}\.js"/
     );
 });
 void test('private and superadmin operations reject anonymous access', async () => {
