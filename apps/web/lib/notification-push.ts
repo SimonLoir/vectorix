@@ -17,6 +17,8 @@ export type NotificationPushReceipt = Readonly<{
     id: string;
     version: number;
     deviceId: string;
+    /** A confirmed revoke may precede a failed browser unsubscribe. */
+    serverRevoked?: true;
 }>;
 
 export function notificationPushSupport(): NotificationPushSupport {
@@ -60,18 +62,25 @@ export function readNotificationPushReceipt(
             parsed === null ||
             !('id' in parsed) ||
             typeof parsed.id !== 'string' ||
+            parsed.id.length === 0 ||
+            parsed.id.length > 191 ||
             !('version' in parsed) ||
             typeof parsed.version !== 'number' ||
-            !Number.isInteger(parsed.version) ||
+            !Number.isSafeInteger(parsed.version) ||
             parsed.version < 1 ||
             !('deviceId' in parsed) ||
-            typeof parsed.deviceId !== 'string'
+            typeof parsed.deviceId !== 'string' ||
+            parsed.deviceId.length === 0 ||
+            parsed.deviceId.length > 191
         )
             return null;
         return {
             id: parsed.id,
             version: parsed.version,
             deviceId: parsed.deviceId,
+            ...('serverRevoked' in parsed && parsed.serverRevoked === true
+                ? { serverRevoked: true as const }
+                : {}),
         };
     } catch {
         return null;
@@ -111,10 +120,11 @@ function applicationServerKey(publicKey: string) {
 export async function currentNotificationPushSubscription() {
     const support = notificationPushSupport();
     if (!support.supported) return null;
-    const registration = await navigator.serviceWorker.ready;
-    return registration.pushManager.getSubscription();
+    const registration = await navigator.serviceWorker.getRegistration('/');
+    return registration ? registration.pushManager.getSubscription() : null;
 }
 
+/** Reuses an existing subscription without making rollback affect other scopes. */
 export async function subscribeToNotifications(publicKey: string) {
     const support = notificationPushSupport();
     if (!support.supported)
@@ -125,18 +135,22 @@ export async function subscribeToNotifications(publicKey: string) {
             : Notification.permission;
     if (permission !== 'granted')
         throw new Error(`PUSH_PERMISSION_${permission.toUpperCase()}`);
-    const registration = await navigator.serviceWorker.ready;
+    const registration = await navigator.serviceWorker.getRegistration('/');
+    if (!registration?.active) throw new Error('PUSH_WORKER_UNAVAILABLE');
     const current = await registration.pushManager.getSubscription();
-    return (
-        current ??
-        registration.pushManager.subscribe({
+    if (current) return { subscription: current, created: false };
+    return {
+        subscription: await registration.pushManager.subscribe({
             userVisibleOnly: true,
             applicationServerKey: applicationServerKey(publicKey),
-        })
-    );
+        }),
+        created: true,
+    };
 }
 
+/** null means this browser cannot confirm local cleanup; false is not success. */
 export async function unsubscribeFromNotifications() {
+    if (!notificationPushSupport().supported) return null;
     const subscription = await currentNotificationPushSubscription();
     return subscription ? subscription.unsubscribe() : true;
 }

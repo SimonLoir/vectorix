@@ -70,7 +70,12 @@ export async function processNotifications(db: PrismaClient) {
                         },
                     },
                 });
+            const activeOrganization = await db.organization.findFirst({
+                where: { id: notification.organizationId, isActive: true },
+                select: { id: true },
+            });
             const valid =
+                Boolean(activeOrganization) &&
                 notification.eventType === 'ACCOUNT_SIGN_IN' &&
                 member &&
                 (await accountSignInSourceExists(
@@ -119,9 +124,8 @@ export async function processNotifications(db: PrismaClient) {
                         organizationId: notification.organizationId,
                         recipientId: notification.recipientId,
                         notificationId: notification.id,
-                        title: notification.title,
-                        body: notification.body,
-                        action: { kind: 'ACCOUNT', version: 1 },
+                        deliveryId: delivery.id,
+                        leaseToken: token,
                     },
                     new Date()
                 );

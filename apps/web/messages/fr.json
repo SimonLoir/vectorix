@@ -73,8 +73,19 @@
                 "updating": "Mise à jour…",
                 "disable": "Désactiver sur cet appareil",
                 "enable": "Activer sur cet appareil",
-                "error": "La souscription push n’a pas pu être mise à jour. Les autres canaux restent disponibles.",
-                "consentExplanation": "L’activation demande l’autorisation du navigateur et peut nécessiter l’installation de Vectorix sur iPhone ou iPad. Vous pouvez retirer ce consentement ici à tout moment."
+                "consentExplanation": "L’activation demande l’autorisation du navigateur et peut nécessiter l’installation de Vectorix sur iPhone ou iPad. Le nettoyage révoque uniquement l’inscription enregistrée de cette organisation ; supprimer la souscription du navigateur arrête aussi le push des autres organisations sur cet appareil.",
+                "servicePolicy": "Ce déploiement accepte uniquement les services push approuvés par son opérateur. Le navigateur choisit le service ; aucune adresse de destination n’est à saisir ici.",
+                "retry": "Vérifier à nouveau",
+                "checkFailed": "La souscription du navigateur n’a pas pu être vérifiée. Réessayez ou lancez le nettoyage à partir de l’inscription enregistrée.",
+                "enabled": "L’inscription push est activée pour cette organisation sur cet appareil.",
+                "disabled": "L’inscription enregistrée pour cette organisation a été révoquée et la souscription du navigateur supprimée.",
+                "registrationRefused": "L’inscription a été refusée. La souscription peut être invalide ou son service push peut ne pas être approuvé pour ce déploiement. Réessayez plus tard ou contactez votre opérateur. Les autres canaux restent disponibles.",
+                "enableFailed": "L’inscription push n’a pas pu être confirmée. Réessayez ou lancez le nettoyage si une souscription reste dans le navigateur. Les autres canaux restent disponibles.",
+                "receiptUnavailable": "Le reçu d’inscription n’a pas pu être enregistré ou supprimé sur cet appareil. Gardez cette page ouverte et réessayez le nettoyage ; un rechargement peut perdre le résultat confirmé du serveur.",
+                "localOnly": "La souscription du navigateur a été supprimée. Aucune inscription enregistrée ne permettait de confirmer la révocation serveur pour cette organisation.",
+                "serverRevokeFailed": "La révocation serveur n’a pas pu être confirmée. L’inscription enregistrée a été conservée pour permettre une nouvelle tentative de nettoyage.",
+                "localCleanupFailed": "Le nettoyage du navigateur n’a pas pu être confirmé. Réessayez sur cet appareil dans un navigateur compatible.",
+                "serverRevoked": "L’inscription enregistrée pour cette organisation a été révoquée sur le serveur."
             },
             "accountEmailExplanation": "Les notifications de connexion sont envoyées par e-mail par défaut. Vous pouvez activer les notifications dans l’application et les notifications push."
         }

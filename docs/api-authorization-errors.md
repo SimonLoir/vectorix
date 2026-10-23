@@ -1,6 +1,6 @@
 # Authorization errors and dashboard feedback
 
-Issue #14 is implemented and locally validated on `codex/sanitized-authorization-errors`. Pull-request delivery and exact-head CI remain pending.
+Issue #14 is delivered through [PR #69](https://github.com/SimonLoir/vectorix/pull/69), implemented on `codex/sanitized-authorization-errors`.
 
 ## Boundaries
 
@@ -49,6 +49,8 @@ The first web process exits with code 143 after the active observation; its boun
 
 A separately archived and independently reviewed one-shot diagnostic verifies the same source/build/runtime/helper/migration pins and all four exact owned stores, then uses the exact loopback `_test` database in a bounded read-only RepeatableRead transaction. Its distinct `SUPPLEMENTAL_POST_STOP_ONLY` result confirms zero sessions, unchanged ordinary owner membership, the inactive organization, saved French locale and zero documents, collections, keys, groups, invitations, credentials or audit records. It neither restarts services nor replaces the failed formal observer, and does not determine browser acceptance.
 
-Cleanup reaches `CLEANED_EVIDENCE_RETAINED` with zero owned containers/volumes; the remaining identity-checked API process exits successfully. The private login fixture and empty mail directory are removed, with safe screenshots and metadata evidence retained. Recovery tab 48 is closed. Closing original tab 47 is refused by the browser tool's policy after it navigates to a network-error `data:` page; no bypass is attempted, and its documented automatic turn-end cleanup is still pending at this checkpoint. These harness limitations are not counted as successful checks.
+Cleanup reaches `CLEANED_EVIDENCE_RETAINED` with zero owned containers/volumes; the remaining identity-checked API process exits successfully. The private login fixture and empty mail directory are removed, with safe screenshots and metadata evidence retained. Recovery tab 48 is closed. Closing original tab 47 is initially refused by the browser tool's policy after it navigates to a network-error `data:` page. After documented automatic turn-end cleanup, both owned tabs 47–48 are independently confirmed absent; no bypass is attempted. These harness limitations are not counted as successful checks.
 
 Independent product, interface/test and supplemental-diagnostic reviews identify no actionable P1/P2. Five documents pass formatting, 162 local Markdown links resolve, and the Mermaid diagram parses; `git diff --check` passes. The preceding organization-selection delivery is [PR #68](https://github.com/SimonLoir/vectorix/pull/68). Full capacity remains deferred until the requested compute upgrade, and live hosted-provider credentials remain deferred.
+
+Delivered as squash `a6ab50b6986e9d8cef8968faa8906635dccbad29` at 20:23:35 UTC on October 23, 2026. Exact head `507cc6f860aa549784a217696e446b5317b3827c` passes [catalog run `40017377981`](https://github.com/SimonLoir/vectorix/actions/runs/40017377981) at 20:21:10 UTC and [six-image run `40017378133`](https://github.com/SimonLoir/vectorix/actions/runs/40017378133) at 20:18:33 UTC. Both completed-success check-runs and the fresh head/base/main gate pass before the authorized merge. Issue #14 closes at 20:23:36 UTC. Registry publication is not established by pull-request checks.

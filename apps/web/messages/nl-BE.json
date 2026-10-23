@@ -73,8 +73,19 @@
                 "updating": "Bijwerken…",
                 "disable": "Uitschakelen op dit toestel",
                 "enable": "Inschakelen op dit toestel",
-                "error": "De pushinschrijving kon niet worden bijgewerkt. Andere kanalen blijven beschikbaar.",
-                "consentExplanation": "Push inschakelen vraagt toestemming van de browser en kan vereisen dat Vectorix op een iPhone of iPad is geïnstalleerd. U kunt deze toestemming hier altijd intrekken."
+                "consentExplanation": "Push inschakelen vraagt toestemming van de browser en kan vereisen dat Vectorix op een iPhone of iPad is geïnstalleerd. Opruimen trekt alleen de bewaarde registratie van deze organisatie in; de browserinschrijving verwijderen stopt ook push voor andere organisaties op dit toestel.",
+                "servicePolicy": "Deze installatie aanvaardt alleen pushdiensten die de beheerder heeft goedgekeurd. Uw browser kiest de dienst; u hoeft hier geen bestemmingsadres in te voeren.",
+                "retry": "Opnieuw controleren",
+                "checkFailed": "De browserinschrijving kon niet worden gecontroleerd. Probeer opnieuw of ruim op met de bewaarde registratie.",
+                "enabled": "Push is voor deze organisatie op dit toestel geregistreerd.",
+                "disabled": "De bewaarde registratie voor deze organisatie is ingetrokken en de browserinschrijving is verwijderd.",
+                "registrationRefused": "De registratie is geweigerd. De inschrijving kan ongeldig zijn of de pushdienst is mogelijk niet goedgekeurd voor deze installatie. Probeer later opnieuw of neem contact op met uw beheerder. Andere kanalen blijven beschikbaar.",
+                "enableFailed": "De pushregistratie kon niet worden bevestigd. Probeer opnieuw of ruim op als er een browserinschrijving overblijft. Andere kanalen blijven beschikbaar.",
+                "receiptUnavailable": "Het registratiebewijs kon niet worden bewaard of verwijderd op dit toestel. Houd deze pagina open en probeer de opruiming opnieuw; herladen kan het bevestigde serverresultaat verliezen.",
+                "localOnly": "De browserinschrijving is verwijderd. Er was geen bewaarde registratie om de intrekking op de server voor deze organisatie te bevestigen.",
+                "serverRevokeFailed": "De intrekking op de server kon niet worden bevestigd. De registratie is bewaard zodat u de opruiming opnieuw kunt proberen.",
+                "localCleanupFailed": "De opruiming in de browser kon niet worden bevestigd. Probeer opnieuw op dit toestel in een ondersteunde browser.",
+                "serverRevoked": "De bewaarde registratie voor deze organisatie is op de server ingetrokken."
             },
             "accountEmailExplanation": "Aanmeldingsmeldingen worden standaard per e-mail verzonden. U kunt ook in-app- en pushmeldingen inschakelen."
         }
