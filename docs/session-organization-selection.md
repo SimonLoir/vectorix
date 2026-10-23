@@ -1,6 +1,6 @@
 # Initial organization selection
 
-Issue #13 replaces the arbitrary organization selected by the native session-create hook. Implementation, automated validation and the isolated dashboard acceptance below are complete; pull-request delivery remains pending.
+Issue #13 replaces the arbitrary organization selected by the native session-create hook. Implementation, automated validation and the isolated dashboard acceptance below are delivered through [PR #68](https://github.com/SimonLoir/vectorix/pull/68).
 
 ## Selection rule
 
@@ -70,3 +70,9 @@ Actual browser observations:
 The first private harness preflight (`b9d1276e4a03`) refuses its 256 MiB runtime-input hashing bound before creating any run directory or resource. A metadata-only diagnosis measures 393,858,461 bytes across 52 installed packages plus generated code. Independently reviewed revision 2 raises only that private hashing bound to 512 MiB; its remaining limits stay unchanged. This is not a capacity-test limit change or a failed live application run.
 
 Source, build, helper and installed runtime pins match before cleanup. All three owned processes, four containers, four volumes and the sole owned browser tab are removed; the private login fixture and empty mail directory are deleted. Five safe screenshots, read-only receipts and aggregate observations remain in the ignored private evidence directory. No browser credential change, two-factor enrollment, API-key creation, role promotion or invitation acceptance occurs. Native two-factor and negative authorization cases are established by the automated HTTP suite. Forced network-error rendering is not exercised in the browser. The existing native manual-switch activity limitation remains outside this automatic-selection change.
+
+### Pull-request delivery
+
+Exact head `6e83e34713d39ff89e39821df3c9da0a8a72224a` passes [catalog run `40010516543`](https://github.com/SimonLoir/vectorix/actions/runs/40010516543), including all 276 integrations, and [six-image run `40010516472`](https://github.com/SimonLoir/vectorix/actions/runs/40010516472). The first merge gates defer while GitHub still reports the catalog job/check as in progress despite workflow success. Both jobs and PR check-runs report success, and the fresh head/base/main gate reports clean, before the authorized squash/merge.
+
+[PR #68](https://github.com/SimonLoir/vectorix/pull/68) merges as `4b63ac9b74bd9ff7baa99ccf76605886c724da53` at 19:34:46 UTC on October 23, 2026; issue #13 closes at 19:34:47 UTC. No forced merge occurs. Registry publication is not established by these pull-request checks. Subsequent implementation uses a new dedicated branch.
