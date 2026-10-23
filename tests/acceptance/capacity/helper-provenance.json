@@ -78,7 +78,7 @@
     },
     "currentImplementationNativeStatus": {
         "DEFAULT_V1": "NOT_RUN",
-        "LIGHT_V1": "NOT_RUN"
+        "LIGHT_V1": "PILOT_COMPLETE_FULL_REFUSED"
     },
     "currentRuntimeSha256": {
         "load-bootstrap-runtime.mjs": "84cafa1de2c3936771f468561881eb1d0ad6729ee80f0a43202c65e7a6b87151",
@@ -330,6 +330,42 @@
             "trafficAcceptance": "NOT_RUN"
         }
     ],
+    "nativeMeasurements": {
+        "0720450b77ba": {
+            "acceptance": "PILOT_PREPARED",
+            "browserEvidenceSha256": "66947c85ea47302e48c9f996a44d0b40aef24cf38d6aa9fa65e564c0706fa5c5",
+            "capacityAcceptance": "NOT_RUN",
+            "cleanup": "CLEANED_EVIDENCE_RETAINED",
+            "cleanupObservedAt": "2026-10-23T10:39:44Z",
+            "experimentPolicyId": "LIGHT_V1",
+            "fullAdmission": "REFUSED_PROJECTION",
+            "fullProjectionMs": 14461450,
+            "helperSources": "currentRuntimeSha256",
+            "internalP95": "UNMEASURED",
+            "knownProviderInputTokens": "301407",
+            "nativeBatches": 32,
+            "parents": 500,
+            "physicalChildren": 2000,
+            "pilotIndexMs": 289229,
+            "policySha256": "9f660800bd7d71118e506cdcfec2c6456a90cb6b42b811680fd6f1d1a32f5f9e",
+            "rawFilesSha256": {
+                "load-baseline-report.json": "335e6aa51b624c24e9947e79145fc0efc752ecfe068351c1b2406bb3b497ca93",
+                "load-pilot-invocation.json": "0c40db7a0e24228522ec7151cdd8ce30d479a7e6dd77c3e87c8646530e708bf1",
+                "load-pilot-journal.json": "e3dc3d1accb2e47169644574025fe56af65d8de12d9b90acc1d94d14d89245d8",
+                "load-pilot-outcome.json": "6a7ac93ae604cb6acb04a16381770907bd40b10ff110410c3b746e5f7a06c434",
+                "load-pilot-report.json": "f88f8a81d2dbf439578f72e5f9f3f67ec0cb00170e82a8c04d916050193ce792",
+                "load-resource-observations/resources-pilot-summary.json": "34cca7c6706d041113bf5c95f9e797ea9c1015dad508d392637de9caa17a4ab8",
+                "load-resource-observations/resources-pilot.ndjson": "fc1da9554b4e646fcae3ae02ded8a9b56d57da3d23d44fe733dc3123918d22ba",
+                "store-sizes/store-sizes-pilot-after.json": "461a692f702a77961d8a11453574122fc7682c625ca868fc1608083d28810450",
+                "store-sizes/store-sizes-pilot-before.json": "6057fbcd6041a225a735056656f269b8851c07edd31360312bbf35a0ccc200b2"
+            },
+            "reportCanonicalSha256": "6e041fb07d037dcd69c4d2a02f21a0628dfb45aca319d156c41319ad079b5fe7",
+            "sourceCommit": "215465c4dbe75e1c8a3fc70cabaaea198a6ba494",
+            "status": "INDEX_PREPARATION_COMPLETE",
+            "trafficAcceptance": "NOT_RUN",
+            "validatedNativeVectors": 2000
+        }
+    },
     "postTimingChangedRuntimeFiles": [
         "load-import-core.mjs",
         "load-resources.mjs",

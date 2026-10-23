@@ -1,6 +1,6 @@
 # Separate light-profile capacity experiment
 
-Status: **offline geometry verified; native pilot/full/traffic NOT_RUN**. This is a new experiment, not a relabeling of the original long-input capacity attempt. Its purpose is to measure whether shorter embedding inputs can make a real 100,000-child run practical on the same CPU VM. No model/provider concurrency, vector dimension, timeout, resource budget or finite admission gate is relaxed.
+Status: **native 2,000-child pilot completed; full admission refused by the fixed projection gate; full/traffic NOT_RUN**. This is a separate experiment, not a relabeling of the original long-input capacity attempt. Shorter embedding inputs did not bring this pilot's projection within the two-hour full-indexing bound on the tested CPU VM. No model/provider concurrency, vector dimension, timeout, resource budget or finite admission gate was relaxed.
 
 Only primary organization A's pilot/full token-window profile changes: target/minimum/maximum/overlap 128/32/192/16, parent maximum 512. Organization B's 24-source reference collection and both tiny-ingestion controls retain 512/128/768/64 and parent maximum 2,048. Keep Ollama 0.40.8, exact verified EmbeddingGemma weights, full 768 dimensions, preset/empty preparation, cosine/float32/DISKANN and one native slot. The selected closed experiment/collection-role binding must be present in every state, profile and receipt.
 
@@ -83,4 +83,21 @@ Default source metadata stays in [load-v1](../tests/acceptance/capacity/load-v1/
 
 ## Actual native result
 
-NOT_RUN. Shared-runtime integration, independent review and full source/build/input freezing are required before preparation. No current preparation file authorizes bypassing those gates.
+Run `0720450b77ba` tested committed source `215465c4dbe75e1c8a3fc70cabaaea198a6ba494` with `LIGHT_V1`. The original pilot invocation completed with `PILOT_PREPARED`: four normal uploads produced 2,000 searchable children and 500 unembedded parents. Its saved report, outcome, source bindings, native receipts and resource samples were independently audited from local evidence. No supplemental result replaced the original timing or admission decision.
+
+| Original pilot measurement                          | Recorded result                          |
+| --------------------------------------------------- | ---------------------------------------- |
+| Index-start call to first observed ACTIVE           | 289,229 ms (4 min 49.229 s)              |
+| Pilot protocol total (`setupMs`, includes indexing) | 390,824 ms                               |
+| Fixed projection, index time × 50                   | 14,461,450 ms (4 h 1 min 1.450 s)        |
+| Full admission                                      | `REFUSED_PROJECTION`; limit 7,200,000 ms |
+| Validated logical native batches / vectors          | 32 / 2,000                               |
+| Reported provider input tokens                      | 301,407                                  |
+
+The native delta recorded matching batch starts/completions, no indexing/native errors or known recording gaps, and source/canonical hashes matching all four frozen pilot originals. These logical batches do not establish wire-attempt counts or a bill. The physical/source reader checked the saved generation's child-only vectors, manifests, canonical geometry and prepared inputs; the later file audit verified the recorded proof chain without querying the stores again. The successful pilot does **not** admit the 100,000-child generation or establish ten-search concurrency, traffic latency or p95; those measurements remain NOT_RUN.
+
+The 128 resource points span 323,909 ms, with a maximum observed sampling gap of 4,606 ms. No OOM, process loss or safety-reserve breach was recorded. Maximum recorded memory was 1,943,093,248 bytes under the documented sum-of-process-RSS/container-memory definition; this is a sampled maximum, not a continuous peak. Minimum filesystem free space was 20,921,204,736 bytes. Model warm state remained `UNKNOWN`. Separate before/after receipts recorded application-database growth of 10,993,664 bytes and vector-database growth of 10,698,752 bytes. These are logical PostgreSQL database-size observations; physical volume usage, including RustFS, remains UNKNOWN.
+
+After the measured cohort, the French dashboard showed the saved primary profile, four indexed documents and five completed tasks with one stored attempt each. An English HYBRID query showed three TXT results and parent context. The inspected result referred to the third pilot document, version 1: parent offsets 76,608–78,000 with 464 estimated tokens, matched child offsets 76,608–76,991. Its exact-version source preview advanced from displayed characters 1–20,000 to 20,001–40,000 of 168,048. Usage then showed 33 batches and 2,001 validated vectors because one query embedding occurred after the index cohort; these totals must not be attributed entirely to indexing. Operations showed zero pending or failed work. An initial operator-opened `localhost` origin caused one failed fetch; the declared `127.0.0.1` origin was then used and its console contained zero errors. Organization B, English/Dutch interfaces and original-file downloading were not browser-verified in this run.
+
+Cleanup completed at 10:39 UTC on 2026-10-23 with `CLEANED_EVIDENCE_RETAINED` and an empty resource inventory. The owned API, worker and web processes, five containers, four new volumes and browser tab 33 were closed or removed; the existing model cache and private evidence were preserved. Before execution, 241 pure/injected tests and three CLI/preparation checks passed, alongside 23 workspace type checks, 23 lint checks, four cached application builds and 51 backend tests.
