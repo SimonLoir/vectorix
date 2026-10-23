@@ -26,6 +26,7 @@
         "./lib/auth-client": "./src/lib/auth-client.ts",
         "./lib/email-ownership": "./src/lib/email-ownership.ts",
         "./lib/orpc-headers": "./src/lib/orpc-headers.ts",
+        "./lib/request-errors": "./src/lib/request-errors.ts",
         "./i18n/locale": "./src/i18n/locale.ts",
         "./i18n/time-zone": "./src/i18n/time-zone.ts",
         "./config/security-headers": {

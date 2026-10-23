@@ -26,6 +26,10 @@ import { Label } from '@repo/ui/label';
 import { Button } from '@repo/ui/button';
 import { CollectionScopeEditor } from './collection-scope-editor';
 import type { ListedApiKey } from './api-key-line';
+import {
+    requestErrorKey,
+    type RequestErrorKey,
+} from '@repo/dashboard-core/lib/request-errors';
 
 /** Creates limited keys or explicitly replaces a legacy key's full-access grant. */
 export function ApiKeyPermissionsDialog({
@@ -42,6 +46,7 @@ export function ApiKeyPermissionsDialog({
     const { access, refresh } = useVectorixPermissions();
     const t = useTranslations('permissions');
     const tKeys = useTranslations('apiKeys');
+    const errors = useTranslations('requestErrors');
     const [name, setName] = useState('');
     const [permissions, setPermissions] = useState<PermissionSet>(
         existing?.legacyFullAccess ? {} : (existing?.permissions ?? {})
@@ -56,7 +61,9 @@ export function ApiKeyPermissionsDialog({
             existing.issuerMemberId &&
             existing.issuerMemberId === access?.memberId
         );
-    const [saveError, setSaveError] = useState<string | null>(null);
+    const [saveErrorKey, setSaveErrorKey] = useState<RequestErrorKey | null>(
+        null
+    );
     const selectablePermissions = getSelectablePermissions(
         access?.permissions ?? {},
         true
@@ -102,7 +109,7 @@ export function ApiKeyPermissionsDialog({
                             return;
                         }
                         setSaving(true);
-                        setSaveError(null);
+                        setSaveErrorKey(null);
                         try {
                             if (existing)
                                 await client.admin.organization.apiKeys.updatePermissions(
@@ -124,16 +131,9 @@ export function ApiKeyPermissionsDialog({
                             await refresh();
                             onClose();
                         } catch (error) {
-                            setSaveError(
-                                error instanceof Error
-                                    ? error.message
-                                    : t('failed')
-                            );
-                            toast.error(
-                                error instanceof Error
-                                    ? error.message
-                                    : t('failed')
-                            );
+                            const errorKey = requestErrorKey(error);
+                            setSaveErrorKey(errorKey);
+                            toast.error(errors(errorKey));
                         } finally {
                             setSaving(false);
                         }
@@ -197,7 +197,7 @@ export function ApiKeyPermissionsDialog({
                             readOnly={!canEditScopes}
                         />
                     </fieldset>
-                    {saveError && <p role='alert'>{saveError}</p>}
+                    {saveErrorKey && <p role='alert'>{errors(saveErrorKey)}</p>}
                     <DialogFooter>
                         <Button
                             type='button'

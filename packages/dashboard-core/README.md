@@ -27,3 +27,9 @@ See [Dashboard time zones](../../docs/dashboard-timezones.md) for the runtime fl
 ## Static frontend security configuration
 
 `@repo/dashboard-core/config/security-headers` exports `dashboardSecurityHeaderRules()` as dependency-free ESM with TypeScript declarations. Both Next configurations consume fresh rule/header objects to set framing, MIME and referrer protections. Keep application-specific exceptions after the shared rules; web retains its stronger `/sw.js` policy. This config import performs no environment read or React/auth initialization. Rebuild frontends after policy changes and preserve headers at the edge. See [dashboard security headers](../../docs/dashboard-security-headers.md) for exact values, framework response limits and acceptance.
+
+## Finite request-error mapping
+
+`@repo/dashboard-core/lib/request-errors` exports dependency-free `requestErrorKey(error: unknown)` and `RequestErrorKey`. It reads only an own data `code` property and returns one of ten fixed translation keys; it never returns server messages, nested details, inherited values or accessor results. Unknown and malformed values use `generic`. Applications supply complete localized messages and recovery actions. This helper has no React, authentication, environment or database initialization.
+
+Web uses it for catalog actions/queries and permission loading, plus covered API-key RPC errors and license query errors. Structured indexing diagnostics keep their existing mapping. The shared export is available to admin consumers but this slice does not claim to convert every existing admin or native-auth error. See [authorization errors and feedback](../../docs/api-authorization-errors.md) for scope, business-conflict limits and actual acceptance.

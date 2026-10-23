@@ -2,6 +2,8 @@
 import { useQuery } from '@tanstack/react-query';
 import { useORPC } from '@/hooks/use-orpc';
 import DashboardPage from '@/components/dashboard-page';
+import { requestErrorKey } from '@repo/dashboard-core/lib/request-errors';
+import { RequestErrorState } from '@/components/request-error-state';
 export default function LicensesPage() {
     const { orpc } = useORPC();
     const query = useQuery(orpc.admin.organization.features.queryOptions({}));
@@ -13,7 +15,10 @@ export default function LicensesPage() {
             {query.isPending ? (
                 <p className='mt-6'>Chargement…</p>
             ) : query.isError ? (
-                <p role='alert'>{query.error.message}</p>
+                <RequestErrorState
+                    errorKey={requestErrorKey(query.error)}
+                    onRetry={query.refetch}
+                />
             ) : (
                 <div className='mt-6 space-y-4'>
                     {query.data.providers.external.error && (
