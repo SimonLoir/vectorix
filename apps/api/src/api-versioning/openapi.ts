@@ -1,6 +1,10 @@
 import { OpenAPIGenerator } from '@orpc/openapi';
 import { ZodToJsonSchemaConverter } from '@orpc/zod/zod4';
 import { formatVectorixApiVersion } from '@repo/api/versioning';
+import {
+    VECTORIX_CSRF_HEADER,
+    VECTORIX_CSRF_VALUE,
+} from '@repo/api/transport-security';
 import type { ApiVersionDefinition } from './registry';
 
 const openApiGenerator = new OpenAPIGenerator({
@@ -16,6 +20,7 @@ export async function generateOpenApiSpec(
         info: {
             title: `Vectorix API v${version.major}`,
             version: formatVectorixApiVersion(version),
+            description: `Unsafe requests carrying Cookie require a configured trusted Origin or Referer. When both headers are absent, send ${VECTORIX_CSRF_HEADER}: ${VECTORIX_CSRF_VALUE}. The marker never overrides an explicitly rejected origin. API-key and bearer requests without Cookie retain their authentication rules.`,
         },
         servers: [{ url: serverUrl }],
         security: [{ ApiKeyAuth: [] }, { BearerAuth: [] }],

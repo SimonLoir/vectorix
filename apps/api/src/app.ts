@@ -17,12 +17,11 @@ import {
 import { API_VERSION_RUNTIMES } from './api-versioning/runtime';
 import { renderScalarHtml } from './api-versioning/scalar';
 import { requestBodyLimit } from './http/request-body-limit';
+import { cookieCsrfProtection } from './http/cookie-csrf';
+import { resolveTrustedOrigins } from './http/trusted-origins';
+import { VECTORIX_CSRF_HEADER } from '@repo/api/transport-security';
 export const app = new Hono();
-const origins = (
-    process.env.TRUSTED_ORIGINS ?? 'http://localhost:3000,http://localhost:3006'
-)
-    .split(',')
-    .map((value) => value.trim());
+const origins = resolveTrustedOrigins(process.env.TRUSTED_ORIGINS);
 app.use(
     '*',
     cors({
@@ -34,6 +33,7 @@ app.use(
             'Authorization',
             'x-api-key',
             'Vectorix-Expected-Organization-Id',
+            VECTORIX_CSRF_HEADER,
         ],
         exposeHeaders: [
             ...API_VERSION_RESPONSE_HEADERS,
@@ -42,6 +42,7 @@ app.use(
         ],
     })
 );
+app.use('*', cookieCsrfProtection(API_VERSION_REGISTRY, origins));
 app.use('*', requestBodyLimit(API_VERSION_REGISTRY));
 app.on(['GET', 'POST'], '/api/auth/*', (c) => auth.handler(c.req.raw));
 app.get('/health', (c) => c.json({ status: 'ok' }));

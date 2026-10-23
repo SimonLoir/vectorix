@@ -24,6 +24,7 @@
         "./contexts/auth": "./src/contexts/auth.tsx",
         "./utils/date-utils": "./src/utils/date-utils.ts",
         "./lib/auth-client": "./src/lib/auth-client.ts",
+        "./lib/orpc-headers": "./src/lib/orpc-headers.ts",
         "./i18n/locale": "./src/i18n/locale.ts",
         "./i18n/time-zone": "./src/i18n/time-zone.ts"
     },
@@ -32,7 +33,6 @@
         "lint": "eslint"
     },
     "devDependencies": {
-        "@repo/api": "workspace:*",
         "@repo/eslint-config": "workspace:*",
         "@repo/typescript-config": "workspace:*",
         "@types/react": "19.3.0",
@@ -41,6 +41,7 @@
         "@types/node": "^26.6.2"
     },
     "dependencies": {
+        "@repo/api": "workspace:*",
         "@better-auth/api-key": "1.6.33",
         "@better-auth/passkey": "1.6.33",
         "@hookform/resolvers": "^5.9.1",

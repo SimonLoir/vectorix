@@ -5,6 +5,10 @@ import { createORPCClient } from '@orpc/client';
 import { RPCLink } from '@orpc/client/fetch';
 import { createTanstackQueryUtils } from '@orpc/tanstack-query';
 import type { VectorixApiV1Client } from '@repo/api';
+import {
+    VECTORIX_CSRF_HEADER,
+    VECTORIX_CSRF_VALUE,
+} from '@repo/api/transport-security';
 
 // This app only uses superadmin operations. Keeping the client projection
 // narrow avoids expanding the whole dashboard contract in every query hook.
@@ -22,6 +26,7 @@ export function ORPCProvider({
     const value = useMemo(() => {
         const link = new RPCLink({
             url: `${baseURL}/rpc/v1`,
+            headers: { [VECTORIX_CSRF_HEADER]: VECTORIX_CSRF_VALUE },
             fetch: (request, init) =>
                 fetch(request, { ...init, credentials: 'include' }),
         });
