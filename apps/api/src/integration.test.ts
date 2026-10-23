@@ -12,6 +12,7 @@ import { app } from './app';
 import { apiKeyIssuerRevocationTests } from './api-key-issuer-revocation';
 import { requestBodyIntegrationTests } from './request-body-integration';
 import { passwordResetIntegrationTests } from './password-reset-integration';
+import { emailOwnershipIntegrationTests } from './email-ownership-integration';
 import { superadminTransactionIntegrationTests } from './superadmin-transaction-integration';
 import { cookieCsrfIntegrationTests } from './cookie-csrf-integration';
 
@@ -398,6 +399,10 @@ void test('core journeys with real PostgreSQL and the HTTP transports', async (t
     await passwordResetIntegrationTests(t, {
         createBrowser: browser,
         registerUser: (id) => userIds.push(id),
+    });
+    await emailOwnershipIntegrationTests(t, {
+        registerUser: (id) => userIds.push(id),
+        registerOrganization: (id) => organizationIds.push(id),
     });
     await superadminTransactionIntegrationTests(t, {
         createBrowser: browser,

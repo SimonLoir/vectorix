@@ -16,6 +16,8 @@ import { useAuth } from '../hooks/use-auth';
 import { toast } from 'sonner';
 import { useTranslations } from 'next-intl';
 import { TwoFactorChallenge } from './two-factor-challenge';
+import Link from 'next/link';
+import { emailOwnershipSignInReturn } from '../lib/email-ownership';
 
 /** Renders login methods and optionally exposes the public signup link. */
 export function LoginForm({
@@ -32,7 +34,13 @@ export function LoginForm({
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [twoFactorPending, setTwoFactorPending] = useState(false);
+    const [busy, setBusy] = useState(false);
     const t = useTranslations('login');
+    const returnTo = emailOwnershipSignInReturn(successRedirectPath);
+    const signUpHref =
+        returnTo === '/dashboard'
+            ? '/sign-up'
+            : `/sign-up?${new URLSearchParams({ returnTo })}`;
 
     const completeSignIn = () => {
         toast.success(t('loginSuccessful'));
@@ -56,32 +64,41 @@ export function LoginForm({
                             className='p-6 md:p-8'
                             onSubmit={async (e) => {
                                 e.preventDefault();
-                                await authClient.signIn.email(
-                                    {
-                                        email,
-                                        password,
-                                    },
-                                    {
-                                        onSuccess: (ctx) => {
-                                            // A pending 2FA challenge has no session yet.
-                                            if (
-                                                (
-                                                    ctx.data as {
-                                                        twoFactorRedirect?: boolean;
-                                                    } | null
-                                                )?.twoFactorRedirect
-                                            ) {
-                                                setTwoFactorPending(true);
-                                                return;
-                                            }
-                                            completeSignIn();
+                                setBusy(true);
+                                try {
+                                    await authClient.signIn.email(
+                                        {
+                                            email,
+                                            password,
                                         },
-                                        onError: (ctx) => {
-                                            // display the error message
-                                            alert(ctx.error.message);
-                                        },
-                                    }
-                                );
+                                        {
+                                            onSuccess: (ctx) => {
+                                                // A pending 2FA challenge has no session yet.
+                                                if (
+                                                    typeof ctx.data ===
+                                                        'object' &&
+                                                    ctx.data !== null &&
+                                                    'twoFactorRedirect' in
+                                                        ctx.data &&
+                                                    ctx.data
+                                                        .twoFactorRedirect ===
+                                                        true
+                                                ) {
+                                                    setTwoFactorPending(true);
+                                                    return;
+                                                }
+                                                completeSignIn();
+                                            },
+                                            onError: () => {
+                                                toast.error(t('loginFailed'));
+                                            },
+                                        }
+                                    );
+                                } catch {
+                                    toast.error(t('loginFailed'));
+                                } finally {
+                                    setBusy(false);
+                                }
                             }}
                         >
                             <FieldGroup>
@@ -100,6 +117,7 @@ export function LoginForm({
                                     <Input
                                         id='email'
                                         type='email'
+                                        autoComplete='email'
                                         placeholder='m@example.com'
                                         value={email}
                                         onChange={(e) =>
@@ -123,6 +141,7 @@ export function LoginForm({
                                     <Input
                                         id='password'
                                         type='password'
+                                        autoComplete='current-password'
                                         value={password}
                                         onChange={(e) =>
                                             setPassword(e.target.value)
@@ -131,7 +150,9 @@ export function LoginForm({
                                     />
                                 </Field>
                                 <Field>
-                                    <Button type='submit'>{t('login')}</Button>
+                                    <Button type='submit' disabled={busy}>
+                                        {busy ? t('signingIn') : t('login')}
+                                    </Button>
                                 </Field>
 
                                 <FieldSeparator className='*:data-[slot=field-separator-content]:bg-card'>
@@ -142,16 +163,33 @@ export function LoginForm({
                                     <Button
                                         type='button'
                                         variant='secondary'
+                                        disabled={busy}
                                         onClick={async () => {
-                                            await authClient.signIn.passkey({
-                                                fetchOptions: {
-                                                    onSuccess: () => {
-                                                        void router.push(
-                                                            successRedirectPath
-                                                        );
-                                                    },
-                                                },
-                                            });
+                                            setBusy(true);
+                                            try {
+                                                await authClient.signIn.passkey(
+                                                    {
+                                                        fetchOptions: {
+                                                            onSuccess: () => {
+                                                                void router.push(
+                                                                    successRedirectPath
+                                                                );
+                                                            },
+                                                            onError: () => {
+                                                                toast.error(
+                                                                    t(
+                                                                        'loginFailed'
+                                                                    )
+                                                                );
+                                                            },
+                                                        },
+                                                    }
+                                                );
+                                            } catch {
+                                                toast.error(t('loginFailed'));
+                                            } finally {
+                                                setBusy(false);
+                                            }
                                         }}
                                     >
                                         {t('usePasskey')}
@@ -161,7 +199,12 @@ export function LoginForm({
                                 {allowAccountCreation && (
                                     <FieldDescription className='text-center'>
                                         {t('noAccount')}{' '}
-                                        <a href='/sign-up'>{t('signUp')}</a>
+                                        <Link
+                                            href={signUpHref}
+                                            prefetch={false}
+                                        >
+                                            {t('signUp')}
+                                        </Link>
                                     </FieldDescription>
                                 )}
                             </FieldGroup>

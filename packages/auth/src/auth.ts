@@ -6,7 +6,10 @@ import { passkey } from '@better-auth/passkey';
 import { prisma } from '@repo/db';
 import { apiKey } from '@better-auth/api-key';
 import { sendPasswordResetEmail } from './password-reset-email';
+import { assertSystemMailConfigured } from '@repo/emails';
 import { assertPasswordResetUrlConfigured } from './password-reset-url';
+import { handleEmailOwnership } from './email-ownership/handler';
+import { sendEmailOwnershipVerification } from './email-ownership/mail';
 import { authRateLimitOptions } from './rate-limit';
 import { isAccountCreationAllowed } from './account-creation';
 import { isOrganizationCreationAllowed } from './organization-creation';
@@ -71,7 +74,17 @@ export const auth = betterAuth({
             // Validate first so known and unknown accounts receive the same 503.
             if (ctx.path === '/request-password-reset') {
                 assertPasswordResetUrlConfigured();
+                try {
+                    assertSystemMailConfigured();
+                } catch {
+                    throw new APIError('SERVICE_UNAVAILABLE', {
+                        code: 'PASSWORD_RESET_UNAVAILABLE',
+                        message: 'Password reset is temporarily unavailable.',
+                    });
+                }
             }
+            const emailResponse = await handleEmailOwnership(ctx);
+            if (emailResponse) return emailResponse;
             if (
                 ctx.path === '/update-user' &&
                 ctx.body &&
@@ -105,6 +118,14 @@ export const auth = betterAuth({
             sendPasswordResetEmail({ user, token, request }),
         revokeSessionsOnPasswordReset: true,
     },
+    emailVerification: {
+        autoSignInAfterVerification: false,
+        expiresIn: 3600,
+        sendOnSignUp: false,
+        sendOnSignIn: false,
+        sendVerificationEmail: (input, request) =>
+            sendEmailOwnershipVerification(input, request),
+    },
     plugins: [
         bearer(),
         apiKey([
@@ -121,6 +142,7 @@ export const auth = betterAuth({
             ac: accessControl,
             roles,
             dynamicAccessControl: { enabled: true },
+            requireEmailVerificationOnInvitation: true,
             organizationHooks: {
                 beforeDeleteOrganization: ({ organization }) =>
                     requireOrganizationCleanup(prisma, organization.id),
@@ -138,7 +160,9 @@ export const auth = betterAuth({
     user: {
         changeEmail: {
             enabled: true,
-            updateEmailWithoutVerification: true,
+            updateEmailWithoutVerification: false,
+            sendChangeEmailConfirmation: (input, request) =>
+                sendEmailOwnershipVerification(input, request),
         },
         deleteUser: {
             enabled: true,

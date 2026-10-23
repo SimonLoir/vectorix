@@ -1,20 +1,5 @@
-import MailService from '@repo/emails/mail-service';
+import { sendSystemMail } from '@repo/emails';
 import { buildCanonicalPasswordResetUrl } from './password-reset-url';
-
-type MailCredentials =
-    | {
-          provider: 'resend';
-          apiKey: string;
-          senderEmail: string;
-      }
-    | {
-          provider: 'smtp';
-          host: string;
-          port: number;
-          user: string;
-          password: string;
-          senderEmail: string;
-      };
 
 type PasswordResetLocale = 'en' | 'fr' | 'nl-BE';
 
@@ -26,8 +11,6 @@ type PasswordResetEmailInput = Readonly<{
     token: string;
     request?: Request;
 }>;
-
-const defaultSenderEmail = 'noreply@example.com';
 
 const passwordResetTranslations: Record<
     PasswordResetLocale,
@@ -65,71 +48,6 @@ const passwordResetTranslations: Record<
         ignore: 'Als u dit niet heeft aangevraagd, kunt u deze e-mail negeren.',
     },
 };
-
-function getEnvValue(name: string): string | undefined {
-    const value = process.env[name]?.trim();
-    return value && value.length > 0 ? value : undefined;
-}
-
-function getGlobalMailCredentials(): MailCredentials | null {
-    const resendApiKey = getEnvValue('VECTORIX_DEFAULT_RESEND_API_KEY');
-    if (resendApiKey) {
-        return {
-            provider: 'resend',
-            apiKey: resendApiKey,
-            senderEmail:
-                getEnvValue('VECTORIX_DEFAULT_RESEND_SENDER_EMAIL') ??
-                defaultSenderEmail,
-        };
-    }
-
-    const smtpHost = getEnvValue('VECTORIX_DEFAULT_SMTP_HOST');
-    const smtpPortRaw = getEnvValue('VECTORIX_DEFAULT_SMTP_PORT');
-    const smtpUser = getEnvValue('VECTORIX_DEFAULT_SMTP_USER');
-    const smtpPassword = getEnvValue('VECTORIX_DEFAULT_SMTP_PASSWORD');
-
-    if (smtpHost && smtpPortRaw && smtpUser && smtpPassword) {
-        const smtpPort = Number(smtpPortRaw);
-        if (!Number.isFinite(smtpPort) || smtpPort <= 0) {
-            return null;
-        }
-
-        return {
-            provider: 'smtp',
-            host: smtpHost,
-            port: smtpPort,
-            user: smtpUser,
-            password: smtpPassword,
-            senderEmail:
-                getEnvValue('VECTORIX_DEFAULT_SMTP_SENDER_EMAIL') ??
-                defaultSenderEmail,
-        };
-    }
-
-    return null;
-}
-
-function getMailService(credentials: MailCredentials): MailService {
-    if (credentials.provider === 'resend') {
-        return new MailService({
-            resend: {
-                APIKey: credentials.apiKey,
-            },
-        });
-    }
-
-    return new MailService({
-        nodeMailer: {
-            host: credentials.host,
-            port: credentials.port,
-            secure: credentials.port === 465,
-            auth: {
-                user: credentials.user,
-                pass: credentials.password,
-            },
-        },
-    });
-}
 
 function parseCookieValue(cookieHeader: string | null, name: string) {
     if (!cookieHeader) return null;
@@ -251,18 +169,10 @@ export async function sendPasswordResetEmail({
     request,
 }: PasswordResetEmailInput) {
     const resetUrl = buildCanonicalPasswordResetUrl(token);
-    const credentials = getGlobalMailCredentials();
-    if (!credentials) {
-        throw new Error(
-            'No global email provider configured for password reset.'
-        );
-    }
-
     const locale = resolveLocale(request);
     const t = passwordResetTranslations[locale];
-    const mailService = getMailService(credentials);
     const trimmedName = user.name?.trim();
-    await mailService.sendMail(
+    await sendSystemMail(
         user.email,
         t.subject,
         buildPasswordResetHtml({
@@ -272,7 +182,6 @@ export async function sendPasswordResetEmail({
                     : user.email,
             resetUrl,
             locale,
-        }),
-        credentials.senderEmail
+        })
     );
 }

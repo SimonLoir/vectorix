@@ -120,7 +120,9 @@
             "useTotp": "Use the authenticator app",
             "back": "Back",
             "invalidCode": "Invalid or expired code. Please try again."
-        }
+        },
+        "loginFailed": "Sign-in could not be completed. Check your details and try again.",
+        "signingIn": "Signing in…"
     },
     "apiKeys": {
         "title": "API Keys",
@@ -235,6 +237,25 @@
             "backupCodesFileHeader": "Vectorix backup codes — each code can be used only once.",
             "enabledToast": "Two-factor authentication enabled",
             "disabledToast": "Two-factor authentication disabled"
+        },
+        "title": "My account",
+        "notificationPreferences": "Notification preferences",
+        "profile": {
+            "title": "Profile",
+            "name": "Name",
+            "saveName": "Save name",
+            "savingName": "Saving name…",
+            "nameSaved": "Your name was saved.",
+            "nameError": "Your name could not be saved. Try again.",
+            "emailTitle": "Email ownership",
+            "verified": "This email address is verified.",
+            "unverified": "This email address has not been verified.",
+            "newEmail": "New email address",
+            "changeVerifiedHelp": "First confirm the request from your current inbox, then verify the new address. Your current address stays unchanged until both steps are complete.",
+            "changeUnverifiedHelp": "Verify your current address using the verification email above before requesting a change. You will then confirm the change from your current inbox and verify the new address. Your current address stays unchanged until all steps are complete.",
+            "changeVerifiedRequested": "Request accepted. Check your current inbox to confirm the change, then your new inbox to verify the new address. Your current address has not changed.",
+            "requestChange": "Request email change",
+            "requestingChange": "Requesting change…"
         }
     },
     "signup": {
@@ -252,7 +273,9 @@
         "terms": "By clicking continue, you agree to our",
         "termsOfService": "Terms of Service",
         "privacyPolicy": "Privacy Policy",
-        "signupSuccessful": "Signup successful"
+        "signupSuccessful": "Signup successful",
+        "signupFailed": "Your account could not be created. Check your details and try again.",
+        "creatingAccount": "Creating account…"
     },
     "resetPassword": {
         "title": "Choose a new password",
@@ -279,7 +302,7 @@
         "createMyOrganization": "Create my organization",
         "invitationId": "Invitation ID",
         "enterInvitationId": "Enter invitation ID",
-        "joinDescription": "Enter the invitation ID you received to join an organization",
+        "joinDescription": "Enter your invitation ID to review its details and confirm acceptance. A verified email address is required.",
         "joining": "Joining...",
         "joinOrganization": "Join organization",
         "organizationCreated": "Organization created",
@@ -287,7 +310,9 @@
         "joinedSuccessfully": "Successfully joined organization!",
         "failedToAccept": "Failed to accept invitation",
         "nameRequired": "Organization name is required",
-        "invitationIdRequired": "Invitation ID is required"
+        "invitationIdRequired": "Invitation ID is required",
+        "reviewInvitation": "Review invitation",
+        "invalidInvitationId": "Enter a valid invitation ID of at most 128 characters."
     },
     "language": {
         "label": "Language",
@@ -314,7 +339,23 @@
         "joinedOrganization": "Successfully joined the organization!",
         "failedToAccept": "Failed to accept invitation",
         "unexpectedError": "An unexpected error occurred",
-        "missingId": "Invalid invitation link - missing invitation ID"
+        "missingId": "A valid invitation ID is required. Check the invitation link or enter the ID again.",
+        "reviewTitle": "Review invitation",
+        "loadingDetails": "Loading your invitation…",
+        "verifyBeforeReview": "Verify your current email address before reviewing or accepting this invitation.",
+        "returnAfterVerification": "The verification link returns to this invitation. You will still need to confirm acceptance here.",
+        "reviewDescription": "You have been invited to join {organization}.",
+        "recipient": "Invited email address",
+        "role": "Assigned role",
+        "explicitAcceptance": "Accepting creates your membership and opens this organisation as your active workspace. Nothing is accepted or switched until you choose the button below.",
+        "accept": "Accept invitation",
+        "cancel": "Cancel",
+        "accepted": "The invitation was accepted. Your membership has been created.",
+        "activationFailed": "Membership was created, but the active organisation could not be switched. Select the organisation in the dashboard; do not accept the invitation again.",
+        "unavailableHelp": "This invitation may be expired, cancelled or already used. Check that you are signed in with the invited address.",
+        "reloadInvitation": "Reload invitation",
+        "accountLink": "Open my account",
+        "signIn": "Sign in to review invitation"
     },
     "members": {
         "title": "Manage Members",
@@ -1296,5 +1337,45 @@
             "organization": "Team members, invitations, and roles.",
             "licenses": "Features enabled for your organization."
         }
+    },
+    "emailOwnership": {
+        "verifyCurrentDescription": "Confirm ownership of {email} before using features that require a verified address.",
+        "verificationSent": "Verification requested. Check your inbox for the link; you will need to sign in to this account and confirm it.",
+        "sendVerification": "Send verification email",
+        "sending": "Requesting verification…",
+        "loadingSession": "Loading your account…",
+        "sessionError": "Your current session could not be confirmed. Reload before continuing.",
+        "reloadSession": "Reload session"
+    },
+    "emailOwnershipErrors": {
+        "generic": "This action could not be completed. Check your account and try again.",
+        "unavailable": "Email verification is temporarily unavailable. Try again later or contact the operator.",
+        "sessionRequired": "Sign in to the account that requested this link before continuing.",
+        "accountMismatch": "This link belongs to another account. Sign in to that account to continue.",
+        "invalidToken": "This link is invalid or has expired. Request a new verification email.",
+        "stale": "This request is no longer current or has already been used. Check your account and request a new link if needed.",
+        "emailMismatch": "Verification can only be requested for the current address of your signed-in account.",
+        "verificationRequired": "Verify your email address before reviewing or accepting this invitation.",
+        "invitationRecipient": "This invitation is addressed to another email address. Sign in with the matching account.",
+        "currentAddressRequired": "Verify your current email address before requesting a change. Reload your account if the verification state has changed."
+    },
+    "verifyEmail": {
+        "title": "Confirm email ownership",
+        "invalidLink": "This verification link is incomplete or invalid. Request a new link from your account.",
+        "signInRequired": "Sign in to the account that requested this link. Password, passkey and two-factor sign-in return you here before any verification takes place.",
+        "signIn": "Sign in to continue",
+        "signedInAs": "Signed in as {email}",
+        "explicitConfirmation": "Only continue if you requested this verification or email change. Opening this page alone does not confirm the link.",
+        "verify": "Confirm this link",
+        "verifying": "Confirming…",
+        "continue": "Continue",
+        "ADDRESS_VERIFIED": "Your email address is now verified.",
+        "ADDRESS_CHANGED": "Your new email address is verified and is now the address of this account.",
+        "NEW_ADDRESS_VERIFICATION_REQUIRED": "The change request is confirmed. Your current address is unchanged. Check the new inbox and confirm its separate verification link to finish.",
+        "refreshFailed": "Verification succeeded, but the session could not be refreshed. Reload your account page before making another change.",
+        "wrongAccount": "If this is not the account that requested the link, switch accounts before confirming.",
+        "switchAccount": "Sign out and use another account",
+        "switchingAccount": "Signing out…",
+        "requestNewLink": "Open account verification settings"
     }
 }

@@ -119,6 +119,10 @@ export function AppSidebar({
                 </Link>
                 <TeamSwitcher
                     allowOrganizationCreation={allowOrganizationCreation}
+                    showEmptyOrganizationOnboarding={
+                        pathname !== '/dashboard/accept-invitation' &&
+                        pathname !== '/dashboard/account'
+                    }
                 />
             </SidebarHeader>
             <SidebarContent>
