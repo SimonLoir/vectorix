@@ -33,8 +33,11 @@ import { toast } from 'sonner';
 
 export function TeamSwitcher({
     allowOrganizationCreation = false,
+    showEmptyOrganizationOnboarding = true,
 }: Readonly<{
     allowOrganizationCreation?: boolean;
+    /** Account and invitation recovery may remain accessible before membership. */
+    showEmptyOrganizationOnboarding?: boolean;
 }>) {
     const authClient = useAuth();
     const { data: organizations, refetch } = authClient.useListOrganizations();
@@ -64,6 +67,9 @@ export function TeamSwitcher({
             toast.error(t('switchFailed'));
         }
     }
+
+    if (organizations?.length === 0 && !showEmptyOrganizationOnboarding)
+        return null;
 
     if (organizations?.length === 0)
         return (

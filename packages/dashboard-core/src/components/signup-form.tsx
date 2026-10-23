@@ -16,11 +16,15 @@ import { useAuth } from '../hooks/use-auth';
 import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
 import { useTranslations } from 'next-intl';
+import Link from 'next/link';
+import { emailOwnershipSignInReturn } from '../lib/email-ownership';
 
+/** Native signup preserves only the explicitly allowlisted email-flow resume. */
 export function SignupForm({
     className,
+    successRedirectPath = '/',
     ...props
-}: React.ComponentProps<'div'>) {
+}: React.ComponentProps<'div'> & { readonly successRedirectPath?: string }) {
     const authClient = useAuth();
     const [name, setName] = useState('');
     const [email, setEmail] = useState('');
@@ -28,6 +32,12 @@ export function SignupForm({
     const [confirmPassword, setConfirmPassword] = useState('');
     const router = useRouter();
     const t = useTranslations('signup');
+    const [busy, setBusy] = useState(false);
+    const returnTo = emailOwnershipSignInReturn(successRedirectPath);
+    const signInHref =
+        returnTo === '/dashboard'
+            ? '/sign-in'
+            : `/sign-in?${new URLSearchParams({ returnTo })}`;
 
     return (
         <div className={cn('flex flex-col gap-6', className)} {...props}>
@@ -37,7 +47,8 @@ export function SignupForm({
                         className='p-6 md:p-8'
                         onSubmit={async (e) => {
                             e.preventDefault();
-                            const { data, error } =
+                            setBusy(true);
+                            try {
                                 await authClient.signUp.email(
                                     {
                                         email,
@@ -49,15 +60,20 @@ export function SignupForm({
                                             toast.success(
                                                 t('signupSuccessful')
                                             );
-                                            void router.push('/');
+                                            void router.push(
+                                                successRedirectPath
+                                            );
                                         },
-                                        onError: (ctx) => {
-                                            // display the error message
-                                            alert(ctx.error.message);
+                                        onError: () => {
+                                            toast.error(t('signupFailed'));
                                         },
                                     }
                                 );
-                            console.log(data, error);
+                            } catch {
+                                toast.error(t('signupFailed'));
+                            } finally {
+                                setBusy(false);
+                            }
                         }}
                     >
                         <FieldGroup>
@@ -76,6 +92,8 @@ export function SignupForm({
                                 <Input
                                     id='name'
                                     type='text'
+                                    autoComplete='name'
+                                    maxLength={200}
                                     placeholder='John Doe'
                                     value={name}
                                     onChange={(e) => setName(e.target.value)}
@@ -89,6 +107,8 @@ export function SignupForm({
                                 <Input
                                     id='email'
                                     type='email'
+                                    autoComplete='email'
+                                    maxLength={254}
                                     placeholder='m@example.com'
                                     value={email}
                                     onChange={(e) => setEmail(e.target.value)}
@@ -104,6 +124,7 @@ export function SignupForm({
                                         <Input
                                             id='password'
                                             type='password'
+                                            autoComplete='new-password'
                                             value={password}
                                             onChange={(e) =>
                                                 setPassword(e.target.value)
@@ -118,6 +139,7 @@ export function SignupForm({
                                         <Input
                                             id='confirm-password'
                                             type='password'
+                                            autoComplete='new-password'
                                             value={confirmPassword}
                                             onChange={(e) =>
                                                 setConfirmPassword(
@@ -136,11 +158,14 @@ export function SignupForm({
                                 <Button
                                     type='submit'
                                     disabled={
+                                        busy ||
                                         password !== confirmPassword ||
                                         password.length < 8
                                     }
                                 >
-                                    {t('createAccount')}
+                                    {busy
+                                        ? t('creatingAccount')
+                                        : t('createAccount')}
                                 </Button>
                             </Field>
                             <FieldSeparator className='*:data-[slot=field-separator-content]:bg-card'>
@@ -149,7 +174,9 @@ export function SignupForm({
 
                             <FieldDescription className='text-center'>
                                 {t('alreadyHaveAccount')}{' '}
-                                <a href='/sign-in'>{t('signIn')}</a>
+                                <Link href={signInHref} prefetch={false}>
+                                    {t('signIn')}
+                                </Link>
                             </FieldDescription>
                         </FieldGroup>
                     </form>

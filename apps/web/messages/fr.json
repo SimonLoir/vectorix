@@ -120,7 +120,9 @@
             "useTotp": "Utiliser l’application d’authentification",
             "back": "Retour",
             "invalidCode": "Code invalide ou expiré. Réessayez."
-        }
+        },
+        "loginFailed": "La connexion n’a pas pu aboutir. Vérifiez vos informations et réessayez.",
+        "signingIn": "Connexion…"
     },
     "apiKeys": {
         "title": "Clés API",
@@ -235,6 +237,25 @@
             "backupCodesFileHeader": "Codes de secours Vectorix — chaque code n’est utilisable qu’une fois.",
             "enabledToast": "Authentification à deux facteurs activée",
             "disabledToast": "Authentification à deux facteurs désactivée"
+        },
+        "title": "Mon compte",
+        "notificationPreferences": "Préférences de notifications",
+        "profile": {
+            "title": "Profil",
+            "name": "Nom",
+            "saveName": "Enregistrer le nom",
+            "savingName": "Enregistrement du nom…",
+            "nameSaved": "Votre nom a été enregistré.",
+            "nameError": "Votre nom n’a pas pu être enregistré. Réessayez.",
+            "emailTitle": "Propriété de l’adresse e-mail",
+            "verified": "Cette adresse e-mail est vérifiée.",
+            "unverified": "Cette adresse e-mail n’est pas encore vérifiée.",
+            "newEmail": "Nouvelle adresse e-mail",
+            "changeVerifiedHelp": "Confirmez d’abord la demande depuis votre boîte actuelle, puis vérifiez la nouvelle adresse. Votre adresse actuelle reste inchangée jusqu’à la fin des deux étapes.",
+            "changeUnverifiedHelp": "Vérifiez votre adresse actuelle grâce à l’e-mail de vérification ci-dessus avant de demander un changement. Vous devrez ensuite confirmer le changement depuis votre boîte actuelle et vérifier la nouvelle adresse. Votre adresse actuelle reste inchangée jusqu’à la fin de toutes les étapes.",
+            "changeVerifiedRequested": "Demande acceptée. Consultez votre boîte actuelle pour confirmer le changement, puis la nouvelle boîte pour vérifier la nouvelle adresse. Votre adresse actuelle n’a pas changé.",
+            "requestChange": "Demander le changement d’adresse",
+            "requestingChange": "Demande en cours…"
         }
     },
     "signup": {
@@ -252,7 +273,9 @@
         "terms": "En cliquant sur continuer, vous acceptez nos",
         "termsOfService": "Conditions d'utilisation",
         "privacyPolicy": "Politique de confidentialité",
-        "signupSuccessful": "Inscription réussie"
+        "signupSuccessful": "Inscription réussie",
+        "signupFailed": "Votre compte n’a pas pu être créé. Vérifiez vos informations et réessayez.",
+        "creatingAccount": "Création du compte…"
     },
     "resetPassword": {
         "title": "Choisir un nouveau mot de passe",
@@ -279,7 +302,7 @@
         "createMyOrganization": "Créer mon organisation",
         "invitationId": "Identifiant d'invitation",
         "enterInvitationId": "Entrez l'identifiant d'invitation",
-        "joinDescription": "Entrez l'identifiant d'invitation reçu pour rejoindre une organisation",
+        "joinDescription": "Saisissez l’identifiant pour consulter les détails de l’invitation et confirmer son acceptation. Une adresse e-mail vérifiée est nécessaire.",
         "joining": "Rejoindre...",
         "joinOrganization": "Rejoindre l'organisation",
         "organizationCreated": "Organisation créée",
@@ -287,7 +310,9 @@
         "joinedSuccessfully": "Organisation rejointe avec succès !",
         "failedToAccept": "Échec de l'acceptation de l'invitation",
         "nameRequired": "Le nom de l'organisation est requis",
-        "invitationIdRequired": "L'identifiant d'invitation est requis"
+        "invitationIdRequired": "L'identifiant d'invitation est requis",
+        "reviewInvitation": "Consulter l’invitation",
+        "invalidInvitationId": "Saisissez un identifiant d’invitation valide de 128 caractères au maximum."
     },
     "language": {
         "label": "Langue",
@@ -314,7 +339,23 @@
         "joinedOrganization": "Organisation rejointe avec succès !",
         "failedToAccept": "Échec de l'acceptation de l'invitation",
         "unexpectedError": "Une erreur inattendue s'est produite",
-        "missingId": "Lien d'invitation invalide - identifiant d'invitation manquant"
+        "missingId": "Un identifiant d’invitation valide est nécessaire. Vérifiez le lien ou saisissez de nouveau l’identifiant.",
+        "reviewTitle": "Consulter l’invitation",
+        "loadingDetails": "Chargement de votre invitation…",
+        "verifyBeforeReview": "Vérifiez votre adresse e-mail actuelle avant de consulter ou d’accepter cette invitation.",
+        "returnAfterVerification": "Le lien de vérification vous ramène à cette invitation. Vous devrez encore confirmer son acceptation ici.",
+        "reviewDescription": "Vous avez été invité à rejoindre {organization}.",
+        "recipient": "Adresse e-mail invitée",
+        "role": "Rôle attribué",
+        "explicitAcceptance": "Accepter crée votre appartenance et ouvre cette organisation comme espace de travail actif. Rien n’est accepté et aucun changement d’espace n’a lieu tant que vous ne cliquez pas sur le bouton ci-dessous.",
+        "accept": "Accepter l’invitation",
+        "cancel": "Annuler",
+        "accepted": "L’invitation a été acceptée. Votre appartenance à l’organisation a été créée.",
+        "activationFailed": "Votre appartenance a été créée, mais l’organisation active n’a pas pu être changée. Sélectionnez l’organisation dans le tableau de bord ; n’acceptez pas à nouveau l’invitation.",
+        "unavailableHelp": "Cette invitation peut avoir expiré, avoir été annulée ou déjà utilisée. Vérifiez que vous êtes connecté avec l’adresse invitée.",
+        "reloadInvitation": "Recharger l’invitation",
+        "accountLink": "Ouvrir mon compte",
+        "signIn": "Se connecter pour consulter l’invitation"
     },
     "members": {
         "title": "Gestion des membres",
@@ -1296,5 +1337,45 @@
             "organization": "Membres, invitations et rôles de votre équipe.",
             "licenses": "Fonctionnalités activées pour votre organisation."
         }
+    },
+    "emailOwnership": {
+        "verifyCurrentDescription": "Confirmez que vous possédez l’adresse {email} avant d’utiliser les fonctions qui nécessitent une adresse vérifiée.",
+        "verificationSent": "Vérification demandée. Consultez votre boîte pour obtenir le lien ; vous devrez vous connecter à ce compte et le confirmer.",
+        "sendVerification": "Envoyer l’e-mail de vérification",
+        "sending": "Demande de vérification…",
+        "loadingSession": "Chargement de votre compte…",
+        "sessionError": "Votre session actuelle n’a pas pu être confirmée. Rechargez-la avant de continuer.",
+        "reloadSession": "Recharger la session"
+    },
+    "emailOwnershipErrors": {
+        "generic": "Cette action n’a pas pu aboutir. Vérifiez votre compte et réessayez.",
+        "unavailable": "La vérification des adresses e-mail est temporairement indisponible. Réessayez plus tard ou contactez l’opérateur.",
+        "sessionRequired": "Connectez-vous au compte qui a demandé ce lien avant de continuer.",
+        "accountMismatch": "Ce lien appartient à un autre compte. Connectez-vous à ce compte pour continuer.",
+        "invalidToken": "Ce lien est invalide ou a expiré. Demandez un nouvel e-mail de vérification.",
+        "stale": "Cette demande n’est plus actuelle ou a déjà été utilisée. Vérifiez votre compte et demandez un nouveau lien si nécessaire.",
+        "emailMismatch": "La vérification ne peut être demandée que pour l’adresse actuelle du compte connecté.",
+        "verificationRequired": "Vérifiez votre adresse e-mail avant de consulter ou d’accepter cette invitation.",
+        "invitationRecipient": "Cette invitation concerne une autre adresse e-mail. Connectez-vous au compte correspondant.",
+        "currentAddressRequired": "Vérifiez votre adresse e-mail actuelle avant de demander un changement. Rechargez votre compte si son état de vérification a changé."
+    },
+    "verifyEmail": {
+        "title": "Confirmer la propriété de l’adresse",
+        "invalidLink": "Ce lien de vérification est incomplet ou invalide. Demandez un nouveau lien depuis votre compte.",
+        "signInRequired": "Connectez-vous au compte qui a demandé ce lien. La connexion par mot de passe, passkey ou double authentification vous ramène ici avant toute vérification.",
+        "signIn": "Se connecter pour continuer",
+        "signedInAs": "Connecté avec l’adresse {email}",
+        "explicitConfirmation": "Continuez uniquement si vous avez demandé cette vérification ou ce changement d’adresse. Ouvrir cette page ne confirme pas le lien.",
+        "verify": "Confirmer ce lien",
+        "verifying": "Confirmation…",
+        "continue": "Continuer",
+        "ADDRESS_VERIFIED": "Votre adresse e-mail est maintenant vérifiée.",
+        "ADDRESS_CHANGED": "Votre nouvelle adresse e-mail est vérifiée et est désormais celle de ce compte.",
+        "NEW_ADDRESS_VERIFICATION_REQUIRED": "La demande de changement est confirmée. Votre adresse actuelle reste inchangée. Consultez la nouvelle boîte et confirmez son lien de vérification distinct pour terminer.",
+        "refreshFailed": "La vérification a réussi, mais la session n’a pas pu être actualisée. Rechargez la page de votre compte avant un autre changement.",
+        "wrongAccount": "Si ce compte n’a pas demandé le lien, changez de compte avant de confirmer.",
+        "switchAccount": "Se déconnecter et utiliser un autre compte",
+        "switchingAccount": "Déconnexion…",
+        "requestNewLink": "Ouvrir les paramètres de vérification du compte"
     }
 }

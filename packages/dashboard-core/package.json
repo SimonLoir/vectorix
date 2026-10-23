@@ -24,6 +24,7 @@
         "./contexts/auth": "./src/contexts/auth.tsx",
         "./utils/date-utils": "./src/utils/date-utils.ts",
         "./lib/auth-client": "./src/lib/auth-client.ts",
+        "./lib/email-ownership": "./src/lib/email-ownership.ts",
         "./lib/orpc-headers": "./src/lib/orpc-headers.ts",
         "./i18n/locale": "./src/i18n/locale.ts",
         "./i18n/time-zone": "./src/i18n/time-zone.ts"

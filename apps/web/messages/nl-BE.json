@@ -120,7 +120,9 @@
             "useTotp": "De authenticator-app gebruiken",
             "back": "Terug",
             "invalidCode": "Ongeldige of verlopen code. Probeer het opnieuw."
-        }
+        },
+        "loginFailed": "Aanmelden is niet gelukt. Controleer uw gegevens en probeer opnieuw.",
+        "signingIn": "Aanmelden…"
     },
     "apiKeys": {
         "title": "API-sleutels",
@@ -235,6 +237,25 @@
             "backupCodesFileHeader": "Vectorix back-upcodes — elke code kan maar één keer worden gebruikt.",
             "enabledToast": "Tweestapsverificatie ingeschakeld",
             "disabledToast": "Tweestapsverificatie uitgeschakeld"
+        },
+        "title": "Mijn account",
+        "notificationPreferences": "Meldingsvoorkeuren",
+        "profile": {
+            "title": "Profiel",
+            "name": "Naam",
+            "saveName": "Naam opslaan",
+            "savingName": "Naam opslaan…",
+            "nameSaved": "Uw naam is opgeslagen.",
+            "nameError": "Uw naam kon niet worden opgeslagen. Probeer opnieuw.",
+            "emailTitle": "Eigendom van het e-mailadres",
+            "verified": "Dit e-mailadres is geverifieerd.",
+            "unverified": "Dit e-mailadres is nog niet geverifieerd.",
+            "newEmail": "Nieuw e-mailadres",
+            "changeVerifiedHelp": "Bevestig het verzoek eerst vanuit uw huidige mailbox en verifieer daarna het nieuwe adres. Uw huidige adres blijft ongewijzigd tot beide stappen voltooid zijn.",
+            "changeUnverifiedHelp": "Verifieer uw huidige adres via de verificatiemail hierboven voordat u een wijziging aanvraagt. Daarna bevestigt u de wijziging vanuit uw huidige mailbox en verifieert u het nieuwe adres. Uw huidige adres blijft ongewijzigd tot alle stappen voltooid zijn.",
+            "changeVerifiedRequested": "Verzoek aanvaard. Controleer uw huidige mailbox om de wijziging te bevestigen en daarna de nieuwe mailbox om het nieuwe adres te verifiëren. Uw huidige adres is niet gewijzigd.",
+            "requestChange": "E-mailadres wijzigen aanvragen",
+            "requestingChange": "Wijziging aanvragen…"
         }
     },
     "signup": {
@@ -252,7 +273,9 @@
         "terms": "Door op doorgaan te klikken, gaat u akkoord met onze",
         "termsOfService": "Servicevoorwaarden",
         "privacyPolicy": "Privacybeleid",
-        "signupSuccessful": "Registratie geslaagd"
+        "signupSuccessful": "Registratie geslaagd",
+        "signupFailed": "Uw account kon niet worden aangemaakt. Controleer uw gegevens en probeer opnieuw.",
+        "creatingAccount": "Account aanmaken…"
     },
     "resetPassword": {
         "title": "Kies een nieuw wachtwoord",
@@ -279,7 +302,7 @@
         "createMyOrganization": "Mijn organisatie aanmaken",
         "invitationId": "Uitnodigings-ID",
         "enterInvitationId": "Voer het uitnodigings-ID in",
-        "joinDescription": "Voer het uitnodigings-ID in dat u heeft ontvangen om lid te worden van een organisatie",
+        "joinDescription": "Voer het uitnodigings-ID in om de details te bekijken en de aanvaarding te bevestigen. Een geverifieerd e-mailadres is vereist.",
         "joining": "Deelnemen...",
         "joinOrganization": "Lid worden van organisatie",
         "organizationCreated": "Organisatie aangemaakt",
@@ -287,7 +310,9 @@
         "joinedSuccessfully": "Succesvol lid geworden van de organisatie!",
         "failedToAccept": "Accepteren van uitnodiging mislukt",
         "nameRequired": "Naam van de organisatie is verplicht",
-        "invitationIdRequired": "Uitnodigings-ID is verplicht"
+        "invitationIdRequired": "Uitnodigings-ID is verplicht",
+        "reviewInvitation": "Uitnodiging bekijken",
+        "invalidInvitationId": "Voer een geldig uitnodigings-ID van maximaal 128 tekens in."
     },
     "language": {
         "label": "Taal",
@@ -314,7 +339,23 @@
         "joinedOrganization": "Succesvol lid geworden van de organisatie!",
         "failedToAccept": "Accepteren van uitnodiging mislukt",
         "unexpectedError": "Er is een onverwachte fout opgetreden",
-        "missingId": "Ongeldige uitnodigingslink - uitnodigings-ID ontbreekt"
+        "missingId": "Een geldig uitnodigings-ID is vereist. Controleer de link of voer het ID opnieuw in.",
+        "reviewTitle": "Uitnodiging bekijken",
+        "loadingDetails": "Uw uitnodiging laden…",
+        "verifyBeforeReview": "Verifieer uw huidige e-mailadres voordat u deze uitnodiging bekijkt of aanvaardt.",
+        "returnAfterVerification": "De verificatielink brengt u terug naar deze uitnodiging. U moet de aanvaarding hier nog bevestigen.",
+        "reviewDescription": "U bent uitgenodigd om lid te worden van {organization}.",
+        "recipient": "Uitgenodigd e-mailadres",
+        "role": "Toegewezen rol",
+        "explicitAcceptance": "Door te aanvaarden wordt u lid en opent deze organisatie als uw actieve werkruimte. Er wordt niets aanvaard of gewijzigd totdat u op de knop hieronder klikt.",
+        "accept": "Uitnodiging aanvaarden",
+        "cancel": "Annuleren",
+        "accepted": "De uitnodiging is aanvaard. Uw lidmaatschap is aangemaakt.",
+        "activationFailed": "Uw lidmaatschap is aangemaakt, maar de actieve organisatie kon niet worden gewijzigd. Selecteer de organisatie in het dashboard; aanvaard de uitnodiging niet opnieuw.",
+        "unavailableHelp": "Deze uitnodiging kan verlopen, ingetrokken of al gebruikt zijn. Controleer of u met het uitgenodigde adres bent aangemeld.",
+        "reloadInvitation": "Uitnodiging opnieuw laden",
+        "accountLink": "Mijn account openen",
+        "signIn": "Aanmelden om de uitnodiging te bekijken"
     },
     "members": {
         "title": "Leden beheren",
@@ -1296,5 +1337,45 @@
             "organization": "Teamleden, uitnodigingen en rollen.",
             "licenses": "Ingeschakelde functies voor je organisatie."
         }
+    },
+    "emailOwnership": {
+        "verifyCurrentDescription": "Bevestig dat het adres {email} van u is voordat u functies gebruikt die een geverifieerd adres vereisen.",
+        "verificationSent": "Verificatie aangevraagd. Controleer uw mailbox voor de link; u moet zich bij dit account aanmelden en de link bevestigen.",
+        "sendVerification": "Verificatiemail verzenden",
+        "sending": "Verificatie aanvragen…",
+        "loadingSession": "Uw account laden…",
+        "sessionError": "Uw huidige sessie kon niet worden bevestigd. Laad ze opnieuw voordat u doorgaat.",
+        "reloadSession": "Sessie opnieuw laden"
+    },
+    "emailOwnershipErrors": {
+        "generic": "Deze actie kon niet worden voltooid. Controleer uw account en probeer opnieuw.",
+        "unavailable": "E-mailverificatie is tijdelijk niet beschikbaar. Probeer later opnieuw of neem contact op met de beheerder.",
+        "sessionRequired": "Meld u aan bij het account dat deze link heeft aangevraagd voordat u doorgaat.",
+        "accountMismatch": "Deze link hoort bij een ander account. Meld u bij dat account aan om door te gaan.",
+        "invalidToken": "Deze link is ongeldig of verlopen. Vraag een nieuwe verificatiemail aan.",
+        "stale": "Dit verzoek is niet meer actueel of is al gebruikt. Controleer uw account en vraag indien nodig een nieuwe link aan.",
+        "emailMismatch": "Verificatie kan alleen worden aangevraagd voor het huidige adres van uw aangemelde account.",
+        "verificationRequired": "Verifieer uw e-mailadres voordat u deze uitnodiging bekijkt of aanvaardt.",
+        "invitationRecipient": "Deze uitnodiging is voor een ander e-mailadres. Meld u aan met het bijbehorende account.",
+        "currentAddressRequired": "Verifieer uw huidige e-mailadres voordat u een wijziging aanvraagt. Laad uw account opnieuw als de verificatiestatus is gewijzigd."
+    },
+    "verifyEmail": {
+        "title": "Eigendom van het e-mailadres bevestigen",
+        "invalidLink": "Deze verificatielink is onvolledig of ongeldig. Vraag vanuit uw account een nieuwe link aan.",
+        "signInRequired": "Meld u aan bij het account dat deze link heeft aangevraagd. Aanmelden met wachtwoord, passkey of tweestapsverificatie brengt u hier terug voordat er iets wordt geverifieerd.",
+        "signIn": "Aanmelden om door te gaan",
+        "signedInAs": "Aangemeld als {email}",
+        "explicitConfirmation": "Ga alleen door als u deze verificatie of e-mailwijziging hebt aangevraagd. Deze pagina openen bevestigt de link niet.",
+        "verify": "Deze link bevestigen",
+        "verifying": "Bevestigen…",
+        "continue": "Doorgaan",
+        "ADDRESS_VERIFIED": "Uw e-mailadres is nu geverifieerd.",
+        "ADDRESS_CHANGED": "Uw nieuwe e-mailadres is geverifieerd en is nu het adres van dit account.",
+        "NEW_ADDRESS_VERIFICATION_REQUIRED": "Het wijzigingsverzoek is bevestigd. Uw huidige adres blijft ongewijzigd. Controleer de nieuwe mailbox en bevestig de aparte verificatielink om af te ronden.",
+        "refreshFailed": "De verificatie is geslaagd, maar de sessie kon niet worden vernieuwd. Laad uw accountpagina opnieuw voordat u iets anders wijzigt.",
+        "wrongAccount": "Als dit niet het account is dat de link heeft aangevraagd, wissel dan van account voordat u bevestigt.",
+        "switchAccount": "Afmelden en een ander account gebruiken",
+        "switchingAccount": "Afmelden…",
+        "requestNewLink": "Verificatie-instellingen van het account openen"
     }
 }

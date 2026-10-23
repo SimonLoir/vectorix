@@ -18,6 +18,11 @@ import { toast } from 'sonner';
 import { useState } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@repo/ui/tabs';
 import { useTranslations } from 'next-intl';
+import { useRouter } from 'next/navigation';
+import {
+    invitationReviewPath,
+    isInvitationId,
+} from '../../lib/email-ownership';
 
 export default function NewOrganizationForm({
     onCreate,
@@ -27,6 +32,7 @@ export default function NewOrganizationForm({
     allowOrganizationCreation?: boolean;
 }>) {
     const authClient = useAuth();
+    const router = useRouter();
     const [isSubmitting, setIsSubmitting] = useState(false);
     const t = useTranslations('orgForm');
 
@@ -36,7 +42,10 @@ export default function NewOrganizationForm({
     });
 
     const joinOrganizationSchema = z.object({
-        invitationId: z.string().min(1, t('invitationIdRequired')),
+        invitationId: z
+            .string()
+            .min(1, t('invitationIdRequired'))
+            .refine(isInvitationId, t('invalidInvitationId')),
     });
 
     const createForm = useForm<z.infer<typeof newOrganizationSchema>>({
@@ -60,7 +69,7 @@ export default function NewOrganizationForm({
                 logo: values.logo,
             });
             if (error) {
-                toast.error(error.message ?? t('failedToCreate'));
+                toast.error(t('failedToCreate'));
                 return;
             }
 
@@ -69,35 +78,18 @@ export default function NewOrganizationForm({
                 organizationId: data.id,
             });
             onCreate?.();
+        } catch {
+            toast.error(t('failedToCreate'));
         } finally {
             setIsSubmitting(false);
         }
     }
 
-    async function onJoinSubmit(
-        values: z.infer<typeof joinOrganizationSchema>
-    ) {
-        setIsSubmitting(true);
-        try {
-            const { error, data } =
-                await authClient.organization.acceptInvitation({
-                    invitationId: values.invitationId,
-                });
-
-            if (error) {
-                toast.error(error.message ?? t('failedToAccept'));
-                return;
-            }
-
-            await authClient.organization.setActive({
-                organizationId: data.invitation.organizationId,
-            });
-
-            toast.success(t('joinedSuccessfully'));
-            globalThis.location.reload();
-        } finally {
-            setIsSubmitting(false);
-        }
+    function onJoinSubmit(values: z.infer<typeof joinOrganizationSchema>) {
+        const path = invitationReviewPath(values.invitationId);
+        if (!path) return;
+        onCreate?.();
+        router.push(path);
     }
 
     const joinOrganizationForm = (
@@ -115,6 +107,7 @@ export default function NewOrganizationForm({
                             <FormControl>
                                 <Input
                                     placeholder={t('enterInvitationId')}
+                                    maxLength={128}
                                     {...field}
                                 />
                             </FormControl>
@@ -126,7 +119,7 @@ export default function NewOrganizationForm({
                     )}
                 />
                 <Button type='submit' disabled={isSubmitting}>
-                    {isSubmitting ? t('joining') : t('joinOrganization')}
+                    {t('reviewInvitation')}
                 </Button>
             </form>
         </Form>

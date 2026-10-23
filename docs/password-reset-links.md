@@ -1,6 +1,6 @@
 # Canonical password-reset links
 
-This security change implements issue #17. Final automated and browser acceptance are recorded below. It requires no schema, migration or public DTO change. Outbound mail configuration consistency and verified email-address changes remain separate work.
+This security change implements issue #17. Final automated and browser acceptance are recorded below. It requires no schema, migration or public DTO change. The [account email ownership slice](account-email-ownership.md) extends this boundary with shared platform mail configuration and verified address changes; its current validation status is recorded separately.
 
 Password-reset links must use a web URL controlled by the deployment operator. Request `Origin`, `Referer`, `Host` and forwarded headers cannot choose the destination. These headers may still participate in native request security and locale selection; that does not make them a trusted link base.
 
@@ -20,12 +20,12 @@ The configured path prefix is preserved: `https://app.example.test/tenant-ui` pr
 sequenceDiagram
     participant Client
     participant Auth as Native auth request flow
-    participant Guard as Canonical URL preflight
+    participant Guard as URL and mail preflight
     participant DB as Application database
     participant Mail as Password-reset callback
     participant Transport as Configured mail transport
     Client->>Auth: Request password reset
-    Auth->>Guard: Check configured web URL before account lookup
+    Auth->>Guard: Check configured web URL and static mail configuration
     alt Missing or invalid selected configuration
         Guard-->>Client: Same sanitized 503 for known and unknown email
     else Valid canonical configuration
@@ -40,9 +40,9 @@ sequenceDiagram
     end
 ```
 
-Better Auth catches mail callback errors after its handler creates a token. Callback validation alone would therefore be too late to guarantee the missing/invalid-configuration response. The exact `/request-password-reset` before hook validates first, before the native reset-account lookup or token creation. The mail callback independently validates again before resolving mail credentials or rendering/sending email. Configuration failures use a static HTTP 503 `PASSWORD_RESET_UNAVAILABLE`, without echoing an email address, configuration value or token. The shared web form renders a translated temporary-unavailability message in English, French or Belgian Dutch.
+Better Auth catches mail callback errors after its handler creates a token. Callback validation alone would therefore be too late to guarantee the missing/invalid-configuration response. The exact `/request-password-reset` before hook validates first, before the native reset-account lookup or token creation. The mail callback independently validates again before resolving mail credentials or rendering/sending email. Configuration failures use a static HTTP 503 `PASSWORD_RESET_UNAVAILABLE`, without echoing an email address, configuration value or token. The shared web form renders a translated temporary-unavailability message in English, French or Belgian Dutch. The current shared-mail implementation also preflights the selected platform transport before native account/token work; SMTP authentication is a complete pair or absent, the selected provider owns its sender, and callback errors remain sanitized. Historical validation below predates that additional boundary; current results belong to the account email guide.
 
-Native origin/redirect validation, rate limits, reset expiry, single-use redemption and session revocation remain in force. The preflight validates the link destination, not mail-provider availability. This change does not promise email delivery or make the request/preflight/callback a single transaction across concurrent deployment configuration changes.
+Native origin/redirect validation, rate limits, reset expiry, single-use redemption and session revocation remain in force. The preflight validates the link destination and static transport configuration, not live mail-provider availability. This change does not promise email delivery or make the request/preflight/callback a single transaction across concurrent deployment configuration changes.
 
 ## Implementation entry points
 
