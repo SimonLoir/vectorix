@@ -3,7 +3,7 @@ import { useTranslations } from 'next-intl';
 import type { ReactNode } from 'react';
 import DashboardPage from '@/components/dashboard-page';
 import { useVectorixPermissions } from '@/contexts/vectorix-permissions';
-import { Button } from '@repo/ui/button';
+import { RequestErrorState } from '@/components/request-error-state';
 
 /** Mount business queries only after current organization permissions are known. */
 export function CatalogPage({
@@ -18,7 +18,7 @@ export function CatalogPage({
     children: ReactNode;
 }>) {
     const tr = useTranslations('rag');
-    const { isPending, isError, canOperation, refresh } =
+    const { isPending, isError, errorKey, canOperation, refresh } =
         useVectorixPermissions();
     return (
         <DashboardPage className='space-y-6'>
@@ -34,18 +34,16 @@ export function CatalogPage({
                 </p>
             </header>
             {isError ? (
-                <div role='alert'>
-                    {tr('page.permissionFailed')}{' '}
-                    <Button variant='outline' onClick={() => void refresh()}>
-                        {tr('common.retry')}
-                    </Button>
-                </div>
+                <RequestErrorState
+                    errorKey={errorKey ?? 'generic'}
+                    onRetry={refresh}
+                />
             ) : isPending ? (
                 <p role='status'>{tr('page.permissionLoading')}</p>
             ) : canOperation(operation) ? (
                 children
             ) : (
-                <p role='alert'>{tr('page.denied')}</p>
+                <RequestErrorState errorKey='permission' onRetry={refresh} />
             )}
         </DashboardPage>
     );

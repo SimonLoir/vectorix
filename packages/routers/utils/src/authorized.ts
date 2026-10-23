@@ -12,6 +12,7 @@ import {
     resolveExpectedOrganizationAccess,
 } from './expected-organization';
 import { resolveCurrentApiKeyAccess } from './api-key-access';
+import { normalizeAuthorizationError } from './authorization-error';
 
 const authorize = async (
     headers: Headers,
@@ -144,15 +145,9 @@ export const authMiddleware = base.middleware(
 
 export const authorized = base
     .use(
-        onError((e) => {
-            if (e instanceof ORPCError) throw e;
-            if (
-                'status' in e &&
-                typeof e.status === 'string' &&
-                e.status === 'UNAUTHORIZED'
-            )
-                throw new ORPCError('UNAUTHORIZED');
-            console.error(e);
+        onError((error) => {
+            // Installed onError rethrows its input unless this callback throws.
+            throw normalizeAuthorizationError(error);
         })
     )
     .use(authMiddleware);

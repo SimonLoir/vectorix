@@ -427,6 +427,20 @@
             "generic": "De actie kon niet worden voltooid. Laad de pagina opnieuw om de huidige toestand te controleren voordat je opnieuw probeert."
         }
     },
+    "requestErrors": {
+        "permission": "Je hebt geen toestemming om deze actie uit te voeren.",
+        "session": "Je sessie is niet beschikbaar of is verlopen. Meld je opnieuw aan om verder te gaan.",
+        "conflict": "Een bestaand item, een limiet of een recentere wijziging verhindert deze actie. Laad de pagina opnieuw en controleer de huidige toestand voordat je opnieuw probeert.",
+        "notFound": "Dit item is niet beschikbaar of je hebt geen toegang meer. Laad de pagina opnieuw om de huidige toestand te controleren.",
+        "invalidInput": "Sommige waarden zijn ongeldig. Controleer de ingevoerde gegevens voordat je opnieuw probeert.",
+        "rateLimited": "Er zijn te veel verzoeken verstuurd. Wacht even en laad de pagina opnieuw om de huidige toestand te controleren.",
+        "tooLarge": "Het bestand of het verzoek is te groot. Gebruik een kleiner bestand of verstuur minder gegevens.",
+        "unsupportedFormat": "Het formaat van dit bestand of verzoek wordt niet ondersteund. Controleer het geselecteerde bestand en probeer opnieuw.",
+        "unavailable": "De dienst is niet beschikbaar of heeft niet op tijd geantwoord. Laad de pagina opnieuw om de huidige toestand te controleren voordat je opnieuw probeert.",
+        "generic": "Dit verzoek kon niet worden voltooid. Laad de pagina opnieuw om de huidige toestand te controleren voordat je opnieuw probeert.",
+        "retry": "Opnieuw proberen",
+        "account": "Mijn account openen"
+    },
     "teamSwitcher": {
         "switchFailed": "Kan niet van organisatie wisselen. Probeer opnieuw.",
         "selectorLabel": "Organisatie: {organization}",

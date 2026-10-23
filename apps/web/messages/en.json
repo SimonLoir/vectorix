@@ -427,6 +427,20 @@
             "generic": "The action could not be completed. Reload to check the current state before trying again."
         }
     },
+    "requestErrors": {
+        "permission": "You do not have permission to perform this action.",
+        "session": "Your session is unavailable or has expired. Sign in again to continue.",
+        "conflict": "An existing item, a limit or a newer change prevents this action. Reload the page and review the current state before trying again.",
+        "notFound": "This item is unavailable or you no longer have access. Reload the page to check the current state.",
+        "invalidInput": "Some values are invalid. Check the entered information before trying again.",
+        "rateLimited": "Too many requests were sent. Wait a moment, then reload to check the current state.",
+        "tooLarge": "The file or request is too large. Use a smaller file or reduce the submitted data.",
+        "unsupportedFormat": "This file or request format is not supported. Check the selected file and try again.",
+        "unavailable": "The service is unavailable or did not respond in time. Reload to check the current state before trying again.",
+        "generic": "This request could not be completed. Reload to check the current state before trying again.",
+        "retry": "Retry",
+        "account": "Open my account"
+    },
     "teamSwitcher": {
         "switchFailed": "Unable to switch organization. Try again.",
         "selectorLabel": "Organization: {organization}",

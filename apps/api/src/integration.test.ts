@@ -18,6 +18,7 @@ import { superadminTransactionIntegrationTests } from './superadmin-transaction-
 import { cookieCsrfIntegrationTests } from './cookie-csrf-integration';
 import { notificationLocaleIntegrationTests } from './notification-locale-integration';
 import { sessionOrganizationIntegrationTests } from './session-organization-integration';
+import { authorizationErrorIntegrationTests } from './authorization-error-integration';
 
 if (
     !new URL(
@@ -418,6 +419,12 @@ void test('core journeys with real PostgreSQL and the HTTP transports', async (t
     await sessionOrganizationIntegrationTests(t, {
         registerUser: (id) => userIds.push(id),
         registerOrganization: (id) => organizationIds.push(id),
+    });
+    await authorizationErrorIntegrationTests(t, {
+        owner: a,
+        organizationId: organizationIds[0]!,
+        createBrowser: browser,
+        registerUser: (id) => userIds.push(id),
     });
     await superadminTransactionIntegrationTests(t, {
         createBrowser: browser,

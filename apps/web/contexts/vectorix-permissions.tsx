@@ -13,12 +13,17 @@ import { permits, type PermissionSet } from '@repo/auth/permissions';
 import { operationPermissions } from '@repo/auth/permissions/operations';
 import { useORPC } from '@/hooks/use-orpc';
 import type { VectorixApiV1Outputs } from '@repo/api';
+import {
+    requestErrorKey,
+    type RequestErrorKey,
+} from '@repo/dashboard-core/lib/request-errors';
 
 type Access = VectorixApiV1Outputs['admin']['organization']['access'];
 type PermissionState = {
     access: Access | undefined;
     isPending: boolean;
     isError: boolean;
+    errorKey: RequestErrorKey | null;
     can: (permissions: PermissionSet) => boolean;
     canOperation: (operation: string) => boolean;
     refresh: () => Promise<void>;
@@ -80,6 +85,7 @@ export function VectorixPermissionsProvider({
                 access,
                 isPending: query.isPending,
                 isError: query.isError,
+                errorKey: query.isError ? requestErrorKey(query.error) : null,
                 can,
                 canOperation: (operation) =>
                     Object.hasOwn(operationPermissions, operation) &&

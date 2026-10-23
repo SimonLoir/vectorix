@@ -13,7 +13,8 @@
         "./vectorix-features": "./src/utils/vectorix-features/index.ts",
         "./encryption": "./src/utils/encryption.ts",
         "./transactions": "./src/utils/transactions.ts",
-        "./audit-log": "./src/utils/audit-log.ts"
+        "./audit-log": "./src/utils/audit-log.ts",
+        "./authorization-error": "./src/authorization-error.ts"
     },
     "scripts": {
         "check-types": "tsc6 -p tsconfig.json --noEmit",

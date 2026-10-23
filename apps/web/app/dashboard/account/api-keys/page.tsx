@@ -28,6 +28,8 @@ import { useORPC } from '@/hooks/use-orpc';
 import { useVectorixPermissions } from '@/contexts/vectorix-permissions';
 import { ApiKeyPermissionsDialog } from './components/api-key-permissions-dialog';
 import ApiKeyLine from './components/api-key-line';
+import { requestErrorKey } from '@repo/dashboard-core/lib/request-errors';
+import { RequestErrorState } from '@/components/request-error-state';
 
 /** Lists legacy/scoped keys without rotating or changing existing production secrets. */
 export default function APIKeysPage() {
@@ -40,6 +42,16 @@ export default function APIKeysPage() {
         orpc.admin.organization.apiKeys.list.queryOptions({})
     );
     if (query.isPending) return <PaddedSpinner />;
+    if (query.isError)
+        return (
+            <DashboardPage className='space-y-6'>
+                <PageTitle>{t('title')}</PageTitle>
+                <RequestErrorState
+                    errorKey={requestErrorKey(query.error)}
+                    onRetry={query.refetch}
+                />
+            </DashboardPage>
+        );
     return (
         <DashboardPage className='space-y-6'>
             <div className='flex items-center justify-between'>
@@ -50,7 +62,6 @@ export default function APIKeysPage() {
                     </Button>
                 )}
             </div>
-            {query.isError && <p role='alert'>{query.error.message}</p>}
             <Table>
                 <TableHeader>
                     <TableRow>

@@ -427,6 +427,20 @@
             "generic": "L’action n’a pas pu aboutir. Rechargez la page pour vérifier l’état actuel avant de réessayer."
         }
     },
+    "requestErrors": {
+        "permission": "Vous n’avez pas l’autorisation d’effectuer cette action.",
+        "session": "Votre session est indisponible ou a expiré. Reconnectez-vous pour continuer.",
+        "conflict": "Un élément existant, une limite ou une modification récente empêche cette action. Rechargez la page et vérifiez l’état actuel avant de réessayer.",
+        "notFound": "Cet élément n’est plus disponible ou vous n’y avez plus accès. Rechargez la page pour vérifier l’état actuel.",
+        "invalidInput": "Certaines valeurs sont invalides. Vérifiez les informations saisies avant de réessayer.",
+        "rateLimited": "Trop de requêtes ont été envoyées. Patientez, puis rechargez la page pour vérifier l’état actuel.",
+        "tooLarge": "Le fichier ou la requête est trop volumineux. Utilisez un fichier plus petit ou réduisez les données envoyées.",
+        "unsupportedFormat": "Le format de ce fichier ou de cette requête n’est pas pris en charge. Vérifiez le fichier sélectionné et réessayez.",
+        "unavailable": "Le service est indisponible ou n’a pas répondu à temps. Rechargez la page pour vérifier l’état actuel avant de réessayer.",
+        "generic": "Cette requête n’a pas pu aboutir. Rechargez la page pour vérifier l’état actuel avant de réessayer.",
+        "retry": "Réessayer",
+        "account": "Ouvrir mon compte"
+    },
     "teamSwitcher": {
         "switchFailed": "Impossible de changer d’organisation. Réessayez.",
         "selectorLabel": "Organisation : {organization}",

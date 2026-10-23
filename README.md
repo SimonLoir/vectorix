@@ -76,6 +76,8 @@ Cookie-authenticated RPC/REST requests using unsafe HTTP methods, including RPC 
 
 Before auth and RPC/REST parsing, the API limits ordinary request bodies to 1 MiB and reserves a 26 MiB envelope for the four supported POST document upload/replacement routes. The original-file contract remains 25 MiB. The guard counts exposed stream bytes even when `Content-Length` is absent or understated; CORS preflight and bodyless adapter behavior remain unchanged. See [HTTP request limits](docs/http-request-limits.md) for route matching, sanitized 413 responses and deployment boundaries.
 
+Matched RPC/REST procedure failures use bounded request-logger observations, and covered dashboard RPC errors use finite localized guidance with retry/account recovery. Permission codes and HTTP statuses remain authoritative; see [authorization errors and feedback](docs/api-authorization-errors.md) for scope, unchanged explicit service errors and actual acceptance status.
+
 ## Configuration
 
 All variables are documented in `.env.example`. Public values are read on the server and passed to the interface, without `NEXT_PUBLIC_*` variables.

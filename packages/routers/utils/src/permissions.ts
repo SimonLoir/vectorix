@@ -5,6 +5,9 @@ import { operationPermissions } from '@repo/auth/permissions/operations';
 export { permits } from '@repo/auth/permissions';
 export type { PermissionSet } from '@repo/auth/permissions';
 
+export const AUTHORIZATION_DENIED_MESSAGE =
+    'You do not have the required permissions.';
+
 export type PermissionContext = {
     permissions: PermissionSet;
     legacyApiKey: boolean;
@@ -15,7 +18,9 @@ export function permitsOperation(
     permissions: PermissionSet,
     operation: string
 ): boolean {
-    const required = operationPermissions[operation];
+    const required = Object.hasOwn(operationPermissions, operation)
+        ? operationPermissions[operation]
+        : undefined;
     return Boolean(required && permits(permissions, required));
 }
 
@@ -26,7 +31,7 @@ export function requirePermissions(
 ) {
     if (!context.legacyApiKey && !permits(context.permissions, required)) {
         throw new ORPCError('FORBIDDEN', {
-            message: 'Vous ne disposez pas des permissions nécessaires.',
+            message: AUTHORIZATION_DENIED_MESSAGE,
         });
     }
 }
@@ -36,10 +41,13 @@ export function requireOperationPermissions(
     context: PermissionContext,
     path: readonly string[]
 ) {
-    const required = operationPermissions[path.join('.')];
+    const operation = path.join('.');
+    const required = Object.hasOwn(operationPermissions, operation)
+        ? operationPermissions[operation]
+        : undefined;
     if (!required)
         throw new ORPCError('FORBIDDEN', {
-            message: 'Unclassified private operation.',
+            message: AUTHORIZATION_DENIED_MESSAGE,
         });
     requirePermissions(context, required);
 }

@@ -3,6 +3,8 @@ import { useTranslations } from 'next-intl';
 import { useState } from 'react';
 import { Input } from '@repo/ui/input';
 import { Button } from '@repo/ui/button';
+import { requestErrorKey } from '@repo/dashboard-core/lib/request-errors';
+import { RequestErrorState } from '@/components/request-error-state';
 
 export function useCatalogPagination() {
     const [query, setQuery] = useState('');
@@ -99,20 +101,10 @@ export function CatalogQueryState({
     const tr = useTranslations('rag');
     if (query.isError)
         return (
-            <div
-                role='alert'
-                className='rounded-lg border border-destructive/40 p-4'
-            >
-                <p>{query.error?.message ?? tr('common.loadFailed')}</p>
-                <Button
-                    type='button'
-                    className='mt-3'
-                    variant='outline'
-                    onClick={() => void query.refetch()}
-                >
-                    {tr('common.retry')}
-                </Button>
-            </div>
+            <RequestErrorState
+                errorKey={requestErrorKey(query.error)}
+                onRetry={query.refetch}
+            />
         );
     if (query.isPending) return <p role='status'>{tr('common.loading')}</p>;
     return null;
