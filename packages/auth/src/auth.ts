@@ -8,6 +8,7 @@ import { apiKey } from '@better-auth/api-key';
 import { sendPasswordResetEmail } from './password-reset-email';
 import { userLocaleFields } from './user-locale-fields';
 import { requireUserLocaleSession } from './user-locale';
+import { resolveInitialOrganization } from './initial-organization';
 import { assertSystemMailConfigured } from '@repo/emails';
 import { assertPasswordResetUrlConfigured } from './password-reset-url';
 import { handleEmailOwnership } from './email-ownership/handler';
@@ -177,21 +178,12 @@ export const auth = betterAuth({
         session: {
             create: {
                 before: async (session) => {
-                    const organization = await prisma.organization.findFirst({
-                        where: {
-                            members: {
-                                some: {
-                                    userId: session.userId,
-                                },
-                            },
-                        },
-                    });
+                    const activeOrganizationId =
+                        await resolveInitialOrganization(session);
                     return {
                         data: {
                             ...session,
-                            ...(organization && {
-                                activeOrganizationId: organization.id,
-                            }),
+                            activeOrganizationId,
                         },
                     };
                 },

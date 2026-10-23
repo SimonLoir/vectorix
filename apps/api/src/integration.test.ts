@@ -17,6 +17,7 @@ import { userLocaleIntegrationTests } from './user-locale-tests';
 import { superadminTransactionIntegrationTests } from './superadmin-transaction-integration';
 import { cookieCsrfIntegrationTests } from './cookie-csrf-integration';
 import { notificationLocaleIntegrationTests } from './notification-locale-integration';
+import { sessionOrganizationIntegrationTests } from './session-organization-integration';
 
 if (
     !new URL(
@@ -411,6 +412,10 @@ void test('core journeys with real PostgreSQL and the HTTP transports', async (t
         registerOrganization: (id) => organizationIds.push(id),
     });
     await userLocaleIntegrationTests(t, {
+        registerUser: (id) => userIds.push(id),
+        registerOrganization: (id) => organizationIds.push(id),
+    });
+    await sessionOrganizationIntegrationTests(t, {
         registerUser: (id) => userIds.push(id),
         registerOrganization: (id) => organizationIds.push(id),
     });

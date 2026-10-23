@@ -2,6 +2,7 @@
 
 import * as React from 'react';
 import { ChevronsUpDown, Plus } from 'lucide-react';
+import Link from 'next/link';
 
 import {
     DropdownMenu,
@@ -27,9 +28,12 @@ import {
     DialogTitle,
 } from '@repo/ui/dialog';
 import NewOrganizationForm from './new-organization-form';
-import { Avatar, AvatarFallback, AvatarImage } from '@repo/ui/avatar';
 import { useTranslations } from 'next-intl';
 import { toast } from 'sonner';
+import {
+    OrganizationAvatar,
+    OrganizationRecovery,
+} from './organization-selection-state';
 
 export function TeamSwitcher({
     allowOrganizationCreation = false,
@@ -40,13 +44,28 @@ export function TeamSwitcher({
     showEmptyOrganizationOnboarding?: boolean;
 }>) {
     const authClient = useAuth();
-    const { data: organizations, refetch } = authClient.useListOrganizations();
+    const {
+        data: organizations,
+        isPending: organizationsPending,
+        error: organizationsError,
+        refetch,
+    } = authClient.useListOrganizations();
     const { isMobile } = useSidebar();
-    const { data: activeOrganization } = authClient.useActiveOrganization();
+    const {
+        data: activeOrganization,
+        isPending: activeOrganizationPending,
+        error: activeOrganizationError,
+    } = authClient.useActiveOrganization();
     const [showNewOrgModal, setShowNewOrgModal] = React.useState(false);
     const [switching, setSwitching] = React.useState(false);
     const switchingRef = React.useRef(false);
     const t = useTranslations('teamSwitcher');
+    const loading = organizationsPending || activeOrganizationPending;
+    const loadFailed = Boolean(organizationsError ?? activeOrganizationError);
+    const informationReady = !loading && !loadFailed;
+    const noActiveOrganization = informationReady && !activeOrganization;
+    const emptyOrganizationList =
+        informationReady && organizations?.length === 0;
 
     async function switchOrganization(organizationId: string) {
         if (switchingRef.current || organizationId === activeOrganization?.id)
@@ -68,10 +87,9 @@ export function TeamSwitcher({
         }
     }
 
-    if (organizations?.length === 0 && !showEmptyOrganizationOnboarding)
-        return null;
+    if (emptyOrganizationList && !showEmptyOrganizationOnboarding) return null;
 
-    if (organizations?.length === 0)
+    if (emptyOrganizationList)
         return (
             <Dialog open={true} onOpenChange={() => {}}>
                 <DialogContent showCloseButton={false}>
@@ -94,11 +112,10 @@ export function TeamSwitcher({
             </Dialog>
         );
 
-    const activeOrganizationFallback =
-        activeOrganization?.name
-            .split(' ')
-            .map((part) => part[0]?.toUpperCase() ?? '')
-            .join('') ?? '';
+    let organizationLabel =
+        activeOrganization?.name ?? t('noActiveOrganization');
+    if (loadFailed) organizationLabel = t('loadFailed');
+    if (loading) organizationLabel = t('loading');
 
     return (
         <>
@@ -108,21 +125,29 @@ export function TeamSwitcher({
                         <DropdownMenuTrigger asChild>
                             <SidebarMenuButton
                                 size='lg'
-                                disabled={switching}
+                                disabled={switching || loading}
+                                aria-label={t('selectorLabel', {
+                                    organization: organizationLabel,
+                                })}
+                                aria-busy={loading || switching}
                                 className='data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground'
                             >
-                                <Avatar className='size-8 rounded-lg'>
-                                    <AvatarImage
-                                        src={activeOrganization?.logo ?? ''}
-                                        alt={activeOrganization?.name}
-                                    />
-                                    <AvatarFallback className='rounded-lg'>
-                                        {activeOrganizationFallback}
-                                    </AvatarFallback>
-                                </Avatar>
+                                <OrganizationAvatar
+                                    name={
+                                        loadFailed
+                                            ? null
+                                            : (activeOrganization?.name ?? null)
+                                    }
+                                    logo={
+                                        loadFailed
+                                            ? null
+                                            : (activeOrganization?.logo ?? null)
+                                    }
+                                    loading={loading}
+                                />
                                 <div className='grid flex-1 text-left text-sm leading-tight'>
                                     <span className='truncate font-medium'>
-                                        {activeOrganization?.name}
+                                        {organizationLabel}
                                     </span>
                                 </div>
                                 <ChevronsUpDown className='ml-auto' />
@@ -142,6 +167,7 @@ export function TeamSwitcher({
                                     key={organization.id}
                                     disabled={
                                         switching ||
+                                        loadFailed ||
                                         organization.id ===
                                             activeOrganization?.id
                                     }
@@ -151,13 +177,31 @@ export function TeamSwitcher({
                                     className='gap-2 p-2'
                                 >
                                     <div className='flex size-6 items-center justify-center rounded-md border'></div>
-                                    {organization.name}
+                                    <span className='min-w-0 flex-1 truncate'>
+                                        {organization.name}
+                                    </span>
                                     <DropdownMenuShortcut>
                                         ⌘{index + 1}
                                     </DropdownMenuShortcut>
                                 </DropdownMenuItem>
                             ))}
                             <DropdownMenuSeparator />
+                            {loadFailed && (
+                                <DropdownMenuItem
+                                    onSelect={() =>
+                                        globalThis.location.reload()
+                                    }
+                                >
+                                    {t('reload')}
+                                </DropdownMenuItem>
+                            )}
+                            {(noActiveOrganization || loadFailed) && (
+                                <DropdownMenuItem asChild>
+                                    <Link href='/dashboard/account'>
+                                        {t('openAccount')}
+                                    </Link>
+                                </DropdownMenuItem>
+                            )}
                             <DropdownMenuItem
                                 className='gap-2 p-2'
                                 onClick={() => setShowNewOrgModal(true)}
@@ -175,6 +219,12 @@ export function TeamSwitcher({
                             </DropdownMenuItem>
                         </DropdownMenuContent>
                     </DropdownMenu>
+                    {!loading && (noActiveOrganization || loadFailed) && (
+                        <OrganizationRecovery
+                            loadFailed={loadFailed}
+                            switching={switching}
+                        />
+                    )}
                 </SidebarMenuItem>
             </SidebarMenu>
             <Dialog open={showNewOrgModal} onOpenChange={setShowNewOrgModal}>
