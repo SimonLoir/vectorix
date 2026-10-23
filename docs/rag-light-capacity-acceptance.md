@@ -2,6 +2,8 @@
 
 Status: **native 2,000-child pilot completed; full admission refused by the fixed projection gate; full/traffic NOT_RUN**. This is a separate experiment, not a relabeling of the original long-input capacity attempt. Shorter embedding inputs did not bring this pilot's projection within the two-hour full-indexing bound on the tested CPU VM. No model/provider concurrency, vector dimension, timeout, resource budget or finite admission gate was relaxed.
 
+Next capacity direction: the user chooses to wait for a VM with a GPU or more compute. No new full run is admitted, and no existing profile, model, measurement or finite gate is changed by that decision.
+
 Only primary organization A's pilot/full token-window profile changes: target/minimum/maximum/overlap 128/32/192/16, parent maximum 512. Organization B's 24-source reference collection and both tiny-ingestion controls retain 512/128/768/64 and parent maximum 2,048. Keep Ollama 0.40.8, exact verified EmbeddingGemma weights, full 768 dimensions, preset/empty preparation, cosine/float32/DISKANN and one native slot. The selected closed experiment/collection-role binding must be present in every state, profile and receipt.
 
 ## Frozen preparation

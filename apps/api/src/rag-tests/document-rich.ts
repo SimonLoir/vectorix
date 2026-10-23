@@ -604,7 +604,7 @@ export async function documentRichTests(t: TestContext) {
                     { headers: f.owner.headers() }
                 );
                 assert.equal(rest.status, 200, await rest.clone().text());
-                assert.equal(rest.headers.get('Vectorix-API-Revision'), '18');
+                assert.equal(rest.headers.get('Vectorix-API-Revision'), '19');
                 assert.equal((await rest.json()).text, pdfPages[1]);
                 await f.owner.rag.collections.setGrant({
                     id: collection.id,

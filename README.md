@@ -68,7 +68,9 @@ Organization API keys remain separate from user sessions. Removed issuers, unbou
 | `packages/queues`, `packages/emails`     | Redis/BullMQ and email transports                                                 |
 | `packages/ui`, `packages/dashboard-core` | Shared components                                                                 |
 
-The API uses `/rpc/v1` and `/api/v1`. The current compatible contract revision is `1.18.0`. The OpenAPI schema is available at `/spec/v1.json` and `/spec.json`, and the version registry at `/api-versions.json`. `/health` checks the process; `/ready` checks PostgreSQL and Redis.
+The API uses `/rpc/v1` and `/api/v1`. The current compatible contract revision is `1.19.0`. The OpenAPI schema is available at `/spec/v1.json` and `/spec.json`, and the version registry at `/api-versions.json`. `/health` checks the process; `/ready` checks PostgreSQL and Redis.
+
+Cookie-authenticated RPC/REST requests using unsafe HTTP methods, including RPC POST reads, require a configured, trusted `Origin` or `Referer`. When both are absent, server and command-line clients must send `Vectorix-CSRF: orpc`; this public marker is not a credential and never overrides an explicitly rejected origin. Web and admin supply it automatically. Configure `TRUSTED_ORIGINS` as comma-separated exact HTTP(S) origins for your dashboards; add the API origin explicitly if Scalar should make cookie-authenticated mutations there. Keys and bearer clients without a Cookie header retain their authentication rules. See [cookie CSRF protection](docs/http-cookie-csrf.md) for deployment, client updates and verification.
 
 Before auth and RPC/REST parsing, the API limits ordinary request bodies to 1 MiB and reserves a 26 MiB envelope for the four supported POST document upload/replacement routes. The original-file contract remains 25 MiB. The guard counts exposed stream bytes even when `Content-Length` is absent or understated; CORS preflight and bodyless adapter behavior remain unchanged. See [HTTP request limits](docs/http-request-limits.md) for route matching, sanitized 413 responses and deployment boundaries.
 

@@ -4,6 +4,11 @@ import type { VectorixApiV1Client } from '@repo/api';
 import { createTanstackQueryUtils } from '@orpc/tanstack-query';
 import { RPCLink } from '@orpc/client/fetch';
 import { createORPCClient } from '@orpc/client';
+import {
+    VECTORIX_CSRF_HEADER,
+    VECTORIX_CSRF_VALUE,
+} from '@repo/api/transport-security';
+import { buildSsrRpcHeaders } from '@repo/dashboard-core/lib/orpc-headers';
 
 export type ORPCClient = VectorixApiV1Client;
 
@@ -23,11 +28,11 @@ export const ORPCProvider = ({
             url: `${baseURL}/rpc/v1`,
             headers: async () => {
                 if (globalThis.window !== undefined) {
-                    return {};
+                    return { [VECTORIX_CSRF_HEADER]: VECTORIX_CSRF_VALUE };
                 }
 
                 const { headers } = await import('next/headers');
-                return await headers();
+                return buildSsrRpcHeaders(await headers());
             },
             fetch: (request, init) => {
                 return fetch(request, {

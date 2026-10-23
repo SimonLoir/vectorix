@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import { isContractProcedure } from '@orpc/contract';
 import { API_VERSION_REGISTRY } from './api-versioning/registry';
+import { formatVectorixApiVersion } from '@repo/api/versioning';
 import { operationPermissions } from '@repo/auth/permissions/operations';
 import { app } from './app';
 import { validatePermissions, permits } from '@repo/auth/permissions';
@@ -13,16 +14,47 @@ import {
 
 void test('health and versioned OpenAPI expose the versioned API and RAG catalog', async () => {
     assert.equal((await app.request('/health')).status, 200);
-    const result = await app.request('/spec/v1.json');
-    assert.equal(result.status, 200);
-    const spec = await result.json();
-    assert.equal(spec.info.title, 'Vectorix API v1');
-    for (const path of Object.keys(spec.paths))
-        assert.match(
-            path,
-            /^\/(health$|admin\/(organization|members|notifications|rag)(\/|$)|superadmin\/)/
+    for (const version of API_VERSION_REGISTRY) {
+        const result = await app.request(version.specPath);
+        assert.equal(result.status, 200);
+        assert.equal(
+            result.headers.get('Vectorix-API-Version'),
+            String(version.major)
         );
-    assert.equal((await app.request('/spec.json')).status, 200);
+        assert.equal(
+            result.headers.get('Vectorix-API-Revision'),
+            String(version.revision)
+        );
+        const spec = await result.json();
+        assert.equal(spec.info.title, `Vectorix API v${version.major}`);
+        assert.equal(spec.info.version, formatVectorixApiVersion(version));
+        assert.match(spec.info.description, /Vectorix-CSRF: orpc/);
+        for (const path of Object.keys(spec.paths))
+            assert.match(
+                path,
+                /^\/(health$|admin\/(organization|members|notifications|rag)(\/|$)|superadmin\/)/
+            );
+    }
+    const current = API_VERSION_REGISTRY.find(
+        (version) => version.status === 'current'
+    )!;
+    const alias = await app.request('/spec.json');
+    assert.equal(alias.status, 200);
+    assert.equal(
+        (await alias.json()).info.version,
+        formatVectorixApiVersion(current)
+    );
+    const registry = await app.request('/api-versions.json');
+    assert.equal(registry.status, 200);
+    assert.deepEqual(
+        (await registry.json()).versions.map(
+            (entry: { major: number; revision: number }) => [
+                entry.major,
+                entry.revision,
+            ]
+        ),
+        API_VERSION_REGISTRY.map((version) => [version.major, version.revision])
+    );
 });
 void test('private and superadmin operations reject anonymous access', async () => {
     assert.equal(

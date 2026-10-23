@@ -7,7 +7,8 @@
     "types": "src/index.ts",
     "exports": {
         ".": "./src/index.ts",
-        "./versioning": "./src/versioning.ts"
+        "./versioning": "./src/versioning.ts",
+        "./transport-security": "./src/transport-security.ts"
     },
     "scripts": {
         "check-types": "tsc6 -p tsconfig.json --noEmit",

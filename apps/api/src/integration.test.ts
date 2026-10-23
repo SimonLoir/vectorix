@@ -13,6 +13,7 @@ import { apiKeyIssuerRevocationTests } from './api-key-issuer-revocation';
 import { requestBodyIntegrationTests } from './request-body-integration';
 import { passwordResetIntegrationTests } from './password-reset-integration';
 import { superadminTransactionIntegrationTests } from './superadmin-transaction-integration';
+import { cookieCsrfIntegrationTests } from './cookie-csrf-integration';
 
 if (
     !new URL(
@@ -376,6 +377,12 @@ void test('core journeys with real PostgreSQL and the HTTP transports', async (t
             );
         }
     );
+    await cookieCsrfIntegrationTests(t, {
+        owner: a,
+        foreign: b,
+        organizationId: organizationIds[0]!,
+        foreignOrganizationId: organizationIds[1]!,
+    });
     await apiKeyIssuerRevocationTests(t, {
         owner: a,
         foreign: b,
