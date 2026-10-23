@@ -1,6 +1,7 @@
 /** Pure load-only evidence rules. Importing this module performs no I/O. */
 import { createHash } from 'node:crypto';
 import { isDeepStrictEqual } from 'node:util';
+import { loadPolicyForState } from './load-policy-registry.mjs';
 export const RUNTIME_DRAFT_ONLY = true;
 export const OBSERVER_LIMITS = Object.freeze({
     page: 500,
@@ -70,26 +71,44 @@ export function decimal(value) {
     );
     return BigInt(value);
 }
+/** Translate closed-registry rejections into the observer's finite error contract without exposing an underlying message. */
+export function observationPolicy(state) {
+    need(
+        state && typeof state === 'object' && !Array.isArray(state),
+        'LOAD_OBS_SCOPE'
+    );
+    try {
+        return loadPolicyForState(state);
+    } catch {
+        throw new LoadObservationError('LOAD_OBS_POLICY_BINDING');
+    }
+}
 export function validateIdentity(state, fixture) {
     need(
         state?.schemaVersion === 1 &&
-            state.namespace === 'vectorix-m7c-load' &&
-            /^[a-f0-9]{12}$/u.test(state.runId),
+            typeof state.namespace === 'string' &&
+            typeof state.runId === 'string' &&
+            /^[a-f0-9]{12}$/u.test(state.runId) &&
+            fixture?.namespace === state.namespace &&
+            fixture.runId === state.runId &&
+            Array.isArray(fixture.organizationIds) &&
+            fixture.organizationIds.length === 2 &&
+            new Set(fixture.organizationIds).size === 2 &&
+            fixture.organizationIds.every(id),
         'LOAD_OBS_SCOPE'
     );
+    const policy = observationPolicy(state);
+    need(state.namespace === policy.namespace, 'LOAD_OBS_SCOPE');
     need(
         state.applicationDatabase ===
-            `vectorix_m7c_load_app_${state.runId}_test` &&
+            `${policy.databasePrefix}_app_${state.runId}_test` &&
             state.vectorDatabase ===
-                `vectorix_m7c_load_vectors_${state.runId}_test`,
+                `${policy.databasePrefix}_vectors_${state.runId}_test`,
         'LOAD_OBS_DATABASE'
     );
     need(
-        fixture?.namespace === state.namespace &&
-            fixture.runId === state.runId &&
-            fixture.organizationIds?.length === 2 &&
-            new Set(fixture.organizationIds).size === 2 &&
-            fixture.organizationIds.every(id),
+        fixture.experimentPolicyId === policy.id &&
+            fixture.experimentPolicySha256 === state.experimentPolicySha256,
         'LOAD_OBS_SCOPE'
     );
     for (const role of ['owner', 'reader', 'foreign'])
@@ -108,13 +127,21 @@ export function validateIdentity(state, fixture) {
                 fixture.users.owner.organizationId,
         'LOAD_OBS_SCOPE'
     );
+    need(
+        state.ports &&
+            typeof state.ports === 'object' &&
+            state.environment &&
+            typeof state.environment === 'object',
+        'LOAD_OBS_DATABASE'
+    );
     for (const [key, database, port] of [
         ['DATABASE_URL', state.applicationDatabase, state.ports.postgres],
         ['VECTOR_DATABASE_URL', state.vectorDatabase, state.ports.vector],
     ]) {
-        let url;
+        let url, decodedDatabase;
         try {
             url = new URL(state.environment[key]);
+            decodedDatabase = decodeURIComponent(url.pathname.slice(1));
         } catch {
             throw new LoadObservationError('LOAD_OBS_DATABASE');
         }
@@ -122,7 +149,7 @@ export function validateIdentity(state, fixture) {
             url.protocol === 'postgresql:' &&
                 url.hostname === '127.0.0.1' &&
                 url.port === String(port) &&
-                decodeURIComponent(url.pathname.slice(1)) === database &&
+                decodedDatabase === database &&
                 !url.search &&
                 !url.hash,
             'LOAD_OBS_DATABASE'

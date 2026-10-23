@@ -2,6 +2,7 @@
 import { performance } from 'node:perf_hooks';
 import { digest, hash, id, validateIdentity } from './load-observer-core.mjs';
 import { loadResourcePolicyHash } from './load-import-core.mjs';
+import { getLoadPolicy } from './load-policy-registry.mjs';
 
 export const RUNTIME_DRAFT_ONLY = true;
 export const SIZE_LIMITS = Object.freeze({
@@ -257,17 +258,25 @@ export async function readStoreDatabaseSize(
     client,
     {
         database,
+        experimentPolicyId = 'DEFAULT_V1',
         scope,
         collectionId = null,
         organizationId = null,
         now = () => performance.now(),
     }
 ) {
+    let policy;
+    try {
+        policy = getLoadPolicy(experimentPolicyId);
+    } catch {
+        throw new LoadSizeError('LOAD_SIZE_DATABASE');
+    }
     need(
         typeof database === 'string' &&
-            /^vectorix_m7c_load_(app|vectors)_[a-f0-9]{12}_test$/u.test(
-                database
-            ) &&
+            new RegExp(
+                `^${policy.databasePrefix}_(app|vectors)_[a-f0-9]{12}_test$`,
+                'u'
+            ).test(database) &&
             ['public', 'vector_collections'].includes(scope) &&
             (database.includes('_app_')
                 ? scope === 'public'

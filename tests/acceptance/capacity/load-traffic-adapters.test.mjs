@@ -1,3 +1,8 @@
+import {
+    experimentFields,
+    fixturePolicyFields,
+    roleFields,
+} from './load-observer.test-helper.mjs';
 /** Local synthetic metadata, clocks, process protocols and owned temporary files only. No worker/process/socket/model is started. */
 import test from 'node:test';
 import assert from 'node:assert/strict';
@@ -38,7 +43,7 @@ import {
     summaryFor,
 } from './load-import-runtime-policy.mjs';
 import { LOAD_IDENTITY, loadResourcePolicyHash } from './load-import-core.mjs';
-import { sha, digest } from './load-observer-core.mjs';
+import { sha, digest, LoadObservationError } from './load-observer-core.mjs';
 const root = path.resolve(
         path.dirname(fileURLToPath(import.meta.url)),
         '../../..'
@@ -46,6 +51,7 @@ const root = path.resolve(
     run = '0123456789ab',
     prefix = 'vectorix-m7c-load-' + run;
 const fixture = {
+    ...fixturePolicyFields(),
     schemaVersion: 1,
     namespace: 'vectorix-m7c-load',
     runId: run,
@@ -73,10 +79,7 @@ const state = {
     commit: 'c'.repeat(40),
     images: { synthetic: 'image' },
     resourceLimits: { synthetic: 1 },
-    loadPolicy: {
-        model: { digest: LOAD_IDENTITY.weights },
-        minimumFreeBytes: 4 * 1024 ** 3,
-    },
+    ...experimentFields(),
     ports: { postgres: 15432, vector: 15433, api: 18001, web: 18002 },
     apiOrigin: 'http://127.0.0.1:18001',
     webOrigin: 'http://127.0.0.1:18002',
@@ -491,6 +494,7 @@ test('catalog preload uses readonly bounded per-document pages and exact current
         state,
         fixture,
         input: {
+            ...roleFields('primaryA'),
             organizationId: 'orgA',
             collectionId: 'col',
             generationId: 'gen',
@@ -502,18 +506,27 @@ test('catalog preload uses readonly bounded per-document pages and exact current
     assert(sqls[0].sql.endsWith('READ ONLY'));
     assert(sqls.some((row) => row.sql.includes('LIMIT 500')));
     assert(!sqls.some((row) => /\b(INSERT|UPDATE|DELETE)\b/u.test(row.sql)));
-    await assert.rejects(() =>
-        readTrafficCatalog(client, {
-            state,
-            fixture,
-            input: {
-                organizationId: 'orgA',
-                collectionId: 'col',
-                generationId: 'gen',
-                bindings: [{ documentId: 'doc', versionId: 'foreign-version' }],
-            },
-            parseIdentity: (value) => value,
-        })
+    await assert.rejects(
+        () =>
+            readTrafficCatalog(client, {
+                state,
+                fixture,
+                input: {
+                    ...roleFields('primaryA'),
+                    organizationId: 'orgA',
+                    collectionId: 'col',
+                    generationId: 'gen',
+                    bindings: [
+                        { documentId: 'doc', versionId: 'foreign-version' },
+                    ],
+                },
+                parseIdentity: (value) => value,
+            }),
+        (error) => {
+            assert(error instanceof LoadObservationError);
+            assert.equal(error.code, 'LOAD_OBS_CATALOG_CURRENT');
+            return true;
+        }
     );
 });
 test('source follower independently verifies surrogate-safe preview and complete original SHA without a search or receipt in safe output', async () => {
@@ -597,6 +610,7 @@ test('growing library inventory admits only declared tiny IDs while immutable co
             ],
         },
         collection = (name, n) => ({
+            ...roleFields(name === 'primary' ? 'primaryA' : 'referenceB'),
             collectionId: name,
             generationId: name + 'gen',
             activeChildren: n,
@@ -677,6 +691,7 @@ test('growing library inventory admits only declared tiny IDs while immutable co
             seen.push(input);
             const saved = input.collectionId === 'primary' ? primary : ref;
             return {
+                ...roleFields(saved.collectionRole),
                 physicalChildren: saved.activeChildren,
                 parents: 1,
                 manifestSha256: 'b'.repeat(64),
@@ -685,6 +700,7 @@ test('growing library inventory admits only declared tiny IDs while immutable co
         },
     };
     const options = {
+        state,
         api,
         observer,
         fullReport,
@@ -722,6 +738,8 @@ test('async guard decodes only finite exact proof, records wall time, and ignore
     const proof = {
             schemaVersion: 1,
             namespace: state.namespace,
+            experimentPolicyId: state.experimentPolicyId,
+            experimentPolicySha256: state.experimentPolicySha256,
             runId: run,
             purpose: 'import',
             resourceOwnership: true,
@@ -943,13 +961,16 @@ test('post-proof budget is checked after each awaited read before any next API o
             })),
         },
         collections: {
-            primary: { collectionId: 'primary' },
+            primary: { collectionId: 'primary', ...roleFields('primaryA') },
             pilot: { collectionId: 'pilot' },
         },
         baseline: {
             documents: { referenceB: [] },
             collections: {
-                referenceB: { collectionId: 'reference' },
+                referenceB: {
+                    collectionId: 'reference',
+                    ...roleFields('referenceB'),
+                },
                 ingestionA: { collectionId: 'ia' },
                 ingestionB: { collectionId: 'ib' },
             },
@@ -960,6 +981,7 @@ test('post-proof budget is checked after each awaited read before any next API o
     let snapshots = 0;
     await assert.rejects(() =>
         verifyTrafficServingState({
+            state,
             api: {
                 async call() {
                     calls++;
@@ -992,19 +1014,34 @@ test('post-proof budget is checked after each awaited read before any next API o
     assert.equal(calls, 1);
     assert.equal(snapshots, 0);
 });
-test('concrete CLI context rejects an invalid state path before private reads even when enabled; private run files are exclusive and own-only', async () => {
-    await assert.rejects(
-        () =>
-            createLoadTrafficContext(
-                {
-                    statePath: '/synthetic-invalid/state.json',
-                    runId: run,
-                    mode: 'traffic',
-                },
-                []
-            ),
-        /LOAD_OBS_(?:RUNTIME_DISABLED|TRAFFIC_ARGUMENTS)/u
+test('concrete CLI context rejects an invalid state path before private reads even when enabled; private run files are exclusive and own-only', async (t) => {
+    const privateIO = ['lstatSync', 'openSync'].map((name) =>
+        t.mock.method(fs, name, () =>
+            assert.fail('invalid location reached private filesystem I/O')
+        )
     );
+    try {
+        await assert.rejects(
+            () =>
+                createLoadTrafficContext(
+                    {
+                        statePath: '/synthetic-invalid/state.json',
+                        runId: run,
+                        mode: 'traffic',
+                    },
+                    []
+                ),
+            (error) => {
+                assert(error instanceof LoadObservationError);
+                assert.equal(error.code, 'LOAD_OBS_POLICY_BINDING');
+                return true;
+            }
+        );
+        for (const method of privateIO)
+            assert.equal(method.mock.calls.length, 0);
+    } finally {
+        for (const method of privateIO) method.mock.restore();
+    }
     const helperDirectory = path.join(root, 'tests/acceptance/capacity'),
         pinned = {
             ...state,
@@ -1089,6 +1126,8 @@ test('one-shot traffic invocation is persisted before any preload/adapter and in
     const full = {
         schemaVersion: 1,
         namespace: state.namespace,
+        experimentPolicyId: state.experimentPolicyId,
+        policySha256: state.experimentPolicySha256,
         runId: run,
         workflow: 'full',
         status: 'COMPLETE',
@@ -1098,9 +1137,25 @@ test('one-shot traffic invocation is persisted before any preload/adapter and in
         trafficAcceptance: 'NOT_RUN',
         familySha256: LOAD_IDENTITY.family,
         corpusSha256: LOAD_IDENTITY.full,
-        baseline: { documents: { referenceB: Array.from({ length: 24 }) } },
+        baseline: {
+            experimentPolicyId: state.experimentPolicyId,
+            policySha256: state.experimentPolicySha256,
+            documents: { referenceB: Array.from({ length: 24 }) },
+            collections: {
+                referenceB: roleFields('referenceB'),
+                ingestionA: roleFields('ingestionA'),
+                ingestionB: roleFields('ingestionB'),
+            },
+        },
         documents: { loadA: Array.from({ length: 200 }) },
-        collections: { primary: { activeChildren: 100000, parents: 25000 } },
+        collections: {
+            primary: {
+                ...roleFields('primaryA'),
+                activeChildren: 100000,
+                parents: 25000,
+            },
+            pilot: roleFields('pilotA'),
+        },
         fullObservation: {
             validatedNativeVectors: 100000,
             resourcePolicySha256: loadResourcePolicyHash(state),

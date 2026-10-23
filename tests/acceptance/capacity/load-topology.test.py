@@ -19,7 +19,8 @@ spec.loader.exec_module(main)
 RUN = 'abcdef012345'
 
 
-def fixture():
+def fixture(experiment_id="DEFAULT_V1"):
+    selected = policy.get_load_policy(experiment_id)
     ports = dict(postgres=45101, vector=45102, redis=45103, rustfs=45104, ollama=45105, api=45106, web=45107, admin=45108)
     secret = {key: 'a' * 32 for key in ['postgres', 'indexer', 'runtime', 's3Secret']}
     secret['s3Access'] = 'm7c-load-' + RUN
@@ -55,6 +56,13 @@ def fixture():
         entry = policy.ROOT / ('apps/' + service + '/dist/index.mjs' if service != 'web'
             else 'apps/web/.next/standalone/apps/web/server.js')
         state['builds'][service] = {'entry': str(entry), 'entrySha256': '6' * 64, 'treeSha256': '7' * 64, 'treeFiles': 1}
+    state['experimentPolicyId'] = selected['id']
+    state['experimentPolicySha256'] = policy.policy_sha256(selected)
+    if experiment_id == 'LIGHT_V1':
+        old_ns,old_db,old_email=policy.NAMESPACE,'vectorix_m7c_load','m7c-load'
+        state=json.loads(json.dumps(state).replace(old_ns,selected['namespace']).replace(old_db,selected['databasePrefix']).replace(old_email,selected['emailPrefix']))
+        state['loadPolicy']=selected['loadPolicy']
+        state['corpusFiles']={'light-v1/full-preflight.json':'8'*64}
     return state
 
 
@@ -68,16 +76,19 @@ def process_record(state, service='api'):
 def load_fixture(state):
     users = {role: {'userId': role + '-user', 'memberId': role + '-member',
         'organizationId': 'org-b' if role == 'foreign' else 'org-a',
-        'email': 'm7c-load-' + role + '-' + RUN + '@example.test', 'password': role + '-' + 'x' * 32}
+        'email': policy.load_policy_for_state(state)['emailPrefix'] + '-' + role + '-' + RUN + '@example.test', 'password': role + '-' + 'x' * 32}
         for role in ['owner', 'reader', 'foreign']}
-    return {'schemaVersion': 1, 'namespace': policy.NAMESPACE, 'runId': RUN,
+    return {'schemaVersion': 1, 'namespace': state['namespace'], 'runId': RUN,
+        'experimentPolicyId':state['experimentPolicyId'],'experimentPolicySha256':state['experimentPolicySha256'],
         'organizationIds': ['org-a', 'org-b'], 'users': users}
 
 
 def pilot_report():
     return {'schemaVersion': 1, 'namespace': policy.NAMESPACE, 'runId': RUN, 'workflow': 'pilot',
+        'experimentPolicyId':'DEFAULT_V1','policySha256':policy.policy_sha256(policy.get_load_policy('DEFAULT_V1')),
         'status': 'COMPLETE', 'acceptance': 'PILOT_PREPARED', 'evidenceKind': 'LIVE_NATIVE_ISOLATED',
         'corpusSha256': policy.LOAD_POLICY['pilotCorpusSha256'], 'familySha256': policy.LOAD_POLICY['familySha256'],
+        'collections':{'pilot':{'collectionRole':'pilotA','policySha256':policy.policy_sha256(policy.get_load_policy('DEFAULT_V1'))}},
         'timing': {'pilotIndexMs': 140000}, 'pilotObservation': {'physicalChildren': 2000,
             'validatedNativeVectors': 2000, 'peakMemoryBytes': 1024 ** 3, 'minimumFreeBytes': 5 * 1024 ** 3,
             'modelWarmState': 'UNKNOWN', 'retries': 0, 'errors': 0, 'providerInputTokens': None,
@@ -90,9 +101,9 @@ def full_report():
         corpusSha256=policy.LOAD_POLICY['fullCorpusSha256'], timing={'fullIndexMs': 7000000},
         documents={'loadA': [{'documentId': 'document-' + str(index)} for index in range(200)]},
         collections={'primary': {'collectionId': 'full-collection', 'generationId': 'full-generation',
-            'activeChildren': 100000, 'parents': 25000},
+            'activeChildren': 100000, 'parents': 25000,'collectionRole':'primaryA','policySha256':policy.policy_sha256(policy.get_load_policy('DEFAULT_V1'))},
             'pilot': {'collectionId': 'pilot-collection', 'generationId': 'pilot-generation',
-                'activeChildren': 2000, 'parents': 500}})
+                'activeChildren': 2000, 'parents': 500,'collectionRole':'pilotA','policySha256':policy.policy_sha256(policy.get_load_policy('DEFAULT_V1'))}})
     report['fullObservation'] = {**report.pop('pilotObservation'), 'physicalChildren': 100000,
         'parents': 25000, 'validatedNativeVectors': 100000, 'manifestSha256': 'a' * 64}
     return report
@@ -101,7 +112,7 @@ def full_report():
 def volume(state, service):
     return {'Name': state['modelVolume']['name'] if service == 'ollama' else state['prefix'] + '-' + service + '-data',
         'CreatedAt': '2026-01-01T00:00:00Z', 'Driver': 'local', 'Options': None,
-        'Labels': {'operator': 'preserve'} if service == 'ollama' else policy.labels(RUN, service)}
+        'Labels': {'operator': 'preserve'} if service == 'ollama' else policy.labels(RUN, service, state['experimentPolicyId'])}
 
 
 def add_resource(state, service, *, identifier='a' * 64):
@@ -115,7 +126,7 @@ def add_resource(state, service, *, identifier='a' * 64):
 def container(state, service, running=True):
     saved = state['resources'][service]
     return {'Id': saved['id'], 'Name': '/' + saved['name'], 'Image': state['images'][service],
-        'State': {'Running': running}, 'Config': {'Labels': policy.labels(RUN, service)},
+        'State': {'Running': running}, 'Config': {'Labels': policy.labels(RUN, service, state['experimentPolicyId'])},
         'HostConfig': {'NetworkMode': 'bridge', 'Privileged': False, 'VolumesFrom': None, 'Links': None,
             'NanoCpus': policy.nano_cpus(state['resourceLimits'][service]['cpus']),
             'Memory': state['resourceLimits'][service]['memoryBytes'],
@@ -167,8 +178,8 @@ class PolicyTests(unittest.TestCase):
                 patch.object(main, 'migration_manifest', return_value=source['migrations']):
             state = main.initial_state(RUN, source['ports'], source['images'], source['modelVolume'],
                 source['builds'], source['commit'])
-        manifest = json.loads((HERE.parent / 'quality/reference-v1/manifest.json').read_bytes())
-        proof = json.loads((HERE / 'load-v1/pure-preparation-proof.json').read_bytes())
+        manifest = json.loads((policy.ROOT / 'tests/acceptance/quality/reference-v1/manifest.json').read_bytes())
+        proof = json.loads((policy.ROOT / 'tests/acceptance/capacity/load-v1/pure-preparation-proof.json').read_bytes())
         self.assertEqual(state['referenceCorpusDigest'], manifest['corpusDigest'])
         self.assertEqual(len(state['corpusFiles']), 56)
         for field in ['familySha256', 'pilotCorpusSha256', 'fullCorpusSha256']:
@@ -252,7 +263,8 @@ class LifecycleTests(unittest.TestCase):
                 patch.object(main, 'assert_catalog_scope'), patch.object(main.os, 'getppid', return_value=987654):
             self.assertEqual(main.guard(state, 'import', require_caller=True), {'schemaVersion': 1,
                 'namespace': policy.NAMESPACE, 'runId': RUN, 'purpose': 'import', 'resourceOwnership': True,
-                'databaseReadOnly': True, 'bootstrapFreshness': False})
+                'databaseReadOnly': True, 'bootstrapFreshness': False,
+                'experimentPolicyId':state['experimentPolicyId'],'experimentPolicySha256':state['experimentPolicySha256']})
             with patch.object(main.os, 'getppid', return_value=987655):
                 with self.assertRaisesRegex(policy.GuardError, 'load-guard-exact-foreground-parent'):
                     main.guard(state, 'import', require_caller=True)
@@ -468,7 +480,8 @@ class LifecycleTests(unittest.TestCase):
              patch.object(main,'assert_empty'),patch.object(main,'process_alive',return_value=True),patch.object(main,'state_lock') as lock:
             proof=main.guard(state,'bootstrap')
         self.assertEqual(proof,{'schemaVersion':1,'namespace':policy.NAMESPACE,'runId':RUN,'purpose':'bootstrap',
-            'resourceOwnership':True,'databaseReadOnly':True,'bootstrapFreshness':True});lock.assert_not_called()
+            'resourceOwnership':True,'databaseReadOnly':True,'bootstrapFreshness':True,
+            'experimentPolicyId':state['experimentPolicyId'],'experimentPolicySha256':state['experimentPolicySha256']});lock.assert_not_called()
         with patch.object(main,'db_query',return_value={'users':1,'organizations':0,'members':0,'roles':0,'keys':0,'documents':0,'collections':0}):
             with self.assertRaisesRegex(policy.GuardError,'load-bootstrap-requires-empty-catalog'):main.assert_empty(state)
 
@@ -519,11 +532,81 @@ class LifecycleTests(unittest.TestCase):
         state=fixture()
         with patch.object(main,'bounded_stream',return_value={'data':json.dumps({'completed':True,'runId':RUN}).encode(),'exitCode':0}) as call:
             main.child(state,'load-bootstrap.mjs',timeout=180)
-            self.assertEqual(call.call_args.args[0][-2:],['--run',RUN])
+            self.assertEqual(call.call_args.args[0][-4:],['--run',RUN,'--experiment','DEFAULT_V1'])
             self.assertNotIn('--state',call.call_args.args[0])
             main.child(state,'load-bucket.mjs')
             self.assertEqual(call.call_args.args[0][-4:],['--state',str(policy.state_path(RUN)),'--run',RUN])
             with self.assertRaises(policy.GuardError):main.child(state,'collector.mjs')
 
+
+class VariantTests(unittest.TestCase):
+    def test_registry_exact_policy_namespace_and_paths_reject_cross_variant(self):
+        default,light=fixture(),fixture('LIGHT_V1')
+        self.assertEqual(policy.validate_state(default,RUN),default)
+        self.assertEqual(policy.validate_state(light,RUN),light)
+        self.assertNotEqual(policy.state_path(RUN),policy.state_path(RUN,'LIGHT_V1'))
+        self.assertEqual(default['loadPolicy'],policy.LOAD_POLICY)
+        self.assertEqual(light['loadPolicy']['profile']['targetTokens'],128)
+        self.assertEqual(light['loadPolicy']['fullSeconds'],7200)
+        for alter in [lambda s:s.pop('experimentPolicyId'),lambda s:s.pop('experimentPolicySha256'),
+                lambda s:s.update(experimentPolicyId='DEFAULT_V1'),lambda s:s.update(namespace=policy.NAMESPACE),
+                lambda s:s['loadPolicy']['profile'].update(targetTokens=512),
+                lambda s:s.update(corpusFiles={'load-v1/full-preflight.json':'8'*64}),
+                lambda s:s.update(applicationDatabase=default['applicationDatabase']),
+                lambda s:s['environment'].update(VECTORIX_DEFAULT_S3_BUCKET='m7c-load-'+RUN)]:
+            value=copy.deepcopy(light);alter(value)
+            with self.assertRaises(policy.GuardError):policy.validate_state(value,RUN)
+
+    def test_light_resource_label_and_model_volume_are_separate(self):
+        value=fixture('LIGHT_V1');saved=add_resource(value,'postgres');observed=container(value,'postgres')
+        policy.validate_volume(value,'postgres',saved);policy.validate_container(value,'postgres',observed)
+        self.assertNotEqual(policy.labels(RUN,'postgres'),observed['Config']['Labels'])
+        observed['Config']['Labels']=policy.labels(RUN,'postgres')
+        with self.assertRaises(policy.GuardError):policy.validate_container(value,'postgres',observed)
+        value['modelVolume']['name']='vectorix-m7c-load-'+RUN+'-data'
+        with self.assertRaises(policy.GuardError):policy.validate_state(value,RUN)
+
+    def test_light_reports_require_same_descriptor_and_original_projection_gate(self):
+        state=fixture('LIGHT_V1');report=pilot_report();selected=policy.load_policy_for_state(state)
+        report.update(namespace=state['namespace'],experimentPolicyId=selected['id'],policySha256=policy.policy_sha256(selected),
+            corpusSha256=selected['identity']['pilot'],familySha256=selected['identity']['family'])
+        report['pilotObservation']['resourcePolicySha256']=main.load_resource_policy_hash(state)
+        report['collections']['pilot']['policySha256']=state['experimentPolicySha256']
+        main.validate_pilot_admission(report,state)
+        report['timing']['pilotIndexMs']=144001
+        with self.assertRaisesRegex(policy.GuardError,'projection'):main.validate_pilot_admission(report,state)
+        for changes in [dict(policySha256='0'*64),dict(experimentPolicyId='DEFAULT_V1'),dict(namespace=policy.NAMESPACE),
+                dict(corpusSha256=policy.LOAD_POLICY['pilotCorpusSha256'])]:
+            bad=copy.deepcopy(report);bad['timing']['pilotIndexMs']=140000;bad.update(changes)
+            with self.assertRaises(policy.GuardError):main.validate_pilot_admission(bad,state)
+
+    def test_new_reports_cannot_swap_collection_roles_or_borrow_another_policy_receipt(self):
+        for report,validator,key in [(pilot_report(),main.validate_pilot_admission,'pilot'),(full_report(),main.validate_full_admission,'primary')]:
+            validator(report,fixture())
+            for changes in [dict(collectionRole='ingestionA'),dict(policySha256=policy.policy_sha256(policy.get_load_policy('LIGHT_V1'))),dict(policySha256=None)]:
+                bad=copy.deepcopy(report);bad['collections'][key].update(changes)
+                with self.assertRaises(policy.GuardError):validator(bad,fixture())
+
+    def test_light_fixture_exact_explicit_experiment_and_auth_memberships(self):
+        state=fixture('LIGHT_V1');value=load_fixture(state)
+        policy.validate_fixture(value,state)
+        for changes in [dict(experimentPolicyId='DEFAULT_V1'),dict(experimentPolicySha256='0'*64),dict(namespace=policy.NAMESPACE)]:
+            with self.assertRaises(policy.GuardError):policy.validate_fixture({**value,**changes},state)
+
+    def test_read_state_cannot_adopt_other_experiment_from_wrong_directory(self):
+        state=fixture('LIGHT_V1')
+        with patch.object(policy,'read_private_bytes',return_value=json.dumps(state).encode()):
+            with self.assertRaisesRegex(policy.GuardError,'load-state-path-experiment'):policy.read_state(RUN)
+            self.assertEqual(policy.read_state(RUN,'LIGHT_V1'),state)
+
+    def test_light_initial_state_keeps_caps_and_exact_bindings(self):
+        source=fixture('LIGHT_V1')
+        with patch.object(main,'helper_manifest',return_value=source['acceptanceSources']),patch.object(main,'migration_manifest',return_value=source['migrations']):
+            state=main.initial_state(RUN,source['ports'],source['images'],source['modelVolume'],source['builds'],source['commit'],experiment_id='LIGHT_V1')
+        self.assertEqual(state['loadPolicy'],source['loadPolicy'])
+        self.assertEqual(state['applicationDatabase'],source['applicationDatabase'])
+        self.assertEqual(state['experimentPolicySha256'],source['experimentPolicySha256'])
+        self.assertEqual(len(state['corpusFiles']),56)
+        self.assertTrue(all(key.startswith(('reference-v1/','light-v1/')) for key in state['corpusFiles']))
 
 if __name__=='__main__':unittest.main(verbosity=2)

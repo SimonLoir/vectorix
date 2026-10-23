@@ -3,6 +3,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { createRequire } from 'node:module';
 import path from 'node:path';
+import { getLoadPolicy, policySha256 } from './load-policy-registry.mjs';
 import {
     createLoadTransport,
     validateLoadTransportState,
@@ -12,10 +13,13 @@ import {
     TRANSPORT_LIMITS,
 } from './load-transport.mjs';
 const run = '012345abcdef';
-function setup() {
+function setup(experimentPolicyId = 'DEFAULT_V1') {
+    const policy = getLoadPolicy(experimentPolicyId);
     const fixture = {
         schemaVersion: 1,
-        namespace: 'vectorix-m7c-load',
+        namespace: policy.namespace,
+        experimentPolicyId: policy.id,
+        experimentPolicySha256: policySha256(policy),
         runId: run,
         organizationIds: ['org-a', 'org-b'],
         users: Object.fromEntries(
@@ -25,13 +29,16 @@ function setup() {
                     userId: 'user-' + role,
                     memberId: 'member-' + role,
                     organizationId: role === 'foreign' ? 'org-b' : 'org-a',
-                    email: `m7c-load-${role}-${run}@example.test`,
+                    email: `${policy.emailPrefix}-${role}-${run}@example.test`,
                     password: 'SYNTHETIC_PRIVATE_PASSWORD_12345-' + role,
                 },
             ])
         ),
     };
     const state = {
+        experimentPolicyId: policy.id,
+        experimentPolicySha256: policySha256(policy),
+        loadPolicy: structuredClone(policy.loadPolicy),
         namespace: fixture.namespace,
         runId: run,
         prefix: fixture.namespace + '-' + run,
@@ -47,6 +54,19 @@ function setup() {
     };
     return { state, fixture };
 }
+test('both explicit policies admit only their exact namespace fixture and reject cross-policy reuse', () => {
+    for (const policyId of ['DEFAULT_V1', 'LIGHT_V1']) {
+        const { state, fixture } = setup(policyId);
+        validateLoadTransportState(state, fixture);
+        const crossed = structuredClone(fixture);
+        crossed.experimentPolicySha256 = policySha256(
+            getLoadPolicy(policyId === 'LIGHT_V1' ? 'DEFAULT_V1' : 'LIGHT_V1')
+        );
+        assert.throws(() => validateLoadTransportState(state, crossed), {
+            code: 'LOAD_CONFIG',
+        });
+    }
+});
 function mock({
     mode = 'IMPORT',
     rpcResponse,

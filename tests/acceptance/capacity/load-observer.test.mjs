@@ -1,3 +1,8 @@
+import {
+    experimentFields,
+    fixturePolicyFields,
+    roleFields,
+} from './load-observer.test-helper.mjs';
 /** Synthetic counters, local source bytes and mocked SQL only. No resource adapter is enabled. */
 import test from 'node:test';
 import assert from 'node:assert/strict';
@@ -47,9 +52,10 @@ const state = {
         VECTOR_DATABASE_URL: `postgresql://runtime:test@127.0.0.1:15433/vectorix_m7c_load_vectors_${run}_test`,
         VECTORIX_DEFAULT_OLLAMA_ENDPOINT: 'http://127.0.0.1:11435',
     },
-    loadPolicy: { model: { digest: LOAD_IDENTITY.weights } },
+    ...experimentFields(),
 };
 const fixture = {
+    ...fixturePolicyFields(),
     schemaVersion: 1,
     namespace: state.namespace,
     runId: run,
@@ -61,6 +67,7 @@ const fixture = {
     },
 };
 const input = {
+    ...roleFields('pilotA'),
     runId: run,
     organizationId: 'orgA',
     collectionId: uuid(1),
@@ -211,6 +218,7 @@ test('receipt is immutable per generation and revalidation never attributes late
     const baseline = await observer.beginIndexObservation(input);
     current = after;
     const request = {
+        ...roleFields('pilotA'),
         organizationId: 'orgA',
         collectionId: input.collectionId,
         generationId: input.generationId,

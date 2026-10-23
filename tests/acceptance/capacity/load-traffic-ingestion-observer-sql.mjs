@@ -5,7 +5,6 @@ import {
     IngestionObservationError,
 } from './load-traffic-ingestion-observer.mjs';
 import { same, sha } from './load-observer-core.mjs';
-import { loadProfile } from './load-import-core.mjs';
 import { validateIngestionInventory } from './load-traffic-ingestion-observer-history.mjs';
 export const STATIC_DRAFT_ONLY = true;
 const one = (result) => {
@@ -73,6 +72,7 @@ export async function readIngestionProof(
         input.bindings.length <= 6 && input.bindings.length >= 3,
         'LOAD_INGEST_BOUNDS'
     );
+    const profile = dependencies.profile(input);
     const budget = { now, deadline: now() + 30000 };
     try {
         return await ingestionReadonly(
@@ -90,7 +90,6 @@ export async function readIngestionProof(
                                 input.collectionId,
                             ])
                         );
-                        const profile = loadProfile();
                         need(
                             same(
                                 Object.fromEntries(

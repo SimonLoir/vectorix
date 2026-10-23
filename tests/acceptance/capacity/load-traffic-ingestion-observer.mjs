@@ -9,6 +9,10 @@ import {
     fields,
     stableNativeSnapshot,
 } from './load-observer-core.mjs';
+import {
+    observationBinding,
+    assertObservationBinding,
+} from './load-observer-policy.mjs';
 export const STATIC_DRAFT_ONLY = true;
 export const INGESTION_LIMITS = Object.freeze({
     documents: 6,
@@ -267,14 +271,17 @@ export function createTrafficIngestionObserver({
         previousTime = value;
         return value;
     };
-    const scope = (input) =>
+    const scope = (input) => {
         need(
             ['paced', 'closed-loop'].includes(input?.phase) &&
+                ['ingestionA', 'ingestionB'].includes(input.collectionRole) &&
                 fixture.organizationIds.includes(input.organizationId) &&
                 id(input.collectionId) &&
                 id(input.generationId),
             'LOAD_INGEST_SCOPE'
         );
+        return observationBinding(state, fixture, input);
+    };
     const stable = async (input, deadline) => {
         const value = await stableNativeSnapshot(
             async () => checkedNative(await reader.native(input), input),
@@ -300,7 +307,7 @@ export function createTrafficIngestionObserver({
     };
     return {
         async begin(input) {
-            scope(input);
+            const policyBinding = scope(input);
             const key = input.phase + '/' + input.organizationId;
             need(!begun.has(key), 'LOAD_INGEST_REPLAY');
             begun.add(key);
@@ -314,6 +321,7 @@ export function createTrafficIngestionObserver({
                 organizationId: input.organizationId,
                 collectionId: input.collectionId,
                 generationId: input.generationId,
+                ...policyBinding,
                 snapshot,
             };
             const ref = digest(baseline);
@@ -326,7 +334,7 @@ export function createTrafficIngestionObserver({
             return ref;
         },
         async finish(input) {
-            scope(input);
+            const policyBinding = scope(input);
             need(
                 hash(input.baselineRef) && !finished.has(input.baselineRef),
                 'LOAD_INGEST_REPLAY'
@@ -376,6 +384,7 @@ export function createTrafficIngestionObserver({
                     ].every((key) => before[key] === input[key]),
                 'LOAD_INGEST_BASELINE'
             );
+            assertObservationBinding(before, policyBinding);
             await admit();
             let after, native;
             do {
@@ -417,6 +426,7 @@ export function createTrafficIngestionObserver({
                 organizationId: input.organizationId,
                 collectionId: input.collectionId,
                 generationId: input.generationId,
+                ...policyBinding,
                 ...catalog,
                 native: {
                     ...native,

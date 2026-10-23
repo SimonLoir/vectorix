@@ -9,6 +9,7 @@ import {
     loadObserverGuard,
     loadObservationPackages,
 } from './load-observer-runtime.mjs';
+import { observationBinding } from './load-observer-policy.mjs';
 export const STATIC_DRAFT_ONLY = false;
 /** Bounded per-document pages prevent125k metadata rows from becoming one unbounded ORM read. */
 export async function readTrafficCatalog(
@@ -16,6 +17,7 @@ export async function readTrafficCatalog(
     { state, fixture, input, parseIdentity, now = () => performance.now() }
 ) {
     validateIdentity(state, fixture);
+    const policyBinding = observationBinding(state, fixture, input);
     need(
         fixture.organizationIds.includes(input.organizationId) &&
             id(input.collectionId) &&
@@ -120,6 +122,7 @@ export async function readTrafficCatalog(
             organizationId: input.organizationId,
             collectionId: input.collectionId,
             generationId: input.generationId,
+            ...policyBinding,
             modelIdentity,
             documents,
         };
@@ -140,6 +143,7 @@ export async function createTrafficCatalogRuntime({
     const { Client, embeddings } = await loadObservationPackages(admit);
     return {
         async catalog(input) {
+            observationBinding(state, fixture, input);
             await admit();
             const client = new Client({
                 connectionString: state.environment.DATABASE_URL,

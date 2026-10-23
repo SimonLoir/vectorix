@@ -1,5 +1,7 @@
 /** Pure mock setup protocol; no filesystem, SDK, HTTP, Docker or database operation. */
 import test from 'node:test';
+import { getLoadPolicy, policySha256 } from './load-policy-registry.mjs';
+const defaultPolicy = getLoadPolicy('DEFAULT_V1');
 import assert from 'node:assert/strict';
 import {
     DRAFT_ONLY,
@@ -13,6 +15,9 @@ function state() {
     return {
         schemaVersion: 1,
         namespace: 'vectorix-m7c-load',
+        experimentPolicyId: defaultPolicy.id,
+        experimentPolicySha256: policySha256(defaultPolicy),
+        loadPolicy: structuredClone(defaultPolicy.loadPolicy),
         runId: run,
         prefix: 'vectorix-m7c-load-' + run,
         phase: 'APP_DB_EMPTY_SCHEMA_REQUIRED',
@@ -79,23 +84,29 @@ test('independent proof must affirm exact run purpose ownership read-only empty 
     const value = {
         schemaVersion: 1,
         namespace: 'vectorix-m7c-load',
+        experimentPolicyId: defaultPolicy.id,
+        experimentPolicySha256: policySha256(defaultPolicy),
         runId: run,
         purpose: 'bucket',
         resourceOwnership: true,
         databaseReadOnly: true,
         bootstrapFreshness: true,
     };
-    validateBucketGuard(value, run);
+    validateBucketGuard(value, run, defaultPolicy);
     for (const key of [
         'resourceOwnership',
         'databaseReadOnly',
         'bootstrapFreshness',
     ])
         assert.throws(() =>
-            validateBucketGuard({ ...value, [key]: false }, run)
+            validateBucketGuard({ ...value, [key]: false }, run, defaultPolicy)
         );
     assert.throws(() =>
-        validateBucketGuard({ ...value, purpose: 'bootstrap' }, run)
+        validateBucketGuard(
+            { ...value, purpose: 'bootstrap' },
+            run,
+            defaultPolicy
+        )
     );
 });
 test('new private unversioned empty bucket setup has finite exact native actions', async () => {
@@ -150,5 +161,53 @@ test('a failed checkpoint cannot produce a returned successful setup proof', asy
             },
         }),
         /SYNTHETIC_CHECKPOINT_REFUSAL/u
+    );
+});
+
+test('light bucket namespace cannot reuse default resources or guard receipts', async () => {
+    const policy = getLoadPolicy('LIGHT_V1'),
+        light = state();
+    Object.assign(light, {
+        namespace: policy.namespace,
+        prefix: policy.namespace + '-' + run,
+        experimentPolicyId: policy.id,
+        experimentPolicySha256: policySha256(policy),
+        loadPolicy: structuredClone(policy.loadPolicy),
+    });
+    light.environment.VECTORIX_DEFAULT_S3_BUCKET =
+        policy.emailPrefix + '-' + run;
+    light.environment.VECTORIX_DEFAULT_S3_ACCESS_KEY_ID =
+        policy.emailPrefix + '-' + run;
+    validateBucketState(light, run);
+    const value = {
+        schemaVersion: 1,
+        namespace: policy.namespace,
+        runId: run,
+        experimentPolicyId: policy.id,
+        experimentPolicySha256: policySha256(policy),
+        purpose: 'bucket',
+        resourceOwnership: true,
+        databaseReadOnly: true,
+        bootstrapFreshness: true,
+    };
+    validateBucketGuard(value, run, policy);
+    assert.throws(() => validateBucketGuard(value, run, defaultPolicy));
+    assert.throws(() =>
+        validateBucketState(
+            { ...light, namespace: defaultPolicy.namespace },
+            run
+        )
+    );
+    assert.throws(() =>
+        validateBucketState(
+            {
+                ...light,
+                environment: {
+                    ...light.environment,
+                    VECTORIX_DEFAULT_S3_BUCKET: 'm7c-load-' + run,
+                },
+            },
+            run
+        )
     );
 });

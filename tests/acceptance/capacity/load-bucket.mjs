@@ -5,6 +5,11 @@ import { fileURLToPath } from 'node:url';
 import { createRequire } from 'node:module';
 import { spawnSync } from 'node:child_process';
 import { Transform } from 'node:stream';
+import {
+    getLoadPolicy,
+    loadPolicyForState,
+    policySha256,
+} from './load-policy-registry.mjs';
 
 export const DRAFT_ONLY = false;
 export class LoadBucketError extends Error {}
@@ -13,12 +18,18 @@ const check = (value, label) => {
 };
 
 export function validateBucketState(state, run) {
+    let policy;
+    try {
+        policy = loadPolicyForState(state);
+    } catch {
+        throw new LoadBucketError('LOAD_BUCKET_STATE');
+    }
     check(
         /^[a-f0-9]{12}$/u.test(run) &&
             state.schemaVersion === 1 &&
-            state.namespace === 'vectorix-m7c-load' &&
+            state.namespace === policy.namespace &&
             state.runId === run &&
-            state.prefix === 'vectorix-m7c-load-' + run &&
+            state.prefix === policy.namespace + '-' + run &&
             state.phase === 'APP_DB_EMPTY_SCHEMA_REQUIRED',
         'LOAD_BUCKET_STATE'
     );
@@ -31,10 +42,11 @@ export function validateBucketState(state, run) {
                 `http://127.0.0.1:${state.ports.rustfs}` &&
             env.VECTORIX_S3_ALLOWED_ENDPOINTS ===
                 env.VECTORIX_DEFAULT_S3_ENDPOINT &&
-            env.VECTORIX_DEFAULT_S3_BUCKET === 'm7c-load-' + run &&
+            env.VECTORIX_DEFAULT_S3_BUCKET === policy.emailPrefix + '-' + run &&
             env.VECTORIX_DEFAULT_S3_REGION === 'us-east-1' &&
             env.VECTORIX_DEFAULT_S3_FORCE_PATH_STYLE === 'true' &&
-            env.VECTORIX_DEFAULT_S3_ACCESS_KEY_ID === 'm7c-load-' + run &&
+            env.VECTORIX_DEFAULT_S3_ACCESS_KEY_ID ===
+                policy.emailPrefix + '-' + run &&
             /^[A-Za-z0-9_-]{32,128}$/u.test(
                 env.VECTORIX_DEFAULT_S3_SECRET_ACCESS_KEY
             ),
@@ -43,10 +55,13 @@ export function validateBucketState(state, run) {
     return state;
 }
 
-export function validateBucketGuard(value, run) {
+export function validateBucketGuard(value, run, policy) {
+    policySha256(policy);
     check(
         value?.schemaVersion === 1 &&
-            value.namespace === 'vectorix-m7c-load' &&
+            value.namespace === policy.namespace &&
+            value.experimentPolicyId === policy.id &&
+            value.experimentPolicySha256 === policySha256(policy) &&
             value.runId === run &&
             value.purpose === 'bucket' &&
             value.resourceOwnership === true &&
@@ -131,13 +146,15 @@ function privateJson(file, maximum) {
     }
 }
 
-function guard(root, run) {
+function guard(root, run, policy) {
     const result = spawnSync(
         'python3',
         [
             fileURLToPath(new URL('./load-topology.py', import.meta.url)),
             '--run',
             run,
+            '--experiment',
+            policy.id,
             '--mode',
             'guard',
             '--purpose',
@@ -159,7 +176,7 @@ function guard(root, run) {
         result.status === 0 && !result.error,
         'LOAD_BUCKET_INDEPENDENT_GUARD'
     );
-    validateBucketGuard(JSON.parse(result.stdout), run);
+    validateBucketGuard(JSON.parse(result.stdout), run, policy);
 }
 
 async function nativeApi(root, state) {
@@ -307,14 +324,20 @@ async function main() {
             /^[a-f0-9]{12}$/u.test(args[3]),
         'LOAD_BUCKET_ARGUMENTS'
     );
-    const root = path.resolve(
-        path.dirname(fileURLToPath(import.meta.url)),
-        '../../..'
+    let root = path.dirname(fileURLToPath(import.meta.url));
+    while (!fs.existsSync(path.join(root, 'pnpm-workspace.yaml'))) {
+        check(path.dirname(root) !== root, 'LOAD_BUCKET_WORKSPACE');
+        root = path.dirname(root);
+    }
+    const allowed = ['DEFAULT_V1', 'LIGHT_V1'].map((id) =>
+        path.join(
+            root,
+            'node_modules/.cache/vectorix',
+            getLoadPolicy(id).namespace + '-' + args[3]
+        )
     );
-    const directory = path.join(
-        root,
-        'node_modules/.cache/vectorix/vectorix-m7c-load-' + args[3]
-    );
+    const directory = path.dirname(args[1]);
+    check(allowed.includes(directory), 'LOAD_BUCKET_PRIVATE_DIRECTORY');
     const stat = fs.lstatSync(directory);
     check(
         stat.isDirectory() &&
@@ -328,9 +351,18 @@ async function main() {
         privateJson(args[1], 128 * 1024),
         args[3]
     );
+    check(
+        directory ===
+            path.join(
+                root,
+                'node_modules/.cache/vectorix',
+                loadPolicyForState(state).namespace + '-' + args[3]
+            ),
+        'LOAD_BUCKET_PRIVATE_DIRECTORY'
+    );
     const proofFile = path.join(directory, 'bucket-proof.json');
     check(!fs.existsSync(proofFile), 'LOAD_BUCKET_REFUSES_EXISTING_PROOF');
-    guard(root, args[3]);
+    guard(root, args[3], loadPolicyForState(state));
     for (const key of Object.keys(process.env))
         if (!['PATH', 'LANG', 'LC_ALL', 'TMPDIR'].includes(key))
             delete process.env[key];

@@ -7,10 +7,19 @@ from pathlib import Path
 import re
 import sys
 
-ROOT = Path(__file__).resolve().parents[3]
+ROOT = next(parent for parent in Path(__file__).resolve().parents
+    if (parent / 'pnpm-workspace.yaml').is_file() and (parent / 'packages/db').is_dir())
 sys.path.insert(0, str(ROOT / 'tests/acceptance/restore'))
 from m7c_restore_common import (BASE_ENVIRONMENT_KEYS, CACHE, GuardError, canonical,
     digest, read_private_bytes, require, volume_identity)
+
+from load_policy_registry import get_load_policy, load_policy_for_state as _resolve_policy, policy_sha256, LoadPolicyError
+
+def load_policy_for_state(state):
+    try:
+        return _resolve_policy(state)
+    except LoadPolicyError:
+        raise GuardError("load-immutable-experiment-policy") from None
 
 NAMESPACE = 'vectorix-m7c-load'
 LABEL = 'vectorix.load-test'
@@ -32,35 +41,20 @@ DEFAULT_LIMITS = {'postgres': {'cpus': '2', 'memoryBytes': 2 * 1024 ** 3},
 SAFE_ID = re.compile(r'[A-Za-z0-9_-]{1,128}')
 HASH = re.compile(r'[a-f0-9]{64}')
 ENVIRONMENT_KEYS = frozenset(BASE_ENVIRONMENT_KEYS)
-LOAD_POLICY = {
-    'version': 'native-default-load-v1',
-    'maximumDocuments': 240, 'maximumCollections': 20,
-    'primaryDocuments': 200, 'referenceDocuments': 24, 'concurrentDocuments': 12,
-    'pilotDocuments': 4, 'pilotChildren': 2000, 'fullChildren': 100000,
-    'familySha256': '4f64a77bb49dc1e547aa37fc438507bcfee2a894697424357eb61f4f47bedbfb',
-    'pilotCorpusSha256': '0d008fd0514aac362e888aa6a582daef1cd0b3feb4cf26e6a3d096faaee0627c',
-    'fullCorpusSha256': 'c99db8842d4ab7a52457c8e81926389f7d66b49d569db026ed548fe841f01a67',
-    'model': {'provider': 'OLLAMA', 'model': 'embeddinggemma:latest', 'dimensions': 768,
-        'preset': 'EMBEDDING_GEMMA',
-        'digest': '85462619ee721b466c5927d109d4cb765861907d5417b9109caebc4e614679f1'},
-    'profile': {'strategy': 'TOKEN_WINDOW', 'targetTokens': 512, 'minTokens': 128, 'maxTokens': 768,
-        'overlapTokens': 64, 'parentMaxTokens': 2048, 'parentChild': True,
-        'preparation': '', 'indexType': 'DISKANN'},
-    'pilotSeconds': 1200, 'fullSeconds': 7200, 'phaseSeconds': 180, 'phaseDrainSeconds': 300,
-    'minimumFreeBytes': 4 * 1024 ** 3,
-    'resourceSampling': {'minimumIntervalMs': 1000, 'maximumSamples': 20000, 'maximumBytes': 32 * 1024 ** 2},
-    'gracefulStopSeconds': 300,
-}
+# Compatibility names are read-only defaults, never mutated by experiment selection.
+LOAD_POLICY = get_load_policy('DEFAULT_V1')['loadPolicy']
+HERE = Path(__file__).resolve().parent
 
 
-def state_path(run_id):
+def state_path(run_id, experiment_id="DEFAULT_V1"):
     require(isinstance(run_id, str) and re.fullmatch('[a-f0-9]{12}', run_id), 'load-run-format')
-    return CACHE / (NAMESPACE + '-' + run_id) / 'state.json'
+    return CACHE / (get_load_policy(experiment_id)['namespace'] + '-' + run_id) / 'state.json'
 
 
-def labels(run_id, service):
+def labels(run_id, service, experiment_id="DEFAULT_V1"):
     require(service in SERVICES, 'load-known-service')
-    return {LABEL + '.id': run_id, LABEL + '.service': service}
+    label = get_load_policy(experiment_id)['label']
+    return {label + '.id': run_id, label + '.service': service}
 
 
 def valid_hash(value):
@@ -77,13 +71,15 @@ def nano_cpus(value):
 
 def validate_state(state, run_id, *, complete=False):
     """Accept only this load namespace; restore-shaped state is never adapted."""
-    state_path(run_id)
-    prefix = NAMESPACE + '-' + run_id
-    require(state.get('schemaVersion') == 1 and state.get('namespace') == NAMESPACE
+    selected = load_policy_for_state(state)
+    state_path(run_id, selected['id'])
+    namespace = selected['namespace']
+    prefix = namespace + '-' + run_id
+    require(state.get('schemaVersion') == 1 and state.get('namespace') == namespace
         and state.get('runId') == run_id and state.get('prefix') == prefix, 'load-state-binding')
     require(state.get('phase') in PHASES, 'load-state-phase')
-    require(state.get('applicationDatabase') == 'vectorix_m7c_load_app_' + run_id + '_test'
-        and state.get('vectorDatabase') == 'vectorix_m7c_load_vectors_' + run_id + '_test', 'load-test-databases')
+    require(state.get('applicationDatabase') == selected['databasePrefix'] + '_app_' + run_id + '_test'
+        and state.get('vectorDatabase') == selected['databasePrefix'] + '_vectors_' + run_id + '_test', 'load-test-databases')
     ports = state['ports']
     require(set(ports) == {*SERVICES, 'api', 'web', 'admin'}
         and all(type(value) is int and 1024 < value < 65536 for value in ports.values())
@@ -100,10 +96,10 @@ def validate_state(state, run_id, *, complete=False):
             for key, value in state['acceptanceSources'].items()), 'load-acceptance-source-pins')
     require(valid_hash(state.get('referenceCorpusDigest')), 'load-corpus-pin')
     require(isinstance(state.get('corpusFiles'), dict) and 1 <= len(state['corpusFiles']) <= 64
-        and all(isinstance(key, str) and re.fullmatch(r'(?:reference-v1|load-v1)/[A-Za-z0-9_./-]{1,120}', key)
+        and all(isinstance(key, str) and re.fullmatch(r'(?:reference-v1|' + re.escape(selected['corpusRoot']) + r')/[A-Za-z0-9_./-]{1,120}', key)
             and '..' not in key.split('/') and valid_hash(value) for key, value in state['corpusFiles'].items()),
         'load-corpus-file-pins')
-    require(state.get('loadPolicy') == LOAD_POLICY, 'load-immutable-experiment-policy')
+    require(state.get('loadPolicy') == selected['loadPolicy'], 'load-immutable-experiment-policy')
     require(state.get('workflowHistory') in [[], ['pilot'], ['pilot', 'full'], ['pilot', 'full', 'traffic']],
         'load-once-only-workflow-history')
     require(set(state['images']) == set(SERVICES) and all(re.fullmatch('sha256:[a-f0-9]{64}', value)
@@ -123,7 +119,7 @@ def validate_state(state, run_id, *, complete=False):
             and 1 <= build['treeFiles'] <= 30000, 'load-production-artifact-pin')
     secret = state['infrastructureSecrets']
     require(set(secret) == {'postgres', 'indexer', 'runtime', 's3Access', 's3Secret'}
-        and secret['s3Access'] == 'm7c-load-' + run_id
+        and secret['s3Access'] == selected['emailPrefix'] + '-' + run_id
         and all(isinstance(secret[key], str) and re.fullmatch('[A-Za-z0-9_-]{32,128}', secret[key])
             for key in ['postgres', 'indexer', 'runtime', 's3Secret']), 'load-synthetic-secrets')
     environment = state['environment']
@@ -147,7 +143,7 @@ def validate_state(state, run_id, *, complete=False):
         'REDIS_URL': 'redis://127.0.0.1:' + str(ports['redis']), 'VECTORIX_WEB_PUSH_ENABLED': 'false',
         'VECTORIX_DEFAULT_S3_ENDPOINT': 'http://127.0.0.1:' + str(ports['rustfs']),
         'VECTORIX_DEFAULT_S3_REGION': 'us-east-1', 'VECTORIX_DEFAULT_S3_FORCE_PATH_STYLE': 'true',
-        'VECTORIX_DEFAULT_S3_BUCKET': 'm7c-load-' + run_id,
+        'VECTORIX_DEFAULT_S3_BUCKET': selected['emailPrefix'] + '-' + run_id,
         'VECTORIX_DEFAULT_S3_ACCESS_KEY_ID': secret['s3Access'], 'VECTORIX_DEFAULT_S3_SECRET_ACCESS_KEY': secret['s3Secret'],
         'VECTORIX_DEFAULT_OLLAMA_ENDPOINT': 'http://127.0.0.1:' + str(ports['ollama'])}
     exact['VECTORIX_S3_ALLOWED_ENDPOINTS'] = exact['VECTORIX_DEFAULT_S3_ENDPOINT']
@@ -180,7 +176,7 @@ def validate_state(state, run_id, *, complete=False):
     require(len(ids) == len(set(ids)) and len(volumes) == len(set(volumes)), 'load-distinct-resource-identities')
     model = state['modelVolume']
     require(isinstance(model['name'], str) and re.fullmatch('[A-Za-z0-9][A-Za-z0-9_.-]{1,127}', model['name'])
-        and not model['name'].startswith(NAMESPACE + '-') and valid_hash(model['identity']), 'load-existing-model-volume')
+        and not any(model['name'].startswith(get_load_policy(key)['namespace'] + '-') for key in ['DEFAULT_V1','LIGHT_V1']) and valid_hash(model['identity']), 'load-existing-model-volume')
     require(set(state['processes']).issubset({'api', 'workers'}) and set(state['dashboardProcesses']).issubset({'web'}),
         'load-separate-process-sets')
     records = {**state['processes'], **state['dashboardProcesses']}
@@ -188,7 +184,7 @@ def validate_state(state, run_id, *, complete=False):
         records['load'] = state['loadProcess']
     for service, saved in records.items():
         require(isinstance(saved, dict), 'load-process-record')
-        entry = ROOT / 'tests/acceptance/capacity' / RUNTIME_ENTRIES.get(saved.get('workflow'), 'invalid') if service == 'load' \
+        entry = HERE / RUNTIME_ENTRIES.get(saved.get('workflow'), 'invalid') if service == 'load' \
             else Path(state['builds'][service]['entry'])
         require(isinstance(saved, dict) and saved.get('service') == service
             and type(saved.get('pid')) is int and saved['pid'] > 1
@@ -212,7 +208,7 @@ def validate_volume(state, service, value):
         and value.get('Options') in [None, {}] and volume_identity(value) == saved['volumeIdentity'],
         'load-volume-creation-identity')
     if service != 'ollama':
-        require(value.get('Labels') == labels(state['runId'], service), 'load-volume-labels')
+        require(value.get('Labels') == labels(state['runId'], service, state['experimentPolicyId']), 'load-volume-labels')
     return value
 
 
@@ -222,7 +218,7 @@ def validate_container(state, service, value, *, running=None):
     require(saved['id'] is not None and value['Id'] == saved['id'] and value['Name'] == '/' + saved['name']
         and value['Image'] == saved['imageId'], 'load-container-immutable-identity')
     actual_labels = value['Config'].get('Labels') or {}
-    require(all(actual_labels.get(key) == content for key, content in labels(state['runId'], service).items()),
+    require(all(actual_labels.get(key) == content for key, content in labels(state['runId'], service, state['experimentPolicyId']).items()),
         'load-container-labels')
     host = value['HostConfig']
     require(host['NetworkMode'] == 'bridge' and host['Privileged'] is False
@@ -242,7 +238,10 @@ def validate_container(state, service, value, *, running=None):
 
 def validate_fixture(fixture, state):
     """Validate final synthetic identities without accepting partial signup journals."""
-    require(fixture.get('schemaVersion') == 1 and fixture.get('namespace') == NAMESPACE
+    selected = load_policy_for_state(state)
+    require(fixture.get('experimentPolicyId') == selected['id']
+        and fixture.get('experimentPolicySha256') == policy_sha256(selected), 'load-fixture-experiment')
+    require(fixture.get('schemaVersion') == 1 and fixture.get('namespace') == selected['namespace']
         and fixture.get('runId') == state['runId'] and set(fixture['users']) == {'owner', 'reader', 'foreign'},
         'load-fixture-binding')
     organizations = fixture['organizationIds']
@@ -254,7 +253,7 @@ def validate_fixture(fixture, state):
             and all(isinstance(user[key], str) and SAFE_ID.fullmatch(user[key])
                 for key in ['userId', 'memberId', 'organizationId'])
             and user['organizationId'] in organizations
-            and user['email'] == 'm7c-load-' + role + '-' + state['runId'] + '@example.test'
+            and user['email'] == selected['emailPrefix'] + '-' + role + '-' + state['runId'] + '@example.test'
             and isinstance(user['password'], str) and 20 <= len(user['password']) <= 200,
             'load-fixture-user')
         user_ids.append(user['userId']); member_ids.append(user['memberId'])
@@ -273,6 +272,8 @@ def entry_digest(path):
     return hashlib.sha256(value.read_bytes()).hexdigest()
 
 
-def read_state(run_id):
+def read_state(run_id, experiment_id="DEFAULT_V1"):
     import json
-    return validate_state(json.loads(read_private_bytes(state_path(run_id), 128 * 1024)), run_id)
+    state = validate_state(json.loads(read_private_bytes(state_path(run_id, experiment_id), 128 * 1024)), run_id)
+    require(state["experimentPolicyId"] == experiment_id, "load-state-path-experiment")
+    return state

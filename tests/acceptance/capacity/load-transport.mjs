@@ -1,4 +1,5 @@
 /** Guarded adapter factory: core-only imports; never opens files, clients or sockets on import. */
+import { loadPolicyForState } from './load-policy-registry.mjs';
 export const RUNTIME_DRAFT_ONLY = true;
 export const TRANSPORT_LIMITS = Object.freeze({
     requestBytes: 1024 * 1024,
@@ -94,12 +95,20 @@ const safeId = (value) =>
 
 /** Exact separate load namespace and same-host auth origins; no quality/restore state is accepted. */
 export function validateLoadTransportState(state, fixture) {
+    let policy;
+    try {
+        policy = loadPolicyForState(state);
+    } catch {
+        throw new LoadTransportError('LOAD_CONFIG');
+    }
     need(
-        state?.namespace === 'vectorix-m7c-load' &&
+        state?.namespace === policy.namespace &&
             /^[a-f0-9]{12}$/u.test(state.runId) &&
-            state.prefix === `vectorix-m7c-load-${state.runId}` &&
+            state.prefix === `${policy.namespace}-${state.runId}` &&
             fixture?.schemaVersion === 1 &&
             fixture.namespace === state.namespace &&
+            fixture.experimentPolicyId === state.experimentPolicyId &&
+            fixture.experimentPolicySha256 === state.experimentPolicySha256 &&
             fixture.runId === state.runId,
         'LOAD_CONFIG'
     );
@@ -118,7 +127,8 @@ export function validateLoadTransportState(state, fixture) {
             safeId(user.userId) &&
                 safeId(user.memberId) &&
                 fixture.organizationIds.includes(user.organizationId) &&
-                user.email === `m7c-load-${role}-${state.runId}@example.test` &&
+                user.email ===
+                    `${policy.emailPrefix}-${role}-${state.runId}@example.test` &&
                 typeof user.password === 'string' &&
                 user.password.length >= 20 &&
                 user.password.length <= 200,

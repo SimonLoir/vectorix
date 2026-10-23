@@ -1,3 +1,8 @@
+import {
+    experimentFields,
+    fixturePolicyFields,
+    roleFields,
+} from './load-observer.test-helper.mjs';
 /** Synthetic transport events, clocks, APIs and numeric snapshots only. No socket/process/database/model action. */
 import test from 'node:test';
 import assert from 'node:assert/strict';
@@ -25,6 +30,7 @@ import { wrapTrafficMeasurement } from './load-traffic-resources.mjs';
 const run = '0123456789ab',
     organizationIds = ['orgA', 'orgB'],
     fixture = {
+        ...fixturePolicyFields(),
         schemaVersion: 1,
         namespace: 'vectorix-m7c-load',
         runId: run,
@@ -36,6 +42,7 @@ const run = '0123456789ab',
         },
     };
 const state = {
+    ...experimentFields(),
     schemaVersion: 1,
     namespace: 'vectorix-m7c-load',
     runId: run,
@@ -619,6 +626,8 @@ function phaseFixture() {
                 kind: 'INGESTION_PHASE_PROOF',
                 runId: run,
                 phase: input.phase,
+                collectionRole: input.collectionRole,
+                policySha256: input.policySha256,
                 newPublishedDocuments: 3,
                 currentDocuments: input.priorBindings.length + 3,
                 sourceTuplesVerified: true,
@@ -696,10 +705,12 @@ function phaseFixture() {
         baseline: {
             collections: {
                 ingestionA: {
+                    ...roleFields('ingestionA'),
                     collectionId: 'ingestA',
                     generationId: 'generationA',
                 },
                 ingestionB: {
+                    ...roleFields('ingestionB'),
                     collectionId: 'ingestB',
                     generationId: 'generationB',
                 },

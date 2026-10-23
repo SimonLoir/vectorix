@@ -11,9 +11,14 @@ import {
 } from './load-observer-core.mjs';
 import { sizeBindings, SIZE_LIMITS, LoadSizeError } from './load-sizes.mjs';
 import { sha, same, LoadImportError } from './load-import-core.mjs';
+import { loadPolicyForState, policySha256 } from './load-policy-registry.mjs';
 export const LOAD_RUNTIME_HELPERS = Object.freeze([
     'load-topology.py',
     'load_topology_policy.py',
+    'load-policy-registry.mjs',
+    'load_policy_registry.py',
+    'load-light-policy.mjs',
+    'load-light-corpus.mjs',
     'load-import-runtime.mjs',
     'load-import-runtime-content.mjs',
     'load-import-runtime-policy.mjs',
@@ -27,6 +32,7 @@ export const LOAD_RUNTIME_HELPERS = Object.freeze([
     'load-import-collections.mjs',
     'load-corpus.mjs',
     'load-observer.mjs',
+    'load-observer-policy.mjs',
     'load-observer-core.mjs',
     'load-observer-layout.mjs',
     'load-observer-sql.mjs',
@@ -101,7 +107,7 @@ const KNOWN_ADAPTER_CODES = new Set(
     LOAD_ASSOCIATION_RESPONSE LOAD_AUTH LOAD_AUTH_IDENTITY LOAD_BASELINE_CHANGED LOAD_BUDGET
     LOAD_CALL_CAP LOAD_CANCELLED LOAD_CANONICAL_HASH LOAD_CANONICAL_PAGE
     LOAD_CLOCK_NOT_ADVANCED LOAD_CONCURRENCY LOAD_CONFIG LOAD_COOKIE LOAD_DOCUMENT_CHANGED
-    LOAD_DOCUMENT_INPUT LOAD_EXISTING_BINDING LOAD_EXTRACTION_FAILED LOAD_FORBIDDEN
+    LOAD_DOCUMENT_INPUT LOAD_EXISTING_BINDING LOAD_EXPERIMENT_POLICY LOAD_EXTRACTION_FAILED LOAD_FORBIDDEN
     LOAD_FROZEN_CORPUS LOAD_GENERATION_BINDING LOAD_HTTP LOAD_IMPORT_CONFIG
     LOAD_IMPORT_DEADLINE LOAD_IMPORT_FAILED LOAD_INDEPENDENT_PROOF LOAD_INDEX_ACCESS
     LOAD_INDEX_FAILED LOAD_INPUT_CAP LOAD_INVENTORY_CAP LOAD_INVENTORY_CHANGED
@@ -116,7 +122,7 @@ const KNOWN_ADAPTER_CODES = new Set(
     LOAD_OBS_GUARD LOAD_OBS_HOUR_BOUND LOAD_OBS_HOUR_LOST LOAD_OBS_IDENTITY
     LOAD_OBS_LAYOUT_BOUND LOAD_OBS_MANIFEST LOAD_OBS_MARKER LOAD_OBS_NATIVE_COVERAGE
     LOAD_OBS_NATIVE_FAILURE LOAD_OBS_NATIVE_INPUT LOAD_OBS_NOT_DRAINED LOAD_OBS_NOT_STABLE
-    LOAD_OBS_PAGE LOAD_OBS_PARENT LOAD_OBS_PHYSICAL_BOUND LOAD_OBS_PHYSICAL_ROW
+    LOAD_OBS_PAGE LOAD_OBS_PARENT LOAD_OBS_PHYSICAL_BOUND LOAD_OBS_PHYSICAL_ROW LOAD_OBS_POLICY_BINDING
     LOAD_OBS_PREPARED_INPUT LOAD_OBS_PRODUCER LOAD_OBS_PROFILE LOAD_OBS_PROGRESS
     LOAD_OBS_PUBLICATION LOAD_OBS_READ_DEADLINE LOAD_OBS_RECEIPT LOAD_OBS_RESOURCE_ADAPTER
     LOAD_OBS_RESOURCE_BYTES LOAD_OBS_RESOURCE_CGROUP LOAD_OBS_RESOURCE_CONTAINER
@@ -258,6 +264,7 @@ export function validateLoadRuntimeContext(context) {
         'LOAD_RUNTIME_CONTEXT'
     );
     validateLoadTransportState(state, fixture);
+    const policy = loadPolicyForState(state);
     validateIdentity(state, fixture);
     need(
         LOAD_RUNTIME_HELPERS.every((name) =>
@@ -268,7 +275,7 @@ export function validateLoadRuntimeContext(context) {
     const directory = path.join(
             root,
             'node_modules/.cache/vectorix',
-            'vectorix-m7c-load-' + runId
+            policy.namespace + '-' + runId
         ),
         caller = state.loadProcess;
     need(
@@ -298,9 +305,12 @@ export function guardProof(proof, context) {
     need(
         proof &&
             Object.keys(proof).sort().join(',') ===
-                'bootstrapFreshness,databaseReadOnly,namespace,purpose,resourceOwnership,runId,schemaVersion' &&
+                'bootstrapFreshness,databaseReadOnly,experimentPolicyId,experimentPolicySha256,namespace,purpose,resourceOwnership,runId,schemaVersion' &&
             proof.schemaVersion === 1 &&
-            proof.namespace === 'vectorix-m7c-load' &&
+            proof.namespace === context.state.namespace &&
+            proof.experimentPolicyId === context.state.experimentPolicyId &&
+            proof.experimentPolicySha256 ===
+                context.state.experimentPolicySha256 &&
             proof.runId === context.runId &&
             proof.purpose === 'import' &&
             proof.resourceOwnership === true &&
@@ -323,7 +333,10 @@ export const CHILDREN = [
 export function checkReport(report, context, workflow, evidenceKind) {
     need(
         report?.schemaVersion === 1 &&
-            report.namespace === 'vectorix-m7c-load' &&
+            report.namespace === context.state.namespace &&
+            report.experimentPolicyId === context.state.experimentPolicyId &&
+            report.policySha256 ===
+                policySha256(loadPolicyForState(context.state)) &&
             report.runId === context.runId &&
             report.workflow === workflow &&
             report.status === 'COMPLETE' &&
@@ -348,6 +361,8 @@ export function summaryFor(report) {
         completed: true,
         status: 'INDEX_PREPARATION_COMPLETE',
         runId: report.runId,
+        experimentPolicyId: report.experimentPolicyId,
+        policySha256: report.policySha256,
         workflow: report.workflow,
         evidenceKind: report.evidenceKind,
         acceptance: report.acceptance,

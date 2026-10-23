@@ -5,12 +5,38 @@ import {
     hash,
     same,
     loadProfile,
-    LOAD_IDENTITY,
     LOAD_LIMITS,
     requestId,
 } from './load-import-core.mjs';
-export async function createCollection(ctx, role, label, metadataFields) {
-    const profile = loadProfile(metadataFields),
+import {
+    assertCollectionRoleOrganization,
+    policySha256,
+} from './load-policy-registry.mjs';
+/** An explicit collection role is independent of the API account dispatching the request. */
+function collectionBinding(ctx, role, collection) {
+    assertCollectionRoleOrganization(
+        ctx.policy,
+        collection.collectionRole,
+        ctx.fixture.users[role].organizationId,
+        ctx.fixture
+    );
+    return {
+        collectionRole: collection.collectionRole,
+        policySha256: policySha256(ctx.policy),
+    };
+}
+export async function createCollection(
+    ctx,
+    role,
+    label,
+    metadataFields,
+    collectionRole
+) {
+    const binding = collectionBinding(ctx, role, { collectionRole }),
+        profile = loadProfile(metadataFields, {
+            policy: ctx.policy,
+            collectionRole,
+        }),
         name = `M7c load ${ctx.state.runId} ${label}`;
     const created = await ctx.mutate(
         role,
@@ -38,9 +64,19 @@ export async function createCollection(ctx, role, label, metadataFields) {
             return { collectionId: value.id, configurationRevision: 1 };
         }
     );
-    return { collectionId: created.id, configurationRevision: 1, profile };
+    return {
+        collectionId: created.id,
+        configurationRevision: 1,
+        profile,
+        ...binding,
+    };
 }
 export async function probeCollection(ctx, role, collection) {
+    const binding = collectionBinding(ctx, role, collection);
+    need(
+        collection.policySha256 === binding.policySha256,
+        'LOAD_SAVED_PROFILE'
+    );
     const probe = await ctx.call(role, 'indexing.probe', {
         collectionId: collection.collectionId,
         expectedRevision: 1,
@@ -48,12 +84,17 @@ export async function probeCollection(ctx, role, collection) {
     need(
         probe.provider === 'OLLAMA' &&
             probe.model === 'embeddinggemma:latest' &&
-            probe.digest === LOAD_IDENTITY.weights &&
+            probe.digest === ctx.policy.identity.weights &&
             probe.dimensions === 768 &&
             probe.preset === 'EMBEDDING_GEMMA' &&
             probe.identityKind === 'WEIGHTS_DIGEST' &&
             Number.isInteger(probe.contextTokens) &&
-            probe.contextTokens >= 1608,
+            probe.contextTokens >=
+                ctx.policy.minimumContextTokens[
+                    ['pilotA', 'primaryA'].includes(collection.collectionRole)
+                        ? 'primary'
+                        : 'control'
+                ],
         'LOAD_NATIVE_PROBE'
     );
     return {
@@ -66,11 +107,12 @@ export async function probeCollection(ctx, role, collection) {
 }
 /** Capture native accounting before each start, including reference/empty baselines, after probe traffic ends. */
 function validateNativeBaseline(baseline, ctx, role, collection) {
+    const binding = collectionBinding(ctx, role, collection);
     need(
         Object.keys(baseline ?? {})
             .sort()
             .join(',') ===
-            'baselineSha256,collectionId,evidenceKind,exclusive,kind,organizationId,producerIdentitySha256,provider,runId,schemaVersion,stable,workload' &&
+            'baselineSha256,collectionId,collectionRole,evidenceKind,exclusive,kind,organizationId,policySha256,producerIdentitySha256,provider,runId,schemaVersion,stable,workload' &&
             baseline?.schemaVersion === 1 &&
             baseline.kind === 'INDEPENDENT_NATIVE_BASELINE' &&
             baseline.evidenceKind ===
@@ -81,6 +123,8 @@ function validateNativeBaseline(baseline, ctx, role, collection) {
             baseline.organizationId ===
                 ctx.fixture.users[role].organizationId &&
             baseline.collectionId === collection.collectionId &&
+            baseline.collectionRole === binding.collectionRole &&
+            baseline.policySha256 === binding.policySha256 &&
             baseline.workload === 'INDEXING' &&
             baseline.provider === 'OLLAMA' &&
             baseline.stable === true &&
@@ -111,6 +155,7 @@ export function validateGenerationObservation(
     }
 ) {
     validateNativeBaseline(nativeBaseline, ctx, role, collection);
+    const binding = collectionBinding(ctx, role, collection);
     need(
         observation?.schemaVersion === 1 &&
             observation.runId === ctx.state.runId &&
@@ -122,10 +167,12 @@ export function validateGenerationObservation(
             observation.organizationId ===
                 ctx.fixture.users[role].organizationId &&
             observation.collectionId === collection.collectionId &&
+            observation.collectionRole === binding.collectionRole &&
+            observation.policySha256 === binding.policySha256 &&
             observation.generationId === collection.generationId &&
             observation.configurationRevision === 1 &&
             observation.status === 'ACTIVE' &&
-            observation.modelIdentity === LOAD_IDENTITY.weights &&
+            observation.modelIdentity === ctx.policy.identity.weights &&
             observation.dimensions === 768 &&
             observation.chunkerVersion === 'token-window-utf8-v1' &&
             observation.parentContextVersion === 'parent-context-utf8-v1' &&
@@ -202,9 +249,11 @@ export function validateGenerationObservation(
         Object.keys(native ?? {})
             .sort()
             .join(',') ===
-            'baselineSha256,exclusive,finalSha256,kind,knownGapReports,nativeBatchErrors,nativeBatches,nativeFinishedBatches,nativeStartedBatches,producerIdentitySha256,receiptSha256,stableFinal' &&
+            'baselineSha256,collectionRole,exclusive,finalSha256,kind,knownGapReports,nativeBatchErrors,nativeBatches,nativeFinishedBatches,nativeStartedBatches,policySha256,producerIdentitySha256,receiptSha256,stableFinal' &&
             native?.kind === 'EXCLUSIVE_INDEXING_DELTA' &&
             native.baselineSha256 === nativeBaseline.baselineSha256 &&
+            native.collectionRole === binding.collectionRole &&
+            native.policySha256 === binding.policySha256 &&
             native.producerIdentitySha256 ===
                 nativeBaseline.producerIdentitySha256 &&
             hash(native.finalSha256) &&
@@ -289,6 +338,7 @@ export async function startCollection(
     );
     need(ctx.time() < absoluteDeadline, 'LOAD_PHASE_DEADLINE');
     const probe = await probeCollection(ctx, role, collection);
+    const policyBinding = collectionBinding(ctx, role, collection);
     const nativeBaseline = validateNativeBaseline(
         await beginIndexObservation({
             runId: ctx.state.runId,
@@ -298,6 +348,7 @@ export async function startCollection(
             expectedChildren,
             nativeIdentity: probe.digest,
             dimensions: probe.dimensions,
+            ...policyBinding,
         }),
         ctx,
         role,
@@ -356,7 +407,7 @@ export async function startCollection(
     );
     const elapsed = ctx.time() - indexStart;
     need(
-        status.active.modelIdentity === LOAD_IDENTITY.weights &&
+        status.active.modelIdentity === ctx.policy.identity.weights &&
             status.active.dimensions === 768 &&
             status.active.totalDocuments === bindings.length &&
             status.active.publishedDocuments === bindings.length &&
@@ -369,6 +420,7 @@ export async function startCollection(
         'LOAD_ACTIVE_STATUS'
     );
     const observed = await observeGeneration({
+        ...policyBinding,
         organizationId: ctx.fixture.users[role].organizationId,
         collectionId: collection.collectionId,
         generationId: collection.generationId,
@@ -411,6 +463,18 @@ export async function verifyCollection(
     descriptors,
     observeGeneration
 ) {
+    const policyBinding = collectionBinding(ctx, role, collection);
+    need(
+        collection.policySha256 === policyBinding.policySha256 &&
+            same(
+                collection.profile,
+                loadProfile(collection.profile?.metadataFields, {
+                    policy: ctx.policy,
+                    collectionRole: collection.collectionRole,
+                })
+            ),
+        'LOAD_SAVED_PROFILE'
+    );
     const saved = await ctx.call(role, 'collections.get', {
         id: collection.collectionId,
     });
@@ -446,6 +510,7 @@ export async function verifyCollection(
     );
     need(collection.observation?.nativeWorkProof, 'LOAD_NATIVE_WORK_PROOF');
     const observed = await observeGeneration({
+        ...policyBinding,
         organizationId: ctx.fixture.users[role].organizationId,
         collectionId: collection.collectionId,
         generationId: collection.generationId,

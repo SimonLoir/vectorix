@@ -15,11 +15,12 @@ import {
     validateLoadTransportState,
     createLoadTransport,
 } from './load-transport.mjs';
+import { loadResourcePolicyHash } from './load-import-core.mjs';
+import { observationPolicy } from './load-observer-core.mjs';
 import {
-    loadResourcePolicyHash,
-    LOAD_IDENTITY,
-    loadProfile,
-} from './load-import-core.mjs';
+    observationStateLocation,
+    assertObservationBinding,
+} from './load-observer-policy.mjs';
 import {
     summaryFor,
     LOAD_RUNTIME_HELPERS,
@@ -104,6 +105,7 @@ export function validateTrafficContext(
     helpers
 ) {
     validateIdentity(state, fixture);
+    const policy = observationPolicy(state);
     validateLoadTransportState(state, fixture);
     const directory = path.join(
             root,
@@ -117,7 +119,7 @@ export function validateTrafficContext(
             statePath === path.join(directory, 'state.json') &&
             runId === state.runId &&
             mode === 'traffic' &&
-            state.prefix === 'vectorix-m7c-load-' + runId &&
+            state.prefix === policy.namespace + '-' + runId &&
             state.phase === 'READY_FOR_LOAD_IMPORT' &&
             same(state.workflowHistory, ['pilot', 'full', 'traffic']),
         'LOAD_OBS_TRAFFIC_CONTEXT'
@@ -155,6 +157,7 @@ export function validateTrafficContext(
 
 /** Only a completed full report and its exact immutable baseline/outcome authorize traffic preparation. */
 export function validateTrafficFullReport(full, baseline, outcome, state) {
+    const policy = observationPolicy(state);
     need(
         full?.schemaVersion === 1 &&
             full.namespace === state.namespace &&
@@ -165,8 +168,12 @@ export function validateTrafficFullReport(full, baseline, outcome, state) {
             full.acceptance === 'FULL_INDEX_PREPARED' &&
             full.capacityAcceptance === 'NOT_RUN' &&
             full.trafficAcceptance === 'NOT_RUN' &&
-            full.familySha256 === LOAD_IDENTITY.family &&
-            full.corpusSha256 === LOAD_IDENTITY.full &&
+            full.experimentPolicyId === policy.id &&
+            full.policySha256 === state.experimentPolicySha256 &&
+            baseline.experimentPolicyId === policy.id &&
+            baseline.policySha256 === state.experimentPolicySha256 &&
+            full.familySha256 === policy.identity.family &&
+            full.corpusSha256 === policy.identity.full &&
             same(full.baseline, baseline) &&
             same(summaryFor(full), outcome),
         'LOAD_OBS_FULL_REPORT'
@@ -184,6 +191,17 @@ export function validateTrafficFullReport(full, baseline, outcome, state) {
             full.timing.fullIndexMs <= 7200000,
         'LOAD_OBS_FULL_REPORT'
     );
+    for (const [collectionRole, collection] of [
+        ['pilotA', full.collections?.pilot],
+        ['primaryA', full.collections?.primary],
+        ['referenceB', baseline.collections?.referenceB],
+        ['ingestionA', baseline.collections?.ingestionA],
+        ['ingestionB', baseline.collections?.ingestionB],
+    ])
+        assertObservationBinding(collection, {
+            collectionRole,
+            policySha256: state.experimentPolicySha256,
+        });
     return full;
 }
 
@@ -228,11 +246,8 @@ export function createTrafficRunFiles(directory) {
 export async function createLoadTrafficContext(parsed, helpers) {
     need(!STATIC_DRAFT_ONLY, 'LOAD_OBS_RUNTIME_DISABLED');
     const root = discoverWorkspace(HERE),
-        runDirectory = path.join(
-            root,
-            'node_modules/.cache/vectorix',
-            'vectorix-m7c-load-' + parsed.runId
-        );
+        { policy: selectedPolicy, directory: runDirectory } =
+            observationStateLocation(root, parsed.statePath, parsed.runId);
     need(
         parsed.statePath === path.join(runDirectory, 'state.json'),
         'LOAD_OBS_TRAFFIC_ARGUMENTS'
@@ -244,6 +259,10 @@ export async function createLoadTrafficContext(parsed, helpers) {
         fixture = decode(
             readPrivate(path.join(runDirectory, 'fixture.json'), 128 * 1024)
         );
+    need(
+        observationPolicy(state).id === selectedPolicy.id,
+        'LOAD_OBS_POLICY_BINDING'
+    );
     const context = validateTrafficContext(
         { ...parsed, root, helperDirectory: HERE, state, fixture },
         helpers
@@ -404,6 +423,7 @@ export async function createLoadTrafficContext(parsed, helpers) {
         await bounded(
             (check) =>
                 verifyTrafficServingState({
+                    state,
                     api,
                     observer,
                     fullReport,
@@ -426,6 +446,8 @@ export async function createLoadTrafficContext(parsed, helpers) {
                     ? fullReport.collections.primary
                     : fullReport.baseline.collections.referenceB;
             catalogs[organization] = await reader.catalog({
+                collectionRole: saved.collectionRole,
+                policySha256: saved.policySha256,
                 organizationId:
                     fixture.users[organization === 'A' ? 'owner' : 'foreign']
                         .organizationId,
@@ -437,11 +459,11 @@ export async function createLoadTrafficContext(parsed, helpers) {
                         : fullReport.baseline.documents.referenceB,
             });
         }
-        const profile = loadProfile();
         const oracle = await bounded(
             (check) =>
                 prepareTrafficOracle({
                     state,
+                    fixture,
                     fullReport,
                     references: content.references,
                     manifest: content.manifest,
@@ -452,7 +474,7 @@ export async function createLoadTrafficContext(parsed, helpers) {
                         check();
                         return value;
                     },
-                    plan: (artifact, identity, title) => {
+                    plan: (artifact, identity, title, profile) => {
                         check();
                         const children = [
                                 ...packages.chunking
@@ -477,7 +499,10 @@ export async function createLoadTrafficContext(parsed, helpers) {
                             parent = packages.chunking.planParentContext(
                                 artifact,
                                 children,
-                                { parentMaxTokens: 2048 }
+                                {
+                                    parentMaxTokens:
+                                        profile.chunking.parentMaxTokens,
+                                }
                             );
                         check();
                         return {
@@ -606,6 +631,7 @@ export async function createLoadTrafficContext(parsed, helpers) {
                 bounded(
                     (check) =>
                         verifyTrafficServingState({
+                            state,
                             api,
                             observer,
                             fullReport,

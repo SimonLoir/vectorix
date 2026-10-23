@@ -1,5 +1,7 @@
 /** Pure synthetic tests only. Run directly with node; nothing contacts HTTP, Docker, providers or a database. */
 import assert from 'node:assert/strict';
+import { getLoadPolicy, policySha256 } from './load-policy-registry.mjs';
+const defaultPolicy = getLoadPolicy('DEFAULT_V1');
 import {
     DRAFT_ONLY,
     BOOTSTRAP_LIMITS,
@@ -23,6 +25,9 @@ const run = 'abc123def456';
 const state = () => ({
     schemaVersion: 1,
     namespace: 'vectorix-m7c-load',
+    experimentPolicyId: defaultPolicy.id,
+    experimentPolicySha256: policySha256(defaultPolicy),
+    loadPolicy: structuredClone(defaultPolicy.loadPolicy),
     runId: run,
     prefix: 'vectorix-m7c-load-' + run,
     phase: 'BOOTSTRAPPING',
@@ -265,6 +270,8 @@ test('complete synthetic journey has exact fixture and one narrow database write
     assert.equal(fixture.namespace, 'vectorix-m7c-load');
     assert.equal(fixture.runId, run);
     assert.deepEqual(Object.keys(fixture).sort(), [
+        'experimentPolicyId',
+        'experimentPolicySha256',
         'namespace',
         'organizationIds',
         'runId',
@@ -709,13 +716,15 @@ test('fixed guard proof rejects extra caller booleans and wrong run or freshness
     const proof = {
         schemaVersion: 1,
         namespace: 'vectorix-m7c-load',
+        experimentPolicyId: defaultPolicy.id,
+        experimentPolicySha256: policySha256(defaultPolicy),
         runId: run,
         purpose: 'bootstrap',
         resourceOwnership: true,
         databaseReadOnly: true,
         bootstrapFreshness: true,
     };
-    validateBootstrapGuardProof(proof, run);
+    validateBootstrapGuardProof(proof, run, defaultPolicy);
     for (const value of [
         { ...proof, runId: '111111111111' },
         { ...proof, bootstrapFreshness: false },
@@ -723,9 +732,12 @@ test('fixed guard proof rejects extra caller booleans and wrong run or freshness
         { ...proof, callerApproved: true },
         {},
     ])
-        assert.throws(() => validateBootstrapGuardProof(value, run), {
-            code: 'LOAD_BOOTSTRAP_GUARD_REFUSED',
-        });
+        assert.throws(
+            () => validateBootstrapGuardProof(value, run, defaultPolicy),
+            {
+                code: 'LOAD_BOOTSTRAP_GUARD_REFUSED',
+            }
+        );
 });
 
 test('response decoding counts actual streamed bytes and cancels oversized bodies', async () => {
@@ -942,6 +954,68 @@ test('mock transport bounds request bytes cookies calls and finite fetch failure
     assert.throws(() => createBootstrapTransport(state()), {
         code: 'LOAD_BOOTSTRAP_DEPENDENCIES',
     });
+});
+
+test('light bootstrap uses explicit isolated namespace identities and unchanged reader permissions', async () => {
+    const policy = getLoadPolicy('LIGHT_V1'),
+        mock = mocks(),
+        original = state();
+    const light = {
+        ...original,
+        namespace: policy.namespace,
+        prefix: policy.namespace + '-' + run,
+        experimentPolicyId: policy.id,
+        experimentPolicySha256: policySha256(policy),
+        loadPolicy: structuredClone(policy.loadPolicy),
+        applicationDatabase: policy.databasePrefix + '_app_' + run + '_test',
+        environment: {
+            ...original.environment,
+            DATABASE_URL:
+                'postgresql://mock:mock@127.0.0.1:45432/' +
+                policy.databasePrefix +
+                '_app_' +
+                run +
+                '_test',
+        },
+    };
+    validateBootstrapConfig(light);
+    const result = await bootstrapLoadFixture({
+        ...mock.options,
+        state: light,
+    });
+    const fixture = result;
+    assert.equal(fixture.namespace, policy.namespace);
+    assert.equal(fixture.experimentPolicyId, policy.id);
+    assert.equal(fixture.experimentPolicySha256, policySha256(policy));
+    assert.equal(
+        fixture.users.owner.email,
+        policy.emailPrefix + '-owner-' + run + '@example.test'
+    );
+    assert.equal(
+        fixture.users.foreign.email,
+        policy.emailPrefix + '-foreign-' + run + '@example.test'
+    );
+    assert.equal(
+        fixture.users.reader.organizationId,
+        fixture.users.owner.organizationId
+    );
+    assert.notEqual(
+        fixture.users.foreign.organizationId,
+        fixture.users.owner.organizationId
+    );
+    assert.deepEqual(
+        mock.data().roles[0].permission,
+        JSON.stringify(READER_PERMISSION)
+    );
+    for (const changes of [
+        { experimentPolicyId: 'DEFAULT_V1' },
+        { experimentPolicySha256: '0'.repeat(64) },
+        { namespace: defaultPolicy.namespace },
+        { applicationDatabase: original.applicationDatabase },
+    ])
+        assert.throws(() => validateBootstrapConfig({ ...light, ...changes }), {
+            code: 'LOAD_BOOTSTRAP_CONFIG',
+        });
 });
 
 let passed = 0;

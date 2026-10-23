@@ -1,6 +1,5 @@
 /** Guarded, injected normal importer. No file, SQL, model, HTTP or process adapter is constructed here. */
 import {
-    LOAD_IDENTITY,
     LOAD_LIMITS,
     need,
     id,
@@ -12,6 +11,7 @@ import {
     sha,
     loadResourcePolicyHash,
 } from './load-import-core.mjs';
+import { loadPolicyForState, policySha256 } from './load-policy-registry.mjs';
 import {
     importDocuments,
     verifyExistingDocuments,
@@ -34,6 +34,11 @@ function validateReport(report, ctx, workflow) {
             report.workflow === workflow &&
             report.status === 'COMPLETE' &&
             report.evidenceKind === ctx.evidenceKind,
+        'LOAD_PRIOR_REPORT'
+    );
+    need(
+        report.experimentPolicyId === ctx.policy.id &&
+            report.policySha256 === policySha256(ctx.policy),
         'LOAD_PRIOR_REPORT'
     );
 }
@@ -81,10 +86,18 @@ async function verifyBaseline(
 ) {
     validateReport(report, ctx, 'baseline');
     need(
-        report.referenceDigest === LOAD_IDENTITY.reference &&
+        report.referenceDigest === ctx.policy.identity.reference &&
             report.documents.referenceB?.length === 24,
         'LOAD_PRIOR_REPORT'
     );
+    for (const collectionRole of ['referenceB', 'ingestionA', 'ingestionB'])
+        need(
+            report.collections[collectionRole]?.collectionRole ===
+                collectionRole &&
+                report.collections[collectionRole].policySha256 ===
+                    policySha256(ctx.policy),
+            'LOAD_PRIOR_REPORT'
+        );
     need(
         new Set(
             Object.values(report.collections).map((row) => row.collectionId)
@@ -135,6 +148,8 @@ function completed(ctx, result) {
         workflow: ctx.workflow,
         status: 'COMPLETE',
         evidenceKind: ctx.evidenceKind,
+        experimentPolicyId: ctx.policy.id,
+        policySha256: policySha256(ctx.policy),
         acceptance:
             ctx.evidenceKind === 'LIVE_NATIVE_ISOLATED'
                 ? ctx.workflow === 'pilot'
@@ -150,8 +165,8 @@ function completed(ctx, result) {
 }
 /** Prepare B's unchanged reference and two serving ingestion collections before the A pilot stopwatch. */
 export async function prepareLoadBaseline(options) {
-    const references = validateReferences(options.references),
-        ctx = importContext({ ...options, workflow: 'baseline' });
+    const ctx = importContext({ ...options, workflow: 'baseline' }),
+        references = validateReferences(options.references, ctx.policy);
     need(
         typeof options.observeGeneration === 'function' &&
             typeof options.beginIndexObservation === 'function',
@@ -189,7 +204,8 @@ export async function prepareLoadBaseline(options) {
             ctx,
             'foreign',
             'reference-B',
-            references.manifest.metadataFields
+            references.manifest.metadataFields,
+            'referenceB'
         );
         await attachDocuments(
             ctx,
@@ -219,7 +235,13 @@ export async function prepareLoadBaseline(options) {
         const ingestionA = await startCollection(
             ctx,
             'owner',
-            await createCollection(ctx, 'owner', 'ingestion-A'),
+            await createCollection(
+                ctx,
+                'owner',
+                'ingestion-A',
+                undefined,
+                'ingestionA'
+            ),
             [],
             [],
             {
@@ -234,7 +256,13 @@ export async function prepareLoadBaseline(options) {
         const ingestionB = await startCollection(
             ctx,
             'foreign',
-            await createCollection(ctx, 'foreign', 'ingestion-B'),
+            await createCollection(
+                ctx,
+                'foreign',
+                'ingestion-B',
+                undefined,
+                'ingestionB'
+            ),
             [],
             [],
             {
@@ -248,7 +276,7 @@ export async function prepareLoadBaseline(options) {
         );
         need(ctx.time() <= deadline, 'LOAD_PHASE_DEADLINE');
         const report = completed(ctx, {
-            referenceDigest: LOAD_IDENTITY.reference,
+            referenceDigest: ctx.policy.identity.reference,
             documents: { referenceB: bindings },
             collections: {
                 referenceB: summaryCollection(referenceB),
@@ -303,15 +331,18 @@ function resources(value, ctx, indexMs) {
 }
 /** Reject unsafe or incomplete pilot projection before any full-workflow API mutation. */
 export function validatePilotGate(pilot, { state, evidenceKind }) {
+    const policy = loadPolicyForState(state);
     need(
         pilot?.schemaVersion === 1 &&
-            pilot.namespace === 'vectorix-m7c-load' &&
+            pilot.namespace === policy.namespace &&
+            pilot.experimentPolicyId === policy.id &&
+            pilot.policySha256 === policySha256(policy) &&
             pilot.runId === state.runId &&
             pilot.workflow === 'pilot' &&
             pilot.status === 'COMPLETE' &&
             pilot.evidenceKind === evidenceKind &&
-            pilot.familySha256 === LOAD_IDENTITY.family &&
-            pilot.corpusSha256 === LOAD_IDENTITY.pilot &&
+            pilot.familySha256 === policy.identity.family &&
+            pilot.corpusSha256 === policy.identity.pilot &&
             pilot.acceptance ===
                 (evidenceKind === 'LIVE_NATIVE_ISOLATED'
                     ? 'PILOT_PREPARED'
@@ -339,16 +370,18 @@ export function validatePilotGate(pilot, { state, evidenceKind }) {
         id(pilot.collections?.pilot?.collectionId) &&
             id(pilot.collections.pilot.generationId) &&
             pilot.collections.pilot.activeChildren === 2000 &&
-            pilot.collections.pilot.parents === 500,
+            pilot.collections.pilot.parents === 500 &&
+            pilot.collections.pilot.collectionRole === 'pilotA' &&
+            pilot.collections.pilot.policySha256 === policySha256(policy),
         'LOAD_PILOT_ADMISSION'
     );
     return pilot;
 }
 /** First four sources perform genuine native work; no synthetic result is labeled live. */
 export async function importLoadPilot(options) {
-    const manifest = validateManifest(options.manifest),
-        references = validateReferences(options.references),
-        ctx = importContext({ ...options, workflow: 'pilot' });
+    const ctx = importContext({ ...options, workflow: 'pilot' }),
+        manifest = validateManifest(options.manifest, ctx.policy),
+        references = validateReferences(options.references, ctx.policy);
     need(
         typeof options.observeGeneration === 'function' &&
             typeof options.beginIndexObservation === 'function' &&
@@ -364,7 +397,9 @@ export async function importLoadPilot(options) {
             options.observeGeneration
         );
         const deadline = ctx.time() + LOAD_LIMITS.pilotMs,
-            descriptors = manifest.documents.slice(0, 4).map(loadDescriptor);
+            descriptors = manifest.documents
+                .slice(0, 4)
+                .map((doc) => loadDescriptor(doc, ctx.policy));
         await ctx.stage('UPLOAD_PILOT_SOURCES');
         const bindings = await importDocuments(
             ctx,
@@ -373,7 +408,13 @@ export async function importLoadPilot(options) {
             options.readOriginal,
             { deadline }
         );
-        const collection = await createCollection(ctx, 'owner', 'pilot');
+        const collection = await createCollection(
+            ctx,
+            'owner',
+            'pilot',
+            undefined,
+            'pilotA'
+        );
         await attachDocuments(
             ctx,
             'owner',
@@ -415,8 +456,8 @@ export async function importLoadPilot(options) {
         );
         const resourceProof = resources(resource, ctx, pilot.indexMs);
         const report = completed(ctx, {
-            corpusSha256: LOAD_IDENTITY.pilot,
-            familySha256: LOAD_IDENTITY.family,
+            corpusSha256: ctx.policy.identity.pilot,
+            familySha256: ctx.policy.identity.family,
             baseline: structuredClone(options.baselineReport),
             documents: { loadA: bindings },
             collections: { pilot: summaryCollection(pilot) },
@@ -439,8 +480,9 @@ export async function importLoadPilot(options) {
 }
 /** A new full generation embeds all200 originals; pilot vectors are never adopted/copied. */
 export async function importLoadFull(options) {
-    const manifest = validateManifest(options.manifest),
-        references = validateReferences(options.references);
+    const policy = loadPolicyForState(options.state),
+        manifest = validateManifest(options.manifest, policy),
+        references = validateReferences(options.references, policy);
     validatePilotGate(options.pilotReport, {
         state: options.state,
         evidenceKind: options.evidenceKind ?? 'SYNTHETIC_UNIT_TEST',
@@ -455,7 +497,9 @@ export async function importLoadFull(options) {
     try {
         const prior = options.pilotReport,
             baseline = prior.baseline,
-            first = manifest.documents.slice(0, 4).map(loadDescriptor);
+            first = manifest.documents
+                .slice(0, 4)
+                .map((doc) => loadDescriptor(doc, ctx.policy));
         await ctx.stage('VERIFY_PILOT_ADMISSION');
         await verifyBaseline(
             ctx,
@@ -480,7 +524,9 @@ export async function importLoadFull(options) {
             options.observeGeneration
         );
         await ctx.stage('UPLOAD_FULL_SOURCES');
-        const rest = manifest.documents.slice(4).map(loadDescriptor);
+        const rest = manifest.documents
+            .slice(4)
+            .map((doc) => loadDescriptor(doc, ctx.policy));
         const added = await importDocuments(
             ctx,
             'owner',
@@ -493,7 +539,13 @@ export async function importLoadFull(options) {
         );
         const bindings = [...prior.documents.loadA, ...added],
             descriptors = [...first, ...rest];
-        const collection = await createCollection(ctx, 'owner', 'full');
+        const collection = await createCollection(
+            ctx,
+            'owner',
+            'full',
+            undefined,
+            'primaryA'
+        );
         need(
             collection.collectionId !== prior.collections.pilot.collectionId,
             'LOAD_NEW_GENERATION_REQUIRED'
@@ -542,8 +594,8 @@ export async function importLoadFull(options) {
         );
         return await ctx.finish(
             completed(ctx, {
-                corpusSha256: LOAD_IDENTITY.full,
-                familySha256: LOAD_IDENTITY.family,
+                corpusSha256: ctx.policy.identity.full,
+                familySha256: ctx.policy.identity.family,
                 pilotReportSha256: sha(JSON.stringify(prior)),
                 baseline: structuredClone(baseline),
                 documents: { loadA: bindings },

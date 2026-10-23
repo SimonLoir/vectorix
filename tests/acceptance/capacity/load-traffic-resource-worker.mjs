@@ -11,6 +11,8 @@ import {
 } from './load-observer-runtime.mjs';
 import { readProgressSnapshot } from './load-observer-sql.mjs';
 import { createLoadResourceRuntime } from './load-resources-runtime.mjs';
+import { observationStateLocation } from './load-observer-policy.mjs';
+import { observationPolicy } from './load-observer-core.mjs';
 export const STATIC_DRAFT_ONLY = false;
 const HERE = path.dirname(fileURLToPath(import.meta.url)),
     ROOT = path.resolve(HERE, '../../..');
@@ -87,10 +89,10 @@ async function run() {
             ['paced', 'closed-loop'].includes(workerData.phase),
         'LOAD_OBS_TRAFFIC_RESOURCE'
     );
-    const directory = path.join(
+    const { policy, directory } = observationStateLocation(
         ROOT,
-        'node_modules/.cache/vectorix',
-        'vectorix-m7c-load-' + workerData.runId
+        workerData.statePath,
+        workerData.runId
     );
     need(
         workerData.statePath === path.join(directory, 'state.json') &&
@@ -110,6 +112,7 @@ async function run() {
             ).toString('utf8')
         );
     validateIdentity(state, fixture);
+    need(observationPolicy(state).id === policy.id, 'LOAD_OBS_POLICY_BINDING');
     need(
         state.loadProcess?.pid === process.pid &&
             state.loadProcess.workflow === 'traffic',

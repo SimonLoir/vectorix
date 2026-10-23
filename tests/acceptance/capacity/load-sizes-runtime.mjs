@@ -18,6 +18,7 @@ import {
     privateCheckpoint,
 } from './load-private.mjs';
 import { validateIdentity } from './load-observer-core.mjs';
+import { loadPolicyForState } from './load-policy-registry.mjs';
 
 export const STATIC_DRAFT_ONLY = false;
 const ROOT = path.resolve(
@@ -40,10 +41,11 @@ export async function createLoadSizeRuntime({
 }) {
     need(!STATIC_DRAFT_ONLY, 'LOAD_SIZE_RUNTIME_DISABLED');
     validateIdentity(state, fixture);
+    const policy = loadPolicyForState(state);
     const runDirectory = path.join(
         ROOT,
         'node_modules/.cache/vectorix',
-        'vectorix-m7c-load-' + state.runId
+        policy.namespace + '-' + state.runId
     );
     need(
         statePath === path.join(runDirectory, 'state.json') &&
@@ -88,6 +90,7 @@ export async function createLoadSizeRuntime({
                 database: application
                     ? state.applicationDatabase
                     : state.vectorDatabase,
+                experimentPolicyId: policy.id,
                 scope: application ? 'public' : 'vector_collections',
                 collectionId: application ? input.collectionId : null,
                 organizationId: application

@@ -1,6 +1,11 @@
 /** Normal metadata reads preserve primary/reference membership while admitting only the declared tiny library growth. */
 import { need, id, same } from './load-observer-core.mjs';
 import { loadDescriptor } from './load-import-core.mjs';
+import {
+    assertObservationBinding,
+    observationBinding,
+} from './load-observer-policy.mjs';
+import { observationPolicy } from './load-observer-core.mjs';
 export const STATIC_DRAFT_ONLY = true;
 async function inventory(api, role, section, expected, check) {
     const ids = [];
@@ -29,6 +34,7 @@ async function inventory(api, role, section, expected, check) {
 }
 /** Reuse immutable historical native receipts, never current organization totals; collection source tuples are exact. */
 export async function verifyTrafficServingState({
+    state,
     api,
     observer,
     fullReport,
@@ -37,7 +43,8 @@ export async function verifyTrafficServingState({
     ingestion,
     check = () => {},
 }) {
-    const baseline = fullReport.baseline,
+    const policy = observationPolicy(state),
+        baseline = fullReport.baseline,
         bindings = {
             A: fullReport.documents.loadA,
             B: baseline.documents.referenceB,
@@ -47,7 +54,9 @@ export async function verifyTrafficServingState({
             B: baseline.collections.referenceB,
         },
         descriptors = {
-            A: content.manifest.documents.map(loadDescriptor),
+            A: content.manifest.documents.map((doc) =>
+                loadDescriptor(doc, policy)
+            ),
             B: content.references.manifest.documents,
         };
     for (const organization of ['A', 'B']) {
@@ -55,7 +64,15 @@ export async function verifyTrafficServingState({
         const role = organization === 'A' ? 'owner' : 'foreign',
             extra = (ingestion[organization] ?? []).map(
                 (row) => row.binding ?? row
-            );
+            ),
+            collection = collections[organization],
+            expectedBinding = observationBinding(state, fixture, {
+                collectionRole:
+                    organization === 'A' ? 'primaryA' : 'referenceB',
+                policySha256: state.experimentPolicySha256,
+                organizationId: fixture.users[role].organizationId,
+            });
+        assertObservationBinding(collection, expectedBinding);
         need(
             bindings[organization].length ===
                 (organization === 'A' ? 200 : 24) &&
@@ -87,12 +104,11 @@ export async function verifyTrafficServingState({
             check
         );
         check();
-        const collection = collections[organization],
-            saved = (
-                await api.call(role, 'collections.get', {
-                    id: collection.collectionId,
-                })
-            ).value;
+        const saved = (
+            await api.call(role, 'collections.get', {
+                id: collection.collectionId,
+            })
+        ).value;
         check();
         const status = (
             await api.call(role, 'indexing.status', {
@@ -129,8 +145,11 @@ export async function verifyTrafficServingState({
             expectedNativeWorkProof: collection.observation.nativeWorkProof,
             expectedChildren: collection.activeChildren,
             expectedParents: collection.parents,
+            collectionRole: collection.collectionRole,
+            policySha256: collection.policySha256,
         });
         check();
+        assertObservationBinding(proof, expectedBinding);
         need(
             proof.physicalChildren === collection.activeChildren &&
                 proof.parents === collection.parents &&
