@@ -1,0 +1,1376 @@
+[
+  {
+    "queryId": "Q01-EN",
+    "factDenominator": 1,
+    "requiredFacts": [
+      "primary"
+    ],
+    "editions": [
+      {
+        "fixtureId": "m7c-f01-en-v1",
+        "version": 1,
+        "canonicalSha256": "1ef2154f8591226707ea8a2b843c58b0913e589d1e3c7cd4b362cd0b16a52567",
+        "spans": [
+          {
+            "anchorId": "primary",
+            "startOffset": 94,
+            "endOffset": 132,
+            "textSha256": "3b15e34c4b5bfd5a4d8f311cc8b69e12b608ed6abca0ceb7825f97da206e05cb"
+          }
+        ]
+      },
+      {
+        "fixtureId": "m7c-f01-fr-v1",
+        "version": 1,
+        "canonicalSha256": "20db25eefaaf2e772eb6308012c870fd1bc15bfb336a21b53e166c4e6c151978",
+        "spans": [
+          {
+            "anchorId": "primary",
+            "startOffset": 97,
+            "endOffset": 142,
+            "textSha256": "a025f06dfa43c7fef3757ac76c386d9ad18032ccbc72c72525a91b2e41a53d79"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "queryId": "Q01-FR",
+    "factDenominator": 1,
+    "requiredFacts": [
+      "primary"
+    ],
+    "editions": [
+      {
+        "fixtureId": "m7c-f01-en-v1",
+        "version": 1,
+        "canonicalSha256": "1ef2154f8591226707ea8a2b843c58b0913e589d1e3c7cd4b362cd0b16a52567",
+        "spans": [
+          {
+            "anchorId": "primary",
+            "startOffset": 94,
+            "endOffset": 132,
+            "textSha256": "3b15e34c4b5bfd5a4d8f311cc8b69e12b608ed6abca0ceb7825f97da206e05cb"
+          }
+        ]
+      },
+      {
+        "fixtureId": "m7c-f01-fr-v1",
+        "version": 1,
+        "canonicalSha256": "20db25eefaaf2e772eb6308012c870fd1bc15bfb336a21b53e166c4e6c151978",
+        "spans": [
+          {
+            "anchorId": "primary",
+            "startOffset": 97,
+            "endOffset": 142,
+            "textSha256": "a025f06dfa43c7fef3757ac76c386d9ad18032ccbc72c72525a91b2e41a53d79"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "queryId": "Q02-EN",
+    "factDenominator": 1,
+    "requiredFacts": [
+      "primary"
+    ],
+    "editions": [
+      {
+        "fixtureId": "m7c-f03-en-v1",
+        "version": 1,
+        "canonicalSha256": "322113b2be46b2952482d91bf69d3501364d709beadd42426846771d637efa7d",
+        "spans": [
+          {
+            "anchorId": "primary",
+            "startOffset": 93,
+            "endOffset": 144,
+            "textSha256": "bd2dd06505b1a0f5b7e9f634e619d24c225b3aa5692929ee4b9201e37f0d86e1"
+          }
+        ]
+      },
+      {
+        "fixtureId": "m7c-f03-fr-v1",
+        "version": 1,
+        "canonicalSha256": "38478863e6ace7e0fdf079a3388cc4497fb334cec1e960919fc626d2d083adcb",
+        "spans": [
+          {
+            "anchorId": "primary",
+            "startOffset": 100,
+            "endOffset": 155,
+            "textSha256": "478b5527508b12781b48c31ddc79ab0ee787f4b8f5f5c3d073fee05f070fe95e"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "queryId": "Q02-FR",
+    "factDenominator": 1,
+    "requiredFacts": [
+      "primary"
+    ],
+    "editions": [
+      {
+        "fixtureId": "m7c-f03-en-v1",
+        "version": 1,
+        "canonicalSha256": "322113b2be46b2952482d91bf69d3501364d709beadd42426846771d637efa7d",
+        "spans": [
+          {
+            "anchorId": "primary",
+            "startOffset": 93,
+            "endOffset": 144,
+            "textSha256": "bd2dd06505b1a0f5b7e9f634e619d24c225b3aa5692929ee4b9201e37f0d86e1"
+          }
+        ]
+      },
+      {
+        "fixtureId": "m7c-f03-fr-v1",
+        "version": 1,
+        "canonicalSha256": "38478863e6ace7e0fdf079a3388cc4497fb334cec1e960919fc626d2d083adcb",
+        "spans": [
+          {
+            "anchorId": "primary",
+            "startOffset": 100,
+            "endOffset": 155,
+            "textSha256": "478b5527508b12781b48c31ddc79ab0ee787f4b8f5f5c3d073fee05f070fe95e"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "queryId": "Q03-EN",
+    "factDenominator": 1,
+    "requiredFacts": [
+      "primary"
+    ],
+    "editions": [
+      {
+        "fixtureId": "m7c-f04-en-v1",
+        "version": 1,
+        "canonicalSha256": "55d87b133e767d2492e420600a22c577d92fb371ff4dbabf23046eab2e81b124",
+        "spans": [
+          {
+            "anchorId": "primary",
+            "startOffset": 100,
+            "endOffset": 131,
+            "textSha256": "2625729d9a33eb295839bce95aedeb3e898b49afc6cfa3e9b00d4fc5afd3e4f8"
+          }
+        ]
+      },
+      {
+        "fixtureId": "m7c-f04-fr-v1",
+        "version": 1,
+        "canonicalSha256": "3bd311517f876134d1e794eef2800f31d5b11e1b2a8103753fc7fd649f4d7a69",
+        "spans": [
+          {
+            "anchorId": "primary",
+            "startOffset": 114,
+            "endOffset": 159,
+            "textSha256": "cb4f562c1f16963dfaa926ef1f2767acd062cd758730a8be60f7ec34ccdf7bb5"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "queryId": "Q03-FR",
+    "factDenominator": 1,
+    "requiredFacts": [
+      "primary"
+    ],
+    "editions": [
+      {
+        "fixtureId": "m7c-f04-en-v1",
+        "version": 1,
+        "canonicalSha256": "55d87b133e767d2492e420600a22c577d92fb371ff4dbabf23046eab2e81b124",
+        "spans": [
+          {
+            "anchorId": "primary",
+            "startOffset": 100,
+            "endOffset": 131,
+            "textSha256": "2625729d9a33eb295839bce95aedeb3e898b49afc6cfa3e9b00d4fc5afd3e4f8"
+          }
+        ]
+      },
+      {
+        "fixtureId": "m7c-f04-fr-v1",
+        "version": 1,
+        "canonicalSha256": "3bd311517f876134d1e794eef2800f31d5b11e1b2a8103753fc7fd649f4d7a69",
+        "spans": [
+          {
+            "anchorId": "primary",
+            "startOffset": 114,
+            "endOffset": 159,
+            "textSha256": "cb4f562c1f16963dfaa926ef1f2767acd062cd758730a8be60f7ec34ccdf7bb5"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "queryId": "Q04-EN",
+    "factDenominator": 1,
+    "requiredFacts": [
+      "primary"
+    ],
+    "editions": [
+      {
+        "fixtureId": "m7c-f05-en-v1",
+        "version": 1,
+        "canonicalSha256": "f53c23a2f50f5b1e7d0e755976d21bfb9867be082484156e8011e4d80cec9ae4",
+        "spans": [
+          {
+            "anchorId": "primary",
+            "startOffset": 102,
+            "endOffset": 142,
+            "textSha256": "c1628353afeee7dc8aacea33fc522a931f92baea1220fc9f9996419c790ea08f"
+          }
+        ]
+      },
+      {
+        "fixtureId": "m7c-f05-fr-v1",
+        "version": 1,
+        "canonicalSha256": "6d98c4b8b80b4d470aadd7fe64e6a1e276da71aee1daa6c47e91db03f3ab11ac",
+        "spans": [
+          {
+            "anchorId": "primary",
+            "startOffset": 106,
+            "endOffset": 151,
+            "textSha256": "51a6295f26acf7f935822bf8807056c7c27925cf6fe8f495d6212b156c562556"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "queryId": "Q04-FR",
+    "factDenominator": 1,
+    "requiredFacts": [
+      "primary"
+    ],
+    "editions": [
+      {
+        "fixtureId": "m7c-f05-en-v1",
+        "version": 1,
+        "canonicalSha256": "f53c23a2f50f5b1e7d0e755976d21bfb9867be082484156e8011e4d80cec9ae4",
+        "spans": [
+          {
+            "anchorId": "primary",
+            "startOffset": 102,
+            "endOffset": 142,
+            "textSha256": "c1628353afeee7dc8aacea33fc522a931f92baea1220fc9f9996419c790ea08f"
+          }
+        ]
+      },
+      {
+        "fixtureId": "m7c-f05-fr-v1",
+        "version": 1,
+        "canonicalSha256": "6d98c4b8b80b4d470aadd7fe64e6a1e276da71aee1daa6c47e91db03f3ab11ac",
+        "spans": [
+          {
+            "anchorId": "primary",
+            "startOffset": 106,
+            "endOffset": 151,
+            "textSha256": "51a6295f26acf7f935822bf8807056c7c27925cf6fe8f495d6212b156c562556"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "queryId": "Q05-EN",
+    "factDenominator": 1,
+    "requiredFacts": [
+      "primary"
+    ],
+    "editions": [
+      {
+        "fixtureId": "m7c-f08-en-v1",
+        "version": 1,
+        "canonicalSha256": "3c5d59f474ca602c5c5b6ed74d20f3cd24149670d00ab46c84cf91d182e30ae7",
+        "spans": [
+          {
+            "anchorId": "primary",
+            "startOffset": 98,
+            "endOffset": 140,
+            "textSha256": "476fe0350b3e55069b33b8aeddc0e13981dc0bf4c74ecde460bf06f7e0fe3da6"
+          }
+        ]
+      },
+      {
+        "fixtureId": "m7c-f08-fr-v1",
+        "version": 1,
+        "canonicalSha256": "0a7f0ed99498d4069702ce572d95cc12b4d9cc3c1fcc4e36a8e56df56baee621",
+        "spans": [
+          {
+            "anchorId": "primary",
+            "startOffset": 113,
+            "endOffset": 155,
+            "textSha256": "a96369eae0944632229fc18f6eabe200b4471e5cb2ebe28960232a230619413b"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "queryId": "Q05-FR",
+    "factDenominator": 1,
+    "requiredFacts": [
+      "primary"
+    ],
+    "editions": [
+      {
+        "fixtureId": "m7c-f08-en-v1",
+        "version": 1,
+        "canonicalSha256": "3c5d59f474ca602c5c5b6ed74d20f3cd24149670d00ab46c84cf91d182e30ae7",
+        "spans": [
+          {
+            "anchorId": "primary",
+            "startOffset": 98,
+            "endOffset": 140,
+            "textSha256": "476fe0350b3e55069b33b8aeddc0e13981dc0bf4c74ecde460bf06f7e0fe3da6"
+          }
+        ]
+      },
+      {
+        "fixtureId": "m7c-f08-fr-v1",
+        "version": 1,
+        "canonicalSha256": "0a7f0ed99498d4069702ce572d95cc12b4d9cc3c1fcc4e36a8e56df56baee621",
+        "spans": [
+          {
+            "anchorId": "primary",
+            "startOffset": 113,
+            "endOffset": 155,
+            "textSha256": "a96369eae0944632229fc18f6eabe200b4471e5cb2ebe28960232a230619413b"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "queryId": "Q06-EN",
+    "factDenominator": 1,
+    "requiredFacts": [
+      "primary"
+    ],
+    "editions": [
+      {
+        "fixtureId": "m7c-f02-en-v1",
+        "version": 1,
+        "canonicalSha256": "c7b8a561ea220562818b18f16a3d6e9203e903abd4422e89e889231980ecbadf",
+        "spans": [
+          {
+            "anchorId": "primary",
+            "startOffset": 96,
+            "endOffset": 126,
+            "textSha256": "de5e6ddbe76a6fffc0b10aead39aa35435c63f05ea0d38353455e723ffba43fe"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "queryId": "Q06-FR",
+    "factDenominator": 1,
+    "requiredFacts": [
+      "primary"
+    ],
+    "editions": [
+      {
+        "fixtureId": "m7c-f02-fr-v1",
+        "version": 1,
+        "canonicalSha256": "3d2d62fb6b6e71a0748630863454a297b4fc08228acf31fc81c9156d1e96b9d0",
+        "spans": [
+          {
+            "anchorId": "primary",
+            "startOffset": 111,
+            "endOffset": 155,
+            "textSha256": "939a84eeb64a4311666bd72a260d040f5a8e488e7caa4ddaaf1476c73f8d270b"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "queryId": "Q07-EN",
+    "factDenominator": 1,
+    "requiredFacts": [
+      "primary"
+    ],
+    "editions": [
+      {
+        "fixtureId": "m7c-f01-en-v1",
+        "version": 1,
+        "canonicalSha256": "1ef2154f8591226707ea8a2b843c58b0913e589d1e3c7cd4b362cd0b16a52567",
+        "spans": [
+          {
+            "anchorId": "primary",
+            "startOffset": 94,
+            "endOffset": 132,
+            "textSha256": "3b15e34c4b5bfd5a4d8f311cc8b69e12b608ed6abca0ceb7825f97da206e05cb"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "queryId": "Q07-FR",
+    "factDenominator": 1,
+    "requiredFacts": [
+      "primary"
+    ],
+    "editions": [
+      {
+        "fixtureId": "m7c-f01-fr-v1",
+        "version": 1,
+        "canonicalSha256": "20db25eefaaf2e772eb6308012c870fd1bc15bfb336a21b53e166c4e6c151978",
+        "spans": [
+          {
+            "anchorId": "primary",
+            "startOffset": 97,
+            "endOffset": 142,
+            "textSha256": "a025f06dfa43c7fef3757ac76c386d9ad18032ccbc72c72525a91b2e41a53d79"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "queryId": "Q08-EN",
+    "factDenominator": 1,
+    "requiredFacts": [
+      "primary"
+    ],
+    "editions": [
+      {
+        "fixtureId": "m7c-f03-fr-v1",
+        "version": 1,
+        "canonicalSha256": "38478863e6ace7e0fdf079a3388cc4497fb334cec1e960919fc626d2d083adcb",
+        "spans": [
+          {
+            "anchorId": "primary",
+            "startOffset": 100,
+            "endOffset": 155,
+            "textSha256": "478b5527508b12781b48c31ddc79ab0ee787f4b8f5f5c3d073fee05f070fe95e"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "queryId": "Q08-FR",
+    "factDenominator": 1,
+    "requiredFacts": [
+      "primary"
+    ],
+    "editions": [
+      {
+        "fixtureId": "m7c-f03-en-v1",
+        "version": 1,
+        "canonicalSha256": "322113b2be46b2952482d91bf69d3501364d709beadd42426846771d637efa7d",
+        "spans": [
+          {
+            "anchorId": "primary",
+            "startOffset": 93,
+            "endOffset": 144,
+            "textSha256": "bd2dd06505b1a0f5b7e9f634e619d24c225b3aa5692929ee4b9201e37f0d86e1"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "queryId": "Q09-EN",
+    "factDenominator": 1,
+    "requiredFacts": [
+      "primary"
+    ],
+    "editions": [
+      {
+        "fixtureId": "m7c-f05-fr-v1",
+        "version": 1,
+        "canonicalSha256": "6d98c4b8b80b4d470aadd7fe64e6a1e276da71aee1daa6c47e91db03f3ab11ac",
+        "spans": [
+          {
+            "anchorId": "primary",
+            "startOffset": 106,
+            "endOffset": 151,
+            "textSha256": "51a6295f26acf7f935822bf8807056c7c27925cf6fe8f495d6212b156c562556"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "queryId": "Q09-FR",
+    "factDenominator": 1,
+    "requiredFacts": [
+      "primary"
+    ],
+    "editions": [
+      {
+        "fixtureId": "m7c-f05-en-v1",
+        "version": 1,
+        "canonicalSha256": "f53c23a2f50f5b1e7d0e755976d21bfb9867be082484156e8011e4d80cec9ae4",
+        "spans": [
+          {
+            "anchorId": "primary",
+            "startOffset": 102,
+            "endOffset": 142,
+            "textSha256": "c1628353afeee7dc8aacea33fc522a931f92baea1220fc9f9996419c790ea08f"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "queryId": "Q10-EN",
+    "factDenominator": 1,
+    "requiredFacts": [
+      "primary"
+    ],
+    "editions": [
+      {
+        "fixtureId": "m7c-f08-en-v1",
+        "version": 1,
+        "canonicalSha256": "3c5d59f474ca602c5c5b6ed74d20f3cd24149670d00ab46c84cf91d182e30ae7",
+        "spans": [
+          {
+            "anchorId": "primary",
+            "startOffset": 98,
+            "endOffset": 140,
+            "textSha256": "476fe0350b3e55069b33b8aeddc0e13981dc0bf4c74ecde460bf06f7e0fe3da6"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "queryId": "Q10-FR",
+    "factDenominator": 1,
+    "requiredFacts": [
+      "primary"
+    ],
+    "editions": [
+      {
+        "fixtureId": "m7c-f08-fr-v1",
+        "version": 1,
+        "canonicalSha256": "0a7f0ed99498d4069702ce572d95cc12b4d9cc3c1fcc4e36a8e56df56baee621",
+        "spans": [
+          {
+            "anchorId": "primary",
+            "startOffset": 113,
+            "endOffset": 155,
+            "textSha256": "a96369eae0944632229fc18f6eabe200b4471e5cb2ebe28960232a230619413b"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "queryId": "Q11-EN",
+    "factDenominator": 1,
+    "requiredFacts": [
+      "primary"
+    ],
+    "editions": [
+      {
+        "fixtureId": "m7c-f01-en-v1",
+        "version": 1,
+        "canonicalSha256": "1ef2154f8591226707ea8a2b843c58b0913e589d1e3c7cd4b362cd0b16a52567",
+        "spans": [
+          {
+            "anchorId": "primary",
+            "startOffset": 94,
+            "endOffset": 132,
+            "textSha256": "3b15e34c4b5bfd5a4d8f311cc8b69e12b608ed6abca0ceb7825f97da206e05cb"
+          }
+        ]
+      },
+      {
+        "fixtureId": "m7c-f01-fr-v1",
+        "version": 1,
+        "canonicalSha256": "20db25eefaaf2e772eb6308012c870fd1bc15bfb336a21b53e166c4e6c151978",
+        "spans": [
+          {
+            "anchorId": "primary",
+            "startOffset": 97,
+            "endOffset": 142,
+            "textSha256": "a025f06dfa43c7fef3757ac76c386d9ad18032ccbc72c72525a91b2e41a53d79"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "queryId": "Q11-FR",
+    "factDenominator": 1,
+    "requiredFacts": [
+      "primary"
+    ],
+    "editions": [
+      {
+        "fixtureId": "m7c-f01-en-v1",
+        "version": 1,
+        "canonicalSha256": "1ef2154f8591226707ea8a2b843c58b0913e589d1e3c7cd4b362cd0b16a52567",
+        "spans": [
+          {
+            "anchorId": "primary",
+            "startOffset": 94,
+            "endOffset": 132,
+            "textSha256": "3b15e34c4b5bfd5a4d8f311cc8b69e12b608ed6abca0ceb7825f97da206e05cb"
+          }
+        ]
+      },
+      {
+        "fixtureId": "m7c-f01-fr-v1",
+        "version": 1,
+        "canonicalSha256": "20db25eefaaf2e772eb6308012c870fd1bc15bfb336a21b53e166c4e6c151978",
+        "spans": [
+          {
+            "anchorId": "primary",
+            "startOffset": 97,
+            "endOffset": 142,
+            "textSha256": "a025f06dfa43c7fef3757ac76c386d9ad18032ccbc72c72525a91b2e41a53d79"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "queryId": "Q12-EN",
+    "factDenominator": 1,
+    "requiredFacts": [
+      "primary"
+    ],
+    "editions": [
+      {
+        "fixtureId": "m7c-f03-en-v1",
+        "version": 1,
+        "canonicalSha256": "322113b2be46b2952482d91bf69d3501364d709beadd42426846771d637efa7d",
+        "spans": [
+          {
+            "anchorId": "primary",
+            "startOffset": 93,
+            "endOffset": 144,
+            "textSha256": "bd2dd06505b1a0f5b7e9f634e619d24c225b3aa5692929ee4b9201e37f0d86e1"
+          }
+        ]
+      },
+      {
+        "fixtureId": "m7c-f03-fr-v1",
+        "version": 1,
+        "canonicalSha256": "38478863e6ace7e0fdf079a3388cc4497fb334cec1e960919fc626d2d083adcb",
+        "spans": [
+          {
+            "anchorId": "primary",
+            "startOffset": 100,
+            "endOffset": 155,
+            "textSha256": "478b5527508b12781b48c31ddc79ab0ee787f4b8f5f5c3d073fee05f070fe95e"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "queryId": "Q12-FR",
+    "factDenominator": 1,
+    "requiredFacts": [
+      "primary"
+    ],
+    "editions": [
+      {
+        "fixtureId": "m7c-f03-en-v1",
+        "version": 1,
+        "canonicalSha256": "322113b2be46b2952482d91bf69d3501364d709beadd42426846771d637efa7d",
+        "spans": [
+          {
+            "anchorId": "primary",
+            "startOffset": 93,
+            "endOffset": 144,
+            "textSha256": "bd2dd06505b1a0f5b7e9f634e619d24c225b3aa5692929ee4b9201e37f0d86e1"
+          }
+        ]
+      },
+      {
+        "fixtureId": "m7c-f03-fr-v1",
+        "version": 1,
+        "canonicalSha256": "38478863e6ace7e0fdf079a3388cc4497fb334cec1e960919fc626d2d083adcb",
+        "spans": [
+          {
+            "anchorId": "primary",
+            "startOffset": 100,
+            "endOffset": 155,
+            "textSha256": "478b5527508b12781b48c31ddc79ab0ee787f4b8f5f5c3d073fee05f070fe95e"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "queryId": "Q13-EN",
+    "factDenominator": 1,
+    "requiredFacts": [
+      "primary"
+    ],
+    "editions": [
+      {
+        "fixtureId": "m7c-f05-en-v1",
+        "version": 1,
+        "canonicalSha256": "f53c23a2f50f5b1e7d0e755976d21bfb9867be082484156e8011e4d80cec9ae4",
+        "spans": [
+          {
+            "anchorId": "primary",
+            "startOffset": 102,
+            "endOffset": 142,
+            "textSha256": "c1628353afeee7dc8aacea33fc522a931f92baea1220fc9f9996419c790ea08f"
+          }
+        ]
+      },
+      {
+        "fixtureId": "m7c-f05-fr-v1",
+        "version": 1,
+        "canonicalSha256": "6d98c4b8b80b4d470aadd7fe64e6a1e276da71aee1daa6c47e91db03f3ab11ac",
+        "spans": [
+          {
+            "anchorId": "primary",
+            "startOffset": 106,
+            "endOffset": 151,
+            "textSha256": "51a6295f26acf7f935822bf8807056c7c27925cf6fe8f495d6212b156c562556"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "queryId": "Q13-FR",
+    "factDenominator": 1,
+    "requiredFacts": [
+      "primary"
+    ],
+    "editions": [
+      {
+        "fixtureId": "m7c-f05-en-v1",
+        "version": 1,
+        "canonicalSha256": "f53c23a2f50f5b1e7d0e755976d21bfb9867be082484156e8011e4d80cec9ae4",
+        "spans": [
+          {
+            "anchorId": "primary",
+            "startOffset": 102,
+            "endOffset": 142,
+            "textSha256": "c1628353afeee7dc8aacea33fc522a931f92baea1220fc9f9996419c790ea08f"
+          }
+        ]
+      },
+      {
+        "fixtureId": "m7c-f05-fr-v1",
+        "version": 1,
+        "canonicalSha256": "6d98c4b8b80b4d470aadd7fe64e6a1e276da71aee1daa6c47e91db03f3ab11ac",
+        "spans": [
+          {
+            "anchorId": "primary",
+            "startOffset": 106,
+            "endOffset": 151,
+            "textSha256": "51a6295f26acf7f935822bf8807056c7c27925cf6fe8f495d6212b156c562556"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "queryId": "Q14-EN",
+    "factDenominator": 1,
+    "requiredFacts": [
+      "primary"
+    ],
+    "editions": [
+      {
+        "fixtureId": "m7c-f04-en-v1",
+        "version": 1,
+        "canonicalSha256": "55d87b133e767d2492e420600a22c577d92fb371ff4dbabf23046eab2e81b124",
+        "spans": [
+          {
+            "anchorId": "primary",
+            "startOffset": 100,
+            "endOffset": 131,
+            "textSha256": "2625729d9a33eb295839bce95aedeb3e898b49afc6cfa3e9b00d4fc5afd3e4f8"
+          }
+        ]
+      },
+      {
+        "fixtureId": "m7c-f04-fr-v1",
+        "version": 1,
+        "canonicalSha256": "3bd311517f876134d1e794eef2800f31d5b11e1b2a8103753fc7fd649f4d7a69",
+        "spans": [
+          {
+            "anchorId": "primary",
+            "startOffset": 114,
+            "endOffset": 159,
+            "textSha256": "cb4f562c1f16963dfaa926ef1f2767acd062cd758730a8be60f7ec34ccdf7bb5"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "queryId": "Q14-FR",
+    "factDenominator": 1,
+    "requiredFacts": [
+      "primary"
+    ],
+    "editions": [
+      {
+        "fixtureId": "m7c-f04-en-v1",
+        "version": 1,
+        "canonicalSha256": "55d87b133e767d2492e420600a22c577d92fb371ff4dbabf23046eab2e81b124",
+        "spans": [
+          {
+            "anchorId": "primary",
+            "startOffset": 100,
+            "endOffset": 131,
+            "textSha256": "2625729d9a33eb295839bce95aedeb3e898b49afc6cfa3e9b00d4fc5afd3e4f8"
+          }
+        ]
+      },
+      {
+        "fixtureId": "m7c-f04-fr-v1",
+        "version": 1,
+        "canonicalSha256": "3bd311517f876134d1e794eef2800f31d5b11e1b2a8103753fc7fd649f4d7a69",
+        "spans": [
+          {
+            "anchorId": "primary",
+            "startOffset": 114,
+            "endOffset": 159,
+            "textSha256": "cb4f562c1f16963dfaa926ef1f2767acd062cd758730a8be60f7ec34ccdf7bb5"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "queryId": "Q15-EN",
+    "factDenominator": 1,
+    "requiredFacts": [
+      "primary"
+    ],
+    "editions": [
+      {
+        "fixtureId": "m7c-f07-en-v1",
+        "version": 1,
+        "canonicalSha256": "ea134f9a51715ba96e41753a6a80f7e6cae77861fd34b29e6dac8cc79e5074bf",
+        "spans": [
+          {
+            "anchorId": "primary",
+            "startOffset": 99,
+            "endOffset": 142,
+            "textSha256": "baa753fc9da036e8cfaacab942772b057a3e4b214b7704ca66f60c33cb477754"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "queryId": "Q15-FR",
+    "factDenominator": 1,
+    "requiredFacts": [
+      "primary"
+    ],
+    "editions": [
+      {
+        "fixtureId": "m7c-f07-fr-v1",
+        "version": 1,
+        "canonicalSha256": "525c4f678a0d47aa0d347150ecc728297892931e6e28db65fa16c68c8c9da5f7",
+        "spans": [
+          {
+            "anchorId": "primary",
+            "startOffset": 112,
+            "endOffset": 164,
+            "textSha256": "b44fdf082dc69f6433df4b856725cffd6f4c30f5e1264b81cd7ef25b2323324b"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "queryId": "Q16-EN",
+    "factDenominator": 2,
+    "requiredFacts": [
+      "primary",
+      "secondary"
+    ],
+    "editions": [
+      {
+        "fixtureId": "m7c-f06-en-v1",
+        "version": 1,
+        "canonicalSha256": "d164db93ee464c0bd327132392e955bcc497740c1f954a179609c7de72086a73",
+        "spans": [
+          {
+            "anchorId": "primary",
+            "startOffset": 107,
+            "endOffset": 158,
+            "textSha256": "59172e1aed907e1f62296564474a780f7c57a8a5a6852cb63decbaae6fab9e39"
+          },
+          {
+            "anchorId": "secondary",
+            "startOffset": 3040,
+            "endOffset": 3082,
+            "textSha256": "50b15d4c7dbbfac74ba9f74bc7433d107ea92242f09a860759cb43830b8d7bb0"
+          }
+        ]
+      },
+      {
+        "fixtureId": "m7c-f06-fr-v1",
+        "version": 1,
+        "canonicalSha256": "0edf367f1551960d68196683168b0555e1f0110a018e3e23874f15b275735333",
+        "spans": [
+          {
+            "anchorId": "primary",
+            "startOffset": 114,
+            "endOffset": 164,
+            "textSha256": "3e0ec8c03324ea05dee4cdf9d62a3cc73544f08312e74f5fa687fa9aaecca13a"
+          },
+          {
+            "anchorId": "secondary",
+            "startOffset": 3086,
+            "endOffset": 3135,
+            "textSha256": "bbd15e8d11e397a403770e8053550a1ee4d1b2a4c9c6c3ed678d1847c644d9bf"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "queryId": "Q16-FR",
+    "factDenominator": 2,
+    "requiredFacts": [
+      "primary",
+      "secondary"
+    ],
+    "editions": [
+      {
+        "fixtureId": "m7c-f06-en-v1",
+        "version": 1,
+        "canonicalSha256": "d164db93ee464c0bd327132392e955bcc497740c1f954a179609c7de72086a73",
+        "spans": [
+          {
+            "anchorId": "primary",
+            "startOffset": 107,
+            "endOffset": 158,
+            "textSha256": "59172e1aed907e1f62296564474a780f7c57a8a5a6852cb63decbaae6fab9e39"
+          },
+          {
+            "anchorId": "secondary",
+            "startOffset": 3040,
+            "endOffset": 3082,
+            "textSha256": "50b15d4c7dbbfac74ba9f74bc7433d107ea92242f09a860759cb43830b8d7bb0"
+          }
+        ]
+      },
+      {
+        "fixtureId": "m7c-f06-fr-v1",
+        "version": 1,
+        "canonicalSha256": "0edf367f1551960d68196683168b0555e1f0110a018e3e23874f15b275735333",
+        "spans": [
+          {
+            "anchorId": "primary",
+            "startOffset": 114,
+            "endOffset": 164,
+            "textSha256": "3e0ec8c03324ea05dee4cdf9d62a3cc73544f08312e74f5fa687fa9aaecca13a"
+          },
+          {
+            "anchorId": "secondary",
+            "startOffset": 3086,
+            "endOffset": 3135,
+            "textSha256": "bbd15e8d11e397a403770e8053550a1ee4d1b2a4c9c6c3ed678d1847c644d9bf"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "queryId": "Q17-EN",
+    "factDenominator": 2,
+    "requiredFacts": [
+      "primary",
+      "secondary"
+    ],
+    "editions": [
+      {
+        "fixtureId": "m7c-f07-en-v1",
+        "version": 1,
+        "canonicalSha256": "ea134f9a51715ba96e41753a6a80f7e6cae77861fd34b29e6dac8cc79e5074bf",
+        "spans": [
+          {
+            "anchorId": "primary",
+            "startOffset": 99,
+            "endOffset": 142,
+            "textSha256": "baa753fc9da036e8cfaacab942772b057a3e4b214b7704ca66f60c33cb477754"
+          },
+          {
+            "anchorId": "secondary",
+            "startOffset": 3010,
+            "endOffset": 3039,
+            "textSha256": "db642ee50c14aeca7ab8c0df322407167afe9ae6af3d32f430c46152a60a3922"
+          }
+        ]
+      },
+      {
+        "fixtureId": "m7c-f07-fr-v1",
+        "version": 1,
+        "canonicalSha256": "525c4f678a0d47aa0d347150ecc728297892931e6e28db65fa16c68c8c9da5f7",
+        "spans": [
+          {
+            "anchorId": "primary",
+            "startOffset": 112,
+            "endOffset": 164,
+            "textSha256": "b44fdf082dc69f6433df4b856725cffd6f4c30f5e1264b81cd7ef25b2323324b"
+          },
+          {
+            "anchorId": "secondary",
+            "startOffset": 3086,
+            "endOffset": 3128,
+            "textSha256": "b47a09eea6eaa49501f3f2a4cad71649eafaefa0c9415eec08686a7fb73b606a"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "queryId": "Q17-FR",
+    "factDenominator": 2,
+    "requiredFacts": [
+      "primary",
+      "secondary"
+    ],
+    "editions": [
+      {
+        "fixtureId": "m7c-f07-en-v1",
+        "version": 1,
+        "canonicalSha256": "ea134f9a51715ba96e41753a6a80f7e6cae77861fd34b29e6dac8cc79e5074bf",
+        "spans": [
+          {
+            "anchorId": "primary",
+            "startOffset": 99,
+            "endOffset": 142,
+            "textSha256": "baa753fc9da036e8cfaacab942772b057a3e4b214b7704ca66f60c33cb477754"
+          },
+          {
+            "anchorId": "secondary",
+            "startOffset": 3010,
+            "endOffset": 3039,
+            "textSha256": "db642ee50c14aeca7ab8c0df322407167afe9ae6af3d32f430c46152a60a3922"
+          }
+        ]
+      },
+      {
+        "fixtureId": "m7c-f07-fr-v1",
+        "version": 1,
+        "canonicalSha256": "525c4f678a0d47aa0d347150ecc728297892931e6e28db65fa16c68c8c9da5f7",
+        "spans": [
+          {
+            "anchorId": "primary",
+            "startOffset": 112,
+            "endOffset": 164,
+            "textSha256": "b44fdf082dc69f6433df4b856725cffd6f4c30f5e1264b81cd7ef25b2323324b"
+          },
+          {
+            "anchorId": "secondary",
+            "startOffset": 3086,
+            "endOffset": 3128,
+            "textSha256": "b47a09eea6eaa49501f3f2a4cad71649eafaefa0c9415eec08686a7fb73b606a"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "queryId": "Q18-EN",
+    "factDenominator": 2,
+    "requiredFacts": [
+      "primary",
+      "secondary"
+    ],
+    "editions": [
+      {
+        "fixtureId": "m7c-f04-en-v1",
+        "version": 1,
+        "canonicalSha256": "55d87b133e767d2492e420600a22c577d92fb371ff4dbabf23046eab2e81b124",
+        "spans": [
+          {
+            "anchorId": "primary",
+            "startOffset": 100,
+            "endOffset": 131,
+            "textSha256": "2625729d9a33eb295839bce95aedeb3e898b49afc6cfa3e9b00d4fc5afd3e4f8"
+          },
+          {
+            "anchorId": "secondary",
+            "startOffset": 3013,
+            "endOffset": 3048,
+            "textSha256": "13048d45663983bf89b11e6a6ba69c245a8ece5e076f26bc34bb50bb2d4c2939"
+          }
+        ]
+      },
+      {
+        "fixtureId": "m7c-f04-fr-v1",
+        "version": 1,
+        "canonicalSha256": "3bd311517f876134d1e794eef2800f31d5b11e1b2a8103753fc7fd649f4d7a69",
+        "spans": [
+          {
+            "anchorId": "primary",
+            "startOffset": 114,
+            "endOffset": 159,
+            "textSha256": "cb4f562c1f16963dfaa926ef1f2767acd062cd758730a8be60f7ec34ccdf7bb5"
+          },
+          {
+            "anchorId": "secondary",
+            "startOffset": 3081,
+            "endOffset": 3123,
+            "textSha256": "d08ecc5112284cc2dd424b718839a432b4263f2835d78defaf301bb236b02a56"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "queryId": "Q18-FR",
+    "factDenominator": 2,
+    "requiredFacts": [
+      "primary",
+      "secondary"
+    ],
+    "editions": [
+      {
+        "fixtureId": "m7c-f04-en-v1",
+        "version": 1,
+        "canonicalSha256": "55d87b133e767d2492e420600a22c577d92fb371ff4dbabf23046eab2e81b124",
+        "spans": [
+          {
+            "anchorId": "primary",
+            "startOffset": 100,
+            "endOffset": 131,
+            "textSha256": "2625729d9a33eb295839bce95aedeb3e898b49afc6cfa3e9b00d4fc5afd3e4f8"
+          },
+          {
+            "anchorId": "secondary",
+            "startOffset": 3013,
+            "endOffset": 3048,
+            "textSha256": "13048d45663983bf89b11e6a6ba69c245a8ece5e076f26bc34bb50bb2d4c2939"
+          }
+        ]
+      },
+      {
+        "fixtureId": "m7c-f04-fr-v1",
+        "version": 1,
+        "canonicalSha256": "3bd311517f876134d1e794eef2800f31d5b11e1b2a8103753fc7fd649f4d7a69",
+        "spans": [
+          {
+            "anchorId": "primary",
+            "startOffset": 114,
+            "endOffset": 159,
+            "textSha256": "cb4f562c1f16963dfaa926ef1f2767acd062cd758730a8be60f7ec34ccdf7bb5"
+          },
+          {
+            "anchorId": "secondary",
+            "startOffset": 3081,
+            "endOffset": 3123,
+            "textSha256": "d08ecc5112284cc2dd424b718839a432b4263f2835d78defaf301bb236b02a56"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "queryId": "Q19-EN",
+    "factDenominator": 2,
+    "requiredFacts": [
+      "primary",
+      "secondary"
+    ],
+    "editions": [
+      {
+        "fixtureId": "m7c-f08-en-v1",
+        "version": 1,
+        "canonicalSha256": "3c5d59f474ca602c5c5b6ed74d20f3cd24149670d00ab46c84cf91d182e30ae7",
+        "spans": [
+          {
+            "anchorId": "primary",
+            "startOffset": 98,
+            "endOffset": 140,
+            "textSha256": "476fe0350b3e55069b33b8aeddc0e13981dc0bf4c74ecde460bf06f7e0fe3da6"
+          },
+          {
+            "anchorId": "secondary",
+            "startOffset": 3022,
+            "endOffset": 3057,
+            "textSha256": "83b62678a160a1b07bb22bb2352c9d88cda3ed4bbd980de17e3552d3ba87af55"
+          }
+        ]
+      },
+      {
+        "fixtureId": "m7c-f08-fr-v1",
+        "version": 1,
+        "canonicalSha256": "0a7f0ed99498d4069702ce572d95cc12b4d9cc3c1fcc4e36a8e56df56baee621",
+        "spans": [
+          {
+            "anchorId": "primary",
+            "startOffset": 113,
+            "endOffset": 155,
+            "textSha256": "a96369eae0944632229fc18f6eabe200b4471e5cb2ebe28960232a230619413b"
+          },
+          {
+            "anchorId": "secondary",
+            "startOffset": 3077,
+            "endOffset": 3117,
+            "textSha256": "a8f7d2da384ceb3d555600caab50e918c7bde7085e57c12fe30530ce4364b663"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "queryId": "Q19-FR",
+    "factDenominator": 2,
+    "requiredFacts": [
+      "primary",
+      "secondary"
+    ],
+    "editions": [
+      {
+        "fixtureId": "m7c-f08-en-v1",
+        "version": 1,
+        "canonicalSha256": "3c5d59f474ca602c5c5b6ed74d20f3cd24149670d00ab46c84cf91d182e30ae7",
+        "spans": [
+          {
+            "anchorId": "primary",
+            "startOffset": 98,
+            "endOffset": 140,
+            "textSha256": "476fe0350b3e55069b33b8aeddc0e13981dc0bf4c74ecde460bf06f7e0fe3da6"
+          },
+          {
+            "anchorId": "secondary",
+            "startOffset": 3022,
+            "endOffset": 3057,
+            "textSha256": "83b62678a160a1b07bb22bb2352c9d88cda3ed4bbd980de17e3552d3ba87af55"
+          }
+        ]
+      },
+      {
+        "fixtureId": "m7c-f08-fr-v1",
+        "version": 1,
+        "canonicalSha256": "0a7f0ed99498d4069702ce572d95cc12b4d9cc3c1fcc4e36a8e56df56baee621",
+        "spans": [
+          {
+            "anchorId": "primary",
+            "startOffset": 113,
+            "endOffset": 155,
+            "textSha256": "a96369eae0944632229fc18f6eabe200b4471e5cb2ebe28960232a230619413b"
+          },
+          {
+            "anchorId": "secondary",
+            "startOffset": 3077,
+            "endOffset": 3117,
+            "textSha256": "a8f7d2da384ceb3d555600caab50e918c7bde7085e57c12fe30530ce4364b663"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "queryId": "Q20-EN",
+    "factDenominator": 2,
+    "requiredFacts": [
+      "primary",
+      "secondary"
+    ],
+    "editions": [
+      {
+        "fixtureId": "m7c-f01-en-v1",
+        "version": 1,
+        "canonicalSha256": "1ef2154f8591226707ea8a2b843c58b0913e589d1e3c7cd4b362cd0b16a52567",
+        "spans": [
+          {
+            "anchorId": "primary",
+            "startOffset": 94,
+            "endOffset": 132,
+            "textSha256": "3b15e34c4b5bfd5a4d8f311cc8b69e12b608ed6abca0ceb7825f97da206e05cb"
+          },
+          {
+            "anchorId": "secondary",
+            "startOffset": 3014,
+            "endOffset": 3036,
+            "textSha256": "b91baf37967aa3d3690a95f29d2fc1db2fb7d34408bb3c638084ce01a6f1fbfb"
+          }
+        ]
+      },
+      {
+        "fixtureId": "m7c-f01-fr-v1",
+        "version": 1,
+        "canonicalSha256": "20db25eefaaf2e772eb6308012c870fd1bc15bfb336a21b53e166c4e6c151978",
+        "spans": [
+          {
+            "anchorId": "primary",
+            "startOffset": 97,
+            "endOffset": 142,
+            "textSha256": "a025f06dfa43c7fef3757ac76c386d9ad18032ccbc72c72525a91b2e41a53d79"
+          },
+          {
+            "anchorId": "secondary",
+            "startOffset": 3050,
+            "endOffset": 3074,
+            "textSha256": "18ee1e6e838e048cdd608c4baeeb5114907af59872b0f2608ad462b7e8dd7e2d"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "queryId": "Q20-FR",
+    "factDenominator": 2,
+    "requiredFacts": [
+      "primary",
+      "secondary"
+    ],
+    "editions": [
+      {
+        "fixtureId": "m7c-f01-en-v1",
+        "version": 1,
+        "canonicalSha256": "1ef2154f8591226707ea8a2b843c58b0913e589d1e3c7cd4b362cd0b16a52567",
+        "spans": [
+          {
+            "anchorId": "primary",
+            "startOffset": 94,
+            "endOffset": 132,
+            "textSha256": "3b15e34c4b5bfd5a4d8f311cc8b69e12b608ed6abca0ceb7825f97da206e05cb"
+          },
+          {
+            "anchorId": "secondary",
+            "startOffset": 3014,
+            "endOffset": 3036,
+            "textSha256": "b91baf37967aa3d3690a95f29d2fc1db2fb7d34408bb3c638084ce01a6f1fbfb"
+          }
+        ]
+      },
+      {
+        "fixtureId": "m7c-f01-fr-v1",
+        "version": 1,
+        "canonicalSha256": "20db25eefaaf2e772eb6308012c870fd1bc15bfb336a21b53e166c4e6c151978",
+        "spans": [
+          {
+            "anchorId": "primary",
+            "startOffset": 97,
+            "endOffset": 142,
+            "textSha256": "a025f06dfa43c7fef3757ac76c386d9ad18032ccbc72c72525a91b2e41a53d79"
+          },
+          {
+            "anchorId": "secondary",
+            "startOffset": 3050,
+            "endOffset": 3074,
+            "textSha256": "18ee1e6e838e048cdd608c4baeeb5114907af59872b0f2608ad462b7e8dd7e2d"
+          }
+        ]
+      }
+    ]
+  }
+]

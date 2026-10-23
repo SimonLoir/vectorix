@@ -1,0 +1,630 @@
+[
+  {
+    "id": "Q01-EN",
+    "pair": 1,
+    "language": "EN",
+    "category": "EXACT",
+    "crossLanguage": false,
+    "text": "\"ORION-30\" return",
+    "factFamily": "F01",
+    "filters": {},
+    "topK": 10,
+    "requiresJointParent": false
+  },
+  {
+    "id": "Q01-FR",
+    "pair": 1,
+    "language": "FR",
+    "category": "EXACT",
+    "crossLanguage": false,
+    "text": "\"ORION-30\" retour",
+    "factFamily": "F01",
+    "filters": {},
+    "topK": 10,
+    "requiresJointParent": false
+  },
+  {
+    "id": "Q02-EN",
+    "pair": 2,
+    "language": "EN",
+    "category": "EXACT",
+    "crossLanguage": false,
+    "text": "\"P1-ACK-15\" tickets",
+    "factFamily": "F03",
+    "filters": {},
+    "topK": 10,
+    "requiresJointParent": false
+  },
+  {
+    "id": "Q02-FR",
+    "pair": 2,
+    "language": "FR",
+    "category": "EXACT",
+    "crossLanguage": false,
+    "text": "\"P1-ACK-15\" ticket",
+    "factFamily": "F03",
+    "filters": {},
+    "topK": 10,
+    "requiresJointParent": false
+  },
+  {
+    "id": "Q03-EN",
+    "pair": 3,
+    "language": "EN",
+    "category": "EXACT",
+    "crossLanguage": false,
+    "text": "\"BK-14\" backup",
+    "factFamily": "F04",
+    "filters": {},
+    "topK": 10,
+    "requiresJointParent": false
+  },
+  {
+    "id": "Q03-FR",
+    "pair": 3,
+    "language": "FR",
+    "category": "EXACT",
+    "crossLanguage": false,
+    "text": "\"BK-14\" sauvegarde",
+    "factFamily": "F04",
+    "filters": {},
+    "topK": 10,
+    "requiresJointParent": false
+  },
+  {
+    "id": "Q04-EN",
+    "pair": 4,
+    "language": "EN",
+    "category": "EXACT",
+    "crossLanguage": false,
+    "text": "\"FRT-75\" delivery",
+    "factFamily": "F05",
+    "filters": {},
+    "topK": 10,
+    "requiresJointParent": false
+  },
+  {
+    "id": "Q04-FR",
+    "pair": 4,
+    "language": "FR",
+    "category": "EXACT",
+    "crossLanguage": false,
+    "text": "\"FRT-75\" livraison",
+    "factFamily": "F05",
+    "filters": {},
+    "topK": 10,
+    "requiresJointParent": false
+  },
+  {
+    "id": "Q05-EN",
+    "pair": 5,
+    "language": "EN",
+    "category": "EXACT",
+    "crossLanguage": false,
+    "text": "\"COLD-26\" food",
+    "factFamily": "F08",
+    "filters": {},
+    "topK": 10,
+    "requiresJointParent": false
+  },
+  {
+    "id": "Q05-FR",
+    "pair": 5,
+    "language": "FR",
+    "category": "EXACT",
+    "crossLanguage": false,
+    "text": "\"COLD-26\" aliments",
+    "factFamily": "F08",
+    "filters": {},
+    "topK": 10,
+    "requiresJointParent": false
+  },
+  {
+    "id": "Q06-EN",
+    "pair": 6,
+    "language": "EN",
+    "category": "PARAPHRASE",
+    "crossLanguage": false,
+    "text": "When must I confirm the renewal to keep my existing price?",
+    "factFamily": "F02",
+    "filters": {
+      "languages": [
+        "EN"
+      ]
+    },
+    "topK": 10,
+    "requiresJointParent": false
+  },
+  {
+    "id": "Q06-FR",
+    "pair": 6,
+    "language": "FR",
+    "category": "PARAPHRASE",
+    "crossLanguage": false,
+    "text": "Quand faut-il confirmer le renouvellement pour garder son tarif ?",
+    "factFamily": "F02",
+    "filters": {
+      "languages": [
+        "FR"
+      ]
+    },
+    "topK": 10,
+    "requiresJointParent": false
+  },
+  {
+    "id": "Q07-EN",
+    "pair": 7,
+    "language": "EN",
+    "category": "PARAPHRASE",
+    "crossLanguage": false,
+    "text": "Can an unpacked device still be sent back a few weeks after purchase?",
+    "factFamily": "F01",
+    "filters": {
+      "languages": [
+        "EN"
+      ]
+    },
+    "topK": 10,
+    "requiresJointParent": false
+  },
+  {
+    "id": "Q07-FR",
+    "pair": 7,
+    "language": "FR",
+    "category": "PARAPHRASE",
+    "crossLanguage": false,
+    "text": "Peut-on encore renvoyer un appareil déballé quelques semaines après l'achat ?",
+    "factFamily": "F01",
+    "filters": {
+      "languages": [
+        "FR"
+      ]
+    },
+    "topK": 10,
+    "requiresJointParent": false
+  },
+  {
+    "id": "Q08-EN",
+    "pair": 8,
+    "language": "EN",
+    "category": "PARAPHRASE",
+    "crossLanguage": true,
+    "text": "How quickly will somebody acknowledge a critical outage ticket?",
+    "factFamily": "F03",
+    "filters": {
+      "languages": [
+        "FR"
+      ]
+    },
+    "topK": 10,
+    "requiresJointParent": false
+  },
+  {
+    "id": "Q08-FR",
+    "pair": 8,
+    "language": "FR",
+    "category": "PARAPHRASE",
+    "crossLanguage": true,
+    "text": "Sous quel délai reçoit-on un accusé de réception pour une panne critique ?",
+    "factFamily": "F03",
+    "filters": {
+      "languages": [
+        "EN"
+      ]
+    },
+    "topK": 10,
+    "requiresJointParent": false
+  },
+  {
+    "id": "Q09-EN",
+    "pair": 9,
+    "language": "EN",
+    "category": "PARAPHRASE",
+    "crossLanguage": true,
+    "text": "How much should a normal Belgian basket cost before delivery is free?",
+    "factFamily": "F05",
+    "filters": {
+      "languages": [
+        "FR"
+      ]
+    },
+    "topK": 10,
+    "requiresJointParent": false
+  },
+  {
+    "id": "Q09-FR",
+    "pair": 9,
+    "language": "FR",
+    "category": "PARAPHRASE",
+    "crossLanguage": true,
+    "text": "Quel montant doit atteindre un panier belge standard pour éviter les frais de livraison ?",
+    "factFamily": "F05",
+    "filters": {
+      "languages": [
+        "EN"
+      ]
+    },
+    "topK": 10,
+    "requiresJointParent": false
+  },
+  {
+    "id": "Q10-EN",
+    "pair": 10,
+    "language": "EN",
+    "category": "PARAPHRASE",
+    "crossLanguage": false,
+    "text": "What climate must chilled food stock be kept in?",
+    "factFamily": "F08",
+    "filters": {
+      "languages": [
+        "EN"
+      ]
+    },
+    "topK": 10,
+    "requiresJointParent": false
+  },
+  {
+    "id": "Q10-FR",
+    "pair": 10,
+    "language": "FR",
+    "category": "PARAPHRASE",
+    "crossLanguage": false,
+    "text": "Dans quelles conditions thermiques doit-on garder les aliments réfrigérés ?",
+    "factFamily": "F08",
+    "filters": {
+      "languages": [
+        "FR"
+      ]
+    },
+    "topK": 10,
+    "requiresJointParent": false
+  },
+  {
+    "id": "Q11-EN",
+    "pair": 11,
+    "language": "EN",
+    "category": "FILTER",
+    "crossLanguage": false,
+    "text": "What is the current device return period?",
+    "factFamily": "F01",
+    "filters": {
+      "metadata": [
+        {
+          "field": "policy_year",
+          "operator": "EQ",
+          "value": 2026
+        },
+        {
+          "field": "active",
+          "operator": "EQ",
+          "value": true
+        }
+      ]
+    },
+    "topK": 10,
+    "requiresJointParent": false
+  },
+  {
+    "id": "Q11-FR",
+    "pair": 11,
+    "language": "FR",
+    "category": "FILTER",
+    "crossLanguage": false,
+    "text": "Quel est le délai de retour actuel des appareils ?",
+    "factFamily": "F01",
+    "filters": {
+      "metadata": [
+        {
+          "field": "policy_year",
+          "operator": "EQ",
+          "value": 2026
+        },
+        {
+          "field": "active",
+          "operator": "EQ",
+          "value": true
+        }
+      ]
+    },
+    "topK": 10,
+    "requiresJointParent": false
+  },
+  {
+    "id": "Q12-EN",
+    "pair": 12,
+    "language": "EN",
+    "category": "FILTER",
+    "crossLanguage": false,
+    "text": "How soon is a support ticket acknowledged?",
+    "factFamily": "F03",
+    "filters": {
+      "metadata": [
+        {
+          "field": "tier",
+          "operator": "EQ",
+          "value": "critical"
+        }
+      ]
+    },
+    "topK": 10,
+    "requiresJointParent": false
+  },
+  {
+    "id": "Q12-FR",
+    "pair": 12,
+    "language": "FR",
+    "category": "FILTER",
+    "crossLanguage": false,
+    "text": "Sous quel délai un ticket de support est-il pris en compte ?",
+    "factFamily": "F03",
+    "filters": {
+      "metadata": [
+        {
+          "field": "tier",
+          "operator": "EQ",
+          "value": "critical"
+        }
+      ]
+    },
+    "topK": 10,
+    "requiresJointParent": false
+  },
+  {
+    "id": "Q13-EN",
+    "pair": 13,
+    "language": "EN",
+    "category": "FILTER",
+    "crossLanguage": false,
+    "text": "When is shipping free?",
+    "factFamily": "F05",
+    "filters": {
+      "metadata": [
+        {
+          "field": "region",
+          "operator": "EQ",
+          "value": "BE"
+        },
+        {
+          "field": "tier",
+          "operator": "EQ",
+          "value": "standard"
+        }
+      ]
+    },
+    "topK": 10,
+    "requiresJointParent": false
+  },
+  {
+    "id": "Q13-FR",
+    "pair": 13,
+    "language": "FR",
+    "category": "FILTER",
+    "crossLanguage": false,
+    "text": "À partir de quel montant la livraison est-elle gratuite ?",
+    "factFamily": "F05",
+    "filters": {
+      "metadata": [
+        {
+          "field": "region",
+          "operator": "EQ",
+          "value": "BE"
+        },
+        {
+          "field": "tier",
+          "operator": "EQ",
+          "value": "standard"
+        }
+      ]
+    },
+    "topK": 10,
+    "requiresJointParent": false
+  },
+  {
+    "id": "Q14-EN",
+    "pair": 14,
+    "language": "EN",
+    "category": "FILTER",
+    "crossLanguage": false,
+    "text": "How long are backups retained?",
+    "factFamily": "F04",
+    "filters": {
+      "metadata": [
+        {
+          "field": "active",
+          "operator": "EQ",
+          "value": true
+        },
+        {
+          "field": "effective_at",
+          "operator": "GTE",
+          "value": "2026-01-01T00:00:00.000Z"
+        }
+      ]
+    },
+    "topK": 10,
+    "requiresJointParent": false
+  },
+  {
+    "id": "Q14-FR",
+    "pair": 14,
+    "language": "FR",
+    "category": "FILTER",
+    "crossLanguage": false,
+    "text": "Combien de temps les sauvegardes sont-elles conservées ?",
+    "factFamily": "F04",
+    "filters": {
+      "metadata": [
+        {
+          "field": "active",
+          "operator": "EQ",
+          "value": true
+        },
+        {
+          "field": "effective_at",
+          "operator": "GTE",
+          "value": "2026-01-01T00:00:00.000Z"
+        }
+      ]
+    },
+    "topK": 10,
+    "requiresJointParent": false
+  },
+  {
+    "id": "Q15-EN",
+    "pair": 15,
+    "language": "EN",
+    "category": "FILTER",
+    "crossLanguage": false,
+    "text": "What is the deadline for this travel claim?",
+    "factFamily": "F07",
+    "filters": {
+      "documentFixtureIds": [
+        "m7c-f07-en-v1"
+      ],
+      "mediaTypes": [
+        "application/pdf"
+      ]
+    },
+    "topK": 10,
+    "requiresJointParent": false
+  },
+  {
+    "id": "Q15-FR",
+    "pair": 15,
+    "language": "FR",
+    "category": "FILTER",
+    "crossLanguage": false,
+    "text": "Quel est le délai pour cette demande de remboursement de voyage ?",
+    "factFamily": "F07",
+    "filters": {
+      "documentFixtureIds": [
+        "m7c-f07-fr-v1"
+      ],
+      "mediaTypes": [
+        "text/plain"
+      ]
+    },
+    "topK": 10,
+    "requiresJointParent": false
+  },
+  {
+    "id": "Q16-EN",
+    "pair": 16,
+    "language": "EN",
+    "category": "PARENT",
+    "crossLanguage": false,
+    "text": "Where do I take damaged equipment, and which form is needed?",
+    "factFamily": "F06",
+    "filters": {},
+    "topK": 10,
+    "requiresJointParent": true
+  },
+  {
+    "id": "Q16-FR",
+    "pair": 16,
+    "language": "FR",
+    "category": "PARENT",
+    "crossLanguage": false,
+    "text": "Où déposer le matériel endommagé et quel formulaire faut-il joindre ?",
+    "factFamily": "F06",
+    "filters": {},
+    "topK": 10,
+    "requiresJointParent": true
+  },
+  {
+    "id": "Q17-EN",
+    "pair": 17,
+    "language": "EN",
+    "category": "PARENT",
+    "crossLanguage": false,
+    "text": "How quickly do I submit travel expenses, and what is the trip limit?",
+    "factFamily": "F07",
+    "filters": {},
+    "topK": 10,
+    "requiresJointParent": true
+  },
+  {
+    "id": "Q17-FR",
+    "pair": 17,
+    "language": "FR",
+    "category": "PARENT",
+    "crossLanguage": false,
+    "text": "Sous quel délai remettre ses frais de voyage et quel est le plafond par déplacement ?",
+    "factFamily": "F07",
+    "filters": {},
+    "topK": 10,
+    "requiresJointParent": true
+  },
+  {
+    "id": "Q18-EN",
+    "pair": 18,
+    "language": "EN",
+    "category": "PARENT",
+    "crossLanguage": false,
+    "text": "When does the backup run, and how long is it kept?",
+    "factFamily": "F04",
+    "filters": {},
+    "topK": 10,
+    "requiresJointParent": true
+  },
+  {
+    "id": "Q18-FR",
+    "pair": 18,
+    "language": "FR",
+    "category": "PARENT",
+    "crossLanguage": false,
+    "text": "À quelle heure la sauvegarde est-elle faite et combien de temps reste-t-elle disponible ?",
+    "factFamily": "F04",
+    "filters": {},
+    "topK": 10,
+    "requiresJointParent": true
+  },
+  {
+    "id": "Q19-EN",
+    "pair": 19,
+    "language": "EN",
+    "category": "PARENT",
+    "crossLanguage": false,
+    "text": "What temperature is required for food, and how often is its sensor calibrated?",
+    "factFamily": "F08",
+    "filters": {},
+    "topK": 10,
+    "requiresJointParent": true
+  },
+  {
+    "id": "Q19-FR",
+    "pair": 19,
+    "language": "FR",
+    "category": "PARENT",
+    "crossLanguage": false,
+    "text": "Quelle température faut-il pour les aliments et à quelle fréquence étalonne-t-on le capteur ?",
+    "factFamily": "F08",
+    "filters": {},
+    "topK": 10,
+    "requiresJointParent": true
+  },
+  {
+    "id": "Q20-EN",
+    "pair": 20,
+    "language": "EN",
+    "category": "PARENT",
+    "crossLanguage": false,
+    "text": "How long can I return an opened device, and what proof do I need?",
+    "factFamily": "F01",
+    "filters": {},
+    "topK": 10,
+    "requiresJointParent": true
+  },
+  {
+    "id": "Q20-FR",
+    "pair": 20,
+    "language": "FR",
+    "category": "PARENT",
+    "crossLanguage": false,
+    "text": "Combien de temps peut-on retourner un appareil ouvert et quel justificatif faut-il ?",
+    "factFamily": "F01",
+    "filters": {},
+    "topK": 10,
+    "requiresJointParent": true
+  }
+]

@@ -1,0 +1,1093 @@
+{
+  "schemaVersion": 1,
+  "namespace": "vectorix-m7c-quality",
+  "status": "CANONICAL_CONFIRMED_NOT_INDEXED",
+  "metadataFields": {
+    "region": "STRING",
+    "policy_year": "NUMBER",
+    "active": "BOOLEAN",
+    "effective_at": "DATE",
+    "tier": "STRING"
+  },
+  "documents": [
+    {
+      "fixtureId": "m7c-f01-en-v1",
+      "kind": "CORE",
+      "factFamily": "F01",
+      "language": "EN",
+      "mediaType": "text/plain",
+      "fileName": "m7c-f01-en-v1.txt",
+      "originalPath": "originals/m7c-f01-en-v1.txt",
+      "originalSha256": "1ef2154f8591226707ea8a2b843c58b0913e589d1e3c7cd4b362cd0b16a52567",
+      "originalBytes": 3065,
+      "version": 1,
+      "metadata": {
+        "region": "BE",
+        "policy_year": 2026,
+        "active": true,
+        "effective_at": "2026-01-01T00:00:00.000Z",
+        "tier": "standard"
+      },
+      "tags": [
+        "m7c-reference-v1",
+        "f01"
+      ],
+      "canonicalStatus": "CONFIRMED_LOCAL_PARSER",
+      "canonicalPath": "canonical/m7c-f01-en-v1.json",
+      "canonicalOffsetUnit": "UTF16_CODE_UNITS",
+      "canonicalSha256": "1ef2154f8591226707ea8a2b843c58b0913e589d1e3c7cd4b362cd0b16a52567",
+      "canonicalLength": 3065,
+      "canonicalUtf8Bytes": 3065,
+      "extractionFormat": "TEXT",
+      "goldSpans": [
+        {
+          "anchorId": "primary",
+          "startOffset": 94,
+          "endOffset": 132,
+          "textSha256": "3b15e34c4b5bfd5a4d8f311cc8b69e12b608ed6abca0ceb7825f97da206e05cb"
+        },
+        {
+          "anchorId": "secondary",
+          "startOffset": 3014,
+          "endOffset": 3036,
+          "textSha256": "b91baf37967aa3d3690a95f29d2fc1db2fb7d34408bb3c638084ce01a6f1fbfb"
+        }
+      ]
+    },
+    {
+      "fixtureId": "m7c-f01-fr-v1",
+      "kind": "CORE",
+      "factFamily": "F01",
+      "language": "FR",
+      "mediaType": "application/pdf",
+      "fileName": "m7c-f01-fr-v1.pdf",
+      "originalPath": "originals/m7c-f01-fr-v1.pdf",
+      "originalSha256": "8d8a710f3177da1fe25655465713a9615350140e0caf0f5b2ac377589b866167",
+      "originalBytes": 2469,
+      "version": 1,
+      "metadata": {
+        "region": "BE",
+        "policy_year": 2026,
+        "active": true,
+        "effective_at": "2026-01-01T00:00:00.000Z",
+        "tier": "standard"
+      },
+      "tags": [
+        "m7c-reference-v1",
+        "f01"
+      ],
+      "canonicalStatus": "CONFIRMED_LOCAL_PARSER",
+      "canonicalPath": "canonical/m7c-f01-fr-v1.json",
+      "canonicalOffsetUnit": "UTF16_CODE_UNITS",
+      "canonicalSha256": "20db25eefaaf2e772eb6308012c870fd1bc15bfb336a21b53e166c4e6c151978",
+      "canonicalLength": 3104,
+      "canonicalUtf8Bytes": 3245,
+      "extractionFormat": "PDF",
+      "goldSpans": [
+        {
+          "anchorId": "primary",
+          "startOffset": 97,
+          "endOffset": 142,
+          "textSha256": "a025f06dfa43c7fef3757ac76c386d9ad18032ccbc72c72525a91b2e41a53d79"
+        },
+        {
+          "anchorId": "secondary",
+          "startOffset": 3050,
+          "endOffset": 3074,
+          "textSha256": "18ee1e6e838e048cdd608c4baeeb5114907af59872b0f2608ad462b7e8dd7e2d"
+        }
+      ]
+    },
+    {
+      "fixtureId": "m7c-f02-en-v1",
+      "kind": "CORE",
+      "factFamily": "F02",
+      "language": "EN",
+      "mediaType": "text/markdown",
+      "fileName": "m7c-f02-en-v1.md",
+      "originalPath": "originals/m7c-f02-en-v1.md",
+      "originalSha256": "c7b8a561ea220562818b18f16a3d6e9203e903abd4422e89e889231980ecbadf",
+      "originalBytes": 3076,
+      "version": 1,
+      "metadata": {
+        "region": "BE",
+        "policy_year": 2026,
+        "active": true,
+        "effective_at": "2026-01-01T00:00:00.000Z",
+        "tier": "standard"
+      },
+      "tags": [
+        "m7c-reference-v1",
+        "f02"
+      ],
+      "canonicalStatus": "CONFIRMED_LOCAL_PARSER",
+      "canonicalPath": "canonical/m7c-f02-en-v1.json",
+      "canonicalOffsetUnit": "UTF16_CODE_UNITS",
+      "canonicalSha256": "c7b8a561ea220562818b18f16a3d6e9203e903abd4422e89e889231980ecbadf",
+      "canonicalLength": 3076,
+      "canonicalUtf8Bytes": 3076,
+      "extractionFormat": "MARKDOWN",
+      "goldSpans": [
+        {
+          "anchorId": "primary",
+          "startOffset": 96,
+          "endOffset": 126,
+          "textSha256": "de5e6ddbe76a6fffc0b10aead39aa35435c63f05ea0d38353455e723ffba43fe"
+        },
+        {
+          "anchorId": "secondary",
+          "startOffset": 3008,
+          "endOffset": 3047,
+          "textSha256": "22668f4b3bdbf9a095b1550305008c26b04e42c3f7c562c22aab24ecf770c611"
+        }
+      ]
+    },
+    {
+      "fixtureId": "m7c-f02-fr-v1",
+      "kind": "CORE",
+      "factFamily": "F02",
+      "language": "FR",
+      "mediaType": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+      "fileName": "m7c-f02-fr-v1.docx",
+      "originalPath": "originals/m7c-f02-fr-v1.docx",
+      "originalSha256": "09e4f664959fd0886ac2dfc1666fb6a918d5768b9a9d3b176be23cc9cb52d4e2",
+      "originalBytes": 1696,
+      "version": 1,
+      "metadata": {
+        "region": "BE",
+        "policy_year": 2026,
+        "active": true,
+        "effective_at": "2026-01-01T00:00:00.000Z",
+        "tier": "standard"
+      },
+      "tags": [
+        "m7c-reference-v1",
+        "f02"
+      ],
+      "canonicalStatus": "CONFIRMED_LOCAL_PARSER",
+      "canonicalPath": "canonical/m7c-f02-fr-v1.json",
+      "canonicalOffsetUnit": "UTF16_CODE_UNITS",
+      "canonicalSha256": "3d2d62fb6b6e71a0748630863454a297b4fc08228acf31fc81c9156d1e96b9d0",
+      "canonicalLength": 3149,
+      "canonicalUtf8Bytes": 3289,
+      "extractionFormat": "DOCX",
+      "goldSpans": [
+        {
+          "anchorId": "primary",
+          "startOffset": 111,
+          "endOffset": 155,
+          "textSha256": "939a84eeb64a4311666bd72a260d040f5a8e488e7caa4ddaaf1476c73f8d270b"
+        },
+        {
+          "anchorId": "secondary",
+          "startOffset": 3077,
+          "endOffset": 3118,
+          "textSha256": "f77bc87097157634670b6be1db58cdccd2ef81416c939b6489af179531d96c71"
+        }
+      ]
+    },
+    {
+      "fixtureId": "m7c-f03-en-v1",
+      "kind": "CORE",
+      "factFamily": "F03",
+      "language": "EN",
+      "mediaType": "application/pdf",
+      "fileName": "m7c-f03-en-v1.pdf",
+      "originalPath": "originals/m7c-f03-en-v1.pdf",
+      "originalSha256": "e14490552f5af424bce49d2e67f15ab21708a6cfe8971ca9ad2a94c90220eb22",
+      "originalBytes": 2201,
+      "version": 1,
+      "metadata": {
+        "region": "BE",
+        "policy_year": 2026,
+        "active": true,
+        "effective_at": "2026-01-01T00:00:00.000Z",
+        "tier": "critical"
+      },
+      "tags": [
+        "m7c-reference-v1",
+        "f03"
+      ],
+      "canonicalStatus": "CONFIRMED_LOCAL_PARSER",
+      "canonicalPath": "canonical/m7c-f03-en-v1.json",
+      "canonicalOffsetUnit": "UTF16_CODE_UNITS",
+      "canonicalSha256": "322113b2be46b2952482d91bf69d3501364d709beadd42426846771d637efa7d",
+      "canonicalLength": 3090,
+      "canonicalUtf8Bytes": 3090,
+      "extractionFormat": "PDF",
+      "goldSpans": [
+        {
+          "anchorId": "primary",
+          "startOffset": 93,
+          "endOffset": 144,
+          "textSha256": "bd2dd06505b1a0f5b7e9f634e619d24c225b3aa5692929ee4b9201e37f0d86e1"
+        },
+        {
+          "anchorId": "secondary",
+          "startOffset": 3012,
+          "endOffset": 3063,
+          "textSha256": "64bf87c2ad2f54ac359559699336252995236963c6ab0d513db10883c67be95d"
+        }
+      ]
+    },
+    {
+      "fixtureId": "m7c-f03-fr-v1",
+      "kind": "CORE",
+      "factFamily": "F03",
+      "language": "FR",
+      "mediaType": "text/plain",
+      "fileName": "m7c-f03-fr-v1.txt",
+      "originalPath": "originals/m7c-f03-fr-v1.txt",
+      "originalSha256": "38478863e6ace7e0fdf079a3388cc4497fb334cec1e960919fc626d2d083adcb",
+      "originalBytes": 3411,
+      "version": 1,
+      "metadata": {
+        "region": "BE",
+        "policy_year": 2026,
+        "active": true,
+        "effective_at": "2026-01-01T00:00:00.000Z",
+        "tier": "critical"
+      },
+      "tags": [
+        "m7c-reference-v1",
+        "f03"
+      ],
+      "canonicalStatus": "CONFIRMED_LOCAL_PARSER",
+      "canonicalPath": "canonical/m7c-f03-fr-v1.json",
+      "canonicalOffsetUnit": "UTF16_CODE_UNITS",
+      "canonicalSha256": "38478863e6ace7e0fdf079a3388cc4497fb334cec1e960919fc626d2d083adcb",
+      "canonicalLength": 3259,
+      "canonicalUtf8Bytes": 3411,
+      "extractionFormat": "TEXT",
+      "goldSpans": [
+        {
+          "anchorId": "primary",
+          "startOffset": 100,
+          "endOffset": 155,
+          "textSha256": "478b5527508b12781b48c31ddc79ab0ee787f4b8f5f5c3d073fee05f070fe95e"
+        },
+        {
+          "anchorId": "secondary",
+          "startOffset": 3171,
+          "endOffset": 3227,
+          "textSha256": "ddbcb755e3dfaa22863a25a887b685a3546781678b04a259d951f5d4041d5090"
+        }
+      ]
+    },
+    {
+      "fixtureId": "m7c-f04-en-v1",
+      "kind": "CORE",
+      "factFamily": "F04",
+      "language": "EN",
+      "mediaType": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+      "fileName": "m7c-f04-en-v1.docx",
+      "originalPath": "originals/m7c-f04-en-v1.docx",
+      "originalSha256": "ee8bd91657664b3c2a8a9243dbafcd0f69d203111f3710b210054a780bde7468",
+      "originalBytes": 1672,
+      "version": 1,
+      "metadata": {
+        "region": "BE",
+        "policy_year": 2026,
+        "active": true,
+        "effective_at": "2026-01-01T00:00:00.000Z",
+        "tier": "standard"
+      },
+      "tags": [
+        "m7c-reference-v1",
+        "f04"
+      ],
+      "canonicalStatus": "CONFIRMED_LOCAL_PARSER",
+      "canonicalPath": "canonical/m7c-f04-en-v1.json",
+      "canonicalOffsetUnit": "UTF16_CODE_UNITS",
+      "canonicalSha256": "55d87b133e767d2492e420600a22c577d92fb371ff4dbabf23046eab2e81b124",
+      "canonicalLength": 3076,
+      "canonicalUtf8Bytes": 3076,
+      "extractionFormat": "DOCX",
+      "goldSpans": [
+        {
+          "anchorId": "primary",
+          "startOffset": 100,
+          "endOffset": 131,
+          "textSha256": "2625729d9a33eb295839bce95aedeb3e898b49afc6cfa3e9b00d4fc5afd3e4f8"
+        },
+        {
+          "anchorId": "secondary",
+          "startOffset": 3013,
+          "endOffset": 3048,
+          "textSha256": "13048d45663983bf89b11e6a6ba69c245a8ece5e076f26bc34bb50bb2d4c2939"
+        }
+      ]
+    },
+    {
+      "fixtureId": "m7c-f04-fr-v1",
+      "kind": "CORE",
+      "factFamily": "F04",
+      "language": "FR",
+      "mediaType": "text/markdown",
+      "fileName": "m7c-f04-fr-v1.md",
+      "originalPath": "originals/m7c-f04-fr-v1.md",
+      "originalSha256": "3bd311517f876134d1e794eef2800f31d5b11e1b2a8103753fc7fd649f4d7a69",
+      "originalBytes": 3297,
+      "version": 1,
+      "metadata": {
+        "region": "BE",
+        "policy_year": 2026,
+        "active": true,
+        "effective_at": "2026-01-01T00:00:00.000Z",
+        "tier": "standard"
+      },
+      "tags": [
+        "m7c-reference-v1",
+        "f04"
+      ],
+      "canonicalStatus": "CONFIRMED_LOCAL_PARSER",
+      "canonicalPath": "canonical/m7c-f04-fr-v1.json",
+      "canonicalOffsetUnit": "UTF16_CODE_UNITS",
+      "canonicalSha256": "3bd311517f876134d1e794eef2800f31d5b11e1b2a8103753fc7fd649f4d7a69",
+      "canonicalLength": 3155,
+      "canonicalUtf8Bytes": 3297,
+      "extractionFormat": "MARKDOWN",
+      "goldSpans": [
+        {
+          "anchorId": "primary",
+          "startOffset": 114,
+          "endOffset": 159,
+          "textSha256": "cb4f562c1f16963dfaa926ef1f2767acd062cd758730a8be60f7ec34ccdf7bb5"
+        },
+        {
+          "anchorId": "secondary",
+          "startOffset": 3081,
+          "endOffset": 3123,
+          "textSha256": "d08ecc5112284cc2dd424b718839a432b4263f2835d78defaf301bb236b02a56"
+        }
+      ]
+    },
+    {
+      "fixtureId": "m7c-f05-en-v1",
+      "kind": "CORE",
+      "factFamily": "F05",
+      "language": "EN",
+      "mediaType": "text/plain",
+      "fileName": "m7c-f05-en-v1.txt",
+      "originalPath": "originals/m7c-f05-en-v1.txt",
+      "originalSha256": "f53c23a2f50f5b1e7d0e755976d21bfb9867be082484156e8011e4d80cec9ae4",
+      "originalBytes": 3096,
+      "version": 1,
+      "metadata": {
+        "region": "BE",
+        "policy_year": 2026,
+        "active": true,
+        "effective_at": "2026-01-01T00:00:00.000Z",
+        "tier": "standard"
+      },
+      "tags": [
+        "m7c-reference-v1",
+        "f05"
+      ],
+      "canonicalStatus": "CONFIRMED_LOCAL_PARSER",
+      "canonicalPath": "canonical/m7c-f05-en-v1.json",
+      "canonicalOffsetUnit": "UTF16_CODE_UNITS",
+      "canonicalSha256": "f53c23a2f50f5b1e7d0e755976d21bfb9867be082484156e8011e4d80cec9ae4",
+      "canonicalLength": 3096,
+      "canonicalUtf8Bytes": 3096,
+      "extractionFormat": "TEXT",
+      "goldSpans": [
+        {
+          "anchorId": "primary",
+          "startOffset": 102,
+          "endOffset": 142,
+          "textSha256": "c1628353afeee7dc8aacea33fc522a931f92baea1220fc9f9996419c790ea08f"
+        },
+        {
+          "anchorId": "secondary",
+          "startOffset": 3024,
+          "endOffset": 3067,
+          "textSha256": "53c7b839336ef3097e539baa2999441edde0805ffde754bc3ddf1ced524d2de9"
+        }
+      ]
+    },
+    {
+      "fixtureId": "m7c-f05-fr-v1",
+      "kind": "CORE",
+      "factFamily": "F05",
+      "language": "FR",
+      "mediaType": "application/pdf",
+      "fileName": "m7c-f05-fr-v1.pdf",
+      "originalPath": "originals/m7c-f05-fr-v1.pdf",
+      "originalSha256": "6b19c7f656f58550bd182b0a75235ad2d0a04ec5232888c89ac672d299b51af4",
+      "originalBytes": 2475,
+      "version": 1,
+      "metadata": {
+        "region": "BE",
+        "policy_year": 2026,
+        "active": true,
+        "effective_at": "2026-01-01T00:00:00.000Z",
+        "tier": "standard"
+      },
+      "tags": [
+        "m7c-reference-v1",
+        "f05"
+      ],
+      "canonicalStatus": "CONFIRMED_LOCAL_PARSER",
+      "canonicalPath": "canonical/m7c-f05-fr-v1.json",
+      "canonicalOffsetUnit": "UTF16_CODE_UNITS",
+      "canonicalSha256": "6d98c4b8b80b4d470aadd7fe64e6a1e276da71aee1daa6c47e91db03f3ab11ac",
+      "canonicalLength": 3130,
+      "canonicalUtf8Bytes": 3271,
+      "extractionFormat": "PDF",
+      "goldSpans": [
+        {
+          "anchorId": "primary",
+          "startOffset": 106,
+          "endOffset": 151,
+          "textSha256": "51a6295f26acf7f935822bf8807056c7c27925cf6fe8f495d6212b156c562556"
+        },
+        {
+          "anchorId": "secondary",
+          "startOffset": 3059,
+          "endOffset": 3100,
+          "textSha256": "6d7639e68d840c2535c764399ccc2dc8b810ca42094f36d4f33975ea4e0a1085"
+        }
+      ]
+    },
+    {
+      "fixtureId": "m7c-f06-en-v1",
+      "kind": "CORE",
+      "factFamily": "F06",
+      "language": "EN",
+      "mediaType": "text/markdown",
+      "fileName": "m7c-f06-en-v1.md",
+      "originalPath": "originals/m7c-f06-en-v1.md",
+      "originalSha256": "d164db93ee464c0bd327132392e955bcc497740c1f954a179609c7de72086a73",
+      "originalBytes": 3111,
+      "version": 1,
+      "metadata": {
+        "region": "BE",
+        "policy_year": 2026,
+        "active": true,
+        "effective_at": "2026-01-01T00:00:00.000Z",
+        "tier": "standard"
+      },
+      "tags": [
+        "m7c-reference-v1",
+        "f06"
+      ],
+      "canonicalStatus": "CONFIRMED_LOCAL_PARSER",
+      "canonicalPath": "canonical/m7c-f06-en-v1.json",
+      "canonicalOffsetUnit": "UTF16_CODE_UNITS",
+      "canonicalSha256": "d164db93ee464c0bd327132392e955bcc497740c1f954a179609c7de72086a73",
+      "canonicalLength": 3111,
+      "canonicalUtf8Bytes": 3111,
+      "extractionFormat": "MARKDOWN",
+      "goldSpans": [
+        {
+          "anchorId": "primary",
+          "startOffset": 107,
+          "endOffset": 158,
+          "textSha256": "59172e1aed907e1f62296564474a780f7c57a8a5a6852cb63decbaae6fab9e39"
+        },
+        {
+          "anchorId": "secondary",
+          "startOffset": 3040,
+          "endOffset": 3082,
+          "textSha256": "50b15d4c7dbbfac74ba9f74bc7433d107ea92242f09a860759cb43830b8d7bb0"
+        }
+      ]
+    },
+    {
+      "fixtureId": "m7c-f06-fr-v1",
+      "kind": "CORE",
+      "factFamily": "F06",
+      "language": "FR",
+      "mediaType": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+      "fileName": "m7c-f06-fr-v1.docx",
+      "originalPath": "originals/m7c-f06-fr-v1.docx",
+      "originalSha256": "04ca6922b3985cb096b3448386f44ee32ce92e3eae5a2f81c05ae239ea6584ec",
+      "originalBytes": 1714,
+      "version": 1,
+      "metadata": {
+        "region": "BE",
+        "policy_year": 2026,
+        "active": true,
+        "effective_at": "2026-01-01T00:00:00.000Z",
+        "tier": "standard"
+      },
+      "tags": [
+        "m7c-reference-v1",
+        "f06"
+      ],
+      "canonicalStatus": "CONFIRMED_LOCAL_PARSER",
+      "canonicalPath": "canonical/m7c-f06-fr-v1.json",
+      "canonicalOffsetUnit": "UTF16_CODE_UNITS",
+      "canonicalSha256": "0edf367f1551960d68196683168b0555e1f0110a018e3e23874f15b275735333",
+      "canonicalLength": 3166,
+      "canonicalUtf8Bytes": 3316,
+      "extractionFormat": "DOCX",
+      "goldSpans": [
+        {
+          "anchorId": "primary",
+          "startOffset": 114,
+          "endOffset": 164,
+          "textSha256": "3e0ec8c03324ea05dee4cdf9d62a3cc73544f08312e74f5fa687fa9aaecca13a"
+        },
+        {
+          "anchorId": "secondary",
+          "startOffset": 3086,
+          "endOffset": 3135,
+          "textSha256": "bbd15e8d11e397a403770e8053550a1ee4d1b2a4c9c6c3ed678d1847c644d9bf"
+        }
+      ]
+    },
+    {
+      "fixtureId": "m7c-f07-en-v1",
+      "kind": "CORE",
+      "factFamily": "F07",
+      "language": "EN",
+      "mediaType": "application/pdf",
+      "fileName": "m7c-f07-en-v1.pdf",
+      "originalPath": "originals/m7c-f07-en-v1.pdf",
+      "originalSha256": "931710ffa0c6bf9e7ecfccf3683eb31405ab1ad04d6497d3398843bd983b85a6",
+      "originalBytes": 2173,
+      "version": 1,
+      "metadata": {
+        "region": "BE",
+        "policy_year": 2026,
+        "active": true,
+        "effective_at": "2026-01-01T00:00:00.000Z",
+        "tier": "standard"
+      },
+      "tags": [
+        "m7c-reference-v1",
+        "f07"
+      ],
+      "canonicalStatus": "CONFIRMED_LOCAL_PARSER",
+      "canonicalPath": "canonical/m7c-f07-en-v1.json",
+      "canonicalOffsetUnit": "UTF16_CODE_UNITS",
+      "canonicalSha256": "ea134f9a51715ba96e41753a6a80f7e6cae77861fd34b29e6dac8cc79e5074bf",
+      "canonicalLength": 3066,
+      "canonicalUtf8Bytes": 3066,
+      "extractionFormat": "PDF",
+      "goldSpans": [
+        {
+          "anchorId": "primary",
+          "startOffset": 99,
+          "endOffset": 142,
+          "textSha256": "baa753fc9da036e8cfaacab942772b057a3e4b214b7704ca66f60c33cb477754"
+        },
+        {
+          "anchorId": "secondary",
+          "startOffset": 3010,
+          "endOffset": 3039,
+          "textSha256": "db642ee50c14aeca7ab8c0df322407167afe9ae6af3d32f430c46152a60a3922"
+        }
+      ]
+    },
+    {
+      "fixtureId": "m7c-f07-fr-v1",
+      "kind": "CORE",
+      "factFamily": "F07",
+      "language": "FR",
+      "mediaType": "text/plain",
+      "fileName": "m7c-f07-fr-v1.txt",
+      "originalPath": "originals/m7c-f07-fr-v1.txt",
+      "originalSha256": "525c4f678a0d47aa0d347150ecc728297892931e6e28db65fa16c68c8c9da5f7",
+      "originalBytes": 3303,
+      "version": 1,
+      "metadata": {
+        "region": "BE",
+        "policy_year": 2026,
+        "active": true,
+        "effective_at": "2026-01-01T00:00:00.000Z",
+        "tier": "standard"
+      },
+      "tags": [
+        "m7c-reference-v1",
+        "f07"
+      ],
+      "canonicalStatus": "CONFIRMED_LOCAL_PARSER",
+      "canonicalPath": "canonical/m7c-f07-fr-v1.json",
+      "canonicalOffsetUnit": "UTF16_CODE_UNITS",
+      "canonicalSha256": "525c4f678a0d47aa0d347150ecc728297892931e6e28db65fa16c68c8c9da5f7",
+      "canonicalLength": 3160,
+      "canonicalUtf8Bytes": 3303,
+      "extractionFormat": "TEXT",
+      "goldSpans": [
+        {
+          "anchorId": "primary",
+          "startOffset": 112,
+          "endOffset": 164,
+          "textSha256": "b44fdf082dc69f6433df4b856725cffd6f4c30f5e1264b81cd7ef25b2323324b"
+        },
+        {
+          "anchorId": "secondary",
+          "startOffset": 3086,
+          "endOffset": 3128,
+          "textSha256": "b47a09eea6eaa49501f3f2a4cad71649eafaefa0c9415eec08686a7fb73b606a"
+        }
+      ]
+    },
+    {
+      "fixtureId": "m7c-f08-en-v1",
+      "kind": "CORE",
+      "factFamily": "F08",
+      "language": "EN",
+      "mediaType": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+      "fileName": "m7c-f08-en-v1.docx",
+      "originalPath": "originals/m7c-f08-en-v1.docx",
+      "originalSha256": "2f996d2e503967d71da14fce10808e444151f43a045e63d35a5308886786d568",
+      "originalBytes": 1683,
+      "version": 1,
+      "metadata": {
+        "region": "BE",
+        "policy_year": 2026,
+        "active": true,
+        "effective_at": "2026-01-01T00:00:00.000Z",
+        "tier": "standard"
+      },
+      "tags": [
+        "m7c-reference-v1",
+        "f08"
+      ],
+      "canonicalStatus": "CONFIRMED_LOCAL_PARSER",
+      "canonicalPath": "canonical/m7c-f08-en-v1.json",
+      "canonicalOffsetUnit": "UTF16_CODE_UNITS",
+      "canonicalSha256": "3c5d59f474ca602c5c5b6ed74d20f3cd24149670d00ab46c84cf91d182e30ae7",
+      "canonicalLength": 3085,
+      "canonicalUtf8Bytes": 3085,
+      "extractionFormat": "DOCX",
+      "goldSpans": [
+        {
+          "anchorId": "primary",
+          "startOffset": 98,
+          "endOffset": 140,
+          "textSha256": "476fe0350b3e55069b33b8aeddc0e13981dc0bf4c74ecde460bf06f7e0fe3da6"
+        },
+        {
+          "anchorId": "secondary",
+          "startOffset": 3022,
+          "endOffset": 3057,
+          "textSha256": "83b62678a160a1b07bb22bb2352c9d88cda3ed4bbd980de17e3552d3ba87af55"
+        }
+      ]
+    },
+    {
+      "fixtureId": "m7c-f08-fr-v1",
+      "kind": "CORE",
+      "factFamily": "F08",
+      "language": "FR",
+      "mediaType": "text/markdown",
+      "fileName": "m7c-f08-fr-v1.md",
+      "originalPath": "originals/m7c-f08-fr-v1.md",
+      "originalSha256": "0a7f0ed99498d4069702ce572d95cc12b4d9cc3c1fcc4e36a8e56df56baee621",
+      "originalBytes": 3291,
+      "version": 1,
+      "metadata": {
+        "region": "BE",
+        "policy_year": 2026,
+        "active": true,
+        "effective_at": "2026-01-01T00:00:00.000Z",
+        "tier": "standard"
+      },
+      "tags": [
+        "m7c-reference-v1",
+        "f08"
+      ],
+      "canonicalStatus": "CONFIRMED_LOCAL_PARSER",
+      "canonicalPath": "canonical/m7c-f08-fr-v1.json",
+      "canonicalOffsetUnit": "UTF16_CODE_UNITS",
+      "canonicalSha256": "0a7f0ed99498d4069702ce572d95cc12b4d9cc3c1fcc4e36a8e56df56baee621",
+      "canonicalLength": 3149,
+      "canonicalUtf8Bytes": 3291,
+      "extractionFormat": "MARKDOWN",
+      "goldSpans": [
+        {
+          "anchorId": "primary",
+          "startOffset": 113,
+          "endOffset": 155,
+          "textSha256": "a96369eae0944632229fc18f6eabe200b4471e5cb2ebe28960232a230619413b"
+        },
+        {
+          "anchorId": "secondary",
+          "startOffset": 3077,
+          "endOffset": 3117,
+          "textSha256": "a8f7d2da384ceb3d555600caab50e918c7bde7085e57c12fe30530ce4364b663"
+        }
+      ]
+    },
+    {
+      "fixtureId": "m7c-d01-en-v1",
+      "kind": "DISTRACTOR",
+      "factFamily": "D01",
+      "language": "EN",
+      "mediaType": "text/plain",
+      "fileName": "m7c-d01-en-v1.txt",
+      "originalPath": "originals/m7c-d01-en-v1.txt",
+      "originalSha256": "8523cdccdc1dfa25de50c9936da92b05c33d923d1e40aa71e8a9ee4f5362a3ad",
+      "originalBytes": 3080,
+      "version": 1,
+      "metadata": {
+        "region": "BE",
+        "policy_year": 2025,
+        "active": false,
+        "effective_at": "2025-01-01T00:00:00.000Z",
+        "tier": "standard"
+      },
+      "tags": [
+        "m7c-reference-v1",
+        "d01"
+      ],
+      "canonicalStatus": "CONFIRMED_LOCAL_PARSER",
+      "canonicalPath": "canonical/m7c-d01-en-v1.json",
+      "canonicalOffsetUnit": "UTF16_CODE_UNITS",
+      "canonicalSha256": "8523cdccdc1dfa25de50c9936da92b05c33d923d1e40aa71e8a9ee4f5362a3ad",
+      "canonicalLength": 3080,
+      "canonicalUtf8Bytes": 3080,
+      "extractionFormat": "TEXT",
+      "goldSpans": [
+        {
+          "anchorId": "primary",
+          "startOffset": 102,
+          "endOffset": 140,
+          "textSha256": "612a0b0f090ab980174b57597d97b66b27fb4aeb789952841131a9d43e11f488"
+        },
+        {
+          "anchorId": "secondary",
+          "startOffset": 3022,
+          "endOffset": 3051,
+          "textSha256": "7aace3df5bb6a594279a3d0f5f861e0dd11cff0fc6d387370a8136f9949f3761"
+        }
+      ]
+    },
+    {
+      "fixtureId": "m7c-d01-fr-v1",
+      "kind": "DISTRACTOR",
+      "factFamily": "D01",
+      "language": "FR",
+      "mediaType": "application/pdf",
+      "fileName": "m7c-d01-fr-v1.pdf",
+      "originalPath": "originals/m7c-d01-fr-v1.pdf",
+      "originalSha256": "329135f13b05083f85a54b5051ea73fa45dd546504636c7cf394faa0d1d13d11",
+      "originalBytes": 2495,
+      "version": 1,
+      "metadata": {
+        "region": "BE",
+        "policy_year": 2025,
+        "active": false,
+        "effective_at": "2025-01-01T00:00:00.000Z",
+        "tier": "standard"
+      },
+      "tags": [
+        "m7c-reference-v1",
+        "d01"
+      ],
+      "canonicalStatus": "CONFIRMED_LOCAL_PARSER",
+      "canonicalPath": "canonical/m7c-d01-fr-v1.json",
+      "canonicalOffsetUnit": "UTF16_CODE_UNITS",
+      "canonicalSha256": "37deb6be17a9c919615796387cbe3f595bd6fe96ee901a522e7b781fb0a465ec",
+      "canonicalLength": 3130,
+      "canonicalUtf8Bytes": 3272,
+      "extractionFormat": "PDF",
+      "goldSpans": [
+        {
+          "anchorId": "primary",
+          "startOffset": 108,
+          "endOffset": 153,
+          "textSha256": "da1198ec4142f25879dd088a956dbc2d464488acdbeca8078e26d81d141c681b"
+        },
+        {
+          "anchorId": "secondary",
+          "startOffset": 3061,
+          "endOffset": 3100,
+          "textSha256": "afa6608ee7d04f40f728aece771b39cd727e545ccdf3689ef253568957952c9d"
+        }
+      ]
+    },
+    {
+      "fixtureId": "m7c-d02-en-v1",
+      "kind": "DISTRACTOR",
+      "factFamily": "D02",
+      "language": "EN",
+      "mediaType": "text/markdown",
+      "fileName": "m7c-d02-en-v1.md",
+      "originalPath": "originals/m7c-d02-en-v1.md",
+      "originalSha256": "e87c6fc1071285eaca94515223e96de0ebdaff67455b97a2625798b2e668f330",
+      "originalBytes": 3103,
+      "version": 1,
+      "metadata": {
+        "region": "BE",
+        "policy_year": 2026,
+        "active": true,
+        "effective_at": "2026-01-01T00:00:00.000Z",
+        "tier": "standard"
+      },
+      "tags": [
+        "m7c-reference-v1",
+        "d02"
+      ],
+      "canonicalStatus": "CONFIRMED_LOCAL_PARSER",
+      "canonicalPath": "canonical/m7c-d02-en-v1.json",
+      "canonicalOffsetUnit": "UTF16_CODE_UNITS",
+      "canonicalSha256": "e87c6fc1071285eaca94515223e96de0ebdaff67455b97a2625798b2e668f330",
+      "canonicalLength": 3103,
+      "canonicalUtf8Bytes": 3103,
+      "extractionFormat": "MARKDOWN",
+      "goldSpans": [
+        {
+          "anchorId": "primary",
+          "startOffset": 99,
+          "endOffset": 148,
+          "textSha256": "b17c1ab2d14e3b2d7efa5d8cb2a345d6e28d2565b967a141e56da2b554c701b3"
+        },
+        {
+          "anchorId": "secondary",
+          "startOffset": 3030,
+          "endOffset": 3074,
+          "textSha256": "c876ac564787016f8b2b65e0b913354ef449fcf1803dd6569536c6fe075df82b"
+        }
+      ]
+    },
+    {
+      "fixtureId": "m7c-d02-fr-v1",
+      "kind": "DISTRACTOR",
+      "factFamily": "D02",
+      "language": "FR",
+      "mediaType": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+      "fileName": "m7c-d02-fr-v1.docx",
+      "originalPath": "originals/m7c-d02-fr-v1.docx",
+      "originalSha256": "12074191eb3e20ec20f57ed2733d2d48f73cd61ad8c7853cf79b4e7864f97e21",
+      "originalBytes": 1711,
+      "version": 1,
+      "metadata": {
+        "region": "BE",
+        "policy_year": 2026,
+        "active": true,
+        "effective_at": "2026-01-01T00:00:00.000Z",
+        "tier": "standard"
+      },
+      "tags": [
+        "m7c-reference-v1",
+        "d02"
+      ],
+      "canonicalStatus": "CONFIRMED_LOCAL_PARSER",
+      "canonicalPath": "canonical/m7c-d02-fr-v1.json",
+      "canonicalOffsetUnit": "UTF16_CODE_UNITS",
+      "canonicalSha256": "afe84d11b42e2e00fa275843661c250c26e49607b9bdf120177bb4c07a33a2fc",
+      "canonicalLength": 3163,
+      "canonicalUtf8Bytes": 3308,
+      "extractionFormat": "DOCX",
+      "goldSpans": [
+        {
+          "anchorId": "primary",
+          "startOffset": 102,
+          "endOffset": 156,
+          "textSha256": "9dbcf229f9d5689183e60408b450276ca782f5238cbe20d41fa7604ce764d360"
+        },
+        {
+          "anchorId": "secondary",
+          "startOffset": 3078,
+          "endOffset": 3132,
+          "textSha256": "a5c10af50654ac0e1859375e3f4071741847b5cf5ec809d0ebf4e72ad130ec98"
+        }
+      ]
+    },
+    {
+      "fixtureId": "m7c-d03-en-v1",
+      "kind": "DISTRACTOR",
+      "factFamily": "D03",
+      "language": "EN",
+      "mediaType": "application/pdf",
+      "fileName": "m7c-d03-en-v1.pdf",
+      "originalPath": "originals/m7c-d03-en-v1.pdf",
+      "originalSha256": "fa9e777d7c5481ced3ca50282588b1a51bd2860643b21051fc62fc4af83496e7",
+      "originalBytes": 2184,
+      "version": 1,
+      "metadata": {
+        "region": "BE",
+        "policy_year": 2026,
+        "active": true,
+        "effective_at": "2026-01-01T00:00:00.000Z",
+        "tier": "contract"
+      },
+      "tags": [
+        "m7c-reference-v1",
+        "d03"
+      ],
+      "canonicalStatus": "CONFIRMED_LOCAL_PARSER",
+      "canonicalPath": "canonical/m7c-d03-en-v1.json",
+      "canonicalOffsetUnit": "UTF16_CODE_UNITS",
+      "canonicalSha256": "05b8ec96c06bf413d57eaf1d73ae74b79add81bda48e219c1bbb50ac5ca00ed9",
+      "canonicalLength": 3066,
+      "canonicalUtf8Bytes": 3066,
+      "extractionFormat": "PDF",
+      "goldSpans": [
+        {
+          "anchorId": "primary",
+          "startOffset": 100,
+          "endOffset": 140,
+          "textSha256": "13581e4357815fc66cc8cddbed40c2ce0110b2004ee163d429b7effc1578af42"
+        },
+        {
+          "anchorId": "secondary",
+          "startOffset": 3008,
+          "endOffset": 3039,
+          "textSha256": "1127f75f7c6f3a110c3e5434809252b73cbe8fece9f007f0ba70e2c550c8e91a"
+        }
+      ]
+    },
+    {
+      "fixtureId": "m7c-d03-fr-v1",
+      "kind": "DISTRACTOR",
+      "factFamily": "D03",
+      "language": "FR",
+      "mediaType": "text/plain",
+      "fileName": "m7c-d03-fr-v1.txt",
+      "originalPath": "originals/m7c-d03-fr-v1.txt",
+      "originalSha256": "7f945c7cd21b42cef64add9e4ad34700edd4175b4e62f9b16496497e450972b3",
+      "originalBytes": 3294,
+      "version": 1,
+      "metadata": {
+        "region": "BE",
+        "policy_year": 2026,
+        "active": true,
+        "effective_at": "2026-01-01T00:00:00.000Z",
+        "tier": "contract"
+      },
+      "tags": [
+        "m7c-reference-v1",
+        "d03"
+      ],
+      "canonicalStatus": "CONFIRMED_LOCAL_PARSER",
+      "canonicalPath": "canonical/m7c-d03-fr-v1.json",
+      "canonicalOffsetUnit": "UTF16_CODE_UNITS",
+      "canonicalSha256": "7f945c7cd21b42cef64add9e4ad34700edd4175b4e62f9b16496497e450972b3",
+      "canonicalLength": 3151,
+      "canonicalUtf8Bytes": 3294,
+      "extractionFormat": "TEXT",
+      "goldSpans": [
+        {
+          "anchorId": "primary",
+          "startOffset": 114,
+          "endOffset": 163,
+          "textSha256": "5d34d16a3aa1e44fb69514fa7993a4d8b12165373306d723ae5483931b023f5c"
+        },
+        {
+          "anchorId": "secondary",
+          "startOffset": 3085,
+          "endOffset": 3119,
+          "textSha256": "9e2e358f143045e4ebe40fb7c58746867493523c5f25322ad74059eabeadf3bc"
+        }
+      ]
+    },
+    {
+      "fixtureId": "m7c-d04-en-v1",
+      "kind": "DISTRACTOR",
+      "factFamily": "D04",
+      "language": "EN",
+      "mediaType": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+      "fileName": "m7c-d04-en-v1.docx",
+      "originalPath": "originals/m7c-d04-en-v1.docx",
+      "originalSha256": "30fb1ff09f6dc53a33bc44bab9f69173e049889361332dbee3428ebb567192d2",
+      "originalBytes": 1679,
+      "version": 1,
+      "metadata": {
+        "region": "BE",
+        "policy_year": 2026,
+        "active": false,
+        "effective_at": "2026-01-01T00:00:00.000Z",
+        "tier": "standard"
+      },
+      "tags": [
+        "m7c-reference-v1",
+        "d04"
+      ],
+      "canonicalStatus": "CONFIRMED_LOCAL_PARSER",
+      "canonicalPath": "canonical/m7c-d04-en-v1.json",
+      "canonicalOffsetUnit": "UTF16_CODE_UNITS",
+      "canonicalSha256": "1aa3f152c7313569338c85ca12d510017c827b96ae80cd46de9b3899daf316f2",
+      "canonicalLength": 3085,
+      "canonicalUtf8Bytes": 3085,
+      "extractionFormat": "DOCX",
+      "goldSpans": [
+        {
+          "anchorId": "primary",
+          "startOffset": 99,
+          "endOffset": 146,
+          "textSha256": "11237896af69eb9c2440d180988ab9e40ebf89f6047278c5226232c01406c08e"
+        },
+        {
+          "anchorId": "secondary",
+          "startOffset": 3028,
+          "endOffset": 3057,
+          "textSha256": "6f0c1ec1e6e28e6e5bf40e4e1d21bbd7bb3cc41e97867fe9b15438e3c1dd9340"
+        }
+      ]
+    },
+    {
+      "fixtureId": "m7c-d04-fr-v1",
+      "kind": "DISTRACTOR",
+      "factFamily": "D04",
+      "language": "FR",
+      "mediaType": "text/markdown",
+      "fileName": "m7c-d04-fr-v1.md",
+      "originalPath": "originals/m7c-d04-fr-v1.md",
+      "originalSha256": "5c90d38c09025888f0cf355168163e25f4279a020b303d53f0b03b40f43dbf30",
+      "originalBytes": 3310,
+      "version": 1,
+      "metadata": {
+        "region": "BE",
+        "policy_year": 2026,
+        "active": false,
+        "effective_at": "2026-01-01T00:00:00.000Z",
+        "tier": "standard"
+      },
+      "tags": [
+        "m7c-reference-v1",
+        "d04"
+      ],
+      "canonicalStatus": "CONFIRMED_LOCAL_PARSER",
+      "canonicalPath": "canonical/m7c-d04-fr-v1.json",
+      "canonicalOffsetUnit": "UTF16_CODE_UNITS",
+      "canonicalSha256": "5c90d38c09025888f0cf355168163e25f4279a020b303d53f0b03b40f43dbf30",
+      "canonicalLength": 3167,
+      "canonicalUtf8Bytes": 3310,
+      "extractionFormat": "MARKDOWN",
+      "goldSpans": [
+        {
+          "anchorId": "primary",
+          "startOffset": 115,
+          "endOffset": 175,
+          "textSha256": "16c9813d2954538995c0feef2b7ac4e739797fbf2f7ece546ad45e2a2a2ab926"
+        },
+        {
+          "anchorId": "secondary",
+          "startOffset": 3097,
+          "endOffset": 3135,
+          "textSha256": "6361791ab7be66a29fa27654f176b983d1edf7dd45d30cc6cb32e0ef17009369"
+        }
+      ]
+    }
+  ],
+  "corpusDigest": "cb372b53964ffe896bb4e3c3c44831db6c0949bbe622e63ce0a482607be6fdbc",
+  "offsetUnit": "UTF16_CODE_UNITS",
+  "canonicalHashEncoding": "UTF8",
+  "canonicalParser": {
+    "text": "utf8-text-v1 LF normalization",
+    "pdf": "production parsePdf /usr/bin Poppler",
+    "docx": "production parseDocx",
+    "popplerVersion": "pdftotext version 26.01.0",
+    "parserSourceHashes": [
+      {
+        "sourcePath": "apps/workers/src/extraction/pdf.ts",
+        "sha256": "3dd9130c2dfcdf9a6a9a4d96572eade514b1eb633fbda4b4c23678ac5cc8c738"
+      },
+      {
+        "sourcePath": "apps/workers/src/extraction/docx.ts",
+        "sha256": "07ffe91d5f3319802cc070c67e62392e654ce46c3b925d7db1667ed8e6538943"
+      },
+      {
+        "sourcePath": "packages/documents/src/index.ts",
+        "sha256": "2314ddda3678fbc73547fc3dcd50d45245c1a478e763ad38879c33ba07959710"
+      }
+    ]
+  }
+}
