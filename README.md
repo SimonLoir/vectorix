@@ -52,6 +52,8 @@ The initial feature catalog is empty. No business domain or demo data is install
 
 Organization API keys remain separate from user sessions. Removed issuers, unbound historical keys and legacy full-access keys fail closed; they require supported scoped reissue rather than automatic attribution to another member. See [API-key authorization and reissue](docs/api-key-authorization.md) for the permission rule, compatibility behavior and dashboard acceptance recipe. Revocation applies to subsequent admissions and does not cancel requests already admitted.
 
+Native [initial organization selection](docs/session-organization-selection.md) uses current active memberships and deterministic defaults while preserving valid native session rotations. The shared dashboard selector provides explicit loading, failure and no-active-organization recovery states; the guide records actual validation and delivery status.
+
 ## Repository structure
 
 | Directory                                | Responsibility                                                                    |

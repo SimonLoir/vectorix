@@ -4,4 +4,6 @@ Better Auth stores hashed passwords, sessions, organizations, dynamic roles, API
 
 A user session is required for notifications and global administration. API keys cannot create other keys, manage members, change roles, or access superadmin routes. Permission initialization grants no automatic privileges to existing keys.
 
+Native session creation resolves the initial organization through `src/initial-organization.ts`: retain a current active membership carried by native rotation, otherwise select the earliest active membership by creation time and ID, or explicitly use no organization. The resolver performs bounded ID-only reads and propagates database failures. Later request authorization still checks current membership and activity. This is not a last-used preference or a guarantee about manual organization switching. See [selection and dashboard acceptance](../../docs/session-organization-selection.md) for behavior, scope and actual validation status.
+
 Configure `BETTER_AUTH_SECRET`, `BETTER_AUTH_URL`, `TRUSTED_ORIGINS`, `PASSKEY_RP_ID`, and `PASSKEY_ORIGINS`. Two-factor secrets and recovery codes are encrypted. A sign-in notification is created only after successful authentication; failure to record it does not block sign-in.
