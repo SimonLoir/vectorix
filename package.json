@@ -25,6 +25,7 @@
         "test:catalog": "bash scripts/test-catalog.sh",
         "test:restore:guards": "bash scripts/test-restore-guards.sh",
         "test:quality:guards": "bash scripts/test-quality-guards.sh",
+        "test:capacity:guards": "bash scripts/test-capacity-guards.sh",
         "test:queues": "bash scripts/test-redis.sh"
     },
     "devDependencies": {
