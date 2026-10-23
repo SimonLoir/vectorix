@@ -1,0 +1,662 @@
+{
+  "schemaVersion": 1,
+  "namespace": "vectorix-m7c-quality",
+  "status": "PREPARED_NOT_INDEXED",
+  "metadataFields": {
+    "region": "STRING",
+    "policy_year": "NUMBER",
+    "active": "BOOLEAN",
+    "effective_at": "DATE",
+    "tier": "STRING"
+  },
+  "documents": [
+    {
+      "fixtureId": "m7c-f01-en-v1",
+      "kind": "CORE",
+      "factFamily": "F01",
+      "language": "EN",
+      "mediaType": "text/plain",
+      "fileName": "m7c-f01-en-v1.txt",
+      "originalPath": "originals/m7c-f01-en-v1.txt",
+      "originalSha256": "1ef2154f8591226707ea8a2b843c58b0913e589d1e3c7cd4b362cd0b16a52567",
+      "originalBytes": 3065,
+      "version": 1,
+      "metadata": {
+        "region": "BE",
+        "policy_year": 2026,
+        "active": true,
+        "effective_at": "2026-01-01T00:00:00.000Z",
+        "tier": "standard"
+      },
+      "tags": [
+        "m7c-reference-v1",
+        "f01"
+      ],
+      "anchors": {
+        "primary": "Opened devices: return within 30 days.",
+        "secondary": "A receipt is required."
+      }
+    },
+    {
+      "fixtureId": "m7c-f01-fr-v1",
+      "kind": "CORE",
+      "factFamily": "F01",
+      "language": "FR",
+      "mediaType": "application/pdf",
+      "fileName": "m7c-f01-fr-v1.pdf",
+      "originalPath": "originals/m7c-f01-fr-v1.pdf",
+      "originalSha256": "8d8a710f3177da1fe25655465713a9615350140e0caf0f5b2ac377589b866167",
+      "originalBytes": 2469,
+      "version": 1,
+      "metadata": {
+        "region": "BE",
+        "policy_year": 2026,
+        "active": true,
+        "effective_at": "2026-01-01T00:00:00.000Z",
+        "tier": "standard"
+      },
+      "tags": [
+        "m7c-reference-v1",
+        "f01"
+      ],
+      "anchors": {
+        "primary": "Appareils ouverts : retour dans les 30 jours.",
+        "secondary": "Un reçu est obligatoire."
+      }
+    },
+    {
+      "fixtureId": "m7c-f02-en-v1",
+      "kind": "CORE",
+      "factFamily": "F02",
+      "language": "EN",
+      "mediaType": "text/markdown",
+      "fileName": "m7c-f02-en-v1.md",
+      "originalPath": "originals/m7c-f02-en-v1.md",
+      "originalSha256": "c7b8a561ea220562818b18f16a3d6e9203e903abd4422e89e889231980ecbadf",
+      "originalBytes": 3076,
+      "version": 1,
+      "metadata": {
+        "region": "BE",
+        "policy_year": 2026,
+        "active": true,
+        "effective_at": "2026-01-01T00:00:00.000Z",
+        "tier": "standard"
+      },
+      "tags": [
+        "m7c-reference-v1",
+        "f02"
+      ],
+      "anchors": {
+        "primary": "Confirm renewal before 15 May.",
+        "secondary": "Confirmation keeps the existing tariff."
+      }
+    },
+    {
+      "fixtureId": "m7c-f02-fr-v1",
+      "kind": "CORE",
+      "factFamily": "F02",
+      "language": "FR",
+      "mediaType": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+      "fileName": "m7c-f02-fr-v1.docx",
+      "originalPath": "originals/m7c-f02-fr-v1.docx",
+      "originalSha256": "09e4f664959fd0886ac2dfc1666fb6a918d5768b9a9d3b176be23cc9cb52d4e2",
+      "originalBytes": 1696,
+      "version": 1,
+      "metadata": {
+        "region": "BE",
+        "policy_year": 2026,
+        "active": true,
+        "effective_at": "2026-01-01T00:00:00.000Z",
+        "tier": "standard"
+      },
+      "tags": [
+        "m7c-reference-v1",
+        "f02"
+      ],
+      "anchors": {
+        "primary": "Confirmez le renouvellement avant le 15 mai.",
+        "secondary": "La confirmation conserve le tarif actuel."
+      }
+    },
+    {
+      "fixtureId": "m7c-f03-en-v1",
+      "kind": "CORE",
+      "factFamily": "F03",
+      "language": "EN",
+      "mediaType": "application/pdf",
+      "fileName": "m7c-f03-en-v1.pdf",
+      "originalPath": "originals/m7c-f03-en-v1.pdf",
+      "originalSha256": "e14490552f5af424bce49d2e67f15ab21708a6cfe8971ca9ad2a94c90220eb22",
+      "originalBytes": 2201,
+      "version": 1,
+      "metadata": {
+        "region": "BE",
+        "policy_year": 2026,
+        "active": true,
+        "effective_at": "2026-01-01T00:00:00.000Z",
+        "tier": "critical"
+      },
+      "tags": [
+        "m7c-reference-v1",
+        "f03"
+      ],
+      "anchors": {
+        "primary": "Critical P1 tickets: acknowledge within 15 minutes.",
+        "secondary": "Submit critical tickets through the support portal."
+      }
+    },
+    {
+      "fixtureId": "m7c-f03-fr-v1",
+      "kind": "CORE",
+      "factFamily": "F03",
+      "language": "FR",
+      "mediaType": "text/plain",
+      "fileName": "m7c-f03-fr-v1.txt",
+      "originalPath": "originals/m7c-f03-fr-v1.txt",
+      "originalSha256": "38478863e6ace7e0fdf079a3388cc4497fb334cec1e960919fc626d2d083adcb",
+      "originalBytes": 3411,
+      "version": 1,
+      "metadata": {
+        "region": "BE",
+        "policy_year": 2026,
+        "active": true,
+        "effective_at": "2026-01-01T00:00:00.000Z",
+        "tier": "critical"
+      },
+      "tags": [
+        "m7c-reference-v1",
+        "f03"
+      ],
+      "anchors": {
+        "primary": "Ticket critique P1 : accusé de réception en 15 minutes.",
+        "secondary": "Déposez les tickets critiques sur le portail de support."
+      }
+    },
+    {
+      "fixtureId": "m7c-f04-en-v1",
+      "kind": "CORE",
+      "factFamily": "F04",
+      "language": "EN",
+      "mediaType": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+      "fileName": "m7c-f04-en-v1.docx",
+      "originalPath": "originals/m7c-f04-en-v1.docx",
+      "originalSha256": "ee8bd91657664b3c2a8a9243dbafcd0f69d203111f3710b210054a780bde7468",
+      "originalBytes": 1672,
+      "version": 1,
+      "metadata": {
+        "region": "BE",
+        "policy_year": 2026,
+        "active": true,
+        "effective_at": "2026-01-01T00:00:00.000Z",
+        "tier": "standard"
+      },
+      "tags": [
+        "m7c-reference-v1",
+        "f04"
+      ],
+      "anchors": {
+        "primary": "Retain each backup for 14 days.",
+        "secondary": "The backup runs daily at 02:00 UTC."
+      }
+    },
+    {
+      "fixtureId": "m7c-f04-fr-v1",
+      "kind": "CORE",
+      "factFamily": "F04",
+      "language": "FR",
+      "mediaType": "text/markdown",
+      "fileName": "m7c-f04-fr-v1.md",
+      "originalPath": "originals/m7c-f04-fr-v1.md",
+      "originalSha256": "3bd311517f876134d1e794eef2800f31d5b11e1b2a8103753fc7fd649f4d7a69",
+      "originalBytes": 3297,
+      "version": 1,
+      "metadata": {
+        "region": "BE",
+        "policy_year": 2026,
+        "active": true,
+        "effective_at": "2026-01-01T00:00:00.000Z",
+        "tier": "standard"
+      },
+      "tags": [
+        "m7c-reference-v1",
+        "f04"
+      ],
+      "anchors": {
+        "primary": "Conservez chaque sauvegarde pendant 14 jours.",
+        "secondary": "La sauvegarde est quotidienne à 02:00 UTC."
+      }
+    },
+    {
+      "fixtureId": "m7c-f05-en-v1",
+      "kind": "CORE",
+      "factFamily": "F05",
+      "language": "EN",
+      "mediaType": "text/plain",
+      "fileName": "m7c-f05-en-v1.txt",
+      "originalPath": "originals/m7c-f05-en-v1.txt",
+      "originalSha256": "f53c23a2f50f5b1e7d0e755976d21bfb9867be082484156e8011e4d80cec9ae4",
+      "originalBytes": 3096,
+      "version": 1,
+      "metadata": {
+        "region": "BE",
+        "policy_year": 2026,
+        "active": true,
+        "effective_at": "2026-01-01T00:00:00.000Z",
+        "tier": "standard"
+      },
+      "tags": [
+        "m7c-reference-v1",
+        "f05"
+      ],
+      "anchors": {
+        "primary": "Standard BE delivery is free from EUR75.",
+        "secondary": "This threshold applies to ordinary baskets."
+      }
+    },
+    {
+      "fixtureId": "m7c-f05-fr-v1",
+      "kind": "CORE",
+      "factFamily": "F05",
+      "language": "FR",
+      "mediaType": "application/pdf",
+      "fileName": "m7c-f05-fr-v1.pdf",
+      "originalPath": "originals/m7c-f05-fr-v1.pdf",
+      "originalSha256": "6b19c7f656f58550bd182b0a75235ad2d0a04ec5232888c89ac672d299b51af4",
+      "originalBytes": 2475,
+      "version": 1,
+      "metadata": {
+        "region": "BE",
+        "policy_year": 2026,
+        "active": true,
+        "effective_at": "2026-01-01T00:00:00.000Z",
+        "tier": "standard"
+      },
+      "tags": [
+        "m7c-reference-v1",
+        "f05"
+      ],
+      "anchors": {
+        "primary": "Livraison standard en BE gratuite dès 75 EUR.",
+        "secondary": "Ce seuil concerne les paniers ordinaires."
+      }
+    },
+    {
+      "fixtureId": "m7c-f06-en-v1",
+      "kind": "CORE",
+      "factFamily": "F06",
+      "language": "EN",
+      "mediaType": "text/markdown",
+      "fileName": "m7c-f06-en-v1.md",
+      "originalPath": "originals/m7c-f06-en-v1.md",
+      "originalSha256": "d164db93ee464c0bd327132392e955bcc497740c1f954a179609c7de72086a73",
+      "originalBytes": 3111,
+      "version": 1,
+      "metadata": {
+        "region": "BE",
+        "policy_year": 2026,
+        "active": true,
+        "effective_at": "2026-01-01T00:00:00.000Z",
+        "tier": "standard"
+      },
+      "tags": [
+        "m7c-reference-v1",
+        "f06"
+      ],
+      "anchors": {
+        "primary": "Take damaged equipment to the North reception desk.",
+        "secondary": "Attach form EQ-7 to the damaged equipment."
+      }
+    },
+    {
+      "fixtureId": "m7c-f06-fr-v1",
+      "kind": "CORE",
+      "factFamily": "F06",
+      "language": "FR",
+      "mediaType": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+      "fileName": "m7c-f06-fr-v1.docx",
+      "originalPath": "originals/m7c-f06-fr-v1.docx",
+      "originalSha256": "04ca6922b3985cb096b3448386f44ee32ce92e3eae5a2f81c05ae239ea6584ec",
+      "originalBytes": 1714,
+      "version": 1,
+      "metadata": {
+        "region": "BE",
+        "policy_year": 2026,
+        "active": true,
+        "effective_at": "2026-01-01T00:00:00.000Z",
+        "tier": "standard"
+      },
+      "tags": [
+        "m7c-reference-v1",
+        "f06"
+      ],
+      "anchors": {
+        "primary": "Déposez le matériel endommagé à la réception Nord.",
+        "secondary": "Joignez le formulaire EQ-7 au matériel endommagé."
+      }
+    },
+    {
+      "fixtureId": "m7c-f07-en-v1",
+      "kind": "CORE",
+      "factFamily": "F07",
+      "language": "EN",
+      "mediaType": "application/pdf",
+      "fileName": "m7c-f07-en-v1.pdf",
+      "originalPath": "originals/m7c-f07-en-v1.pdf",
+      "originalSha256": "931710ffa0c6bf9e7ecfccf3683eb31405ab1ad04d6497d3398843bd983b85a6",
+      "originalBytes": 2173,
+      "version": 1,
+      "metadata": {
+        "region": "BE",
+        "policy_year": 2026,
+        "active": true,
+        "effective_at": "2026-01-01T00:00:00.000Z",
+        "tier": "standard"
+      },
+      "tags": [
+        "m7c-reference-v1",
+        "f07"
+      ],
+      "anchors": {
+        "primary": "File travel claims within 10 business days.",
+        "secondary": "The limit is EUR450 per trip."
+      }
+    },
+    {
+      "fixtureId": "m7c-f07-fr-v1",
+      "kind": "CORE",
+      "factFamily": "F07",
+      "language": "FR",
+      "mediaType": "text/plain",
+      "fileName": "m7c-f07-fr-v1.txt",
+      "originalPath": "originals/m7c-f07-fr-v1.txt",
+      "originalSha256": "525c4f678a0d47aa0d347150ecc728297892931e6e28db65fa16c68c8c9da5f7",
+      "originalBytes": 3303,
+      "version": 1,
+      "metadata": {
+        "region": "BE",
+        "policy_year": 2026,
+        "active": true,
+        "effective_at": "2026-01-01T00:00:00.000Z",
+        "tier": "standard"
+      },
+      "tags": [
+        "m7c-reference-v1",
+        "f07"
+      ],
+      "anchors": {
+        "primary": "Déposez les frais de voyage sous 10 jours ouvrables.",
+        "secondary": "Le plafond est de 450 EUR par déplacement."
+      }
+    },
+    {
+      "fixtureId": "m7c-f08-en-v1",
+      "kind": "CORE",
+      "factFamily": "F08",
+      "language": "EN",
+      "mediaType": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+      "fileName": "m7c-f08-en-v1.docx",
+      "originalPath": "originals/m7c-f08-en-v1.docx",
+      "originalSha256": "2f996d2e503967d71da14fce10808e444151f43a045e63d35a5308886786d568",
+      "originalBytes": 1683,
+      "version": 1,
+      "metadata": {
+        "region": "BE",
+        "policy_year": 2026,
+        "active": true,
+        "effective_at": "2026-01-01T00:00:00.000Z",
+        "tier": "standard"
+      },
+      "tags": [
+        "m7c-reference-v1",
+        "f08"
+      ],
+      "anchors": {
+        "primary": "Keep food stock between 2 and 6 degrees C.",
+        "secondary": "Calibrate its sensor every 14 days."
+      }
+    },
+    {
+      "fixtureId": "m7c-f08-fr-v1",
+      "kind": "CORE",
+      "factFamily": "F08",
+      "language": "FR",
+      "mediaType": "text/markdown",
+      "fileName": "m7c-f08-fr-v1.md",
+      "originalPath": "originals/m7c-f08-fr-v1.md",
+      "originalSha256": "0a7f0ed99498d4069702ce572d95cc12b4d9cc3c1fcc4e36a8e56df56baee621",
+      "originalBytes": 3291,
+      "version": 1,
+      "metadata": {
+        "region": "BE",
+        "policy_year": 2026,
+        "active": true,
+        "effective_at": "2026-01-01T00:00:00.000Z",
+        "tier": "standard"
+      },
+      "tags": [
+        "m7c-reference-v1",
+        "f08"
+      ],
+      "anchors": {
+        "primary": "Gardez les aliments entre 2 et 6 degrés C.",
+        "secondary": "Étalonnez son capteur tous les 14 jours."
+      }
+    },
+    {
+      "fixtureId": "m7c-d01-en-v1",
+      "kind": "DISTRACTOR",
+      "factFamily": "D01",
+      "language": "EN",
+      "mediaType": "text/plain",
+      "fileName": "m7c-d01-en-v1.txt",
+      "originalPath": "originals/m7c-d01-en-v1.txt",
+      "originalSha256": "8523cdccdc1dfa25de50c9936da92b05c33d923d1e40aa71e8a9ee4f5362a3ad",
+      "originalBytes": 3080,
+      "version": 1,
+      "metadata": {
+        "region": "BE",
+        "policy_year": 2025,
+        "active": false,
+        "effective_at": "2025-01-01T00:00:00.000Z",
+        "tier": "standard"
+      },
+      "tags": [
+        "m7c-reference-v1",
+        "d01"
+      ],
+      "anchors": {
+        "primary": "Opened devices: return within 14 days.",
+        "secondary": "This edition applied in 2025."
+      }
+    },
+    {
+      "fixtureId": "m7c-d01-fr-v1",
+      "kind": "DISTRACTOR",
+      "factFamily": "D01",
+      "language": "FR",
+      "mediaType": "application/pdf",
+      "fileName": "m7c-d01-fr-v1.pdf",
+      "originalPath": "originals/m7c-d01-fr-v1.pdf",
+      "originalSha256": "329135f13b05083f85a54b5051ea73fa45dd546504636c7cf394faa0d1d13d11",
+      "originalBytes": 2495,
+      "version": 1,
+      "metadata": {
+        "region": "BE",
+        "policy_year": 2025,
+        "active": false,
+        "effective_at": "2025-01-01T00:00:00.000Z",
+        "tier": "standard"
+      },
+      "tags": [
+        "m7c-reference-v1",
+        "d01"
+      ],
+      "anchors": {
+        "primary": "Appareils ouverts : retour dans les 14 jours.",
+        "secondary": "Cette édition était applicable en 2025."
+      }
+    },
+    {
+      "fixtureId": "m7c-d02-en-v1",
+      "kind": "DISTRACTOR",
+      "factFamily": "D02",
+      "language": "EN",
+      "mediaType": "text/markdown",
+      "fileName": "m7c-d02-en-v1.md",
+      "originalPath": "originals/m7c-d02-en-v1.md",
+      "originalSha256": "e87c6fc1071285eaca94515223e96de0ebdaff67455b97a2625798b2e668f330",
+      "originalBytes": 3103,
+      "version": 1,
+      "metadata": {
+        "region": "BE",
+        "policy_year": 2026,
+        "active": true,
+        "effective_at": "2026-01-01T00:00:00.000Z",
+        "tier": "standard"
+      },
+      "tags": [
+        "m7c-reference-v1",
+        "d02"
+      ],
+      "anchors": {
+        "primary": "Standard P2 tickets: acknowledge within one hour.",
+        "secondary": "Acknowledgment is different from resolution."
+      }
+    },
+    {
+      "fixtureId": "m7c-d02-fr-v1",
+      "kind": "DISTRACTOR",
+      "factFamily": "D02",
+      "language": "FR",
+      "mediaType": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+      "fileName": "m7c-d02-fr-v1.docx",
+      "originalPath": "originals/m7c-d02-fr-v1.docx",
+      "originalSha256": "12074191eb3e20ec20f57ed2733d2d48f73cd61ad8c7853cf79b4e7864f97e21",
+      "originalBytes": 1711,
+      "version": 1,
+      "metadata": {
+        "region": "BE",
+        "policy_year": 2026,
+        "active": true,
+        "effective_at": "2026-01-01T00:00:00.000Z",
+        "tier": "standard"
+      },
+      "tags": [
+        "m7c-reference-v1",
+        "d02"
+      ],
+      "anchors": {
+        "primary": "Ticket standard P2 : accusé de réception en une heure.",
+        "secondary": "Un accusé de réception ne signifie pas une résolution."
+      }
+    },
+    {
+      "fixtureId": "m7c-d03-en-v1",
+      "kind": "DISTRACTOR",
+      "factFamily": "D03",
+      "language": "EN",
+      "mediaType": "application/pdf",
+      "fileName": "m7c-d03-en-v1.pdf",
+      "originalPath": "originals/m7c-d03-en-v1.pdf",
+      "originalSha256": "fa9e777d7c5481ced3ca50282588b1a51bd2860643b21051fc62fc4af83496e7",
+      "originalBytes": 2184,
+      "version": 1,
+      "metadata": {
+        "region": "BE",
+        "policy_year": 2026,
+        "active": true,
+        "effective_at": "2026-01-01T00:00:00.000Z",
+        "tier": "contract"
+      },
+      "tags": [
+        "m7c-reference-v1",
+        "d03"
+      ],
+      "anchors": {
+        "primary": "Contract BE delivery is free from EUR35.",
+        "secondary": "This is a contract-only tariff."
+      }
+    },
+    {
+      "fixtureId": "m7c-d03-fr-v1",
+      "kind": "DISTRACTOR",
+      "factFamily": "D03",
+      "language": "FR",
+      "mediaType": "text/plain",
+      "fileName": "m7c-d03-fr-v1.txt",
+      "originalPath": "originals/m7c-d03-fr-v1.txt",
+      "originalSha256": "7f945c7cd21b42cef64add9e4ad34700edd4175b4e62f9b16496497e450972b3",
+      "originalBytes": 3294,
+      "version": 1,
+      "metadata": {
+        "region": "BE",
+        "policy_year": 2026,
+        "active": true,
+        "effective_at": "2026-01-01T00:00:00.000Z",
+        "tier": "contract"
+      },
+      "tags": [
+        "m7c-reference-v1",
+        "d03"
+      ],
+      "anchors": {
+        "primary": "Livraison sous contrat en BE gratuite dès 35 EUR.",
+        "secondary": "Ce tarif est réservé aux contrats."
+      }
+    },
+    {
+      "fixtureId": "m7c-d04-en-v1",
+      "kind": "DISTRACTOR",
+      "factFamily": "D04",
+      "language": "EN",
+      "mediaType": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+      "fileName": "m7c-d04-en-v1.docx",
+      "originalPath": "originals/m7c-d04-en-v1.docx",
+      "originalSha256": "30fb1ff09f6dc53a33bc44bab9f69173e049889361332dbee3428ebb567192d2",
+      "originalBytes": 1679,
+      "version": 1,
+      "metadata": {
+        "region": "BE",
+        "policy_year": 2026,
+        "active": false,
+        "effective_at": "2026-01-01T00:00:00.000Z",
+        "tier": "standard"
+      },
+      "tags": [
+        "m7c-reference-v1",
+        "d04"
+      ],
+      "anchors": {
+        "primary": "Keep non-food stock between 8 and 12 degrees C.",
+        "secondary": "This zone does not hold food."
+      }
+    },
+    {
+      "fixtureId": "m7c-d04-fr-v1",
+      "kind": "DISTRACTOR",
+      "factFamily": "D04",
+      "language": "FR",
+      "mediaType": "text/markdown",
+      "fileName": "m7c-d04-fr-v1.md",
+      "originalPath": "originals/m7c-d04-fr-v1.md",
+      "originalSha256": "5c90d38c09025888f0cf355168163e25f4279a020b303d53f0b03b40f43dbf30",
+      "originalBytes": 3310,
+      "version": 1,
+      "metadata": {
+        "region": "BE",
+        "policy_year": 2026,
+        "active": false,
+        "effective_at": "2026-01-01T00:00:00.000Z",
+        "tier": "standard"
+      },
+      "tags": [
+        "m7c-reference-v1",
+        "d04"
+      ],
+      "anchors": {
+        "primary": "Gardez les produits non alimentaires entre 8 et 12 degrés C.",
+        "secondary": "Cette zone ne contient pas d’aliments."
+      }
+    }
+  ]
+}

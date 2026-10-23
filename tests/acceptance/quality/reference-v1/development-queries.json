@@ -1,0 +1,50 @@
+[
+  {
+    "id": "DEV01-EN",
+    "language": "EN",
+    "text": "How can I start a support case?",
+    "scored": false
+  },
+  {
+    "id": "DEV02-FR",
+    "language": "FR",
+    "text": "Comment ouvrir une demande de support ?",
+    "scored": false
+  },
+  {
+    "id": "DEV03-EN",
+    "language": "EN",
+    "text": "Which desk handles equipment?",
+    "scored": false
+  },
+  {
+    "id": "DEV04-FR",
+    "language": "FR",
+    "text": "Quel bureau reçoit le matériel ?",
+    "scored": false
+  },
+  {
+    "id": "DEV05-EN",
+    "language": "EN",
+    "text": "When should I confirm my renewal?",
+    "scored": false
+  },
+  {
+    "id": "DEV06-FR",
+    "language": "FR",
+    "text": "Quand confirmer mon renouvellement ?",
+    "scored": false
+  },
+  {
+    "id": "DEV07-EN",
+    "language": "EN",
+    "text": "Which procedure concerns cold stock?",
+    "scored": false
+  },
+  {
+    "id": "DEV08-FR",
+    "language": "FR",
+    "text": "Quelle procédure concerne le stock réfrigéré ?",
+    "scored": false
+  }
+]

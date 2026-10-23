@@ -2,3 +2,5 @@ tests/documents/fixtures/*.pdf binary
 tests/documents/fixtures/*.docx binary
 tests/acceptance/restore/fixtures/*.pdf binary
 tests/acceptance/restore/fixtures/*.docx binary
+tests/acceptance/quality/reference-v1/originals/*.pdf binary
+tests/acceptance/quality/reference-v1/originals/*.docx binary

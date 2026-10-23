@@ -1,6 +1,6 @@
 # M7c.1 — Full-store restore and dashboard rebuild acceptance
 
-Status: the reviewed forward SQL migration, populated archive regression and complete isolated full-store restore pass. The restored dashboard, fresh-Redis replay, normal dashboard rebuild and natural retirement/deletion cleanup are verified. Exact owned infrastructure and synthetic downloads have been cleaned; protected evidence remains private. M7b.2 was delivered in PR #43 (squash `5213e9e`). Separate relevance, 100,000-child load and interrupted-process acceptance remain M7c work.
+Status: the reviewed forward SQL migration, populated archive regression and complete isolated full-store restore pass. The restored dashboard, fresh-Redis replay, normal dashboard rebuild and natural retirement/deletion cleanup are verified. Exact owned infrastructure and synthetic downloads have been cleaned; protected evidence remains private. M7b.2 was delivered in PR #43 (squash `5213e9e`). [Native reference quality](rag-reference-quality.md) is verified separately; 100,000-child load and interrupted-process acceptance remain M7c work.
 
 ## Smallest complete action
 
@@ -122,7 +122,7 @@ A later kill/in-flight recovery fixture can deliberately include a real expired 
 
 ## Export bundle and restore order
 
-The reviewed [helper commands](../tests/acceptance/restore/README.md#explicit-commands) implement this bounded sequence. The record above distinguishes the completed execution from remaining relevance, capacity and interrupted-process acceptance.
+The reviewed [helper commands](../tests/acceptance/restore/README.md#explicit-commands) implement this bounded sequence. The record above distinguishes the completed execution from the separate reference-quality record and remaining capacity/interrupted-process acceptance.
 
 1. Create a private ignored directory per run with mode 0700 and mode-0600 files. Record a safe bundle manifest: commit/image digests, database/client/extension versions, logical destination policy, snapshot times, dump hashes/lengths, exact owned bucket names, object-manifest hash, schema migration checksums and fixture bounds. Protect the synthetic runtime secret/configuration material separately; do not include plaintext secrets in the safe manifest.
 2. Use the pinned PostgreSQL client and a full custom-format logical dump for each owned database. Preserve functions, constraints, triggers, parent/semantic supplementary SQL, schema owners, ACLs/default privileges, vector tables/index definitions and ledgers. Do not export only Prisma-known tables: generated vector tables are outside Prisma. Do not run the application migrator against the vector database.

@@ -1,0 +1,32 @@
+{
+  "status": "CONFIRMED_LOCAL_PARSER",
+  "sourceCommit": "5213e9e3d4962a8e76a99e98839cf9c0b9d044f8",
+  "corpusDigest": "cb372b53964ffe896bb4e3c3c44831db6c0949bbe622e63ce0a482607be6fdbc",
+  "documents": 24,
+  "formats": 4,
+  "languages": [
+    "FR",
+    "EN"
+  ],
+  "offsetUnit": "UTF16_CODE_UNITS",
+  "hashEncoding": "UTF8",
+  "popplerVersion": "pdftotext version 26.01.0",
+  "parserSourceHashes": [
+    {
+      "sourcePath": "apps/workers/src/extraction/pdf.ts",
+      "sha256": "3dd9130c2dfcdf9a6a9a4d96572eade514b1eb633fbda4b4c23678ac5cc8c738"
+    },
+    {
+      "sourcePath": "apps/workers/src/extraction/docx.ts",
+      "sha256": "07ffe91d5f3319802cc070c67e62392e654ce46c3b925d7db1667ed8e6538943"
+    },
+    {
+      "sourcePath": "packages/documents/src/index.ts",
+      "sha256": "2314ddda3678fbc73547fc3dcd50d45245c1a478e763ad38879c33ba07959710"
+    }
+  ],
+  "nativeProviderCalls": 0,
+  "databaseCalls": 0,
+  "httpCalls": 0,
+  "semanticFinalGeometry": "NOT_RUN"
+}

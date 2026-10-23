@@ -1,0 +1,64 @@
+{
+  "schemaVersion": 1,
+  "offsetUnit": "UTF16_CODE_UNITS",
+  "canonicalHashEncoding": "UTF8",
+  "model": {
+    "provider": "OLLAMA",
+    "model": "embeddinggemma:latest",
+    "dimensions": 768,
+    "preset": "EMBEDDING_GEMMA",
+    "digest": "85462619ee721b466c5927d109d4cb765861907d5417b9109caebc4e614679f1",
+    "identityKind": "WEIGHTS_DIGEST",
+    "distance": "COSINE",
+    "vectorType": "FLOAT32"
+  },
+  "profile": {
+    "targetTokens": 512,
+    "minTokens": 128,
+    "maxTokens": 768,
+    "overlapTokens": 64,
+    "maxEmbeddingInputBytes": 6144,
+    "indexType": "DISKANN",
+    "preparation": "",
+    "metadataFields": {
+      "region": "STRING",
+      "policy_year": "NUMBER",
+      "active": "BOOLEAN",
+      "effective_at": "DATE",
+      "tier": "STRING"
+    },
+    "parentChild": true,
+    "parentMaxTokens": 2048,
+    "semanticPercentile": 90
+  },
+  "gates": {
+    "exactLexicalHit5": 10,
+    "hybridHit5": 32,
+    "hybridEachLanguageHit5": 16,
+    "hybridMrr10": 0.65,
+    "crossLanguageHybridHit5": 3,
+    "filterHybridHit5": 9,
+    "parentHybridHit5": 8,
+    "hardSafetyViolations": 0
+  },
+  "strategies": [
+    "DOCUMENT_STRUCTURE",
+    "TOKEN_WINDOW",
+    "SEMANTIC"
+  ],
+  "modes": [
+    "LEXICAL",
+    "VECTOR",
+    "HYBRID"
+  ],
+  "repeats": 2,
+  "captureLimits": {
+    "bytes": 8388608,
+    "queries": 720,
+    "resultsPerQuery": 10,
+    "sourceSpansPerPassage": 64
+  },
+  "capacityAcceptance": "NOT_RUN",
+  "hostedProviderAcceptance": "NOT_RUN",
+  "nativeQualityAcceptance": "NOT_RUN"
+}

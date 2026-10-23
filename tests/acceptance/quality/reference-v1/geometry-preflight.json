@@ -1,0 +1,445 @@
+{
+  "status": "PURE_PLANNERS_ONLY",
+  "options": {
+    "targetTokens": 512,
+    "minTokens": 128,
+    "maxTokens": 768,
+    "overlapTokens": 64,
+    "maxEmbeddingInputBytes": 6144
+  },
+  "geometry": [
+    {
+      "fixtureId": "m7c-f01-en-v1",
+      "DOCUMENT_STRUCTURE": {
+        "version": "structure-utf8-v1",
+        "children": 2,
+        "parents": 1
+      },
+      "TOKEN_WINDOW": {
+        "version": "token-window-utf8-v1",
+        "children": 2,
+        "parents": 1
+      },
+      "SEMANTIC": {
+        "unitCount": 36,
+        "nativeDistances": "NOT_RUN",
+        "finalGeometry": "NOT_RUN"
+      }
+    },
+    {
+      "fixtureId": "m7c-f01-fr-v1",
+      "DOCUMENT_STRUCTURE": {
+        "version": "structure-utf8-v1",
+        "children": 3,
+        "parents": 1
+      },
+      "TOKEN_WINDOW": {
+        "version": "token-window-utf8-v1",
+        "children": 2,
+        "parents": 1
+      },
+      "SEMANTIC": {
+        "unitCount": 35,
+        "nativeDistances": "NOT_RUN",
+        "finalGeometry": "NOT_RUN"
+      }
+    },
+    {
+      "fixtureId": "m7c-f02-en-v1",
+      "DOCUMENT_STRUCTURE": {
+        "version": "structure-utf8-v1",
+        "children": 2,
+        "parents": 1
+      },
+      "TOKEN_WINDOW": {
+        "version": "token-window-utf8-v1",
+        "children": 2,
+        "parents": 1
+      },
+      "SEMANTIC": {
+        "unitCount": 36,
+        "nativeDistances": "NOT_RUN",
+        "finalGeometry": "NOT_RUN"
+      }
+    },
+    {
+      "fixtureId": "m7c-f02-fr-v1",
+      "DOCUMENT_STRUCTURE": {
+        "version": "structure-utf8-v1",
+        "children": 2,
+        "parents": 1
+      },
+      "TOKEN_WINDOW": {
+        "version": "token-window-utf8-v1",
+        "children": 3,
+        "parents": 1
+      },
+      "SEMANTIC": {
+        "unitCount": 36,
+        "nativeDistances": "NOT_RUN",
+        "finalGeometry": "NOT_RUN"
+      }
+    },
+    {
+      "fixtureId": "m7c-f03-en-v1",
+      "DOCUMENT_STRUCTURE": {
+        "version": "structure-utf8-v1",
+        "children": 3,
+        "parents": 1
+      },
+      "TOKEN_WINDOW": {
+        "version": "token-window-utf8-v1",
+        "children": 2,
+        "parents": 1
+      },
+      "SEMANTIC": {
+        "unitCount": 35,
+        "nativeDistances": "NOT_RUN",
+        "finalGeometry": "NOT_RUN"
+      }
+    },
+    {
+      "fixtureId": "m7c-f03-fr-v1",
+      "DOCUMENT_STRUCTURE": {
+        "version": "structure-utf8-v1",
+        "children": 2,
+        "parents": 1
+      },
+      "TOKEN_WINDOW": {
+        "version": "token-window-utf8-v1",
+        "children": 3,
+        "parents": 1
+      },
+      "SEMANTIC": {
+        "unitCount": 38,
+        "nativeDistances": "NOT_RUN",
+        "finalGeometry": "NOT_RUN"
+      }
+    },
+    {
+      "fixtureId": "m7c-f04-en-v1",
+      "DOCUMENT_STRUCTURE": {
+        "version": "structure-utf8-v1",
+        "children": 2,
+        "parents": 1
+      },
+      "TOKEN_WINDOW": {
+        "version": "token-window-utf8-v1",
+        "children": 2,
+        "parents": 1
+      },
+      "SEMANTIC": {
+        "unitCount": 36,
+        "nativeDistances": "NOT_RUN",
+        "finalGeometry": "NOT_RUN"
+      }
+    },
+    {
+      "fixtureId": "m7c-f04-fr-v1",
+      "DOCUMENT_STRUCTURE": {
+        "version": "structure-utf8-v1",
+        "children": 2,
+        "parents": 1
+      },
+      "TOKEN_WINDOW": {
+        "version": "token-window-utf8-v1",
+        "children": 3,
+        "parents": 1
+      },
+      "SEMANTIC": {
+        "unitCount": 36,
+        "nativeDistances": "NOT_RUN",
+        "finalGeometry": "NOT_RUN"
+      }
+    },
+    {
+      "fixtureId": "m7c-f05-en-v1",
+      "DOCUMENT_STRUCTURE": {
+        "version": "structure-utf8-v1",
+        "children": 2,
+        "parents": 1
+      },
+      "TOKEN_WINDOW": {
+        "version": "token-window-utf8-v1",
+        "children": 2,
+        "parents": 1
+      },
+      "SEMANTIC": {
+        "unitCount": 36,
+        "nativeDistances": "NOT_RUN",
+        "finalGeometry": "NOT_RUN"
+      }
+    },
+    {
+      "fixtureId": "m7c-f05-fr-v1",
+      "DOCUMENT_STRUCTURE": {
+        "version": "structure-utf8-v1",
+        "children": 3,
+        "parents": 1
+      },
+      "TOKEN_WINDOW": {
+        "version": "token-window-utf8-v1",
+        "children": 3,
+        "parents": 1
+      },
+      "SEMANTIC": {
+        "unitCount": 35,
+        "nativeDistances": "NOT_RUN",
+        "finalGeometry": "NOT_RUN"
+      }
+    },
+    {
+      "fixtureId": "m7c-f06-en-v1",
+      "DOCUMENT_STRUCTURE": {
+        "version": "structure-utf8-v1",
+        "children": 2,
+        "parents": 1
+      },
+      "TOKEN_WINDOW": {
+        "version": "token-window-utf8-v1",
+        "children": 2,
+        "parents": 1
+      },
+      "SEMANTIC": {
+        "unitCount": 36,
+        "nativeDistances": "NOT_RUN",
+        "finalGeometry": "NOT_RUN"
+      }
+    },
+    {
+      "fixtureId": "m7c-f06-fr-v1",
+      "DOCUMENT_STRUCTURE": {
+        "version": "structure-utf8-v1",
+        "children": 2,
+        "parents": 1
+      },
+      "TOKEN_WINDOW": {
+        "version": "token-window-utf8-v1",
+        "children": 3,
+        "parents": 1
+      },
+      "SEMANTIC": {
+        "unitCount": 36,
+        "nativeDistances": "NOT_RUN",
+        "finalGeometry": "NOT_RUN"
+      }
+    },
+    {
+      "fixtureId": "m7c-f07-en-v1",
+      "DOCUMENT_STRUCTURE": {
+        "version": "structure-utf8-v1",
+        "children": 3,
+        "parents": 1
+      },
+      "TOKEN_WINDOW": {
+        "version": "token-window-utf8-v1",
+        "children": 2,
+        "parents": 1
+      },
+      "SEMANTIC": {
+        "unitCount": 35,
+        "nativeDistances": "NOT_RUN",
+        "finalGeometry": "NOT_RUN"
+      }
+    },
+    {
+      "fixtureId": "m7c-f07-fr-v1",
+      "DOCUMENT_STRUCTURE": {
+        "version": "structure-utf8-v1",
+        "children": 2,
+        "parents": 1
+      },
+      "TOKEN_WINDOW": {
+        "version": "token-window-utf8-v1",
+        "children": 3,
+        "parents": 1
+      },
+      "SEMANTIC": {
+        "unitCount": 36,
+        "nativeDistances": "NOT_RUN",
+        "finalGeometry": "NOT_RUN"
+      }
+    },
+    {
+      "fixtureId": "m7c-f08-en-v1",
+      "DOCUMENT_STRUCTURE": {
+        "version": "structure-utf8-v1",
+        "children": 2,
+        "parents": 1
+      },
+      "TOKEN_WINDOW": {
+        "version": "token-window-utf8-v1",
+        "children": 2,
+        "parents": 1
+      },
+      "SEMANTIC": {
+        "unitCount": 36,
+        "nativeDistances": "NOT_RUN",
+        "finalGeometry": "NOT_RUN"
+      }
+    },
+    {
+      "fixtureId": "m7c-f08-fr-v1",
+      "DOCUMENT_STRUCTURE": {
+        "version": "structure-utf8-v1",
+        "children": 2,
+        "parents": 1
+      },
+      "TOKEN_WINDOW": {
+        "version": "token-window-utf8-v1",
+        "children": 3,
+        "parents": 1
+      },
+      "SEMANTIC": {
+        "unitCount": 36,
+        "nativeDistances": "NOT_RUN",
+        "finalGeometry": "NOT_RUN"
+      }
+    },
+    {
+      "fixtureId": "m7c-d01-en-v1",
+      "DOCUMENT_STRUCTURE": {
+        "version": "structure-utf8-v1",
+        "children": 2,
+        "parents": 1
+      },
+      "TOKEN_WINDOW": {
+        "version": "token-window-utf8-v1",
+        "children": 2,
+        "parents": 1
+      },
+      "SEMANTIC": {
+        "unitCount": 36,
+        "nativeDistances": "NOT_RUN",
+        "finalGeometry": "NOT_RUN"
+      }
+    },
+    {
+      "fixtureId": "m7c-d01-fr-v1",
+      "DOCUMENT_STRUCTURE": {
+        "version": "structure-utf8-v1",
+        "children": 3,
+        "parents": 1
+      },
+      "TOKEN_WINDOW": {
+        "version": "token-window-utf8-v1",
+        "children": 3,
+        "parents": 1
+      },
+      "SEMANTIC": {
+        "unitCount": 35,
+        "nativeDistances": "NOT_RUN",
+        "finalGeometry": "NOT_RUN"
+      }
+    },
+    {
+      "fixtureId": "m7c-d02-en-v1",
+      "DOCUMENT_STRUCTURE": {
+        "version": "structure-utf8-v1",
+        "children": 2,
+        "parents": 1
+      },
+      "TOKEN_WINDOW": {
+        "version": "token-window-utf8-v1",
+        "children": 2,
+        "parents": 1
+      },
+      "SEMANTIC": {
+        "unitCount": 36,
+        "nativeDistances": "NOT_RUN",
+        "finalGeometry": "NOT_RUN"
+      }
+    },
+    {
+      "fixtureId": "m7c-d02-fr-v1",
+      "DOCUMENT_STRUCTURE": {
+        "version": "structure-utf8-v1",
+        "children": 2,
+        "parents": 1
+      },
+      "TOKEN_WINDOW": {
+        "version": "token-window-utf8-v1",
+        "children": 3,
+        "parents": 1
+      },
+      "SEMANTIC": {
+        "unitCount": 36,
+        "nativeDistances": "NOT_RUN",
+        "finalGeometry": "NOT_RUN"
+      }
+    },
+    {
+      "fixtureId": "m7c-d03-en-v1",
+      "DOCUMENT_STRUCTURE": {
+        "version": "structure-utf8-v1",
+        "children": 3,
+        "parents": 1
+      },
+      "TOKEN_WINDOW": {
+        "version": "token-window-utf8-v1",
+        "children": 2,
+        "parents": 1
+      },
+      "SEMANTIC": {
+        "unitCount": 35,
+        "nativeDistances": "NOT_RUN",
+        "finalGeometry": "NOT_RUN"
+      }
+    },
+    {
+      "fixtureId": "m7c-d03-fr-v1",
+      "DOCUMENT_STRUCTURE": {
+        "version": "structure-utf8-v1",
+        "children": 2,
+        "parents": 1
+      },
+      "TOKEN_WINDOW": {
+        "version": "token-window-utf8-v1",
+        "children": 3,
+        "parents": 1
+      },
+      "SEMANTIC": {
+        "unitCount": 36,
+        "nativeDistances": "NOT_RUN",
+        "finalGeometry": "NOT_RUN"
+      }
+    },
+    {
+      "fixtureId": "m7c-d04-en-v1",
+      "DOCUMENT_STRUCTURE": {
+        "version": "structure-utf8-v1",
+        "children": 2,
+        "parents": 1
+      },
+      "TOKEN_WINDOW": {
+        "version": "token-window-utf8-v1",
+        "children": 2,
+        "parents": 1
+      },
+      "SEMANTIC": {
+        "unitCount": 36,
+        "nativeDistances": "NOT_RUN",
+        "finalGeometry": "NOT_RUN"
+      }
+    },
+    {
+      "fixtureId": "m7c-d04-fr-v1",
+      "DOCUMENT_STRUCTURE": {
+        "version": "structure-utf8-v1",
+        "children": 2,
+        "parents": 1
+      },
+      "TOKEN_WINDOW": {
+        "version": "token-window-utf8-v1",
+        "children": 3,
+        "parents": 1
+      },
+      "SEMANTIC": {
+        "unitCount": 36,
+        "nativeDistances": "NOT_RUN",
+        "finalGeometry": "NOT_RUN"
+      }
+    }
+  ],
+  "semanticNativeDistances": "NOT_RUN"
+}
