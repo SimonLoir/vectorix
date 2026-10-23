@@ -227,27 +227,9 @@ docker exec "$prefix-api" node --input-type=module -e '
 for app in web admin; do
     port=3000
     if [[ "$app" == admin ]]; then port=3006; fi
-    docker exec -e TEST_PORT="$port" "$prefix-$app" node --input-type=module -e '
-        import assert from "node:assert/strict";
-        const base = `http://127.0.0.1:${process.env.TEST_PORT}`;
-        const html = await (await fetch(`${base}/sign-in`)).text();
-        assert.ok(html.includes("http://api:3001"), "API_URL must be supplied at runtime");
-        const assets = [...html.matchAll(/(?:src|href)="([^" ]*\/_next\/static\/[^" ]+)"/g)].map(match => match[1]);
-        assert.ok(assets.some(path => path.includes(".js")));
-        assert.ok(assets.some(path => path.includes(".css")));
-        for (const path of new Set(assets)) {
-            const response = await fetch(new URL(path.replaceAll("&amp;", "&"), base));
-            assert.equal(response.status, 200, path);
-            assert.ok(!response.headers.get("content-type")?.includes("text/html"), path);
-        }
-    '
+    docker exec -i -e TEST_PORT="$port" -e TEST_APP="$app" "$prefix-$app" \
+        node --input-type=module < tests/dashboard/security-headers.mjs
 done
-docker exec "$prefix-web" node --input-type=module -e '
-    import assert from "node:assert/strict";
-    for (const path of ["/manifest.webmanifest", "/icons/app.svg", "/sw.js"]) {
-        assert.equal((await fetch(`http://127.0.0.1:3000${path}`)).status, 200, path);
-    }
-'
 
 # A completed scan proves the worker connected to Redis and queried PostgreSQL.
 for attempt in {1..45}; do

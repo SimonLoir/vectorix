@@ -1,5 +1,6 @@
 import { fileURLToPath } from 'node:url';
 import createNextIntlPlugin from 'next-intl/plugin';
+import { dashboardSecurityHeaderRules } from '@repo/dashboard-core/config/security-headers';
 
 const withNextIntl = createNextIntlPlugin('./i18n/request.ts');
 
@@ -16,6 +17,9 @@ const nextConfig = {
     serverExternalPackages: ['@dotenvx/dotenvx'],
     async headers() {
         return [
+            ...dashboardSecurityHeaderRules(),
+            // Next uses the last matching value for a header. Preserve the
+            // service worker's stronger policy after the general page rule.
             {
                 source: '/sw.js',
                 headers: [
@@ -29,7 +33,7 @@ const nextConfig = {
                     },
                     {
                         key: 'Content-Security-Policy',
-                        value: "default-src 'none'; script-src 'self'",
+                        value: "default-src 'none'; script-src 'self'; frame-ancestors 'none'",
                     },
                     { key: 'Service-Worker-Allowed', value: '/' },
                 ],

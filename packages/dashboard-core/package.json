@@ -27,7 +27,11 @@
         "./lib/email-ownership": "./src/lib/email-ownership.ts",
         "./lib/orpc-headers": "./src/lib/orpc-headers.ts",
         "./i18n/locale": "./src/i18n/locale.ts",
-        "./i18n/time-zone": "./src/i18n/time-zone.ts"
+        "./i18n/time-zone": "./src/i18n/time-zone.ts",
+        "./config/security-headers": {
+            "types": "./src/config/security-headers-types.d.mts",
+            "default": "./src/config/security-headers.mjs"
+        }
     },
     "scripts": {
         "check-types": "tsc6 -p tsconfig.json --noEmit",
