@@ -9,6 +9,7 @@ import {
     validateReferences,
     LOAD_LIMITS,
 } from './load-import-core.mjs';
+import { getLoadPolicy, loadPolicyForState } from './load-policy-registry.mjs';
 
 const requireValue = (value) => {
     if (!value) throw new Error('LOAD_RUNTIME_CONTENT');
@@ -20,6 +21,7 @@ export function readPinnedLoadFile(
     relative,
     maximum = 2 * 1024 ** 2
 ) {
+    const policy = loadPolicyForState(state);
     requireValue(
         Number.isSafeInteger(maximum) &&
             maximum >= 0 &&
@@ -27,9 +29,11 @@ export function readPinnedLoadFile(
     );
     requireValue(
         typeof relative === 'string' &&
-            /^(?:reference-v1\/(?:[a-z-]+\.json|(?:originals|canonical)\/m7c-[fd]\d{2}-(?:en|fr)-v1\.(?:json|txt|md|pdf|docx))|load-v1\/[a-z-]+\.json)$/u.test(
+            /^(?:reference-v1\/(?:[a-z-]+\.json|(?:originals|canonical)\/m7c-[fd]\d{2}-(?:en|fr)-v1\.(?:json|txt|md|pdf|docx))|(?:load-v1|light-v1)\/[a-z-]+\.json)$/u.test(
                 relative
-            )
+            ) &&
+            (relative.startsWith('reference-v1/') ||
+                relative.startsWith(policy.corpusRoot + '/'))
     );
     // Reference data has one canonical tracked location; logical manifest keys remain unchanged.
     const base = relative.startsWith('reference-v1/')
@@ -77,9 +81,10 @@ export function createFrozenLoadContent({
     readReferenceOriginal,
     buildGenerated,
     decodeText,
+    policy = getLoadPolicy('DEFAULT_V1'),
 }) {
-    validateManifest(manifest);
-    validateReferences(references);
+    validateManifest(manifest, policy);
+    validateReferences(references, policy);
     requireValue(
         [readReferenceOriginal, buildGenerated, decodeText].every(
             (fn) => typeof fn === 'function'
@@ -142,11 +147,13 @@ export async function loadRuntimeContent({
     admit,
 }) {
     requireValue(typeof admit === 'function');
+    const policy = loadPolicyForState(state);
     await admit();
     const read = (relative) =>
         readPinnedLoadFile(helperDirectory, state, relative);
     const manifest = validateManifest(
-        json(read('load-v1/full-preflight.json'))
+        json(read(policy.corpusRoot + '/full-preflight.json')),
+        policy
     );
     const referenceManifest = json(read('reference-v1/manifest.json'));
     const artifacts = {};
@@ -156,17 +163,27 @@ export async function loadRuntimeContent({
             read('reference-v1/' + doc.canonicalPath)
         );
     }
-    const references = validateReferences({
-        manifest: referenceManifest,
-        artifacts,
-    });
+    const references = validateReferences(
+        {
+            manifest: referenceManifest,
+            artifacts,
+        },
+        policy
+    );
     await admit();
     const require = createRequire(path.join(root, 'apps/api/package.json'));
     const { tsImport } = await import(
         pathToFileURL(require.resolve('tsx/esm/api')).href
     );
     const generator = await tsImport(
-        pathToFileURL(path.join(helperDirectory, 'load-corpus.mjs')).href,
+        pathToFileURL(
+            path.join(
+                helperDirectory,
+                policy.id === 'LIGHT_V1'
+                    ? 'load-light-corpus.mjs'
+                    : 'load-corpus.mjs'
+            )
+        ).href,
         import.meta.url
     );
     const documents = await tsImport(
@@ -175,6 +192,7 @@ export async function loadRuntimeContent({
     );
     await admit();
     return createFrozenLoadContent({
+        policy,
         manifest,
         references,
         readReferenceOriginal: async (doc) =>

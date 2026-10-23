@@ -5,6 +5,11 @@ import { fileURLToPath, pathToFileURL } from 'node:url';
 import { createRequire } from 'node:module';
 import { spawnSync } from 'node:child_process';
 import {
+    getLoadPolicy,
+    loadPolicyForState,
+    policySha256,
+} from './load-policy-registry.mjs';
+import {
     DRAFT_ONLY,
     BOOTSTRAP_LIMITS,
     LoadBootstrapError,
@@ -211,13 +216,16 @@ export function createBootstrapTransport(
 }
 
 /** Strict proof from the fixed sibling read-only guard; diagnostics never include its raw output. */
-export function validateBootstrapGuardProof(value, run) {
+export function validateBootstrapGuardProof(value, run, policy) {
+    policySha256(policy);
     bootstrapNeed(
         value &&
             Object.keys(value).sort().join(',') ===
                 [
                     'schemaVersion',
                     'namespace',
+                    'experimentPolicyId',
+                    'experimentPolicySha256',
                     'runId',
                     'purpose',
                     'resourceOwnership',
@@ -227,7 +235,9 @@ export function validateBootstrapGuardProof(value, run) {
                     .sort()
                     .join(',') &&
             value.schemaVersion === 1 &&
-            value.namespace === 'vectorix-m7c-load' &&
+            value.namespace === policy.namespace &&
+            value.experimentPolicyId === policy.id &&
+            value.experimentPolicySha256 === policySha256(policy) &&
             value.runId === run &&
             value.purpose === 'bootstrap' &&
             value.resourceOwnership === true &&
@@ -239,7 +249,7 @@ export function validateBootstrapGuardProof(value, run) {
 }
 
 /** This guard does not acquire the lifecycle lock already held by the parent seed command. */
-function guardBootstrap(root, directory, run) {
+function guardBootstrap(root, directory, run, policy) {
     const env = Object.fromEntries(
         SAFE_ENV_KEYS.filter((key) => process.env[key] !== undefined).map(
             (key) => [key, process.env[key]]
@@ -251,6 +261,8 @@ function guardBootstrap(root, directory, run) {
             path.join(directory, 'load-topology.py'),
             '--run',
             run,
+            '--experiment',
+            policy.id,
             '--mode',
             'guard',
             '--purpose',
@@ -277,7 +289,7 @@ function guardBootstrap(root, directory, run) {
     } catch {
         throw new LoadBootstrapError('LOAD_BOOTSTRAP_GUARD_REFUSED');
     }
-    validateBootstrapGuardProof(proof, run);
+    validateBootstrapGuardProof(proof, run, policy);
 }
 
 function existsNoFollow(filename) {
@@ -311,8 +323,10 @@ export async function runBootstrapRuntime(args) {
         throw new LoadBootstrapError('LOAD_BOOTSTRAP_DRAFT_ONLY');
     bootstrapNeed(
         Array.isArray(args) &&
-            args.length === 2 &&
+            args.length === 4 &&
             args[0] === '--run' &&
+            args[2] === '--experiment' &&
+            ['DEFAULT_V1', 'LIGHT_V1'].includes(args[3]) &&
             /^[a-f0-9]{12}$/u.test(args[1]),
         'LOAD_BOOTSTRAP_ARGUMENTS'
     );
@@ -324,11 +338,12 @@ export async function runBootstrapRuntime(args) {
     } = await import('./load-private.mjs');
     const directory = path.dirname(fileURLToPath(import.meta.url)),
         root = discoverWorkspace(directory),
-        run = args[1];
+        run = args[1],
+        policy = getLoadPolicy(args[3]);
     const runDirectory = path.join(
         root,
         'node_modules/.cache/vectorix',
-        'vectorix-m7c-load-' + run
+        policy.namespace + '-' + run
     );
     const statePath = path.join(runDirectory, 'state.json'),
         progressPath = path.join(runDirectory, 'bootstrap-progress.json'),
@@ -350,8 +365,11 @@ export async function runBootstrapRuntime(args) {
         throw new LoadBootstrapError('LOAD_BOOTSTRAP_PRIVATE_FILE');
     }
     validateBootstrapConfig(state);
-    bootstrapNeed(state.runId === run, 'LOAD_BOOTSTRAP_CONFIG');
-    guardBootstrap(root, directory, run); // Before tsx, generated Prisma imports, clients or authentication.
+    bootstrapNeed(
+        state.runId === run && state.experimentPolicyId === policy.id,
+        'LOAD_BOOTSTRAP_CONFIG'
+    );
+    guardBootstrap(root, directory, run, loadPolicyForState(state)); // Before tsx, generated Prisma imports, clients or authentication.
     for (const key of Object.keys(process.env))
         if (!SAFE_ENV_KEYS.includes(key)) delete process.env[key];
     process.env.DATABASE_URL = state.environment.DATABASE_URL;

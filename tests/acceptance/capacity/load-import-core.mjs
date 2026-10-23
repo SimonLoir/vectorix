@@ -2,18 +2,19 @@
 import { createHash, randomUUID } from 'node:crypto';
 import { isDeepStrictEqual } from 'node:util';
 import {
+    getLoadPolicy,
+    loadPolicyForState,
+    policySha256,
+    profileForCollectionRole,
+} from './load-policy-registry.mjs';
+import {
     validateLoadTransportState,
     LoadTransportError,
 } from './load-transport.mjs';
 export const RUNTIME_DRAFT_ONLY = true;
-export const LOAD_IDENTITY = Object.freeze({
-    family: '4f64a77bb49dc1e547aa37fc438507bcfee2a894697424357eb61f4f47bedbfb',
-    full: 'c99db8842d4ab7a52457c8e81926389f7d66b49d569db026ed548fe841f01a67',
-    pilot: '0d008fd0514aac362e888aa6a582daef1cd0b3feb4cf26e6a3d096faaee0627c',
-    reference:
-        'cb372b53964ffe896bb4e3c3c44831db6c0949bbe622e63ce0a482607be6fdbc',
-    weights: '85462619ee721b466c5927d109d4cb765861907d5417b9109caebc4e614679f1',
-});
+// The explicit default remains useful to old pure geometry consumers. Runtime contexts
+// always select the strict state-bound descriptor and never mutate this alias.
+export const LOAD_IDENTITY = getLoadPolicy('DEFAULT_V1').identity;
 export const LOAD_LIMITS = Object.freeze({
     documents: 240,
     collections: 20,
@@ -101,35 +102,23 @@ export const fields = Object.freeze({
     active: 'BOOLEAN',
     dataset: 'STRING',
 });
-export function loadProfile(metadataFields = fields) {
-    return {
-        provider: 'OLLAMA',
-        model: 'embeddinggemma:latest',
-        dimensions: 768,
-        metric: 'cosine',
-        indexType: 'DISKANN',
-        numericType: 'float32',
-        preparation: '',
-        embeddingPreset: 'EMBEDDING_GEMMA',
-        metadataFields: structuredClone(metadataFields),
-        chunkingStrategy: 'TOKEN_WINDOW',
-        parentChild: true,
-        chunking: {
-            targetTokens: 512,
-            overlapTokens: 64,
-            minTokens: 128,
-            maxTokens: 768,
-            semanticPercentile: 90,
-            parentMaxTokens: 2048,
-        },
-    };
+export function loadProfile(
+    metadataFields = fields,
+    { policy = getLoadPolicy('DEFAULT_V1'), collectionRole = 'primaryA' } = {}
+) {
+    return profileForCollectionRole(policy, collectionRole, metadataFields);
 }
-export function validateManifest(manifest) {
+export function validateManifest(
+    manifest,
+    policy = getLoadPolicy('DEFAULT_V1')
+) {
+    policySha256(policy);
     need(
-        manifest?.namespace === 'vectorix-m7c-load' &&
+        manifest?.namespace === policy.namespace &&
+            manifest.version === policy.version &&
             manifest.formatVersion === 1 &&
-            manifest.familySha256 === LOAD_IDENTITY.family &&
-            manifest.corpusSha256 === LOAD_IDENTITY.full &&
+            manifest.familySha256 === policy.identity.family &&
+            manifest.corpusSha256 === policy.identity.full &&
             Array.isArray(manifest.documents) &&
             manifest.documents.length === 200,
         'LOAD_FROZEN_CORPUS'
@@ -147,10 +136,10 @@ export function validateManifest(manifest) {
         need(
             doc.index === index + 1 &&
                 doc.id ===
-                    `m7c-load-v1-d${String(index + 1).padStart(4, '0')}` &&
+                    `${policy.documentIdPrefix}${String(index + 1).padStart(4, '0')}` &&
                 doc.filename === `${doc.id}-${index % 2 ? 'fr' : 'en'}.txt` &&
                 doc.language === (index % 2 ? 'FR' : 'EN') &&
-                doc.bytes === 672192 &&
+                doc.bytes === policy.documentBytes &&
                 doc.children === 500 &&
                 doc.actualChildren === 500 &&
                 doc.actualParents === 125 &&
@@ -170,17 +159,21 @@ export function validateManifest(manifest) {
                 familySha256: manifest.familySha256,
                 documents: manifest.documents.slice(0, 4),
             })
-        ) === LOAD_IDENTITY.pilot,
+        ) === policy.identity.pilot,
         'LOAD_FROZEN_CORPUS'
     );
     return manifest;
 }
-export function validateReferences(fixtures) {
+export function validateReferences(
+    fixtures,
+    policy = getLoadPolicy('DEFAULT_V1')
+) {
+    policySha256(policy);
     const m = fixtures?.manifest;
     need(
         sha(JSON.stringify(m)) ===
             'c61887f36391043f56637c1b448fef4165cb8a70e653e58dc0542a9b1ec372b2' &&
-            m?.corpusDigest === LOAD_IDENTITY.reference &&
+            m?.corpusDigest === policy.identity.reference &&
             m.offsetUnit === 'UTF16_CODE_UNITS' &&
             m.documents?.length === 24,
         'LOAD_REFERENCE_CORPUS'
@@ -221,9 +214,10 @@ export function importContext({
     priorJournal = null,
 }) {
     validateLoadTransportState(state, fixture);
+    const policy = loadPolicyForState(state);
     need(
         ['pilot', 'full', 'baseline'].includes(workflow) &&
-            state.namespace === 'vectorix-m7c-load' &&
+            state.namespace === policy.namespace &&
             fixture.namespace === state.namespace &&
             state.runId === fixture.runId &&
             /^[a-f0-9]{12}$/u.test(state.runId) &&
@@ -245,6 +239,8 @@ export function importContext({
         namespace: state.namespace,
         runId: state.runId,
         workflow,
+        experimentPolicyId: policy.id,
+        policySha256: policySha256(policy),
         evidenceKind,
         status: 'IN_PROGRESS',
         stage: 'ADMISSION',
@@ -342,6 +338,7 @@ export function importContext({
     };
     return {
         state,
+        policy,
         fixture,
         api,
         workflow,
@@ -411,7 +408,8 @@ export async function readList(ctx, role, section) {
     );
     return rows;
 }
-export function loadDescriptor(doc) {
+export function loadDescriptor(doc, policy = getLoadPolicy('DEFAULT_V1')) {
+    policySha256(policy);
     return {
         fixtureId: doc.id,
         fileName: doc.filename,
@@ -426,9 +424,9 @@ export function loadDescriptor(doc) {
             topic: doc.topic,
             document_no: doc.index,
             active: true,
-            dataset: 'm7c-load-v1',
+            dataset: policy.version,
         },
-        tags: ['m7c-load-v1', doc.language.toLowerCase(), doc.topic],
+        tags: [policy.version, doc.language.toLowerCase(), doc.topic],
     };
 }
 export function requestId() {

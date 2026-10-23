@@ -1,12 +1,18 @@
+import { observationPolicy } from './load-observer-core.mjs';
 /** Preloaded canonical result oracle. No file, SDK, HTTP or process operation on import. */
 import { isDeepStrictEqual } from 'node:util';
 import { createHash } from 'node:crypto';
 import { need, sha, digest, id } from './load-observer-core.mjs';
 import {
-    LOAD_IDENTITY,
+    loadDescriptor,
     validateManifest,
     validateReferences,
 } from './load-import-core.mjs';
+import { profileForCollectionRole } from './load-policy-registry.mjs';
+import {
+    observationBinding,
+    assertObservationBinding,
+} from './load-observer-policy.mjs';
 export const STATIC_DRAFT_ONLY = true;
 const compare = (a, b, type) =>
     type === 'DATE'
@@ -89,6 +95,7 @@ export function eligible(document, filters, types) {
 /** Build before timing: retain canonical documents/ranges/hashes, never generate source text during an HTTP interval. */
 export async function prepareTrafficOracle({
     state,
+    fixture,
     fullReport,
     references,
     manifest,
@@ -97,15 +104,18 @@ export async function prepareTrafficOracle({
     plan,
     prepareInput,
 }) {
-    validateManifest(manifest);
-    validateReferences(references);
+    const policy = observationPolicy(state);
+    validateManifest(manifest, policy);
+    validateReferences(references, policy);
     need(
         fullReport?.status === 'COMPLETE' &&
             fullReport.workflow === 'full' &&
             fullReport.collections.primary.activeChildren === 100000 &&
             fullReport.collections.primary.parents === 25000 &&
-            fullReport.familySha256 === LOAD_IDENTITY.family &&
-            fullReport.corpusSha256 === LOAD_IDENTITY.full,
+            fullReport.experimentPolicyId === policy.id &&
+            fullReport.policySha256 === state.experimentPolicySha256 &&
+            fullReport.familySha256 === policy.identity.family &&
+            fullReport.corpusSha256 === policy.identity.full,
         'LOAD_OBS_FULL_REPORT'
     );
     need(
@@ -124,24 +134,7 @@ export async function prepareTrafficOracle({
             B: fullReport.baseline.documents.referenceB,
         },
         descriptors = {
-            A: manifest.documents.map((doc) => ({
-                fixtureId: doc.id,
-                fileName: doc.filename,
-                mediaType: 'text/plain',
-                language: doc.language,
-                originalSha256: doc.sourceSha256,
-                originalBytes: doc.bytes,
-                canonicalLength: doc.utf16Units,
-                canonicalSha256: doc.canonicalSha256,
-                expectedGeometrySha256: doc.geometrySha256,
-                metadata: {
-                    topic: doc.topic,
-                    document_no: doc.index,
-                    active: true,
-                    dataset: 'm7c-load-v1',
-                },
-                tags: ['m7c-load-v1', doc.language.toLowerCase(), doc.topic],
-            })),
+            A: manifest.documents.map((doc) => loadDescriptor(doc, policy)),
             B: references.manifest.documents,
         },
         types = {
@@ -160,13 +153,30 @@ export async function prepareTrafficOracle({
     };
     for (const organization of ['A', 'B']) {
         const catalog = catalogs[organization],
-            report = reports[organization];
+            report = reports[organization],
+            collectionRole = organization === 'A' ? 'primaryA' : 'referenceB',
+            expectedBinding = observationBinding(state, fixture, {
+                collectionRole,
+                policySha256: state.experimentPolicySha256,
+                organizationId: catalog.organizationId,
+            }),
+            profile = profileForCollectionRole(
+                policy,
+                collectionRole,
+                types[organization]
+            );
+        assertObservationBinding(report, expectedBinding);
+        assertObservationBinding(catalog, expectedBinding);
+        need(
+            isDeepStrictEqual(report.profile, profile),
+            'LOAD_OBS_POLICY_BINDING'
+        );
         need(
             catalog.generationId === report.generationId &&
                 catalog.collectionId === report.collectionId &&
                 catalog.documents.length === bindings[organization].length &&
                 catalog.modelIdentity.provider === 'OLLAMA' &&
-                catalog.modelIdentity.digest === LOAD_IDENTITY.weights &&
+                catalog.modelIdentity.digest === policy.identity.weights &&
                 catalog.modelIdentity.dimensions === 768,
             'LOAD_OBS_ORACLE_CATALOG'
         );
@@ -192,7 +202,8 @@ export async function prepareTrafficOracle({
             const layout = plan(
                     artifact,
                     catalog.modelIdentity,
-                    descriptor.fileName
+                    descriptor.fileName,
+                    profile
                 ),
                 planned = [...layout.children, ...layout.parents];
             totals[organization].children += layout.children.length;

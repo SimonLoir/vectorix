@@ -19,9 +19,16 @@ import { evaluateLoadSearch } from './load-traffic-latency.mjs';
 import path from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { validateIdentity } from './load-observer-core.mjs';
-import { loadResourcePolicyHash, LOAD_IDENTITY } from './load-import-core.mjs';
+import { loadResourcePolicyHash } from './load-import-core.mjs';
+import { observationPolicy } from './load-observer-core.mjs';
+import {
+    assertObservationBinding,
+    observationBinding,
+} from './load-observer-policy.mjs';
 export const STATIC_DRAFT_ONLY = false;
 export const TRAFFIC_RUNTIME_HELPERS = Object.freeze([
+    'load-policy-registry.mjs',
+    'load-observer-policy.mjs',
     'load-traffic-runtime.mjs',
     'load-traffic.mjs',
     'load-traffic-ingestion.mjs',
@@ -182,6 +189,7 @@ export async function executeTrafficPhase({
     priorIngestion = { A: [], B: [] },
     evidenceKind = 'SYNTHETIC_UNIT_TEST',
 }) {
+    validateIdentity(state, fixture);
     need(
         ['paced', 'closed-loop'].includes(phase) &&
             typeof io.openSearch === 'function',
@@ -193,7 +201,19 @@ export async function executeTrafficPhase({
         ingestion: priorIngestion,
     }); // Separate bounded preflight proof, outside the measured phase.
     const nativeBaselines = {};
-    for (const organization of ['A', 'B'])
+    for (const organization of ['A', 'B']) {
+        const collection =
+            fullReport.baseline.collections[
+                organization === 'A' ? 'ingestionA' : 'ingestionB'
+            ];
+        const expected = observationBinding(state, fixture, {
+            collectionRole: organization === 'A' ? 'ingestionA' : 'ingestionB',
+            policySha256: state.experimentPolicySha256,
+            organizationId:
+                fixture.users[organization === 'A' ? 'owner' : 'foreign']
+                    .organizationId,
+        });
+        assertObservationBinding(collection, expected);
         nativeBaselines[organization] = await io.ingestionObserver.begin({
             phase,
             organizationId:
@@ -203,6 +223,7 @@ export async function executeTrafficPhase({
                 organization === 'A' ? 'ingestionA' : 'ingestionB'
             ],
         });
+    }
     const trace = new RequestTrace(),
         held = new Set(),
         tasks = new Set(),
@@ -594,6 +615,18 @@ export async function executeTrafficPhase({
             });
             need(io.now() <= deadline, 'LOAD_OBS_TRAFFIC_DEADLINE');
             const proof = ingestionProofs[organization];
+            assertObservationBinding(
+                proof,
+                observationBinding(state, fixture, {
+                    collectionRole:
+                        organization === 'A' ? 'ingestionA' : 'ingestionB',
+                    policySha256: state.experimentPolicySha256,
+                    organizationId:
+                        fixture.users[
+                            organization === 'A' ? 'owner' : 'foreign'
+                        ].organizationId,
+                })
+            );
             need(
                 proof?.kind === 'INGESTION_PHASE_PROOF' &&
                     proof.runId === state.runId &&
@@ -713,6 +746,8 @@ export async function executeTrafficPhase({
     const report = {
         schemaVersion: 1,
         namespace: state.namespace,
+        experimentPolicyId: state.experimentPolicyId,
+        policySha256: state.experimentPolicySha256,
         runId: state.runId,
         phase,
         evidenceKind,
@@ -799,7 +834,10 @@ export async function executeLoadTrafficWorkflow({
             fullReport.workflow === 'full' &&
             fullReport.runId === state.runId &&
             fullReport.evidenceKind === evidenceKind &&
-            fullReport.corpusSha256 === LOAD_IDENTITY.full &&
+            fullReport.experimentPolicyId === state.experimentPolicyId &&
+            fullReport.policySha256 === state.experimentPolicySha256 &&
+            fullReport.corpusSha256 ===
+                observationPolicy(state).identity.full &&
             fullReport.collections.primary.activeChildren === 100000 &&
             fullReport.collections.primary.parents === 25000 &&
             fullReport.fullObservation.validatedNativeVectors === 100000 &&
@@ -942,6 +980,8 @@ export async function executeLoadTrafficWorkflow({
         schemaVersion: 1,
         namespace: state.namespace,
         runId: state.runId,
+        experimentPolicyId: state.experimentPolicyId,
+        policySha256: state.experimentPolicySha256,
         evidenceKind,
         status,
         capacityAcceptance:

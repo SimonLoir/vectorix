@@ -4,6 +4,8 @@ import assert from 'node:assert/strict';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { buildDocument, documentSpec } from './load-corpus.mjs';
+import * as lightGenerator from './load-light-corpus.mjs';
+import { getLoadPolicy, policySha256 } from './load-policy-registry.mjs';
 import {
     sha,
     LOAD_IDENTITY,
@@ -11,10 +13,17 @@ import {
 } from './load-import-core.mjs';
 const here = path.dirname(fileURLToPath(import.meta.url));
 export function importMock(options = {}) {
-    const run = 'abcdef012345',
+    const policy = getLoadPolicy(options.experimentPolicyId ?? 'DEFAULT_V1'),
+        generator =
+            policy.id === 'LIGHT_V1'
+                ? lightGenerator
+                : { buildDocument, documentSpec },
+        run = 'abcdef012345',
         fixture = {
             schemaVersion: 1,
-            namespace: 'vectorix-m7c-load',
+            namespace: policy.namespace,
+            experimentPolicyId: policy.id,
+            experimentPolicySha256: policySha256(policy),
             runId: run,
             organizationIds: ['org-a', 'org-b'],
             users: Object.fromEntries(
@@ -24,7 +33,7 @@ export function importMock(options = {}) {
                         userId: 'user-' + role,
                         memberId: 'member-' + role,
                         organizationId: role === 'foreign' ? 'org-b' : 'org-a',
-                        email: `m7c-load-${role}-${run}@example.test`,
+                        email: `${policy.emailPrefix}-${role}-${run}@example.test`,
                         password:
                             'SYNTHETIC_PRIVATE_PASSWORD_0123456789-' + role,
                     },
@@ -35,7 +44,9 @@ export function importMock(options = {}) {
         commit: 'a'.repeat(40),
         images: { postgres: 'sha256:' + 'b'.repeat(64) },
         resourceLimits: { ollama: { cpus: '4', memoryBytes: 6 * 1024 ** 3 } },
-        loadPolicy: { dimensions: 768, fullIndexMs: 7200000 },
+        loadPolicy: structuredClone(policy.loadPolicy),
+        experimentPolicyId: policy.id,
+        experimentPolicySha256: policySha256(policy),
         namespace: fixture.namespace,
         runId: run,
         prefix: fixture.namespace + '-' + run,
@@ -50,7 +61,9 @@ export function importMock(options = {}) {
         },
     };
     const manifest = JSON.parse(
-            fs.readFileSync(path.join(here, 'load-v1/full-preflight.json'))
+            fs.readFileSync(
+                path.join(here, policy.corpusRoot + '/full-preflight.json')
+            )
         ),
         ref = JSON.parse(
             fs.readFileSync(
@@ -300,10 +313,12 @@ export function importMock(options = {}) {
         },
     };
     const readOriginal = async (descriptor) =>
-        descriptor.fileName.startsWith('m7c-load-')
+        descriptor.fileName.startsWith(policy.version + '-')
             ? Buffer.from(
-                  buildDocument(
-                      documentSpec(Number(descriptor.fixtureId.slice(-4)))
+                  generator.buildDocument(
+                      generator.documentSpec(
+                          Number(descriptor.fixtureId.slice(-4))
+                      )
                   )
               )
             : new Uint8Array(
@@ -325,6 +340,8 @@ export function importMock(options = {}) {
             runId: run,
             organizationId: input.organizationId,
             collectionId: input.collectionId,
+            collectionRole: input.collectionRole,
+            policySha256: input.policySha256,
             workload: 'INDEXING',
             provider: 'OLLAMA',
             stable: true,
@@ -369,6 +386,8 @@ export function importMock(options = {}) {
             runId: run,
             organizationId: input.organizationId,
             collectionId: input.collectionId,
+            collectionRole: input.collectionRole,
+            policySha256: input.policySha256,
             generationId: input.generationId,
             configurationRevision: 1,
             status: 'ACTIVE',
@@ -392,6 +411,8 @@ export function importMock(options = {}) {
                 errors: 0,
                 providerInputTokens: null,
                 nativeWorkProof: {
+                    collectionRole: input.collectionRole,
+                    policySha256: input.policySha256,
                     kind: 'EXCLUSIVE_INDEXING_DELTA',
                     baselineSha256: input.nativeBaseline.baselineSha256,
                     producerIdentitySha256:

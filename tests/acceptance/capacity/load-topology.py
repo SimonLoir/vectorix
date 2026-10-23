@@ -16,6 +16,7 @@ import sys
 import time
 from urllib.parse import quote
 
+from load_policy_registry import get_load_policy, load_policy_for_state, policy_sha256
 from load_topology_policy import (ROOT, CACHE, NAMESPACE, SERVICES, DEFAULT_LIMITS, LOAD_POLICY,
     WORKFLOW_HISTORY, RUNTIME_ENTRIES,
     ENVIRONMENT_KEYS, GuardError, canonical, digest, entry_digest, labels, nano_cpus,
@@ -75,13 +76,18 @@ PINNED_HELPERS = [
     'load-traffic.mjs',
     'load-transport.mjs',
     'load_topology_policy.py',
+    'load-policy-registry.mjs',
+    'load-observer-policy.mjs',
+    'load_policy_registry.py',
+    'load-light-corpus.mjs',
+    'load-light-policy.mjs',
 ]
 PRODUCTION_PATHS = ['apps/api', 'apps/workers', 'apps/web', 'packages', 'pnpm-lock.yaml', 'package.json']
 
 
 def save(state):
     validate_state(state, state['runId'])
-    save_json(state_path(state['runId']), state)
+    save_json(state_path(state['runId'], state['experimentPolicyId']), state)
 
 
 def inspect(name, kind='container'):
@@ -135,9 +141,10 @@ def helper_manifest():
     return result
 
 
-def corpus_manifest():
+def corpus_manifest(selected=None):
     """Pin the unchanged generated-load manifests plus every frozen reference original and canonical file."""
-    reference = json.loads((HERE.parent / 'quality/reference-v1/manifest.json').read_text())
+    selected = selected or get_load_policy('DEFAULT_V1')
+    reference = json.loads((ROOT / 'tests/acceptance' / 'quality/reference-v1/manifest.json').read_text())
     require(len(reference['documents']) == 24, 'load-reference-document-count')
     names = ['reference-v1/' + name for name in ['manifest.json', 'queries.json', 'qrels.json', 'policy.json',
         'development-queries.json']]
@@ -146,13 +153,14 @@ def corpus_manifest():
             and re.fullmatch(r'canonical/m7c-[fd][0-9]{2}-(?:en|fr)-v1\.json', row['canonicalPath']),
             'load-reference-path-bound')
         names.extend('reference-v1/' + row[key] for key in ['originalPath', 'canonicalPath'])
-    names.extend('load-v1/' + name for name in ['pilot-preflight.json', 'full-preflight.json',
-        'pure-preparation-proof.json'])
+    names.extend(selected['corpusRoot'] + '/' + name for name in ['pilot-preflight.json', 'full-preflight.json',
+        'pure-preparation-proof.json' if selected['id'] == 'DEFAULT_V1' else 'preparation-proof.json'])
     require(len(names) == len(set(names)) and len(names) <= 64, 'load-corpus-file-bound')
     total, result = 0, {}
     for name in sorted(names):
-        path = (HERE.parent / 'quality' if name.startswith('reference-v1/') else HERE) / name
-        require(path.is_file() and not path.is_symlink() and path.resolve().is_relative_to(HERE.parent / 'quality' if name.startswith('reference-v1/') else HERE)
+        corpus_directory = ROOT / 'tests/acceptance/quality' if name.startswith('reference-v1/') else (ROOT / 'tests/acceptance/capacity' if selected['id'] == 'DEFAULT_V1' else HERE)
+        path = corpus_directory / name
+        require(path.is_file() and not path.is_symlink() and path.resolve().is_relative_to(corpus_directory)
             and path.stat().st_size <= 2 * 1024 ** 2, 'load-corpus-file-safety')
         value = path.read_bytes()
         total += len(value)
@@ -199,8 +207,8 @@ def verify_pins(state):
         and digest((ROOT / 'packages/db/prisma.config.ts').read_bytes()) == state['prismaConfigSha256']
         and migration_manifest() == state['migrations'] and helper_manifest() == state['acceptanceSources'],
         'load-release-input-drift')
-    require(corpus_manifest() == state['corpusFiles'], 'load-corpus-file-drift')
-    manifest = json.loads((HERE.parent / 'quality/reference-v1/manifest.json').read_text())
+    require(corpus_manifest(load_policy_for_state(state)) == state['corpusFiles'], 'load-corpus-file-drift')
+    manifest = json.loads((ROOT / 'tests/acceptance/quality/reference-v1/manifest.json').read_text())
     require(manifest['corpusDigest'] == state['referenceCorpusDigest'], 'load-corpus-digest-drift')
     require(build_manifest() == state['builds'], 'load-built-artifact-drift')
 
@@ -250,9 +258,9 @@ def process_alive(state, saved):
         command = value['command']
         position = command.index(saved['entry'].encode())
         require(command[position + 1:] in [
-            [b'--state', str(state_path(state['runId'])).encode(), b'--run', state['runId'].encode(),
+            [b'--state', str(state_path(state['runId'], state['experimentPolicyId'])).encode(), b'--run', state['runId'].encode(),
                 b'--mode', saved['workflow'].encode(), b''],
-            [b'--state', str(state_path(state['runId'])).encode(), b'--run', state['runId'].encode(),
+            [b'--state', str(state_path(state['runId'], state['experimentPolicyId'])).encode(), b'--run', state['runId'].encode(),
                 b'--mode', saved['workflow'].encode()]], 'load-foreground-exact-arguments')
     require(entry_digest(saved['entry']) == saved['entrySha256'], 'load-process-entry-drift')
     return True
@@ -272,7 +280,7 @@ def stop_apps(state):
         for saved in group:
             if process_alive(state, saved):
                 os.kill(saved['pid'], signal.SIGTERM)
-        deadline = time.monotonic() + LOAD_POLICY['gracefulStopSeconds']
+        deadline = time.monotonic() + state['loadPolicy']['gracefulStopSeconds']
         while any(process_alive(state, saved) for saved in group):
             require(time.monotonic() < deadline, 'load-graceful-app-stop-timeout')
             time.sleep(0.1)
@@ -301,7 +309,7 @@ def assert_empty(state):
 
 
 def scoped_fixture(state):
-    return validate_fixture(json.loads(read_private_bytes(state_path(state['runId']).parent / 'fixture.json',
+    return validate_fixture(json.loads(read_private_bytes(state_path(state['runId'], state['experimentPolicyId']).parent / 'fixture.json',
         128 * 1024)), state)
 
 
@@ -329,8 +337,8 @@ def assert_catalog_scope(state, fixture):
     require(result['organizations'] == 2 and result['users'] == 3 and result['members'] == expected
         and all(result[key] == 0 for key in ['outsideOrganizations', 'outsideUsers', 'superadmins', 'keys',
             'outsideDocuments', 'outsideCollections'])
-        and type(result['documents']) is int and 0 <= result['documents'] <= LOAD_POLICY['maximumDocuments']
-        and type(result['collections']) is int and 0 <= result['collections'] <= LOAD_POLICY['maximumCollections'],
+        and type(result['documents']) is int and 0 <= result['documents'] <= state['loadPolicy']['maximumDocuments']
+        and type(result['collections']) is int and 0 <= result['collections'] <= state['loadPolicy']['maximumCollections'],
         'load-exact-synthetic-catalog-bound')
 
 
@@ -376,26 +384,29 @@ def guard(state, purpose, *, require_caller=False):
             saved = state.get('loadProcess')
             require(purpose == 'import' and saved is not None and saved['pid'] == os.getppid()
                 and process_alive(state, saved), 'load-guard-exact-foreground-parent')
-    return {'schemaVersion': 1, 'namespace': NAMESPACE, 'runId': state['runId'], 'purpose': purpose,
+    return {'schemaVersion': 1, 'namespace': state['namespace'],
+        'experimentPolicyId': state['experimentPolicyId'], 'experimentPolicySha256': state['experimentPolicySha256'], 'runId': state['runId'], 'purpose': purpose,
         'resourceOwnership': True, 'databaseReadOnly': True, 'bootstrapFreshness': purpose in {'bootstrap', 'bucket'}}
 
 
-def initial_state(run_id, ports, images, model, builds, commit, *, limits=None):
+def initial_state(run_id, ports, images, model, builds, commit, *, limits=None, experiment_id="DEFAULT_V1"):
     """Construct state from inspected inputs and bounded local source-pin reads."""
+    selected = get_load_policy(experiment_id)
     secret = {key: secrets.token_urlsafe(24) for key in ['postgres', 'indexer', 'runtime', 's3Secret']}
-    secret['s3Access'] = 'm7c-load-' + run_id
+    secret['s3Access'] = selected['emailPrefix'] + '-' + run_id
     api, web = 'http://127.0.0.1:' + str(ports['api']), 'http://127.0.0.1:' + str(ports['web'])
-    state = {'schemaVersion': 1, 'namespace': NAMESPACE, 'runId': run_id, 'prefix': NAMESPACE + '-' + run_id,
+    state = {'schemaVersion': 1, 'namespace': selected['namespace'], 'runId': run_id, 'prefix': selected['namespace'] + '-' + run_id,
         'phase': 'PREPARING', 'ports': ports, 'images': images, 'resourceLimits': copy.deepcopy(limits or DEFAULT_LIMITS),
         'resources': {}, 'modelVolume': model, 'builds': builds, 'processes': {}, 'dashboardProcesses': {},
         'loadProcess': None, 'workflowHistory': [], 'infrastructureSecrets': secret, 'commit': commit,
         'lockfileSha256': digest((ROOT / 'pnpm-lock.yaml').read_bytes()),
         'prismaConfigSha256': digest((ROOT / 'packages/db/prisma.config.ts').read_bytes()),
         'migrations': migration_manifest(), 'acceptanceSources': helper_manifest(),
-        'corpusFiles': corpus_manifest(), 'loadPolicy': copy.deepcopy(LOAD_POLICY),
-        'referenceCorpusDigest': json.loads((HERE.parent / 'quality/reference-v1/manifest.json').read_text())['corpusDigest'],
-        'applicationDatabase': 'vectorix_m7c_load_app_' + run_id + '_test',
-        'vectorDatabase': 'vectorix_m7c_load_vectors_' + run_id + '_test', 'apiOrigin': api, 'webOrigin': web}
+        'corpusFiles': corpus_manifest(selected), 'loadPolicy': copy.deepcopy(selected['loadPolicy']),
+        'experimentPolicyId': selected['id'], 'experimentPolicySha256': policy_sha256(selected),
+        'referenceCorpusDigest': json.loads((ROOT / 'tests/acceptance/quality/reference-v1/manifest.json').read_text())['corpusDigest'],
+        'applicationDatabase': selected['databasePrefix'] + '_app_' + run_id + '_test',
+        'vectorDatabase': selected['databasePrefix'] + '_vectors_' + run_id + '_test', 'apiOrigin': api, 'webOrigin': web}
     env = dict.fromkeys(ENVIRONMENT_KEYS, '')
     env.update(NODE_ENV='production', TZ='UTC', VECTORIX_TIME_ZONE='UTC',
         DATABASE_URL='postgresql://postgres:' + quote(secret['postgres'], safe='') + '@127.0.0.1:' + str(ports['postgres']) + '/' + state['applicationDatabase'],
@@ -406,7 +417,7 @@ def initial_state(run_id, ports, images, model, builds, commit, *, limits=None):
         BETTER_AUTH_URL=api, API_URL=api, VECTORIX_WEB_URL=web, TRUSTED_ORIGINS=web,
         ALLOW_ACCOUNT_CREATION='true', ALLOW_ORGANIZATION_CREATION='true', VECTORIX_WEB_PUSH_ENABLED='false',
         VECTORIX_DEFAULT_S3_ENDPOINT='http://127.0.0.1:' + str(ports['rustfs']), VECTORIX_DEFAULT_S3_REGION='us-east-1',
-        VECTORIX_DEFAULT_S3_BUCKET='m7c-load-' + run_id, VECTORIX_DEFAULT_S3_FORCE_PATH_STYLE='true',
+        VECTORIX_DEFAULT_S3_BUCKET=selected['emailPrefix'] + '-' + run_id, VECTORIX_DEFAULT_S3_FORCE_PATH_STYLE='true',
         VECTORIX_DEFAULT_S3_ACCESS_KEY_ID=secret['s3Access'], VECTORIX_DEFAULT_S3_SECRET_ACCESS_KEY=secret['s3Secret'],
         VECTORIX_DEFAULT_OLLAMA_ENDPOINT='http://127.0.0.1:' + str(ports['ollama']),
         PASSKEY_RP_ID='127.0.0.1', PASSKEY_RP_NAME='Vectorix isolated load acceptance', PASSKEY_ORIGINS=web)
@@ -426,11 +437,11 @@ def create_service(state, service):
     else:
         volume = name + '-data'
         require(command_result(['docker', 'volume', 'inspect', volume])['exitCode'] != 0, 'load-existing-volume-refused')
-        label_args = [item for key, value in labels(state['runId'], service).items() for item in ['--label', key + '=' + value]]
+        label_args = [item for key, value in labels(state['runId'], service, state['experimentPolicyId']).items() for item in ['--label', key + '=' + value]]
         run(['docker', 'volume', 'create', *label_args, volume])
         created = inspect(volume, 'volume')
         require(created['Name'] == volume and created['Driver'] == 'local' and created.get('Options') in [None, {}]
-            and created.get('Labels') == labels(state['runId'], service), 'load-new-volume-identity')
+            and created.get('Labels') == labels(state['runId'], service, state['experimentPolicyId']), 'load-new-volume-identity')
         identity = volume_identity(created)
     state['resources'][service] = {'id': None, 'name': name, 'imageId': state['images'][service],
         'volume': volume, 'volumeIdentity': identity}
@@ -447,7 +458,7 @@ def create_service(state, service):
     elif service == 'ollama':
         values.update(OLLAMA_HOST='0.0.0.0:11434', OLLAMA_NUM_PARALLEL='1')
     arguments = ['docker', 'create', '--pull=never', '--name', name, '--network=bridge']
-    for key, value in labels(state['runId'], service).items():
+    for key, value in labels(state['runId'], service, state['experimentPolicyId']).items():
         arguments += ['--label', key + '=' + value]
     arguments += ['--cpus', state['resourceLimits'][service]['cpus'], '--memory', str(state['resourceLimits'][service]['memoryBytes']),
         '--mount', 'type=volume,src=' + volume + ',dst=' + SERVICES[service][1] + (',readonly' if service == 'ollama' else ''),
@@ -477,8 +488,8 @@ def create_service(state, service):
         raise GuardError('load-postgres-tcp-readiness')
 
 
-def prepare(run_id, model_name, image_references):
-    path = state_path(run_id)
+def prepare(run_id, model_name, image_references, experiment_id="DEFAULT_V1"):
+    path = state_path(run_id, experiment_id)
     require(not path.parent.exists(), 'load-fresh-run-directory-required')
     CACHE.mkdir(parents=True, exist_ok=True)
     require(CACHE.resolve() == CACHE and CACHE.is_dir(), 'load-cache-path')
@@ -499,7 +510,7 @@ def prepare(run_id, model_name, image_references):
     require(model['Name'] == model_name and model['Driver'] == 'local' and model.get('Options') in [None, {}],
         'load-existing-plain-model-volume')
     state = initial_state(run_id, ports, images, {'name': model_name, 'identity': volume_identity(model)}, build_manifest(),
-        run(['git', 'rev-parse', 'HEAD']).decode().strip())
+        run(['git', 'rev-parse', 'HEAD']).decode().strip(), experiment_id=experiment_id)
     verify_pins(state)
     path.parent.mkdir(mode=0o700)
     save_json(path, state, exclusive=True)
@@ -528,8 +539,8 @@ def deploy(state):
 
 def child(state, filename, *, timeout=120):
     require(filename in {'load-bootstrap.mjs', 'load-bucket.mjs'}, 'load-known-child')
-    arguments = (['--run', state['runId']] if filename == 'load-bootstrap.mjs'
-        else ['--state', str(state_path(state['runId'])), '--run', state['runId']])
+    arguments = (['--run', state['runId'], '--experiment', state['experimentPolicyId']] if filename == 'load-bootstrap.mjs'
+        else ['--state', str(state_path(state['runId'], state['experimentPolicyId'])), '--run', state['runId']])
     result = bounded_stream([shutil.which('node'), str(HERE / filename), *arguments],
         environment={**base_environment(), **state['environment']}, capture=True, maximum=32768, timeout=timeout,
         allowed_exit_codes=(0, 1))
@@ -553,7 +564,7 @@ def schema_ready(state):
 
 def bootstrap(state):
     require(state['phase'] == 'SCHEMA_VERIFIED_EMPTY', 'load-bootstrap-phase')
-    directory = state_path(state['runId']).parent
+    directory = state_path(state['runId'], state['experimentPolicyId']).parent
     require(not (directory / 'fixture.json').exists() and not (directory / 'bootstrap-progress.json').exists(),
         'load-bootstrap-refuses-replay')
     guard(state, 'bootstrap')
@@ -571,19 +582,25 @@ def load_resource_policy_hash(state):
 def validate_pilot_admission(report, state):
     """Refuse an unmeasured or too-slow pilot; this is an additional guard, not a substitute for runtime proof."""
     require(isinstance(report, dict) and report.get('schemaVersion') == 1
-        and report.get('namespace') == NAMESPACE and report.get('runId') == state['runId']
+        and report.get('namespace') == state['namespace']
+        and report.get('experimentPolicyId') == state['experimentPolicyId']
+        and report.get('policySha256') == state['experimentPolicySha256'] and report.get('runId') == state['runId']
         and report.get('workflow') == 'pilot' and report.get('status') == 'COMPLETE'
         and report.get('acceptance') == 'PILOT_PREPARED' and report.get('evidenceKind') == 'LIVE_NATIVE_ISOLATED'
-        and report.get('corpusSha256') == LOAD_POLICY['pilotCorpusSha256']
-        and report.get('familySha256') == LOAD_POLICY['familySha256'], 'load-live-pilot-report-required')
+        and report.get('corpusSha256') == state['loadPolicy']['pilotCorpusSha256']
+        and report.get('familySha256') == state['loadPolicy']['familySha256'], 'load-live-pilot-report-required')
+    load_policy_for_state(state)
+    pilot = report.get('collections', {}).get('pilot', {})
+    require(isinstance(pilot, dict) and pilot.get('collectionRole') == 'pilotA'
+        and pilot.get('policySha256') == state['experimentPolicySha256'], 'load-pilot-collection-policy')
     elapsed = report.get('timing', {}).get('pilotIndexMs')
     proof = report.get('pilotObservation', {})
-    require(type(elapsed) is int and elapsed > 0 and elapsed <= LOAD_POLICY['pilotSeconds'] * 1000
-        and elapsed * (LOAD_POLICY['fullChildren'] // LOAD_POLICY['pilotChildren']) <= LOAD_POLICY['fullSeconds'] * 1000,
+    require(type(elapsed) is int and elapsed > 0 and elapsed <= state['loadPolicy']['pilotSeconds'] * 1000
+        and elapsed * (state['loadPolicy']['fullChildren'] // state['loadPolicy']['pilotChildren']) <= state['loadPolicy']['fullSeconds'] * 1000,
         'load-pilot-projection-exceeds-full-bound')
     require(proof.get('physicalChildren') == 2000 and proof.get('validatedNativeVectors') == 2000
         and type(proof.get('peakMemoryBytes')) is int and proof['peakMemoryBytes'] > 0
-        and type(proof.get('minimumFreeBytes')) is int and proof['minimumFreeBytes'] >= LOAD_POLICY['minimumFreeBytes']
+        and type(proof.get('minimumFreeBytes')) is int and proof['minimumFreeBytes'] >= state['loadPolicy']['minimumFreeBytes']
         and proof.get('modelWarmState') in {'WARM', 'COLD', 'UNKNOWN'}
         and proof.get('resourcePolicySha256') == load_resource_policy_hash(state)
         and proof.get('retries') == 0 and proof.get('errors') == 0, 'load-measured-pilot-prerequisite')
@@ -592,23 +609,29 @@ def validate_pilot_admission(report, state):
 def validate_full_admission(report, state):
     """Admit traffic only after measured native 100k preparation; the runtime separately rechecks actual stores."""
     require(isinstance(report, dict) and report.get('schemaVersion') == 1
-        and report.get('namespace') == NAMESPACE and report.get('runId') == state['runId']
+        and report.get('namespace') == state['namespace']
+        and report.get('experimentPolicyId') == state['experimentPolicyId']
+        and report.get('policySha256') == state['experimentPolicySha256'] and report.get('runId') == state['runId']
         and report.get('workflow') == 'full' and report.get('status') == 'COMPLETE'
         and report.get('acceptance') == 'FULL_INDEX_PREPARED' and report.get('evidenceKind') == 'LIVE_NATIVE_ISOLATED'
-        and report.get('corpusSha256') == LOAD_POLICY['fullCorpusSha256']
-        and report.get('familySha256') == LOAD_POLICY['familySha256'], 'load-live-full-report-required')
+        and report.get('corpusSha256') == state['loadPolicy']['fullCorpusSha256']
+        and report.get('familySha256') == state['loadPolicy']['familySha256'], 'load-live-full-report-required')
     require(all(isinstance(report.get(key), dict)
         for key in ['timing', 'fullObservation', 'collections', 'documents']), 'load-complete-full-prerequisite')
+    load_policy_for_state(state)
     elapsed, proof = report.get('timing', {}).get('fullIndexMs'), report.get('fullObservation', {})
     primary, pilot = report.get('collections', {}).get('primary', {}), report.get('collections', {}).get('pilot', {})
     documents = report.get('documents', {}).get('loadA', [])
     require(isinstance(primary, dict) and isinstance(pilot, dict), 'load-complete-full-prerequisite')
-    require(type(elapsed) is int and 0 < elapsed <= LOAD_POLICY['fullSeconds'] * 1000
-        and isinstance(documents, list) and len(documents) == LOAD_POLICY['primaryDocuments']
+    require(type(elapsed) is int and 0 < elapsed <= state['loadPolicy']['fullSeconds'] * 1000
+        and isinstance(documents, list) and len(documents) == state['loadPolicy']['primaryDocuments']
         and all(isinstance(row, dict) and isinstance(row.get('documentId'), str)
             and re.fullmatch('[A-Za-z0-9_-]{1,128}', row['documentId']) for row in documents)
-        and len({row['documentId'] for row in documents}) == LOAD_POLICY['primaryDocuments'],
+        and len({row['documentId'] for row in documents}) == state['loadPolicy']['primaryDocuments'],
         'load-complete-full-prerequisite')
+    require(primary.get('collectionRole') == 'primaryA' and pilot.get('collectionRole') == 'pilotA'
+        and all(collection.get('policySha256') == state['experimentPolicySha256'] for collection in [primary,pilot]),
+        'load-full-collection-policy')
     require(all(isinstance(collection.get(key), str) and re.fullmatch('[A-Za-z0-9_-]{1,128}', collection[key])
             for collection in [primary, pilot] for key in ['collectionId', 'generationId'])
         and primary['collectionId'] != pilot.get('collectionId')
@@ -618,7 +641,7 @@ def validate_full_admission(report, state):
         and proof.get('physicalChildren') == 100000 and proof.get('parents') == 25000
         and proof.get('validatedNativeVectors') == 100000
         and type(proof.get('peakMemoryBytes')) is int and proof['peakMemoryBytes'] > 0
-        and type(proof.get('minimumFreeBytes')) is int and proof['minimumFreeBytes'] >= LOAD_POLICY['minimumFreeBytes']
+        and type(proof.get('minimumFreeBytes')) is int and proof['minimumFreeBytes'] >= state['loadPolicy']['minimumFreeBytes']
         and proof.get('modelWarmState') in {'WARM', 'COLD', 'UNKNOWN'}
         and proof.get('resourcePolicySha256') == load_resource_policy_hash(state)
         and proof.get('retries') == 0 and proof.get('errors') == 0
@@ -635,10 +658,10 @@ def foreground_load(state, workflow):
     guard(state, 'import')
     free_space()
     if workflow == 'full':
-        validate_pilot_admission(json.loads(read_private_bytes(state_path(state['runId']).parent /
+        validate_pilot_admission(json.loads(read_private_bytes(state_path(state['runId'], state['experimentPolicyId']).parent /
             'load-pilot-report.json', 8 * 1024 ** 2)), state)
     if workflow == 'traffic':
-        validate_full_admission(json.loads(read_private_bytes(state_path(state['runId']).parent /
+        validate_full_admission(json.loads(read_private_bytes(state_path(state['runId'], state['experimentPolicyId']).parent /
             'load-full-report.json', 8 * 1024 ** 2)), state)
     filename = RUNTIME_ENTRIES[workflow]
     entry = HERE / filename
@@ -654,7 +677,7 @@ def foreground_load(state, workflow):
     save(state)
     environment = {**base_environment(), **state['environment'],
         'VECTORIX_LOAD_RUN': state['runId'], 'VECTORIX_LOAD_ROLE': 'load'}
-    arguments = [shutil.which('node'), str(entry), '--state', str(state_path(state['runId'])),
+    arguments = [shutil.which('node'), str(entry), '--state', str(state_path(state['runId'], state['experimentPolicyId'])),
         '--run', state['runId'], '--mode', workflow]
     os.chdir(ROOT)
     os.execvpe(arguments[0], arguments, environment)
@@ -672,7 +695,7 @@ def app(state, service, workflow=None):
     for name in SERVICES:
         owned(state, name, running=True)
     if service != 'api':
-        validate_fixture(json.loads(read_private_bytes(state_path(state['runId']).parent / 'fixture.json', 128 * 1024)), state)
+        validate_fixture(json.loads(read_private_bytes(state_path(state['runId'], state['experimentPolicyId']).parent / 'fixture.json', 128 * 1024)), state)
     target = state['dashboardProcesses'] if service == 'web' else state['processes']
     require(service not in target or not process_alive(state, target[service]), 'load-app-already-running')
     entry = Path(state['builds'][service]['entry'])
@@ -684,7 +707,7 @@ def app(state, service, workflow=None):
         free_port(state['ports'][service])
         environment.update(PORT=str(state['ports'][service]), HOSTNAME='127.0.0.1')
     if service == 'api':
-        preload = state_path(state['runId']).parent / 'api-loopback.mjs'
+        preload = state_path(state['runId'], state['experimentPolicyId']).parent / 'api-loopback.mjs'
         content = ("import net from 'node:net';const f=net.Server.prototype.listen;const p=" + str(state['ports']['api'])
             + ";net.Server.prototype.listen=function(...a){if(a[0]&&typeof a[0]==='object'&&Number(a[0].port)===p)a[0]={...a[0],host:'127.0.0.1'};else if(Number(a[0])===p){if(typeof a[1]==='string')a[1]='127.0.0.1';else a.splice(1,0,'127.0.0.1');}return f.apply(this,a);};\n")
         if preload.exists():
@@ -706,7 +729,7 @@ def app(state, service, workflow=None):
 
 def ready(state):
     require(state['phase'] == 'BOOTSTRAPPING', 'load-ready-phase')
-    validate_fixture(json.loads(read_private_bytes(state_path(state['runId']).parent / 'fixture.json', 128 * 1024)), state)
+    validate_fixture(json.loads(read_private_bytes(state_path(state['runId'], state['experimentPolicyId']).parent / 'fixture.json', 128 * 1024)), state)
     for service in ['api', 'workers']:
         require(service in state['processes'] and process_alive(state, state['processes'][service]), 'load-live-runtime-required')
     state['phase'] = 'READY_FOR_LOAD_IMPORT'
@@ -757,6 +780,7 @@ def main():
     require(not DRAFT_ONLY, 'load-topology-draft-awaiting-root-review')
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--run', required=True)
+    parser.add_argument('--experiment', choices=['DEFAULT_V1','LIGHT_V1'], default='DEFAULT_V1')
     parser.add_argument('--mode', required=True, choices=['prepare', 'deploy', 'verify-schema', 'seed', 'app', 'ready',
         'guard', 'status', 'stop-apps', 'cleanup'])
     parser.add_argument('--purpose', choices=['bootstrap', 'bucket', 'import', 'dashboard'])
@@ -766,20 +790,20 @@ def main():
     for service, image in IMAGES.items():
         parser.add_argument('--' + service + '-image', default=image)
     args = parser.parse_args()
-    path = state_path(args.run)
+    path = state_path(args.run, args.experiment)
     if args.mode == 'guard':
         private_directory(path.parent)
-        print(json.dumps(guard(read_state(args.run), args.purpose, require_caller=args.purpose == 'import'), sort_keys=True))
+        print(json.dumps(guard(read_state(args.run, args.experiment), args.purpose, require_caller=args.purpose == 'import'), sort_keys=True))
         return
     if args.mode == 'prepare':
         CACHE.mkdir(parents=True, exist_ok=True)
         require(CACHE.resolve() == CACHE and CACHE.is_dir(), 'load-cache-path')
     with state_lock():
         if args.mode == 'prepare':
-            state = prepare(args.run, args.model_volume, {service: getattr(args, service + '_image') for service in SERVICES})
+            state = prepare(args.run, args.model_volume, {service: getattr(args, service + '_image') for service in SERVICES}, args.experiment)
         else:
             private_directory(path.parent)
-            state = read_state(args.run)
+            state = read_state(args.run, args.experiment)
             if args.mode == 'deploy': deploy(state)
             elif args.mode == 'verify-schema': schema_ready(state)
             elif args.mode == 'seed': bootstrap(state)

@@ -9,6 +9,10 @@ import {
     nativeDelta,
     stableNativeSnapshot,
 } from './load-observer-core.mjs';
+import {
+    observationBinding,
+    assertObservationBinding,
+} from './load-observer-policy.mjs';
 export const RUNTIME_DRAFT_ONLY = true;
 /** Reader/store/admission are explicit capabilities. The default guarded runtime supplies real read-only implementations. */
 export function createLoadObserver({
@@ -40,6 +44,7 @@ export function createLoadObserver({
                 /^[A-Za-z0-9_-]{1,128}$/u.test(input.collectionId),
             'LOAD_OBS_SCOPE'
         );
+        return observationBinding(state, fixture, input);
     };
     const stable = async (input) =>
         stableNativeSnapshot(() => reader.native(input), {
@@ -48,7 +53,7 @@ export function createLoadObserver({
             verify: admit,
         });
     const beginIndexObservation = async (input) => {
-        validate(input);
+        const policyBinding = validate(input);
         await admit();
         need(
             input.configurationRevision === 1 &&
@@ -64,6 +69,7 @@ export function createLoadObserver({
             runId: state.runId,
             organizationId: input.organizationId,
             collectionId: input.collectionId,
+            ...policyBinding,
             snapshot: before,
         };
         await store.write('baseline-' + baselineSha256 + '.json', record);
@@ -74,6 +80,7 @@ export function createLoadObserver({
             runId: state.runId,
             organizationId: input.organizationId,
             collectionId: input.collectionId,
+            ...policyBinding,
             workload: 'INDEXING',
             provider: 'OLLAMA',
             stable: true,
@@ -88,7 +95,7 @@ export function createLoadObserver({
             'LOAD_OBS_SCOPE'
         );
         const input = { ...supplied, runId: state.runId };
-        validate(input);
+        const policyBinding = validate(input);
         await admit();
         need(
             id(input.generationId) &&
@@ -110,6 +117,7 @@ export function createLoadObserver({
                 input.nativeBaseline.collectionId === input.collectionId,
             'LOAD_OBS_BASELINE'
         );
+        assertObservationBinding(input.nativeBaseline, policyBinding);
         const saved = await store.read(
             'baseline-' + input.nativeBaseline.baselineSha256 + '.json'
         );
@@ -124,6 +132,7 @@ export function createLoadObserver({
                     input.nativeBaseline.producerIdentitySha256,
             'LOAD_OBS_BASELINE'
         );
+        assertObservationBinding(saved, policyBinding);
         // Stores are consistent separately. Verify the native producer before/after catalog/vector observation too.
         const beforeGeometry = input.expectedNativeWorkProof
             ? null
@@ -161,7 +170,9 @@ export function createLoadObserver({
                     same(receipt.expected, expected),
                 'LOAD_OBS_RECEIPT'
             );
+            assertObservationBinding(receipt, policyBinding);
             usage = nativeDelta(saved.snapshot, receipt.after, expected);
+            Object.assign(usage.nativeWorkProof, policyBinding);
             usage.nativeWorkProof.receiptSha256 = digest(receipt);
             need(
                 same(usage.nativeWorkProof, input.expectedNativeWorkProof),
@@ -171,12 +182,14 @@ export function createLoadObserver({
             const after = await stable(input);
             need(same(beforeGeometry, after), 'LOAD_OBS_NOT_STABLE');
             usage = nativeDelta(saved.snapshot, after, expected);
+            Object.assign(usage.nativeWorkProof, policyBinding);
             const receipt = {
                 schemaVersion: 1,
                 kind: 'LOAD_NATIVE_WORK_RECEIPT',
                 runId: input.runId,
                 organizationId: input.organizationId,
                 collectionId: input.collectionId,
+                ...policyBinding,
                 generationId: input.generationId,
                 baselineSha256: input.nativeBaseline.baselineSha256,
                 manifestSha256: geometry.manifestSha256,
@@ -196,6 +209,7 @@ export function createLoadObserver({
             runId: input.runId,
             organizationId: input.organizationId,
             collectionId: input.collectionId,
+            ...policyBinding,
             configurationRevision: 1,
             status: 'ACTIVE',
             usage,

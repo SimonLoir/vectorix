@@ -4,6 +4,7 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
+import { getLoadPolicy, policySha256 } from './load-policy-registry.mjs';
 import { digest } from './load-observer-core.mjs';
 import { privateCheckpoint } from './load-private.mjs';
 import {
@@ -20,10 +21,13 @@ import {
 const run = '0123456789ab',
     h = (char) => char.repeat(64);
 function fixtureState() {
-    const namespace = 'vectorix-m7c-load',
+    const policy = getLoadPolicy('DEFAULT_V1'),
+        namespace = policy.namespace,
         applicationDatabase = `vectorix_m7c_load_app_${run}_test`,
         vectorDatabase = `vectorix_m7c_load_vectors_${run}_test`;
     const state = {
+        experimentPolicyId: policy.id,
+        experimentPolicySha256: policySha256(policy),
         schemaVersion: 1,
         namespace,
         runId: run,
@@ -37,7 +41,7 @@ function fixtureState() {
         migrations: { '20261031000000_sql_function_search_path': h('d') },
         images: { postgres: 'sha256:' + h('e') },
         resourceLimits: { postgres: { cpus: '2', memoryBytes: 2147483648 } },
-        loadPolicy: { version: 'synthetic-size-policy' },
+        loadPolicy: structuredClone(policy.loadPolicy),
         resources: Object.fromEntries(
             ['postgres', 'vector', 'redis', 'rustfs', 'ollama'].map(
                 (service, index) => [
@@ -56,6 +60,8 @@ function fixtureState() {
         VECTOR_DATABASE_URL: `postgresql://runtime:SYNTHETIC_SECRET@127.0.0.1:45002/${vectorDatabase}`,
     };
     const fixture = {
+        experimentPolicyId: policy.id,
+        experimentPolicySha256: policySha256(policy),
         schemaVersion: 1,
         namespace,
         runId: run,

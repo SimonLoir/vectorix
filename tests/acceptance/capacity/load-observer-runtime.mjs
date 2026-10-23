@@ -23,13 +23,15 @@ import {
     privateDirectory,
     privateCheckpoint,
 } from './load-private.mjs';
-import { loadProfile } from './load-import-core.mjs';
+import { observationPolicy } from './load-observer-core.mjs';
+import { observationProfile } from './load-observer-policy.mjs';
 import { sourceFormat } from './load-observer-layout.mjs';
 export const STATIC_DRAFT_ONLY = false;
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = path.resolve(HERE, '../../..');
 /** The independently reviewed load guard checks exact labels, IDs, images, mounts, ports, schema and caller PID. */
 export function loadObserverGuard({ state, statePath }) {
+    const policy = observationPolicy(state);
     const expected = path.join(
         ROOT,
         'node_modules/.cache/vectorix',
@@ -38,7 +40,7 @@ export function loadObserverGuard({ state, statePath }) {
     );
     need(
         statePath === expected &&
-            state.prefix === 'vectorix-m7c-load-' + state.runId,
+            state.prefix === policy.namespace + '-' + state.runId,
         'LOAD_OBS_GUARD'
     );
     const child = spawnSync(
@@ -46,6 +48,8 @@ export function loadObserverGuard({ state, statePath }) {
         [
             '-B',
             path.join(HERE, 'load-topology.py'),
+            '--experiment',
+            policy.id,
             '--run',
             state.runId,
             '--mode',
@@ -74,6 +78,8 @@ export function loadObserverGuard({ state, statePath }) {
     }
     need(
         value.schemaVersion === 1 &&
+            value.experimentPolicyId === policy.id &&
+            value.experimentPolicySha256 === state.experimentPolicySha256 &&
             value.namespace === state.namespace &&
             value.runId === state.runId &&
             value.purpose === 'import' &&
@@ -82,6 +88,7 @@ export function loadObserverGuard({ state, statePath }) {
             value.bootstrapFreshness === false,
         'LOAD_OBS_GUARD'
     );
+    return value;
 }
 /** Read the fixed worker tuple already admitted by the guard; never serialize environment/command lines. */
 export function producerIdentity(state) {
@@ -195,13 +202,7 @@ export async function createLoadObservationRuntime({
     need(typeof readCanonical === 'function', 'LOAD_OBS_CANONICAL_ADAPTER');
     const dependencies = {
         profile: (input) =>
-            loadProfile(
-                input.bindings.length === 24 &&
-                    input.organizationId ===
-                        fixture.users.foreign.organizationId
-                    ? referenceMetadataFields
-                    : undefined
-            ),
+            observationProfile(state, fixture, input, referenceMetadataFields),
         canonical: async (descriptor, extractorVersion) => {
             const expected = sourceFormat(descriptor);
             need(
@@ -238,7 +239,7 @@ export async function createLoadObservationRuntime({
                     }),
             ];
             const parent = chunking.planParentContext(artifact, child, {
-                parentMaxTokens: 2048,
+                parentMaxTokens: profile.chunking.parentMaxTokens,
             });
             return {
                 children: child,

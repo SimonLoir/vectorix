@@ -3,6 +3,7 @@
 import path from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { performance } from 'node:perf_hooks';
+import { getLoadPolicy, loadPolicyForState } from './load-policy-registry.mjs';
 import {
     loadResourcePolicyHash,
     same,
@@ -46,6 +47,16 @@ export {
 } from './load-import-runtime-services.mjs';
 export const STATIC_DRAFT_ONLY = false;
 const HERE = path.dirname(fileURLToPath(import.meta.url));
+/** Return the actual independently validated guard result; never reconstruct an older proof envelope. */
+export function createLoadImportAdmission({ state, statePath, guard }) {
+    loadPolicyForState(state);
+    need(typeof guard === 'function', 'LOAD_RUNTIME_ADAPTER');
+    return async () => {
+        const proof = await guard({ state, statePath });
+        guardProof(proof, { state, runId: state.runId });
+        return proof;
+    };
+}
 /**
  * One-shot orchestration with explicitly injected I/O/clients. Synthetic tests cannot become live reports.
  * Journals are durable before mutations; a crashed invocation is never resumed by replaying requests.
@@ -83,8 +94,9 @@ async function executeLoadImportWorkflowChecked({
     );
     const guarded = async () => guardProof(await admit(), context);
     await guarded();
-    validateManifest(content.manifest);
-    validateReferences(content.references);
+    const policy = loadPolicyForState(context.state);
+    validateManifest(content.manifest, policy);
+    validateReferences(content.references, policy);
     const names = pathsFor(context.mode);
     for (const name of Object.values(names)) await io.assertAbsent(name);
     if (context.mode === 'pilot')
@@ -453,13 +465,18 @@ export async function runLoadImportCli(args = process.argv.slice(2)) {
         privateCheckpoint,
     } = await import('./load-private.mjs');
     const root = discoverWorkspace(HERE),
-        runDirectory = path.join(
-            root,
-            'node_modules/.cache/vectorix',
-            'vectorix-m7c-load-' + parsed.runId
-        );
+        runDirectory = path.dirname(parsed.statePath);
     need(
-        parsed.statePath === path.join(runDirectory, 'state.json'),
+        ['DEFAULT_V1', 'LIGHT_V1'].some(
+            (id) =>
+                parsed.statePath ===
+                path.join(
+                    root,
+                    'node_modules/.cache/vectorix',
+                    getLoadPolicy(id).namespace + '-' + parsed.runId,
+                    'state.json'
+                )
+        ),
         'LOAD_RUNTIME_ARGUMENTS'
     );
     privateDirectory(runDirectory);
@@ -480,18 +497,11 @@ export async function runLoadImportCli(args = process.argv.slice(2)) {
         helperDirectory: HERE,
     });
     const { loadObserverGuard } = await import('./load-observer-runtime.mjs');
-    const admit = async () => {
-        loadObserverGuard({ state, statePath: parsed.statePath });
-        return {
-            schemaVersion: 1,
-            namespace: state.namespace,
-            runId: state.runId,
-            purpose: 'import',
-            resourceOwnership: true,
-            databaseReadOnly: true,
-            bootstrapFreshness: false,
-        };
-    };
+    const admit = createLoadImportAdmission({
+        state,
+        statePath: parsed.statePath,
+        guard: loadObserverGuard,
+    });
     await admit();
     for (const key of Object.keys(process.env))
         if (!['PATH', 'LANG', 'LC_ALL', 'TMPDIR'].includes(key))

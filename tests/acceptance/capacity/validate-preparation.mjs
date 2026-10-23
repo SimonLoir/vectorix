@@ -3,6 +3,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { createHash } from 'node:crypto';
+import { getLoadPolicy, policySha256 } from './load-policy-registry.mjs';
 const here = path.dirname(fileURLToPath(import.meta.url));
 const root = path.resolve(here, '../../..');
 const hash = (bytes) => createHash('sha256').update(bytes).digest('hex');
@@ -37,18 +38,56 @@ need(
         )
 );
 need(
-    Object.keys(provenance.postTimingPreRelocationRuntimeSha256).length ===
-        44 &&
-        Object.keys(provenance.relocatedSourcesSha256).length === 60 &&
+    provenance.schemaVersion === 2 &&
+        Object.keys(provenance.postTimingPreRelocationRuntimeSha256).length ===
+            44 &&
+        provenance.previousDeliveredDefault.commit ===
+            '810fe339724254dee66896bc276a8415a3785915' &&
+        Object.keys(provenance.previousDeliveredDefault.sourcesSha256)
+            .length === 60 &&
+        Object.keys(provenance.previousDeliveredDefault.runtimeSha256)
+            .length === 44 &&
+        Object.keys(provenance.currentSourcesSha256).length >= 60 &&
+        Object.keys(provenance.currentSourcesSha256).length <= 90 &&
         Object.keys(provenance.loadFilesSha256).length === 3 &&
+        Object.keys(provenance.lightFilesSha256).length === 3 &&
         Object.keys(provenance.canonicalReferenceFilesSha256).length === 53
 );
+// A newly added runtime/test module cannot silently escape the frozen inventory.
+const actualSources = fs
+    .readdirSync(here)
+    .filter(
+        (name) =>
+            /\.(?:mjs|py)$/u.test(name) && name !== 'validate-preparation.mjs'
+    )
+    .sort();
+need(
+    JSON.stringify(actualSources) ===
+        JSON.stringify(Object.keys(provenance.currentSourcesSha256).sort())
+);
+need(
+    Object.keys(provenance.closedExperiments).sort().join(',') ===
+        'DEFAULT_V1,LIGHT_V1'
+);
+for (const name of ['DEFAULT_V1', 'LIGHT_V1']) {
+    const policy = getLoadPolicy(name),
+        expected = provenance.closedExperiments[name];
+    need(
+        expected.policySha256 === policySha256(policy) &&
+            expected.namespace === policy.namespace &&
+            expected.version === policy.policyVersion &&
+            expected.family === policy.identity.family &&
+            expected.pilot === policy.identity.pilot &&
+            expected.full === policy.identity.full
+    );
+}
 need(
     !fs.existsSync(path.join(here, 'reference-v1')) &&
         !fs.existsSync(path.join(here, 'supplemental-b53.mjs'))
 );
-verify(here, provenance.relocatedSourcesSha256);
+verify(here, provenance.currentSourcesSha256);
 verify(path.join(here, 'load-v1'), provenance.loadFilesSha256);
+verify(path.join(here, 'light-v1'), provenance.lightFilesSha256);
 verify(path.join(here, '../quality'), provenance.canonicalReferenceFilesSha256);
 need(
     hash(
@@ -60,10 +99,12 @@ need(
 console.log(
     JSON.stringify({
         status: 'PASS',
-        relocatedSourceFiles: 60,
+        relocatedSourceFiles: actualSources.length,
         loadMetadataFiles: 3,
+        lightMetadataFiles: 3,
+        closedExperiments: ['DEFAULT_V1', 'LIGHT_V1'],
         canonicalReferenceFiles: 53,
         nativeOrResourceActions: 0,
-        relocatedNativeRetest: 'NOT_RUN',
+        nativeAcceptance: 'NOT_ASSESSED_BY_VALIDATOR',
     })
 );

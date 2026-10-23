@@ -3,6 +3,7 @@
 import { randomBytes, randomUUID } from 'node:crypto';
 import { isDeepStrictEqual } from 'node:util';
 import { pathToFileURL } from 'node:url';
+import { loadPolicyForState } from './load-policy-registry.mjs';
 
 export const DRAFT_ONLY = false;
 export const BOOTSTRAP_LIMITS = Object.freeze({
@@ -86,12 +87,18 @@ const exactKeys = (value, keys) =>
 
 /** Bind this protocol to one fresh owned load run and its two exact loopback origins. */
 export function validateBootstrapConfig(state) {
+    let policy;
+    try {
+        policy = loadPolicyForState(state);
+    } catch {
+        throw new LoadBootstrapError('LOAD_BOOTSTRAP_CONFIG');
+    }
     bootstrapNeed(
         state &&
             state.schemaVersion === 1 &&
-            state.namespace === 'vectorix-m7c-load' &&
+            state.namespace === policy.namespace &&
             /^[a-f0-9]{12}$/u.test(state.runId) &&
-            state.prefix === 'vectorix-m7c-load-' + state.runId &&
+            state.prefix === policy.namespace + '-' + state.runId &&
             ['SCHEMA_VERIFIED_EMPTY', 'BOOTSTRAPPING'].includes(state.phase),
         'LOAD_BOOTSTRAP_CONFIG'
     );
@@ -111,7 +118,7 @@ export function validateBootstrapConfig(state) {
     );
     bootstrapNeed(
         state.applicationDatabase ===
-            `vectorix_m7c_load_app_${state.runId}_test`,
+            `${policy.databasePrefix}_app_${state.runId}_test`,
         'LOAD_BOOTSTRAP_CONFIG'
     );
     const env = state.environment;
@@ -157,7 +164,9 @@ export function buildLoadFixture(state, users, organizations) {
     );
     const fixture = {
         schemaVersion: 1,
-        namespace: 'vectorix-m7c-load',
+        namespace: state.namespace,
+        experimentPolicyId: state.experimentPolicyId,
+        experimentPolicySha256: state.experimentPolicySha256,
         runId: state.runId,
         users: Object.fromEntries(
             ROLES.map((role) => [
@@ -180,6 +189,8 @@ export function buildLoadFixture(state, users, organizations) {
         exactKeys(fixture, [
             'schemaVersion',
             'namespace',
+            'experimentPolicyId',
+            'experimentPolicySha256',
             'runId',
             'users',
             'organizationIds',
@@ -202,7 +213,7 @@ export function buildLoadFixture(state, users, organizations) {
                     typeof user.memberId === 'string' &&
                     ID.test(user.memberId) &&
                     user.email ===
-                        `m7c-load-${role}-${state.runId}@example.test` &&
+                        `${loadPolicyForState(state).emailPrefix}-${role}-${state.runId}@example.test` &&
                     typeof user.password === 'string' &&
                     user.password.length >= 20 &&
                     user.password.length <= 200
@@ -316,7 +327,7 @@ function validateSaved(value, state, users, organizations, withReader) {
                     (saved) =>
                         saved.id === organizations[suffix].id &&
                         saved.slug ===
-                            `m7c-load-${state.runId}-${suffix.toLowerCase()}`
+                            `${loadPolicyForState(state).emailPrefix}-${state.runId}-${suffix.toLowerCase()}`
                 )
             ),
         'LOAD_BOOTSTRAP_ORGANIZATIONS'
@@ -337,7 +348,7 @@ function validateSaved(value, state, users, organizations, withReader) {
                   {
                       userId: users.reader.userId,
                       organizationId: organizations.A.id,
-                      role: `m7c-load-reader-${state.runId}`,
+                      role: `${loadPolicyForState(state).emailPrefix}-reader-${state.runId}`,
                   },
               ]
             : []),
@@ -376,7 +387,8 @@ function validateSaved(value, state, users, organizations, withReader) {
             typeof role?.id === 'string' &&
             ID.test(role.id) &&
             role.organizationId === organizations.A.id &&
-            role.role === `m7c-load-reader-${state.runId}` &&
+            role.role ===
+                `${loadPolicyForState(state).emailPrefix}-reader-${state.runId}` &&
             isDeepStrictEqual(permission, READER_PERMISSION),
         'LOAD_BOOTSTRAP_READER_ROLE'
     );
@@ -417,7 +429,7 @@ export async function bootstrapLoadFixture({
             ROLES.map((role) => [
                 role,
                 {
-                    email: `m7c-load-${role}-${state.runId}@example.test`,
+                    email: `${loadPolicyForState(state).emailPrefix}-${role}-${state.runId}@example.test`,
                     password: randomPassword(role),
                 },
             ])
@@ -446,7 +458,9 @@ export async function bootstrapLoadFixture({
     );
     const journal = {
         schemaVersion: 1,
-        namespace: 'vectorix-m7c-load',
+        namespace: state.namespace,
+        experimentPolicyId: state.experimentPolicyId,
+        experimentPolicySha256: state.experimentPolicySha256,
         runId: state.runId,
         status: 'BOOTSTRAPPING',
         actions: [],
@@ -555,7 +569,7 @@ export async function bootstrapLoadFixture({
                 'organization-create',
                 { suffix, role },
                 async () => {
-                    const slug = `m7c-load-${state.runId}-${suffix.toLowerCase()}`;
+                    const slug = `${loadPolicyForState(state).emailPrefix}-${state.runId}-${suffix.toLowerCase()}`;
                     const saved = await transport.post(
                         role,
                         'organization/create',
@@ -587,7 +601,7 @@ export async function bootstrapLoadFixture({
                 }
             );
         }
-        const readerRole = `m7c-load-reader-${state.runId}`;
+        const readerRole = `${loadPolicyForState(state).emailPrefix}-reader-${state.runId}`;
         await action(
             'reader-role-create',
             { organizationId: organizations.A.id, role: readerRole },

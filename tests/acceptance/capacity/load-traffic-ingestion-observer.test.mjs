@@ -1,3 +1,8 @@
+import {
+    experimentFields,
+    fixturePolicyFields,
+    roleFields,
+} from './load-observer.test-helper.mjs';
 /** Only local synthetic documents, injected numeric observations and mock SQL are used. */
 import test from 'node:test';
 import assert from 'node:assert/strict';
@@ -43,9 +48,10 @@ const state = {
         VECTOR_DATABASE_URL: `postgresql://runtime:test@127.0.0.1:15433/vectorix_m7c_load_vectors_${run}_test`,
         VECTORIX_DEFAULT_OLLAMA_ENDPOINT: 'http://127.0.0.1:11435',
     },
-    loadPolicy: { model: { digest: LOAD_IDENTITY.weights } },
+    ...experimentFields(),
 };
 const fixture = {
+    ...fixturePolicyFields(),
     namespace: state.namespace,
     runId: run,
     organizationIds: ['orgA', 'orgB'],
@@ -56,6 +62,7 @@ const fixture = {
     },
 };
 const input = {
+    ...roleFields('ingestionA'),
     phase: 'paced',
     organizationId: 'orgA',
     collectionId: uuid(1),
@@ -71,6 +78,7 @@ const identity = {
     dimensions: 768,
 };
 const dependencies = {
+    profile: () => loadProfile(),
     prepare: prepareEmbeddingInput,
     manifestHash,
     generationTable,

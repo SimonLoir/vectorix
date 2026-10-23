@@ -1,0 +1,280 @@
+{
+    "formatVersion": 1,
+    "namespace": "vectorix-m7c-light-load",
+    "version": "m7c-light-v1",
+    "seed": "vectorix-m7c-light-default-2026-10-23-v1",
+    "status": "PURE_GEOMETRY_PREPARED_NATIVE_CAPACITY_NOT_RUN",
+    "runtimeDraftOnly": true,
+    "familySha256": "66b2c83297a39f7e805ec5cf1fad2bc30297a0610570b8d06a6090285d8913d0",
+    "policyVersion": "native-light-load-v1",
+    "controlProfile": {
+        "targetTokens": 512,
+        "minTokens": 128,
+        "maxTokens": 768,
+        "overlapTokens": 64,
+        "parentMaxTokens": 2048
+    },
+    "resourceLimits": {
+        "postgres": {
+            "cpus": "2",
+            "memoryBytes": 2147483648
+        },
+        "vector": {
+            "cpus": "2",
+            "memoryBytes": 4294967296
+        },
+        "redis": {
+            "cpus": "1",
+            "memoryBytes": 268435456
+        },
+        "rustfs": {
+            "cpus": "1",
+            "memoryBytes": 1073741824
+        },
+        "ollama": {
+            "cpus": "4",
+            "memoryBytes": 6442450944
+        }
+    },
+    "finiteGates": {
+        "setupMs": 1200000,
+        "pilotMs": 1200000,
+        "sourceImportMs": 1200000,
+        "fullIndexMs": 7200000,
+        "scaleFactor": 50,
+        "phaseMicros": 180000000,
+        "drainMicros": 300000000,
+        "minimumFreeBytes": 4294967296,
+        "maximumDocuments": 240,
+        "maximumCollections": 20,
+        "searchSlots": 10,
+        "searchSlotsPerOrganization": 5,
+        "maximumSearchesPerPhase": 10000,
+        "nativeParallelSlots": 1
+    },
+    "recordBytes": 192,
+    "topics": [
+        {
+            "id": "returns",
+            "EN": "Returns require a receipt and a dated inspection.",
+            "FR": "Le retour exige un reçu et un contrôle daté."
+        },
+        {
+            "id": "renewals",
+            "EN": "Renewal keeps the recorded tariff after confirmation.",
+            "FR": "Le renouvellement conserve le tarif après confirmation."
+        },
+        {
+            "id": "support",
+            "EN": "Support records the priority and acknowledgment.",
+            "FR": "Le support note la priorité et la réception du ticket."
+        },
+        {
+            "id": "backups",
+            "EN": "Backup records retain a schedule and restore check.",
+            "FR": "La sauvegarde garde une échéance et un contrôle."
+        },
+        {
+            "id": "delivery",
+            "EN": "Delivery records contain the region and parcel tier.",
+            "FR": "La livraison note la région et le niveau du colis."
+        },
+        {
+            "id": "equipment",
+            "EN": "Equipment returns use a reception desk and form.",
+            "FR": "Le matériel utilise un accueil et un formulaire."
+        },
+        {
+            "id": "travel",
+            "EN": "Travel claims retain a deadline and expense cap.",
+            "FR": "Le voyage conserve une échéance et un plafond."
+        },
+        {
+            "id": "coldchain",
+            "EN": "Food sensors record temperature and calibration.",
+            "FR": "Le capteur note température et étalonnage."
+        }
+    ],
+    "profile": {
+        "targetTokens": 128,
+        "minTokens": 32,
+        "maxTokens": 192,
+        "overlapTokens": 16,
+        "maxEmbeddingInputBytes": 6144,
+        "maxChunks": 100000
+    },
+    "parentProfile": {
+        "parentMaxTokens": 512
+    },
+    "modelRequirement": {
+        "provider": "OLLAMA",
+        "model": "embeddinggemma:latest",
+        "dimensions": 768,
+        "preset": "EMBEDDING_GEMMA",
+        "preparation": "",
+        "metric": "COSINE",
+        "numericType": "FLOAT32",
+        "indexType": "DISKANN",
+        "parentChild": true,
+        "expectedDigest": "85462619ee721b466c5927d109d4cb765861907d5417b9109caebc4e614679f1"
+    },
+    "totals": {
+        "documents": 4,
+        "children": 2000,
+        "parents": 500,
+        "sourceBytes": 672192,
+        "childBytes": 767347,
+        "parentBytes": 695964,
+        "preparedInputBytes": 849347,
+        "estimatedInputTokens": 213383,
+        "workerBatches64": 32,
+        "maximumSourceBytes": 168048,
+        "maximumPreparedInputBytes": 425,
+        "minimumChildBytes": 381,
+        "maximumChildBytes": 384,
+        "maximumCombinedLayoutBytes": 365895,
+        "maximumSourceSpansPerRow": 1
+    },
+    "languages": {
+        "EN": 2,
+        "FR": 2
+    },
+    "primaryTopics": {
+        "returns": 2,
+        "renewals": 2,
+        "support": 0,
+        "backups": 0,
+        "delivery": 0,
+        "equipment": 0,
+        "travel": 0,
+        "coldchain": 0
+    },
+    "documents": [
+        {
+            "index": 1,
+            "id": "m7c-light-v1-d0001",
+            "filename": "m7c-light-v1-d0001-en.txt",
+            "language": "EN",
+            "topic": "returns",
+            "children": 500,
+            "bytes": 168048,
+            "fullRecords": 875,
+            "tailBytes": 48,
+            "records": 876,
+            "sourceSha256": "3044bee0a6c6a3103d046df5f4a59a2631b5c64133ee37f76af53ee032d68eb5",
+            "canonicalSha256": "3044bee0a6c6a3103d046df5f4a59a2631b5c64133ee37f76af53ee032d68eb5",
+            "utf16Units": 168048,
+            "sourceCount": 1,
+            "chunkerVersion": "token-window-utf8-v1",
+            "parentContextVersion": "parent-context-utf8-v1",
+            "actualChildren": 500,
+            "actualParents": 125,
+            "childBytes": 191778,
+            "parentBytes": 173983,
+            "preparedInputBytes": 212278,
+            "estimatedInputTokens": 53294,
+            "geometrySha256": "c7f804b2fda0f7d4c44f35f8376312342d92b73b408efcc236a41333c6c9ddd3",
+            "parentGeometrySha256": "5f1fe17d190ecfc80ca3081842e75d0b1705b4a1ca5e76b7f0dc06fe2eb7d20c",
+            "childParentMappingSha256": "233e0c67a9a7134208c33b65db39c8fc26108b691d0805fa05fefa09f463b19e"
+        },
+        {
+            "index": 2,
+            "id": "m7c-light-v1-d0002",
+            "filename": "m7c-light-v1-d0002-fr.txt",
+            "language": "FR",
+            "topic": "returns",
+            "children": 500,
+            "bytes": 168048,
+            "fullRecords": 875,
+            "tailBytes": 48,
+            "records": 876,
+            "sourceSha256": "a916966d3de1730e80c7877ad637f61a0a3fc94e52ada8fb316a77dfb875ed98",
+            "canonicalSha256": "a916966d3de1730e80c7877ad637f61a0a3fc94e52ada8fb316a77dfb875ed98",
+            "utf16Units": 162907,
+            "sourceCount": 1,
+            "chunkerVersion": "token-window-utf8-v1",
+            "parentContextVersion": "parent-context-utf8-v1",
+            "actualChildren": 500,
+            "actualParents": 125,
+            "childBytes": 191896,
+            "parentBytes": 173999,
+            "preparedInputBytes": 212396,
+            "estimatedInputTokens": 53398,
+            "geometrySha256": "03226ea30d17f8775971f2c16dfbc0af91d8c3b173d0b6eb68d98f01555f2ac1",
+            "parentGeometrySha256": "32090f0e68c5d6312bf840c78c86c976a4ad4861ad10ae832dcb80c6c453445b",
+            "childParentMappingSha256": "233e0c67a9a7134208c33b65db39c8fc26108b691d0805fa05fefa09f463b19e"
+        },
+        {
+            "index": 3,
+            "id": "m7c-light-v1-d0003",
+            "filename": "m7c-light-v1-d0003-en.txt",
+            "language": "EN",
+            "topic": "renewals",
+            "children": 500,
+            "bytes": 168048,
+            "fullRecords": 875,
+            "tailBytes": 48,
+            "records": 876,
+            "sourceSha256": "9d1c2aa8cb66cce086a5471de74976812ba5c444d64c97984dd7b70fac7658f2",
+            "canonicalSha256": "9d1c2aa8cb66cce086a5471de74976812ba5c444d64c97984dd7b70fac7658f2",
+            "utf16Units": 168048,
+            "sourceCount": 1,
+            "chunkerVersion": "token-window-utf8-v1",
+            "parentContextVersion": "parent-context-utf8-v1",
+            "actualChildren": 500,
+            "actualParents": 125,
+            "childBytes": 191780,
+            "parentBytes": 173984,
+            "preparedInputBytes": 212280,
+            "estimatedInputTokens": 53296,
+            "geometrySha256": "b61cb425f86b4badda5eeec58c2ad4e6cc6c0138d2f2490664f278c548969770",
+            "parentGeometrySha256": "6dada7cea7b8486ae5bdde3f8144925969adde01a50b8fe0d3339b98d89fafdf",
+            "childParentMappingSha256": "233e0c67a9a7134208c33b65db39c8fc26108b691d0805fa05fefa09f463b19e"
+        },
+        {
+            "index": 4,
+            "id": "m7c-light-v1-d0004",
+            "filename": "m7c-light-v1-d0004-fr.txt",
+            "language": "FR",
+            "topic": "renewals",
+            "children": 500,
+            "bytes": 168048,
+            "fullRecords": 875,
+            "tailBytes": 48,
+            "records": 876,
+            "sourceSha256": "8c161e22a367c44565e705765c04e29f49acef64e6df57bed4964ee1e58a6390",
+            "canonicalSha256": "8c161e22a367c44565e705765c04e29f49acef64e6df57bed4964ee1e58a6390",
+            "utf16Units": 162907,
+            "sourceCount": 1,
+            "chunkerVersion": "token-window-utf8-v1",
+            "parentContextVersion": "parent-context-utf8-v1",
+            "actualChildren": 500,
+            "actualParents": 125,
+            "childBytes": 191893,
+            "parentBytes": 173998,
+            "preparedInputBytes": 212393,
+            "estimatedInputTokens": 53395,
+            "geometrySha256": "7abbeefd5e8d8fa301e8c93fdfef4535e34d069abdf9011d441e271014b47649",
+            "parentGeometrySha256": "46614c75851f03156cbdf55d71e4c5444e1a0611caa06288bb7a52bc4511c59e",
+            "childParentMappingSha256": "233e0c67a9a7134208c33b65db39c8fc26108b691d0805fa05fefa09f463b19e"
+        }
+    ],
+    "distinctChildTexts": 2000,
+    "distinctPreparedInputs": 2000,
+    "minimumVerifiedContextTokensForPreparedInputs": 457,
+    "rawFloat32VectorBytesAt768": 6144000,
+    "actualProviderCalls": 0,
+    "databaseCalls": 0,
+    "httpCalls": 0,
+    "capacityAcceptance": "NOT_RUN",
+    "limitations": [
+        "Pure planner geometry and source hashes, not actual uploads, publications, vectors or indexing throughput.",
+        "Preparation formatting uses a nonbinding local context; native probe must independently verify saved model identity/context and byte budget.",
+        "Child counts use UTF8/3 estimates; native estimated work uses ceil(prepared input bytes/4). Neither is an exact model tokenizer or billing count.",
+        "Primary A is light; reference B and both ingestion controls retain the original declared profile.",
+        "Deterministic ID/value variation proves byte-distinct inputs; templated related prose is not representative production semantic diversity.",
+        "Reference quality corpus/qrels/profiles/gates are unchanged and are not measured by this load generator.",
+        "Raw vector/text bytes exclude indexes, WAL, tuple/JSON overhead, parents, temporary rebuilds, logs and multiple physical copies."
+    ],
+    "corpusSha256": "14dd2e0bdcf31e55bff8c0ce6d018bdd42a42d12482c804cd1c9813a44b5d577"
+}

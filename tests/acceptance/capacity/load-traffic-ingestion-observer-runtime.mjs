@@ -22,6 +22,7 @@ import {
 } from './load-private.mjs';
 import { same, validateIdentity } from './load-observer-core.mjs';
 import { tinySource } from './load-traffic-ingestion.mjs';
+import { ingestionProfile } from './load-observer-policy.mjs';
 export const STATIC_DRAFT_ONLY = false;
 const ROOT = path.resolve(
     path.dirname(fileURLToPath(import.meta.url)),
@@ -103,6 +104,7 @@ export async function createTrafficIngestionRuntime({
     const { Client, chunking, documents, embeddings, vector } =
         await loadObservationPackages(admit);
     const dependencies = {
+        profile: (input) => ingestionProfile(state, fixture, input),
         identity: (value) => embeddings.modelIdentity.parse(value),
         prepare: embeddings.prepareEmbeddingInput,
         manifestHash: vector.manifestHash,
@@ -126,7 +128,7 @@ export async function createTrafficIngestionRuntime({
                     }),
             ];
             const parent = chunking.planParentContext(artifact, children, {
-                parentMaxTokens: 2048,
+                parentMaxTokens: profile.chunking.parentMaxTokens,
             });
             return {
                 children,
