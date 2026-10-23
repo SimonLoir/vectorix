@@ -1,0 +1,96 @@
+{
+    "actualRun": {
+        "actualSourcesSha256": {
+            "m7c-interruption-fixture/README.md": "832dbd4d010788cdf469513211a07b4dcea8195b0d94a6280aed091ab76313b6",
+            "m7c-interruption-fixture/fixture.mjs": "61a31a6d030d98aa71bf0c2748c1add85d659fc02fdd2aec9a8a1b90b388ad31",
+            "m7c-interruption-fixture/fixture.test.mjs": "cfe7213c30278010e58e0795830171b747f43061e56823ebc6407de9e925919f",
+            "m7c-interruption-fixture/preflight.mjs": "36015a70090d9d192662003d419254549dfe96623e9bd8370e072990566d350b",
+            "m7c-interruption-fixture/prepared-v1/canonical.json": "aadb208c48b95d0e3312bcd70c11c2a9616027768cb8ca42ce15af2fff6217d0",
+            "m7c-interruption-fixture/prepared-v1/m7c-semantic-boundary-128-v1.txt": "9362fe4019bef7c9c744a4ba46a599523fa693b951103888e4ec1737a7227dd6",
+            "m7c-interruption-fixture/prepared-v1/preflight.json": "879e7fc71b2074052ac978965b83bda7e2322522d89a58d70e4cd2e79d2b3c05",
+            "m7c-interruption-observer/README.md": "913e83569229cf9358b203e1b45c82a09a41b938805f50bb0f7087608faace80",
+            "m7c-interruption-observer/observer-manifest.json": "8f224bb5b5090cc056b4015c64c01dfa248a902de9df58afb2e8fe00f2347426",
+            "m7c-interruption-observer/recovery_observation.py": "9d38a2d1de0402b7f86dc1da990ce613fe9316a4f5b43dc7729bd7ab3ec48780",
+            "m7c-interruption-observer/recovery_observer.py": "274929d87ef17a3715b6b26f7573cde9966597fda07a5ead1a9d71a660f23c2e",
+            "m7c-interruption-observer/recovery_observer_test.py": "796ff85c98b1cc6bc3870aff3426bcb5e2722c03ab100d6d220d05f9714372a1",
+            "m7c-interruption-physical-recipe.md": "54a359005ec9cc6eefc017a046381fb94f7d35e7e351390c2a82017b209889f6",
+            "m7c-interruption/README.md": "e7d89cdc96e3deb9b9082931cb4d465fb36945b805ee9246c12733342be9b085",
+            "m7c-interruption/fault_adapters_test.py": "4d162bf5484fdf1c186b49c98368e753098a2a858b0e4b0ef3d61d9fd0405b46",
+            "m7c-interruption/fault_admission.py": "fb7957c92cc716a2a205304da5abe16e174c400e924d5a21827a6db18609b7c1",
+            "m7c-interruption/fault_driver.py": "2e5f7fcd30b9caee5012e1bf9c60a4a65b6ee75b074edec4533f6a3f1fec1d9a"
+        },
+        "archiveMeaning": "ENABLED_BYTES_PRESERVED_NOT_A_CLAIM_EVERY_FILE_EXECUTED",
+        "formalObserverStatus": "INCOMPLETE_OBSERVER_TIMESTAMP",
+        "originalObserverManifestSha256": "8f224bb5b5090cc056b4015c64c01dfa248a902de9df58afb2e8fe00f2347426",
+        "runId": "8af698331852",
+        "separateFunctionalEvidence": "SEE_RAG_INTERRUPTION_ACCEPTANCE_GUIDE"
+    },
+    "fixture": {
+        "actualPreflightSha256": "879e7fc71b2074052ac978965b83bda7e2322522d89a58d70e4cd2e79d2b3c05",
+        "canonical": {
+            "actualSha256": "aadb208c48b95d0e3312bcd70c11c2a9616027768cb8ca42ce15af2fff6217d0",
+            "path": "fixture/prepared-v1/canonical.json"
+        },
+        "canonicalSha256": "aadb208c48b95d0e3312bcd70c11c2a9616027768cb8ca42ce15af2fff6217d0",
+        "original": {
+            "actualSha256": "9362fe4019bef7c9c744a4ba46a599523fa693b951103888e4ec1737a7227dd6",
+            "path": "fixture/prepared-v1/m7c-semantic-boundary-128-v1.txt"
+        },
+        "originalSha256": "9362fe4019bef7c9c744a4ba46a599523fa693b951103888e4ec1737a7227dd6",
+        "relocatedPreflight": {
+            "path": "fixture/prepared-v1/preflight.json",
+            "sha256": "36b67fe4dba20f726cda48b8e5fd9f1ed245c49fd26865bb18dada72598de321"
+        }
+    },
+    "observerManifestSha256": "30d2ed55062adff91f2de8ae4e6ba07da13900a90036fb5d9061d827c979d51f",
+    "relocatedFixes": [
+        "EXPLICIT_UTC_AND_ACTUAL_TIMESTAMP_TYPE_PROVENANCE_FOR_DESIGNATED_PRISMA_FIELDS",
+        "RETIRED_GENERATION_PUBLISHED_CANDIDATES_RETAIN_CHILD_ACCOUNTING",
+        "SIBLING_FAULT_PATH_AND_ENABLED_INVALID_ARGUMENT_GATES"
+    ],
+    "relocatedNativeRetest": "NOT_RUN",
+    "relocatedSourcesSha256": {
+        "README.md": "ccc4701a2c5474fcb108ddb6a3034daa3c18fabda48e12b023992795452bf9de",
+        "fault/README.md": "6b61276c139bf4ddc6d4a1d9718debdcc43b99a5b1c56d9e0d1c97b3e8542aa1",
+        "fault/fault_adapters_test.py": "c7ba4aae253ba04f8792792874741c8ba8483abcae8bbc8df9ea5e8c7c29cc04",
+        "fault/fault_admission.py": "bde0ace7471f8252cd1c066983558b24e5fee9bdbb46a6c2c8968556dd1c7d88",
+        "fault/fault_driver.py": "8d526792ef8031fffbc58a4510b67985db3b628ce3ad6513b6dd6206d18b09d7",
+        "fixture/README.md": "62cec9ff4e02919c875712e79c196acd1a35edc7ba8e87352c3d85ef19be552c",
+        "fixture/fixture.mjs": "61a31a6d030d98aa71bf0c2748c1add85d659fc02fdd2aec9a8a1b90b388ad31",
+        "fixture/fixture.test.mjs": "33e30e0f95da4d6492a376c1b929439244a9413dbdafc7abe0f11629bc6d7aef",
+        "fixture/preflight.mjs": "466dae2679623150997b691621858a065ef7a0fe2faa5bb049f10ce42b0cdc66",
+        "fixture/prepared-v1/canonical.json": "aadb208c48b95d0e3312bcd70c11c2a9616027768cb8ca42ce15af2fff6217d0",
+        "fixture/prepared-v1/m7c-semantic-boundary-128-v1.txt": "9362fe4019bef7c9c744a4ba46a599523fa693b951103888e4ec1737a7227dd6",
+        "fixture/prepared-v1/preflight.json": "36b67fe4dba20f726cda48b8e5fd9f1ed245c49fd26865bb18dada72598de321",
+        "observer/README.md": "2ba928fb676a948711cb9bc9d34daaec16a41878dfa3f7a96cb3167c88d67be7",
+        "observer/observer-manifest.json": "30d2ed55062adff91f2de8ae4e6ba07da13900a90036fb5d9061d827c979d51f",
+        "observer/recovery_observation.py": "dee29e0facce2a25ef4d7f9bf0996f8fbe8f641bde84003526939b965ae1fd84",
+        "observer/recovery_observer.py": "a7208219da070c973b94054bcc3cbe3b84c2ea1b38174968d38dc25beab74393",
+        "observer/recovery_observer_test.py": "1b073cee12ab0698b95e566949915cafb9c0ffcf2364e29a8589accb43f1e7ba",
+        "physical-proof.md": "c3f921e0d1fe149bceb51e822ff49269a48b12807c7ed801bec3be2769328917",
+        "validate-preparation.mjs": "7d1978e45a615038d3f462b337382d9137816d125c1e8fc785d68484c9d7427f"
+    },
+    "runtimeSourcesSha256": {
+        "fault/fault_admission.py": "bde0ace7471f8252cd1c066983558b24e5fee9bdbb46a6c2c8968556dd1c7d88",
+        "fault/fault_driver.py": "8d526792ef8031fffbc58a4510b67985db3b628ce3ad6513b6dd6206d18b09d7",
+        "fixture/fixture.mjs": "61a31a6d030d98aa71bf0c2748c1add85d659fc02fdd2aec9a8a1b90b388ad31",
+        "fixture/preflight.mjs": "466dae2679623150997b691621858a065ef7a0fe2faa5bb049f10ce42b0cdc66",
+        "observer/recovery_observation.py": "dee29e0facce2a25ef4d7f9bf0996f8fbe8f641bde84003526939b965ae1fd84",
+        "observer/recovery_observer.py": "a7208219da070c973b94054bcc3cbe3b84c2ea1b38174968d38dc25beab74393"
+    },
+    "schemaVersion": 1,
+    "timestampShadow": {
+        "sourcesSha256": {
+            "recovery_observation.py": "37f7f6225b5f9bed7aad605fd9d443ca6a524cd75227dc3f55b8a36afb900449",
+            "recovery_observer.py": "d77f1040c92779cb141165b4f832244f7f52b16e28453d7fd299674cf939b073",
+            "recovery_observer_test.py": "6ce6ace40bced66ee665843c81525c0a5e3c8a1204933862ceb11f0a8a409755"
+        },
+        "status": "OFFLINE_ONLY_NOT_APPLIED_TO_HISTORICAL_RUN",
+        "validation": {
+            "astFiles": 3,
+            "logSha256": "e7f8acfbb253537644e4630c4c2826af2382ef56f5494d2b8222c19a1673fa6d",
+            "resourceCalls": 0,
+            "tests": 20
+        }
+    }
+}
