@@ -182,7 +182,11 @@ void test('preflight and delivery use the same configuration and never dispatch 
                 code: 'SYSTEM_MAIL_INVALID_CONFIGURATION',
             });
             await assert.rejects(
-                sendSystemMail('recipient@example.test', 'Subject', '<p>Test</p>'),
+                sendSystemMail(
+                    'recipient@example.test',
+                    'Subject',
+                    '<p>Test</p>'
+                ),
                 { code: 'SYSTEM_MAIL_INVALID_CONFIGURATION' }
             );
         }
@@ -221,11 +225,18 @@ void test('delivery uses the chosen sender once and sanitizes failures without S
         async () => {
             assert.doesNotThrow(() => assertSystemMailConfigured());
             await assert.rejects(
-                sendSystemMail('recipient@example.test', 'Subject', '<p>Test</p>'),
+                sendSystemMail(
+                    'recipient@example.test',
+                    'Subject',
+                    '<p>Test</p>'
+                ),
                 (error: unknown) => {
                     assert.ok(error instanceof SystemMailError);
                     assert.equal(error.code, 'SYSTEM_MAIL_DELIVERY_FAILED');
-                    assert.equal(error.message, 'System email delivery failed.');
+                    assert.equal(
+                        error.message,
+                        'System email delivery failed.'
+                    );
                     assert.equal(error.cause, undefined);
                     assert.ok(!String(error.stack).includes(rawFailure));
                     return true;

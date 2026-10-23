@@ -32,12 +32,7 @@ export async function sendSystemMail(
                       },
                   }
         );
-        await service.sendMail(
-            to,
-            subject,
-            html,
-            configuration.senderEmail
-        );
+        await service.sendMail(to, subject, html, configuration.senderEmail);
     } catch {
         throw new SystemMailError('SYSTEM_MAIL_DELIVERY_FAILED');
     }
