@@ -1,0 +1,12 @@
+{
+    "faultSha256": {
+        "fault_admission.py": "bde0ace7471f8252cd1c066983558b24e5fee9bdbb46a6c2c8968556dd1c7d88",
+        "fault_driver.py": "8d526792ef8031fffbc58a4510b67985db3b628ce3ad6513b6dd6206d18b09d7"
+    },
+    "runtimeSha256": {
+        "recovery_observation.py": "dee29e0facce2a25ef4d7f9bf0996f8fbe8f641bde84003526939b965ae1fd84",
+        "recovery_observer.py": "a7208219da070c973b94054bcc3cbe3b84c2ea1b38174968d38dc25beab74393"
+    },
+    "schemaVersion": 1,
+    "status": "FROZEN_OFFLINE_NATIVE_NOT_RUN"
+}
