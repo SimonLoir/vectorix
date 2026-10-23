@@ -25,7 +25,7 @@ const messageImports: Record<
 
 interface IntlContextValue {
     locale: Locale;
-    setLocale: (locale: Locale) => void;
+    setLocale: (locale: Locale) => Promise<void>;
 }
 
 const IntlContext = createContext<IntlContextValue | null>(null);

@@ -11,7 +11,8 @@ import {
     TableHeader,
     TableRow,
 } from '@repo/ui/table';
-import PaddedSpinner from '@repo/dashboard-core/components/padded-spinner';
+import { Spinner } from '@repo/ui/spinner';
+import { Button } from '@repo/ui/button';
 import InviteMember from './components/invite-member';
 import MemberLine from './components/member-line';
 import InvitationLine from './components/invitation-line';
@@ -26,9 +27,14 @@ export function MembersManager({
     embedded = false,
 }: Readonly<{ embedded?: boolean }>) {
     const authClient = useAuth();
-    const { data: activeOrganization, isPending } =
-        authClient.useActiveOrganization();
-    const { data: session } = authClient.useSession();
+    const {
+        data: activeOrganization,
+        isPending,
+        error,
+        refetch,
+    } = authClient.useActiveOrganization();
+    const { data: session, isPending: sessionPending } =
+        authClient.useSession();
     const { orpc } = useORPC();
     const { canOperation } = useVectorixPermissions();
     const canReadMembers = canOperation('admin.members.get');
@@ -55,12 +61,25 @@ export function MembersManager({
     const t = useTranslations('members');
     const tBc = useTranslations('breadcrumbs');
 
+    if (isPending || sessionPending)
+        return (
+            <div className='grid h-32 place-items-center'>
+                <Spinner aria-label={t('loading')} />
+            </div>
+        );
     if (
-        isPending ||
+        error ||
         !activeOrganization ||
         activeOrganization.id !== organizationId
     )
-        return <PaddedSpinner />;
+        return (
+            <div className='space-y-3 p-6'>
+                <p role='alert'>{t('loadFailed')}</p>
+                <Button variant='outline' onClick={() => void refetch()}>
+                    {t('reload')}
+                </Button>
+            </div>
+        );
 
     const members = activeOrganization.members || [];
     const avatarColors = new Map(

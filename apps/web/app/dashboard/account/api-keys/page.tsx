@@ -88,10 +88,7 @@ export default function APIKeysPage() {
                     </DialogHeader>
                     <div className='flex gap-2'>
                         <Input readOnly value={newKey ?? ''} />
-                        <CopyToClipboardButton
-                            copyText={newKey ?? ''}
-                            aria-label='Copy'
-                        >
+                        <CopyToClipboardButton copyText={newKey ?? ''}>
                             <CopyIcon />
                         </CopyToClipboardButton>
                     </div>

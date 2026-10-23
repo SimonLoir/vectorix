@@ -617,5 +617,11 @@
                 "UNKNOWN": "Unclassified scan failure"
             }
         }
+    },
+    "languagePreference": {
+        "saving": "Saving language preference",
+        "saveFailed": "We could not confirm your language preference. The display language has not changed.",
+        "sessionRequired": "Sign in again before saving your account language.",
+        "displayFailed": "The display language could not be updated. Reload the page and check your preference."
     }
 }

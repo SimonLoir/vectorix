@@ -4,8 +4,9 @@ import {
     notificationEventRegistry,
     accountSignInSourceExists,
 } from '@routers/utils/notifications';
-import { sendSystemMail, escapeHtml } from '@repo/emails';
+import { sendSystemMail } from '@repo/emails';
 import { sendNotificationPush } from './push';
+import { renderAccountSignInEmail } from './email';
 /** Lease durable deliveries, recheck ownership/preferences, and retry failures with bounded backoff. */
 export async function processNotifications(db: PrismaClient) {
     const now = new Date();
@@ -100,10 +101,16 @@ export async function processNotifications(db: PrismaClient) {
                     '/dashboard/account',
                     process.env.VECTORIX_WEB_URL ?? 'http://localhost:3000'
                 ).toString();
+                const message = renderAccountSignInEmail({
+                    savedLocale: member.user.locale,
+                    title: notification.title,
+                    body: notification.body,
+                    accountUrl: url,
+                });
                 await sendSystemMail(
                     member.user.email,
-                    notification.title,
-                    `<h1>${escapeHtml(notification.title)}</h1><p>${escapeHtml(notification.body)}</p><p><a href="${escapeHtml(url)}">Ouvrir mon compte</a></p>`
+                    message.subject,
+                    message.html
                 );
             } else {
                 const result = await sendNotificationPush(

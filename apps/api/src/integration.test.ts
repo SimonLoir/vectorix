@@ -13,8 +13,10 @@ import { apiKeyIssuerRevocationTests } from './api-key-issuer-revocation';
 import { requestBodyIntegrationTests } from './request-body-integration';
 import { passwordResetIntegrationTests } from './password-reset-integration';
 import { emailOwnershipIntegrationTests } from './email-ownership-integration';
+import { userLocaleIntegrationTests } from './user-locale-tests';
 import { superadminTransactionIntegrationTests } from './superadmin-transaction-integration';
 import { cookieCsrfIntegrationTests } from './cookie-csrf-integration';
+import { notificationLocaleIntegrationTests } from './notification-locale-integration';
 
 if (
     !new URL(
@@ -400,7 +402,15 @@ void test('core journeys with real PostgreSQL and the HTTP transports', async (t
         createBrowser: browser,
         registerUser: (id) => userIds.push(id),
     });
+    await notificationLocaleIntegrationTests(t, {
+        registerUser: (id) => userIds.push(id),
+        registerOrganization: (id) => organizationIds.push(id),
+    });
     await emailOwnershipIntegrationTests(t, {
+        registerUser: (id) => userIds.push(id),
+        registerOrganization: (id) => organizationIds.push(id),
+    });
+    await userLocaleIntegrationTests(t, {
         registerUser: (id) => userIds.push(id),
         registerOrganization: (id) => organizationIds.push(id),
     });

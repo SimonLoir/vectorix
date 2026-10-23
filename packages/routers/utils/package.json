@@ -34,6 +34,7 @@
         "@repo/db": "workspace:*",
         "@repo/queues": "workspace:*",
         "pino": "^10.3.1",
-        "zod": "^4.6.5"
+        "zod": "^4.6.5",
+        "@repo/i18n": "workspace:*"
     }
 }

@@ -1,19 +1,23 @@
 import { sendSystemMail } from '@repo/emails';
+import {
+    resolveLocale,
+    resolveLocaleCookie,
+    type Locale,
+} from '@repo/i18n/locale';
 import { buildCanonicalPasswordResetUrl } from './password-reset-url';
-
-type PasswordResetLocale = 'en' | 'fr' | 'nl-BE';
 
 type PasswordResetEmailInput = Readonly<{
     user: {
         email: string;
         name?: string | null;
+        locale?: unknown;
     };
     token: string;
     request?: Request;
 }>;
 
 const passwordResetTranslations: Record<
-    PasswordResetLocale,
+    Locale,
     {
         subject: string;
         greeting: (name: string) => string;
@@ -49,83 +53,6 @@ const passwordResetTranslations: Record<
     },
 };
 
-function parseCookieValue(cookieHeader: string | null, name: string) {
-    if (!cookieHeader) return null;
-
-    const cookie = cookieHeader
-        .split(';')
-        .map((part) => part.trim())
-        .find((part) => part.startsWith(`${name}=`));
-
-    if (!cookie) return null;
-
-    return decodeURIComponent(cookie.slice(name.length + 1));
-}
-
-function normalizeLocale(
-    value: string | null | undefined
-): PasswordResetLocale | null {
-    if (!value) return null;
-
-    const normalized = value.toLowerCase();
-    if (normalized === 'fr' || normalized.startsWith('fr-')) return 'fr';
-    if (normalized === 'nl' || normalized.startsWith('nl-')) return 'nl-BE';
-    if (normalized === 'en' || normalized.startsWith('en-')) return 'en';
-
-    return null;
-}
-
-function resolveAcceptLanguageLocale(
-    acceptLanguage: string | null
-): PasswordResetLocale | null {
-    if (!acceptLanguage) return null;
-
-    return (
-        acceptLanguage
-            .split(',')
-            .map((part, index) => {
-                const [rawTagValue, ...rawParams] = part.trim().split(';');
-                const rawTag = rawTagValue?.trim();
-                if (!rawTag) return null;
-
-                const locale = normalizeLocale(rawTag);
-                if (!locale) return null;
-
-                const qParam = rawParams
-                    .map((param) => param.trim())
-                    .find((param) => param.startsWith('q='));
-                const q = qParam ? Number(qParam.slice(2)) : 1;
-                if (!Number.isFinite(q) || q <= 0) return null;
-
-                return { locale, q, index };
-            })
-            .filter(
-                (
-                    entry
-                ): entry is {
-                    locale: PasswordResetLocale;
-                    q: number;
-                    index: number;
-                } => entry !== null
-            )
-            .toSorted((a, b) => b.q - a.q || a.index - b.index)[0]?.locale ??
-        null
-    );
-}
-
-function resolveLocale(request?: Request): PasswordResetLocale {
-    const cookieLocale = normalizeLocale(
-        parseCookieValue(request?.headers.get('cookie') ?? null, 'locale')
-    );
-    if (cookieLocale) return cookieLocale;
-
-    return (
-        resolveAcceptLanguageLocale(
-            request?.headers.get('accept-language') ?? null
-        ) ?? 'fr'
-    );
-}
-
 function escapeHtml(value: string) {
     return value
         .replaceAll('&', '&amp;')
@@ -142,13 +69,13 @@ function buildPasswordResetHtml({
 }: {
     name: string;
     resetUrl: string;
-    locale: PasswordResetLocale;
+    locale: Locale;
 }) {
     const t = passwordResetTranslations[locale];
     const escapedResetUrl = escapeHtml(resetUrl);
 
     return `
-        <div style="font-family: Arial, sans-serif; color: #111827; line-height: 1.5;">
+        <div lang="${locale}" style="font-family: Arial, sans-serif; color: #111827; line-height: 1.5;">
             <p>${escapeHtml(t.greeting(name))}</p>
             <p>${escapeHtml(t.intro)}</p>
             <p>
@@ -169,7 +96,11 @@ export async function sendPasswordResetEmail({
     request,
 }: PasswordResetEmailInput) {
     const resetUrl = buildCanonicalPasswordResetUrl(token);
-    const locale = resolveLocale(request);
+    const locale = resolveLocale({
+        cookieLocale: resolveLocaleCookie(request?.headers.get('cookie')),
+        savedLocale: user.locale,
+        acceptLanguage: request?.headers.get('accept-language'),
+    });
     const t = passwordResetTranslations[locale];
     const trimmedName = user.name?.trim();
     await sendSystemMail(

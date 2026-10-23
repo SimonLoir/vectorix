@@ -617,5 +617,11 @@
                 "UNKNOWN": "Échec de scan non classé"
             }
         }
+    },
+    "languagePreference": {
+        "saving": "Enregistrement de la langue",
+        "saveFailed": "Impossible de confirmer votre préférence de langue. La langue affichée n’a pas changé.",
+        "sessionRequired": "Reconnectez-vous avant d’enregistrer la langue de votre compte.",
+        "displayFailed": "Impossible de mettre à jour la langue affichée. Rechargez la page et vérifiez votre préférence."
     }
 }

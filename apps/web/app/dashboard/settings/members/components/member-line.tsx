@@ -1,5 +1,6 @@
+'use client';
+
 import { TableCell, TableRow } from '@repo/ui/table';
-import { Button } from '@repo/ui/button';
 import {
     AlertDialog,
     AlertDialogAction,
@@ -9,7 +10,8 @@ import {
     AlertDialogFooter,
     AlertDialogHeader,
     AlertDialogTitle,
-} from '@repo/ui/alert-dialog';
+    Button,
+} from '@/components/permissions/actions';
 import {
     Select,
     SelectContent,
@@ -26,6 +28,9 @@ import {
 } from '@repo/dashboard-core/components/person-avatar';
 import { toast } from 'sonner';
 import { useVectorixPermissions } from '@/contexts/vectorix-permissions';
+import { useTranslations } from 'next-intl';
+import { memberActionError } from './member-errors';
+import { useMemberRoleLabel } from './member-role-label';
 
 type Member = {
     id: string;
@@ -47,6 +52,8 @@ export default function MemberLine({
     readonly avatarColor?: PersonAvatarColor | null;
 }) {
     const authClient = useAuth();
+    const t = useTranslations('members');
+    const roleLabel = useMemberRoleLabel();
     const { access, can, refresh } = useVectorixPermissions();
     const [showDeleteModal, setShowDeleteModal] = useState(false);
     const [isUpdating, setIsUpdating] = useState(false);
@@ -55,6 +62,10 @@ export default function MemberLine({
     const isCurrentUser = session?.user.id === member.userId;
 
     const handleRoleChange = async (newRole: string) => {
+        if (isCurrentUser || !can({ member: ['update'] })) {
+            toast.error(t('errors.permission'));
+            return;
+        }
         setIsUpdating(true);
         try {
             const { error } = await authClient.organization.updateMemberRole({
@@ -63,19 +74,23 @@ export default function MemberLine({
             });
 
             if (error) {
-                toast.error(error.message ?? 'Failed to update member role');
+                toast.error(t(`errors.${memberActionError(error)}`));
             } else {
-                toast.success('Member role updated successfully');
+                toast.success(t('roleUpdated'));
                 await refresh();
             }
         } catch {
-            toast.error('Failed to update member role');
+            toast.error(t('errors.generic'));
         } finally {
             setIsUpdating(false);
         }
     };
 
     const handleRemoveMember = async () => {
+        if (isCurrentUser || !can({ member: ['delete'] })) {
+            toast.error(t('errors.permission'));
+            return;
+        }
         setIsDeleting(true);
         try {
             const { error } = await authClient.organization.removeMember({
@@ -83,13 +98,13 @@ export default function MemberLine({
             });
 
             if (error) {
-                toast.error(error.message ?? 'Failed to remove member');
+                toast.error(t(`errors.${memberActionError(error)}`));
             } else {
-                toast.success('Member removed successfully');
+                toast.success(t('memberRemoved'));
                 setShowDeleteModal(false);
             }
         } catch {
-            toast.error('Failed to remove member');
+            toast.error(t('errors.generic'));
         } finally {
             setIsDeleting(false);
         }
@@ -97,7 +112,7 @@ export default function MemberLine({
 
     return (
         <>
-            <TableRow>
+            <TableRow aria-busy={isUpdating || isDeleting}>
                 <TableCell>
                     <div className='flex items-center gap-3'>
                         <PersonAvatar
@@ -106,7 +121,15 @@ export default function MemberLine({
                             color={avatarColor}
                             decorative
                         />
-                        <span className='font-medium'>{member.user.name}</span>
+                        <span className='font-medium break-words'>
+                            {member.user.name}
+                            {isCurrentUser && (
+                                <span className='text-muted-foreground'>
+                                    {' '}
+                                    {t('you')}
+                                </span>
+                            )}
+                        </span>
                     </div>
                 </TableCell>
                 <TableCell>{member.user.email}</TableCell>
@@ -120,7 +143,12 @@ export default function MemberLine({
                             !can({ member: ['update'] })
                         }
                     >
-                        <SelectTrigger className='w-[120px]'>
+                        <SelectTrigger
+                            className='w-[160px]'
+                            aria-label={t('changeRoleFor', {
+                                name: member.user.name,
+                            })}
+                        >
                             <SelectValue />
                         </SelectTrigger>
                         <SelectContent>
@@ -136,7 +164,7 @@ export default function MemberLine({
                                         value={role.role}
                                         disabled={!role.assignable}
                                     >
-                                        {role.role}
+                                        {roleLabel(role.role)}
                                     </SelectItem>
                                 ))}
                         </SelectContent>
@@ -144,12 +172,17 @@ export default function MemberLine({
                 </TableCell>
                 <TableCell className='text-center flex justify-center gap-2'>
                     <Button
+                        permissions={{ member: ['delete'] }}
                         variant='ghost'
                         size='icon'
                         onClick={() => setShowDeleteModal(true)}
-                        disabled={isCurrentUser || !can({ member: ['delete'] })}
+                        disabled={isCurrentUser || isDeleting}
+                        title={t('removeMemberFor', { name: member.user.name })}
+                        aria-label={t('removeMemberFor', {
+                            name: member.user.name,
+                        })}
                     >
-                        <TrashIcon className='h-4 w-4' />
+                        <TrashIcon aria-hidden='true' className='h-4 w-4' />
                     </Button>
                 </TableCell>
             </TableRow>
@@ -158,24 +191,23 @@ export default function MemberLine({
                 open={showDeleteModal}
                 onOpenChange={setShowDeleteModal}
             >
-                <AlertDialogContent>
+                <AlertDialogContent className='max-h-[90dvh] overflow-y-auto'>
                     <AlertDialogHeader>
-                        <AlertDialogTitle>Remove Member</AlertDialogTitle>
+                        <AlertDialogTitle>{t('removeMember')}</AlertDialogTitle>
                         <AlertDialogDescription>
-                            Are you sure you want to remove {member.user.name}{' '}
-                            from this organization? This action cannot be
-                            undone.
+                            {t('removeDescription', { name: member.user.name })}
                         </AlertDialogDescription>
                     </AlertDialogHeader>
                     <AlertDialogFooter>
                         <AlertDialogCancel disabled={isDeleting}>
-                            Cancel
+                            {t('keepMember')}
                         </AlertDialogCancel>
                         <AlertDialogAction
+                            permissions={{ member: ['delete'] }}
                             onClick={handleRemoveMember}
-                            disabled={isDeleting}
+                            disabled={isDeleting || isCurrentUser}
                         >
-                            {isDeleting ? 'Removing...' : 'Remove'}
+                            {t(isDeleting ? 'removing' : 'remove')}
                         </AlertDialogAction>
                     </AlertDialogFooter>
                 </AlertDialogContent>

@@ -11,6 +11,7 @@ import {
     accountSignInSourceExists,
     readAccountSignInTemplateData,
 } from './account-sign-in-source';
+import { accountSignInMessages } from './messages';
 export function makeNotificationEventKey(
     event: NotificationEventType,
     source: NotificationSource
@@ -100,13 +101,7 @@ export async function enqueueNotification(
             select: { lastSequence: true },
         });
         const details = readAccountSignInTemplateData(input.templateData);
-        const locale = member.user.locale;
-        const title =
-            locale === 'en'
-                ? 'New sign-in to your account'
-                : locale?.startsWith('nl')
-                  ? 'Nieuwe aanmelding op uw account'
-                  : 'Nouvelle connexion à votre compte';
+        const { title } = accountSignInMessages(member.user.locale);
         const body =
             [details?.device, details?.ipAddress, details?.signedInAt]
                 .filter(Boolean)

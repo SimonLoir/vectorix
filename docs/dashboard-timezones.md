@@ -23,8 +23,8 @@ flowchart LR
 
 ## Implementation entry points
 
-- [Shared resolver](../packages/dashboard-core/src/i18n/time-zone.ts), exported through [dashboard-core's public subpath](../packages/dashboard-core/package.json), owns validation and the `Europe/Brussels` constant. It accepts an argument and never reads the environment itself.
-- [Shared locale resolver](../packages/dashboard-core/src/i18n/locale.ts) owns EN/FR/nl-BE selection independently of the zone.
+- [Shared resolver](../packages/i18n/src/time-zone.ts), reexported through [dashboard-core's compatibility subpath](../packages/dashboard-core/package.json), owns validation and the `Europe/Brussels` constant. It accepts an argument and never reads the environment itself.
+- [Shared locale resolver](../packages/i18n/src/locale.ts), also reexported by dashboard-core, owns EN/FR/nl-BE selection independently of the zone. Explicit signed-in selections additionally save the account preference; see [account and notification localization](account-notification-localization.md).
 - [Administration request configuration](../apps/admin/src/i18n/request.ts) reads `VECTORIX_TIME_ZONE` on the server in `getAdminIntl()` and returns the validated zone alongside locale and messages.
 - [Administration layout](../apps/admin/src/app/layout.tsx) forwards that result to [Providers](../apps/admin/src/app/providers.tsx). The client component requires `timeZone` and explicitly passes it to `NextIntlClientProvider`.
 - [Web request configuration](../apps/web/i18n/request.ts) and [getIntl server action](../apps/web/i18n/actions.ts) reuse the shared resolver. The [web client provider](../apps/web/contexts/intl.tsx) retains its existing propagation and language-change behavior. Moving the helper out of web preserves its validation/fallback semantics.

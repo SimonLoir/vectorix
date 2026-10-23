@@ -1,3 +1,5 @@
+'use client';
+
 import {
     Dialog,
     DialogContent,
@@ -22,14 +24,17 @@ export default function InviteMember() {
                     <Button>{t('inviteMember')}</Button>
                 </DialogTrigger>
             </PermissionGate>
-            <DialogContent>
+            <DialogContent
+                className='max-h-[90dvh] overflow-y-auto'
+                closeLabel={t('close')}
+            >
                 <DialogHeader>
                     <DialogTitle>{t('inviteMember')}</DialogTitle>
                     <DialogDescription>
                         {t('inviteDescription')}
                     </DialogDescription>
-                    <InviteMemberForm onSuccess={() => setOpen(false)} />
                 </DialogHeader>
+                <InviteMemberForm onSuccess={() => setOpen(false)} />
             </DialogContent>
         </Dialog>
     );
