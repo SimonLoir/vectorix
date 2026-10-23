@@ -39,6 +39,7 @@ Vectorix is a multi-tenant application foundation. Preserve its reusable authent
 - Use the shared Prisma client from `@repo/db`. The multi-file schema is under `packages/db/prisma/`; generated clients and Zod schemas under `packages/db/src/generated/` are ignored by Git and must not be edited manually.
 - Prefer Prisma ORM operations. Do not use raw SQL to work around a stale generated client; regenerate with `pnpm db:generate`.
 - Reserve raw SQL for operations Prisma cannot express, including vector extensions, dynamic collection tables and bounded JSON source projection. Encapsulate it in the relevant adapter, parameterize values, validate generated identifiers, and explain why SQL is necessary.
+- Application SQL functions resolve application objects through the trusted `pg_catalog, public, pg_temp` function-local search path. Preserve unqualified statement transition-table aliases; test populated restores and temporary-name shadows when changing these guards.
 - For internal model-derived validation, reuse generated schemas from `@repo/db/schemas` with `.omit()`, `.pick()`, and `.extend()`, and enums from `@repo/db/enums`. Versioned public DTOs are the explicit exception below.
 - Edit only relevant schema files. Do not run global `prisma format` for a targeted change in the multi-file schema.
 - Prepare schema changes for review; migrations are generated manually after review. Do not generate or apply migrations automatically as a side effect of unrelated work. Follow an explicit migration request when given, and never use `db:push` in production.

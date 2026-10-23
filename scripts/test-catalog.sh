@@ -11,6 +11,7 @@ cleanup() {
 }
 trap cleanup EXIT
 docker run -d --name "$prefix-postgres" -p 127.0.0.1::5432 \
+    --label "vectorix.catalog-test=$prefix" \
     -e POSTGRES_PASSWORD=catalog-test-password postgres:18-alpine >/dev/null
 docker run -d --name "$prefix-redis" -p 127.0.0.1::6379 redis:8-alpine >/dev/null
 ready=false
@@ -24,6 +25,8 @@ pg_port=$(docker port "$prefix-postgres" 5432/tcp | cut -d: -f2)
 redis_port=$(docker port "$prefix-redis" 6379/tcp | cut -d: -f2)
 sql() { docker exec -i "$prefix-postgres" psql -U postgres -d "$1" -v ON_ERROR_STOP=1; }
 sql postgres <<< 'CREATE DATABASE vectorix_upgrade_test; CREATE DATABASE vectorix_catalog_test;'
+docker cp tests/catalog "$prefix-postgres:/catalog-tests"
+docker cp packages/db/prisma/migrations/20261031000000_sql_function_search_path/migration.sql "$prefix-postgres:/catalog-tests/sql-function-migration.sql"
 
 # Preserve pre-catalog and catalog data through the approved additive migrations.
 sql vectorix_upgrade_test < packages/db/prisma/migrations/20261021000000_initial/migration.sql
@@ -56,6 +59,10 @@ sql vectorix_upgrade_test < tests/catalog/parent-context-upgrade-seed.sql
 sql vectorix_upgrade_test < packages/db/prisma/migrations/20261029000000_rag_parent_context/migration.sql
 pnpm --filter @repo/db exec prisma migrate resolve --applied 20261029000000_rag_parent_context
 sql vectorix_upgrade_test < tests/catalog/observability-upgrade-seed.sql
+sql vectorix_upgrade_test < packages/db/prisma/migrations/20261030000000_rag_observability/migration.sql
+pnpm --filter @repo/db exec prisma migrate resolve --applied 20261030000000_rag_observability
+docker exec "$prefix-postgres" psql -X -q -U postgres -d vectorix_upgrade_test -v ON_ERROR_STOP=1 -f /catalog-tests/sql-function-upgrade-check.sql
+pnpm --filter @repo/db exec prisma migrate resolve --applied 20261031000000_sql_function_search_path
 for attempt in 1 2; do pnpm --filter @repo/db migrate:deploy; done
 sql vectorix_upgrade_test < tests/catalog/observability-upgrade-check.sql
 sql vectorix_upgrade_test < tests/catalog/observability-schema-check.sql
@@ -66,8 +73,8 @@ sql vectorix_upgrade_test < tests/catalog/document-upgrade-check.sql
 sql vectorix_upgrade_test < tests/catalog/upgrade-check.sql
 sql vectorix_upgrade_test < tests/catalog/parent-context-upgrade-check.sql
 sql vectorix_upgrade_test < tests/catalog/semantic-schema-check.sql
-docker cp tests/catalog "$prefix-postgres:/catalog-tests"
 docker exec "$prefix-postgres" psql -X -q -U postgres -d vectorix_upgrade_test -v ON_ERROR_STOP=1 -f /catalog-tests/parent-context-schema-check.sql
+docker exec "$prefix-postgres" psql -X -q -U postgres -d vectorix_upgrade_test -v ON_ERROR_STOP=1 -f /catalog-tests/sql-function-path-check.sql
 pnpm --filter @repo/db exec prisma migrate diff --from-config-datasource --to-schema prisma --exit-code
 
 # Also validate a fresh installation and a no-op repeat deployment.
@@ -76,10 +83,13 @@ for attempt in 1 2; do pnpm --filter @repo/db migrate:deploy; done
 sql vectorix_catalog_test < tests/catalog/observability-schema-check.sql
 sql vectorix_catalog_test < tests/catalog/semantic-schema-check.sql
 docker exec "$prefix-postgres" psql -X -q -U postgres -d vectorix_catalog_test -v ON_ERROR_STOP=1 -f /catalog-tests/parent-context-schema-check.sql
+docker exec "$prefix-postgres" psql -X -q -U postgres -d vectorix_catalog_test -v ON_ERROR_STOP=1 -f /catalog-tests/sql-function-path-check.sql
 pnpm --filter @repo/db exec prisma migrate diff --from-config-datasource --to-schema prisma --exit-code
 node tests/catalog/semantic-lock-check.mjs
 node tests/catalog/parent-context-lock-check.mjs
 node tests/catalog/observability-lock-check.mjs
+docker exec "$prefix-postgres" psql -X -q -U postgres -d vectorix_upgrade_test -v ON_ERROR_STOP=1 -f /catalog-tests/sql-function-restore-seed.sql
+python3 -B tests/catalog/sql-function-restore-check.py "$prefix"
 export REDIS_URL="redis://127.0.0.1:$redis_port"
 export BETTER_AUTH_SECRET=catalog-integration-test-only-secret-12345678
 export ENCRYPTION_SECRET=1111111111111111111111111111111111111111111111111111111111111111

@@ -1,0 +1,31 @@
+{
+    "version": 1,
+    "purpose": "Small synthetic full-store restore fixture; not a relevance or capacity benchmark.",
+    "files": [
+        {
+            "file": "m7c-reference.docx",
+            "bytes": 1308,
+            "sha256": "9dda9cd421e93fddf3695343eebd6ecdcd03a59952f87cca204cb4dce137afff"
+        },
+        {
+            "file": "m7c-reference.pdf",
+            "bytes": 1329,
+            "sha256": "c7ea3d398db6213fb30f5b464a30094b05c08f69732107674eadbe3e2b1c8a57"
+        },
+        {
+            "file": "m7c-reference.txt",
+            "bytes": 630,
+            "sha256": "2011caabc6e2f54622d526e20f74855343c2b8ebbe41026e8f0322d0bff9b774"
+        },
+        {
+            "file": "m7c-source-v1.md",
+            "bytes": 696,
+            "sha256": "0a53a5302802d4e2c5d7037c10f6f2dd6fd9e65875c369b4e2a060b1e4486f04"
+        },
+        {
+            "file": "m7c-source-v2.md",
+            "bytes": 696,
+            "sha256": "9e68574c09c0a518397996f20eafefdc1152161bd27719864d54d81296a91ed5"
+        }
+    ]
+}
