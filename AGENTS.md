@@ -68,6 +68,7 @@ Vectorix is a multi-tenant application foundation. Preserve its reusable authent
 ## Frontend and runtime configuration
 
 - Read environment variables on the server and pass only public values to client components through props or context. Never introduce `NEXT_PUBLIC_*` variables or expose secrets to the browser.
+- Serve browser dependencies on the authentication origin as exact-version local build assets, with a nonce script CSP and no CDN fallback. Keep vendor build dependencies out of production images when only their emitted browser bytes are needed.
 - Keep deployment configuration available at container startup. Do not bake deployment origins or private settings into frontend builds.
 - Before changing Next.js code, read the relevant documentation shipped with the installed version under the application's `node_modules/next/dist/docs/`. Follow its current APIs and deprecation notices.
 - Reuse shared UI primitives and preserve keyboard navigation, accessible labels, viewport-bounded dialogs, and internal scrolling.
