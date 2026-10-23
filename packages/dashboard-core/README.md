@@ -23,3 +23,7 @@ Applications read `VECTORIX_TIME_ZONE` on the server and pass only the validated
 Restart the affected web/admin deployment consumers after changing configuration and reload open pages so existing client data is refreshed. The configured zone applies to consumers using that provider's formatting context; this is not a promise that every legacy formatter uses it. For example, the existing [web notification list](../../apps/web/components/notifications/notification-list.tsx) still has an explicit Brussels formatter.
 
 See [Dashboard time zones](../../docs/dashboard-timezones.md) for the runtime flow, exact fallback behavior, acceptance recipe and recorded validation status. No database or public API DTO changes are required for the shared resolver and explicit admin-provider prop.
+
+## Static frontend security configuration
+
+`@repo/dashboard-core/config/security-headers` exports `dashboardSecurityHeaderRules()` as dependency-free ESM with TypeScript declarations. Both Next configurations consume fresh rule/header objects to set framing, MIME and referrer protections. Keep application-specific exceptions after the shared rules; web retains its stronger `/sw.js` policy. This config import performs no environment read or React/auth initialization. Rebuild frontends after policy changes and preserve headers at the edge. See [dashboard security headers](../../docs/dashboard-security-headers.md) for exact values, framework response limits and acceptance.

@@ -1,6 +1,6 @@
 # Account, member and notification localization
 
-This implementation slice addresses issue #22. The implementation and local production acceptance are complete; pull-request delivery and exact-head CI remain pending. Actual results are recorded below. It does not complete the remaining RAG capacity milestone, which waits for the requested compute upgrade.
+This implementation slice addresses issue #22. Delivered in [PR #66](https://github.com/SimonLoir/vectorix/pull/66), squash `5b5963291c5f971d7b33c5bf10b0a713538c4cf4` on October 23, 2026. The exact reviewed head `5823cb0bf9aa24297ad793bb3313f559be6a63fe` passes [Catalog checks](https://github.com/SimonLoir/vectorix/actions/runs/40001469980) and [all six image checks](https://github.com/SimonLoir/vectorix/actions/runs/40001470097) before the authorized merge. Issue #22 is closed. Actual local acceptance is recorded below; PR checks do not establish registry publication. It does not complete the remaining RAG capacity milestone, which waits for the requested compute upgrade.
 
 ## Language flow
 

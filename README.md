@@ -78,6 +78,8 @@ Before auth and RPC/REST parsing, the API limits ordinary request bodies to 1 Mi
 
 All variables are documented in `.env.example`. Public values are read on the server and passed to the interface, without `NEXT_PUBLIC_*` variables.
 
+Web/admin builds share a framing policy (`frame-ancestors 'none'` and `X-Frame-Options: DENY`), MIME protection and `Referrer-Policy: no-referrer`. Preserve these headers at the reverse proxy and configure HSTS at HTTPS termination according to the deployment's domain policy. See [dashboard security headers](docs/dashboard-security-headers.md) for response boundaries, service-worker behavior and actual validation status.
+
 Account registration and organization creation are enabled in the local example. Disable them with `ALLOW_ACCOUNT_CREATION=false` and `ALLOW_ORGANIZATION_CREATION=false` for an invitation-only deployment. Set URLs, trusted origins, secrets, the cookie domain, and WebAuthn settings for each deployment.
 
 Email requires Resend or SMTP. Without a provider, notifications remain pending and fail after five attempts; users can still sign in. Account email verification and address changes require that platform mail configuration and a stable auth secret; organization credentials do not select account-security mail. SMTP supports an unauthenticated relay or a complete user/password pair, defaults to port 587 and uses only the SMTP sender when selected. A generic email-change acknowledgement is not delivery confirmation. See [Account email ownership](docs/account-email-ownership.md) for the implementation status and acceptance requirements. Web Push is disabled by default and requires a VAPID key pair and `ENCRYPTION_SECRET` for encrypted subscriptions. These transports are not simulated in production.
