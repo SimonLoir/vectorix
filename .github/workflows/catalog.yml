@@ -33,6 +33,7 @@ jobs:
                   pnpm test
                   pnpm test:documents
                   pnpm test:rag-primitives
+                  pnpm test:restore:guards
             - name: Test Redis authentication with real queues and workers
               run: pnpm test:queues
             - name: Build isolated vector-test image
