@@ -4,6 +4,7 @@
 import hashlib
 import json
 from pathlib import Path
+import re
 import subprocess
 import zipfile
 import xml.etree.ElementTree as ET
@@ -19,16 +20,37 @@ def command(*args):
 def main():
     version = command("/usr/bin/pdftotext", "-v")
     print(version.stderr.decode().splitlines()[0])
-    for name in ["text-fr-en.pdf", "scanned.pdf", "mixed.pdf", "blank-page.pdf"]:
+    for name in ["text-fr-en.pdf", "scanned.pdf", "mixed.pdf", "blank-page.pdf", "xref-reconstructed.pdf"]:
         info = command("/usr/bin/pdfinfo", str(ROOT / name))
         assert info.returncode == 0, (name, info.stderr)
         result = command("/usr/bin/pdftotext", "-enc", "UTF-8", "-eol", "unix", str(ROOT / name), "-")
         assert result.returncode == 0, (name, result.stderr)
+        if name == "xref-reconstructed.pdf":
+            reconstruction = b"Internal Error: xref num 1 not found but needed, try to reconstruct\n"
+            assert info.stderr == reconstruction and result.stderr == reconstruction
         pages = result.stdout.decode("utf8").split("\f")
         assert pages[-1] == "", (name, pages)
         pages = [page.strip() for page in pages[:-1]]
         assert pages == EXPECTED[name]["pages"], (name, pages)
         print(f"PASS {name}: {len(pages)} actual PDF pages and expected text")
+    for source_name, changed_name in [("text-fr-en.pdf", "xref-reconstructed.pdf"), ("partial-corrupt.pdf", "xref-partial-corrupt.pdf")]:
+        original = (ROOT / source_name).read_bytes()
+        changed = (ROOT / changed_name).read_bytes()
+        xref = original.index(b"\nxref\n")
+        entry = re.search(rb"(?m)^(\d{10}) \d{5} n \r?$", original)
+        assert entry is not None and entry.start() > xref
+        start, end = entry.span(1)
+        assert len(changed) == len(original)
+        assert changed[:start] == original[:start] and changed[end:] == original[end:]
+        assert int(changed[start:end]) == int(original[start:end]) + 7
+    for name in ["partial-corrupt.pdf", "xref-partial-corrupt.pdf"]:
+        result = command("/usr/bin/pdftotext", "-enc", "UTF-8", "-eol", "unix", str(ROOT / name), "-")
+        assert result.returncode == 0
+        assert b"Visible prefix page two." in result.stdout
+        assert b"Syntax Error: Unterminated string\n" in result.stderr
+        assert b"Syntax Error: Leftover args in content stream\n" in result.stderr
+        assert (b"Internal Error: xref num 1 not found but needed, try to reconstruct\n" in result.stderr) == (name == "xref-partial-corrupt.pdf")
+    print("PASS xref boundaries: only the intended offset changed; mixed/partial corruption still emits native syntax errors despite exit zero")
     encrypted = command("/usr/bin/pdfinfo", str(ROOT / "encrypted.pdf"))
     assert encrypted.returncode != 0
     assert b"Incorrect password" in encrypted.stderr

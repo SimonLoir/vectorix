@@ -1,5 +1,6 @@
 import { spawn } from 'node:child_process';
 import { DocumentParserError, LIMITS } from './limits';
+import { classifyPopplerResult } from './poppler-diagnostics';
 
 /** No shell, inherited credentials, user-controlled executables or unbounded diagnostics. */
 export function runPoppler(
@@ -72,27 +73,15 @@ export function runPoppler(
             clearTimeout(timer);
             const stderr = Buffer.concat(errors).toString('utf8');
             if (failure) reject(failure);
-            else if (signal) reject(new DocumentParserError('PARSER_LIMIT'));
-            else if (
-                code === 126 ||
-                code === 127 ||
-                /^prlimit:/m.test(stderr) ||
-                /failed to execute|not found|cannot execute/i.test(stderr)
-            )
-                reject(new DocumentParserError('PARSER_UNAVAILABLE'));
-            else if (code !== 0)
-                reject(
-                    new DocumentParserError(
-                        /incorrect password|password required|encrypted/i.test(
-                            stderr
-                        )
-                            ? 'PDF_ENCRYPTED'
-                            : 'FILE_INVALID'
-                    )
-                );
-            else if (/Syntax (?:Error|Warning)|Error:/i.test(stderr))
-                reject(new DocumentParserError('FILE_INVALID'));
-            else resolve({ stdout: Buffer.concat(output), stderr });
+            else {
+                const diagnostic = classifyPopplerResult({
+                    code,
+                    signal,
+                    stderr,
+                });
+                if (diagnostic) reject(new DocumentParserError(diagnostic));
+                else resolve({ stdout: Buffer.concat(output), stderr });
+            }
         });
     });
 }

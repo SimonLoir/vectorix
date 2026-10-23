@@ -267,6 +267,10 @@ def main() -> None:
     if live_references.exists():
         import runpy
         runpy.run_path(str(live_references), run_name="__main__")
+    xref_recovery = ROOT / "generate-xref-recovery.py"
+    if xref_recovery.exists():
+        import runpy
+        runpy.run_path(str(xref_recovery), run_name="__main__")
 
 
 if __name__ == "__main__":

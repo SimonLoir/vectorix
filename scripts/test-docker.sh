@@ -59,6 +59,7 @@ done
 docker run --rm --entrypoint node -v "$PWD/tests/documents/fixtures:/fixtures:ro" "$prefix-workers:test" --input-type=module -e '
     import assert from "node:assert/strict";
     import { readFile } from "node:fs/promises";
+    import { spawnSync } from "node:child_process";
     import { parseRichDocument, PDF_MEDIA_TYPE, DOCX_MEDIA_TYPE } from "/app/dist/document-parser.mjs";
     for (const [file, type, format, count] of [["text-fr-en.pdf", PDF_MEDIA_TYPE, "PDF", 2], ["structure-fr-en.docx", DOCX_MEDIA_TYPE, "DOCX", 7]]) {
         const result = await parseRichDocument(await readFile(`/fixtures/${file}`), type);
@@ -66,9 +67,33 @@ docker run --rm --entrypoint node -v "$PWD/tests/documents/fixtures:/fixtures:ro
         assert.equal(result.sources.length, count);
         assert.ok(result.text.includes("français"));
     }
+    // Prove the packaged Poppler actually reports the repaired-xref diagnostic;
+    // a fixture silently tolerated by another runtime would be a vacuous check.
+    const repaired = await readFile("/fixtures/xref-reconstructed.pdf");
+    const mixed = await readFile("/fixtures/xref-partial-corrupt.pdf");
+    const repairLine = "Internal Error: xref num 1 not found but needed, try to reconstruct";
+    function nativePdf(tool, filename) {
+        const args = tool === "pdfinfo" ? ["-enc", "UTF-8", filename] : ["-enc", "UTF-8", "-eol", "unix", filename, "-"];
+        const result = spawnSync("/usr/bin/prlimit", ["--cpu=5:5", "--as=536870912:536870912", "--nofile=64:64", "--", `/usr/bin/${tool}`, ...args], {
+            shell: false, env: { PATH: "/usr/bin:/bin", LANG: "C", LC_ALL: "C", TZ: "UTC" },
+            timeout: 10000, maxBuffer: 64 * 1024, encoding: "utf8",
+        });
+        assert.equal(result.status, 0, "Native fixture must exit zero before diagnostic acceptance is tested");
+        assert.equal(result.error, undefined, "Native fixture must complete within its bounds");
+        return result;
+    }
+    for (const tool of ["pdfinfo", "pdftotext"]) {
+        assert.ok(nativePdf(tool, "/fixtures/xref-reconstructed.pdf").stderr.trim() === repairLine, "Packaged native tool must report exactly the known reconstruction diagnostic");
+    }
+    const mixedNative = nativePdf("pdftotext", "/fixtures/xref-partial-corrupt.pdf");
+    assert.ok(mixedNative.stderr.includes(repairLine) && mixedNative.stderr.includes("Syntax Error:"), "Mixed corruption must include both repair and fatal diagnostics despite exiting zero");
+    const baseline = await parseRichDocument(await readFile("/fixtures/text-fr-en.pdf"), PDF_MEDIA_TYPE);
+    assert.deepEqual(await parseRichDocument(repaired, PDF_MEDIA_TYPE), baseline, "Repair must preserve the complete canonical text, pages and source geometry");
+    await assert.rejects(parseRichDocument(mixed, PDF_MEDIA_TYPE), {code: "FILE_INVALID"});
+    await assert.rejects(parseRichDocument(await readFile("/fixtures/partial-corrupt.pdf"), PDF_MEDIA_TYPE), {code: "FILE_INVALID"});
     await assert.rejects(parseRichDocument(await readFile("/fixtures/scanned.pdf"), PDF_MEDIA_TYPE), {code: "PDF_OCR_UNAVAILABLE"});
     await assert.rejects(parseRichDocument(await readFile("/fixtures/zipbomb.docx"), DOCX_MEDIA_TYPE), {code: "PARSER_LIMIT"});
-    console.log("Production PDF and DOCX parsers passed");
+    console.log("Production PDF and DOCX parsers, exact xref recovery and mixed-corruption refusal passed");
 '
 docker run --rm --entrypoint node "$prefix-api:test" --input-type=module -e '
     import assert from "node:assert/strict";

@@ -1,6 +1,6 @@
 # Web Push destination and delivery policy
 
-Issue #18 is implemented on `codex/push-destination-policy`, based on the [PR #69](https://github.com/SimonLoir/vectorix/pull/69) squash. Local automated validation and the push-disabled dashboard recipe pass. PR delivery and exact-head CI remain pending; live vendor push delivery has not been tested.
+Issue #18 is delivered in [PR #70](https://github.com/SimonLoir/vectorix/pull/70), squash `e9c7b5a3a2320e012332d15ef5db1eeb04216610`. Local automated validation, the push-disabled dashboard recipe and exact-head catalog/six-image CI pass. Live vendor push delivery has not been tested.
 
 ## Destination approval
 
