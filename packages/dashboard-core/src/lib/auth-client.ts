@@ -1,11 +1,13 @@
 import { createAuthClient } from 'better-auth/client';
 import {
+    inferAdditionalFields,
     organizationClient,
     twoFactorClient,
 } from 'better-auth/client/plugins';
 import { passkeyClient } from '@better-auth/passkey/client';
 import { apiKeyClient } from '@better-auth/api-key/client';
 import { statements, roles } from '@repo/auth/permissions';
+import { userLocaleFields } from '@repo/auth/user-locale-fields';
 import {
     createAccessControl,
     type Statements,
@@ -21,6 +23,7 @@ const clientRoles: Record<string, Role> = {
 };
 
 export const authClientPlugins = [
+    inferAdditionalFields({ user: userLocaleFields }),
     organizationClient({
         ac: clientAccessControl,
         roles: clientRoles,

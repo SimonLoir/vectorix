@@ -13,7 +13,8 @@
         "./permissions/operations": "./src/permissions/operations.ts",
         "./permissions/compound-actions": "./src/permissions/compound-actions.ts",
         "./permissions/resolve": "./src/permissions/resolve.ts",
-        "./permissions/rollout": "./src/permissions/rollout.ts"
+        "./permissions/rollout": "./src/permissions/rollout.ts",
+        "./user-locale-fields": "./src/user-locale-fields.ts"
     },
     "files": [
         "dist"
@@ -34,6 +35,7 @@
         "@better-auth/passkey": "1.6.33",
         "@repo/db": "workspace:*",
         "@repo/emails": "workspace:*",
-        "better-auth": "1.6.33"
+        "better-auth": "1.6.33",
+        "@repo/i18n": "workspace:*"
     }
 }

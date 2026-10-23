@@ -617,5 +617,11 @@
                 "UNKNOWN": "Niet-geclassificeerde scanfout"
             }
         }
+    },
+    "languagePreference": {
+        "saving": "Taalvoorkeur opslaan",
+        "saveFailed": "Je taalvoorkeur kon niet worden bevestigd. De weergegeven taal is niet gewijzigd.",
+        "sessionRequired": "Meld je opnieuw aan voordat je de taal van je account opslaat.",
+        "displayFailed": "De weergegeven taal kon niet worden bijgewerkt. Laad de pagina opnieuw en controleer je voorkeur."
     }
 }

@@ -39,7 +39,8 @@
         "zod": "^4.6.5",
         "@repo/embeddings": "workspace:*",
         "@repo/vector-store": "workspace:*",
-        "@repo/chunking": "workspace:*"
+        "@repo/chunking": "workspace:*",
+        "@repo/i18n": "workspace:*"
     },
     "devDependencies": {
         "@repo/eslint-config": "workspace:*",

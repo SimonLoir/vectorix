@@ -22,13 +22,14 @@ import {
 import { useAuth } from '@repo/dashboard-core/hooks/use-auth';
 import { toast } from 'sonner';
 import { useState } from 'react';
-import { CheckIcon, CopyIcon } from 'lucide-react';
+import { CopyIcon } from 'lucide-react';
+import { useTranslations } from 'next-intl';
+import { CopyToClipboardButton } from '@repo/dashboard-core/components/copy-to-clipboard-button';
+import { invitationReviewPath } from '@repo/dashboard-core/lib/email-ownership';
 import { useVectorixPermissions } from '@/contexts/vectorix-permissions';
-
-const inviteMemberSchema = z.object({
-    email: z.string().email('Please enter a valid email address'),
-    role: z.string().min(1),
-});
+import { InvitationExpiry } from './invitation-expiry';
+import { memberActionError } from './member-errors';
+import { useMemberRoleLabel } from './member-role-label';
 
 export default function InviteMemberForm({
     onSuccess,
@@ -36,30 +37,31 @@ export default function InviteMemberForm({
     onSuccess?: () => void;
 }>) {
     const authClient = useAuth();
+    const t = useTranslations('members');
+    const roleLabel = useMemberRoleLabel();
+    const inviteMemberSchema = z.object({
+        email: z.string().email(t('form.invalidEmail')),
+        role: z.string().min(1, t('form.requiredRole')),
+    });
     const { access, can } = useVectorixPermissions();
     const [isSubmitting, setIsSubmitting] = useState(false);
-    const [invitationLink, setInvitationLink] = useState<string | null>(null);
-    const [isCopied, setIsCopied] = useState(false);
+    const [created, setCreated] = useState<{
+        link: string;
+        expiresAt: Date;
+    } | null>(null);
     const form = useForm<z.infer<typeof inviteMemberSchema>>({
         resolver: zodResolver(inviteMemberSchema),
         defaultValues: {
+            email: '',
             role: '',
         },
     });
 
-    const handleCopyLink = async () => {
-        if (!invitationLink) return;
-        try {
-            await navigator.clipboard.writeText(invitationLink);
-            setIsCopied(true);
-            toast.success('Invitation link copied to clipboard');
-            setTimeout(() => setIsCopied(false), 2000);
-        } catch {
-            toast.error('Failed to copy link');
-        }
-    };
-
     async function onSubmit(values: z.infer<typeof inviteMemberSchema>) {
+        if (!can({ invitation: ['create'] })) {
+            toast.error(t('errors.permission'));
+            return;
+        }
         setIsSubmitting(true);
         try {
             const { data, error } = await authClient.organization.inviteMember({
@@ -68,15 +70,21 @@ export default function InviteMemberForm({
             });
 
             if (error) {
-                toast.error(error.message ?? 'Failed to send invitation');
+                toast.error(t(`errors.${memberActionError(error)}`));
             } else if (data) {
-                toast.success(`Invitation sent to ${values.email}`);
-                // Generate invitation link
-                const link = `${globalThis.location.origin}/dashboard/accept-invitation?id=${data.id}`;
-                setInvitationLink(link);
-            }
+                const path = invitationReviewPath(data.id);
+                if (!path) {
+                    toast.error(t('errors.generic'));
+                    return;
+                }
+                setCreated({
+                    link: new URL(path, globalThis.location.origin).href,
+                    expiresAt: data.expiresAt,
+                });
+                toast.success(t('form.createdToast', { email: values.email }));
+            } else toast.error(t('errors.generic'));
         } catch {
-            toast.error('Unable to send invitation');
+            toast.error(t('errors.generic'));
         } finally {
             setIsSubmitting(false);
         }
@@ -84,8 +92,7 @@ export default function InviteMemberForm({
 
     const handleClose = () => {
         form.reset();
-        setInvitationLink(null);
-        setIsCopied(false);
+        setCreated(null);
         onSuccess?.();
     };
 
@@ -94,52 +101,57 @@ export default function InviteMemberForm({
             <form
                 onSubmit={form.handleSubmit(onSubmit)}
                 className='space-y-4 py-4'
+                aria-busy={isSubmitting}
             >
-                {invitationLink ? (
+                {created ? (
                     <div className='space-y-4'>
-                        <div className='rounded-md bg-green-50 p-4 dark:bg-green-950'>
+                        <div
+                            role='status'
+                            className='rounded-md bg-green-50 p-4 dark:bg-green-950'
+                        >
                             <p className='text-sm font-medium text-green-800 dark:text-green-200'>
-                                Invitation created successfully!
+                                {t('form.created')}
                             </p>
                             <p className='text-sm text-green-700 dark:text-green-300 mt-1'>
-                                Share this link with the invitee to join the
-                                organization.
+                                {t('form.shareLink')}
                             </p>
                         </div>
 
                         <div className='space-y-2'>
-                            <FormLabel>Invitation Link</FormLabel>
+                            <label
+                                htmlFor='created-invitation-link'
+                                className='text-sm font-medium'
+                            >
+                                {t('form.invitationLink')}
+                            </label>
                             <div className='flex gap-2'>
                                 <Input
-                                    value={invitationLink}
+                                    id='created-invitation-link'
+                                    value={created.link}
                                     readOnly
                                     className='font-mono text-xs'
                                 />
-                                <Button
+                                <CopyToClipboardButton
                                     type='button'
-                                    onClick={handleCopyLink}
+                                    copyText={created.link}
                                     variant='outline'
+                                    aria-label={t('copyInvitationLink')}
                                 >
-                                    {isCopied ? (
-                                        <>
-                                            <CheckIcon className='h-4 w-4 mr-2' />
-                                            Copied
-                                        </>
-                                    ) : (
-                                        <>
-                                            <CopyIcon className='h-4 w-4 mr-2' />
-                                            Copy
-                                        </>
-                                    )}
-                                </Button>
+                                    <CopyIcon
+                                        aria-hidden='true'
+                                        className='h-4 w-4 mr-2'
+                                    />
+                                    {t('copy')}
+                                </CopyToClipboardButton>
                             </div>
-                            <p className='text-sm text-muted-foreground'>
-                                This link will expire in 7 days.
+                            <p className='text-sm font-medium'>
+                                {t('expires')}
                             </p>
+                            <InvitationExpiry expiresAt={created.expiresAt} />
                         </div>
 
                         <Button type='button' onClick={handleClose}>
-                            Done
+                            {t('done')}
                         </Button>
                     </div>
                 ) : (
@@ -149,11 +161,17 @@ export default function InviteMemberForm({
                             name='email'
                             render={({ field }) => (
                                 <FormItem>
-                                    <FormLabel>Email Address</FormLabel>
+                                    <FormLabel>
+                                        {t('form.emailAddress')}
+                                    </FormLabel>
                                     <FormControl>
                                         <Input
                                             type='email'
-                                            placeholder='member@example.com'
+                                            placeholder={t(
+                                                'form.emailPlaceholder'
+                                            )}
+                                            autoComplete='email'
+                                            disabled={isSubmitting}
                                             {...field}
                                         />
                                     </FormControl>
@@ -167,14 +185,19 @@ export default function InviteMemberForm({
                             name='role'
                             render={({ field }) => (
                                 <FormItem>
-                                    <FormLabel>Role</FormLabel>
+                                    <FormLabel>{t('role')}</FormLabel>
                                     <Select
                                         onValueChange={field.onChange}
-                                        defaultValue={field.value}
+                                        value={field.value}
+                                        disabled={isSubmitting}
                                     >
                                         <FormControl>
                                             <SelectTrigger>
-                                                <SelectValue placeholder='Select a role' />
+                                                <SelectValue
+                                                    placeholder={t(
+                                                        'form.selectRole'
+                                                    )}
+                                                />
                                             </SelectTrigger>
                                         </FormControl>
                                         <SelectContent>
@@ -187,7 +210,7 @@ export default function InviteMemberForm({
                                                         key={role.role}
                                                         value={role.role}
                                                     >
-                                                        {role.role}
+                                                        {roleLabel(role.role)}
                                                     </SelectItem>
                                                 ))}
                                         </SelectContent>
@@ -203,7 +226,7 @@ export default function InviteMemberForm({
                                 isSubmitting || !can({ invitation: ['create'] })
                             }
                         >
-                            {isSubmitting ? 'Sending...' : 'Send Invitation'}
+                            {t(isSubmitting ? 'form.creating' : 'form.create')}
                         </Button>
                     </>
                 )}

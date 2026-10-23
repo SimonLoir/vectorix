@@ -6,6 +6,8 @@ import { passkey } from '@better-auth/passkey';
 import { prisma } from '@repo/db';
 import { apiKey } from '@better-auth/api-key';
 import { sendPasswordResetEmail } from './password-reset-email';
+import { userLocaleFields } from './user-locale-fields';
+import { requireUserLocaleSession } from './user-locale';
 import { assertSystemMailConfigured } from '@repo/emails';
 import { assertPasswordResetUrlConfigured } from './password-reset-url';
 import { handleEmailOwnership } from './email-ownership/handler';
@@ -70,6 +72,7 @@ const getAdvancedOptions = (): BetterAuthAdvancedOptions | undefined => {
 export const auth = betterAuth({
     hooks: {
         before: createAuthMiddleware(async (ctx) => {
+            await requireUserLocaleSession(ctx);
             // Better Auth swallows mail callback errors after creating a token.
             // Validate first so known and unknown accounts receive the same 503.
             if (ctx.path === '/request-password-reset') {
@@ -158,6 +161,7 @@ export const auth = betterAuth({
     ],
 
     user: {
+        additionalFields: userLocaleFields,
         changeEmail: {
             enabled: true,
             updateEmailWithoutVerification: false,

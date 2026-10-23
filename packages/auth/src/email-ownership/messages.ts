@@ -1,9 +1,9 @@
 import { escapeHtml, sendSystemMail } from '@repo/emails';
+import { resolveLocale, resolveLocaleCookie } from '@repo/i18n/locale';
 import { emailOwnershipWebUrl } from './configuration';
 import { emailOwnershipError } from './errors';
 import type { EmailOwnershipClaims } from './tokens';
 
-type Locale = 'en' | 'fr' | 'nl-BE';
 const messages = {
     en: {
         verifySubject: 'Verify your Vectorix email address',
@@ -40,38 +40,6 @@ const messages = {
     },
 } as const;
 
-function locale(request?: Request, savedLocale?: unknown): Locale {
-    const candidates: string[] = [];
-    const cookie = request?.headers
-        .get('cookie')
-        ?.split(';')
-        .find((value) => value.trim().startsWith('locale='));
-    if (cookie) {
-        try {
-            candidates.push(
-                decodeURIComponent(cookie.trim().slice('locale='.length))
-            );
-        } catch {
-            /* A malformed language cookie never controls the message or its destination. */
-        }
-    }
-    if (typeof savedLocale === 'string') candidates.push(savedLocale);
-    candidates.push(
-        ...(request?.headers
-            .get('accept-language')
-            ?.slice(0, 4096)
-            .split(',')
-            .map((value) => value.split(';')[0]?.trim() ?? '') ?? [])
-    );
-    for (const candidate of candidates) {
-        const language = candidate.toLowerCase();
-        if (language === 'en' || language.startsWith('en-')) return 'en';
-        if (language === 'fr' || language.startsWith('fr-')) return 'fr';
-        if (language === 'nl' || language.startsWith('nl-')) return 'nl-BE';
-    }
-    return 'fr';
-}
-
 /** Deliver one bound proof outside the application transaction; failures remain safe if the auth framework logs them. */
 export async function sendEmailOwnershipMessage(input: {
     token: string;
@@ -79,13 +47,18 @@ export async function sendEmailOwnershipMessage(input: {
     savedLocale?: unknown;
     request?: Request;
 }): Promise<void> {
-    const t = messages[locale(input.request, input.savedLocale)];
+    const locale = resolveLocale({
+        cookieLocale: resolveLocaleCookie(input.request?.headers.get('cookie')),
+        savedLocale: input.savedLocale,
+        acceptLanguage: input.request?.headers.get('accept-language'),
+    });
+    const t = messages[locale];
     const confirming = input.claims.requestType === 'change-email-confirmation';
     const destination = confirming
         ? input.claims.email
         : (input.claims.updateTo ?? input.claims.email);
     const url = emailOwnershipWebUrl(input.token, input.claims.returnTo);
-    const html = `<div style="font-family:Arial,sans-serif;line-height:1.5"><p>${escapeHtml(confirming ? t.confirm : t.verify)}</p><p><a href="${escapeHtml(url)}">${escapeHtml(t.action)}</a></p><p>${escapeHtml(t.session)}</p><p>${escapeHtml(t.expiry)}</p></div>`;
+    const html = `<div lang="${locale}" style="font-family:Arial,sans-serif;line-height:1.5"><p>${escapeHtml(confirming ? t.confirm : t.verify)}</p><p><a href="${escapeHtml(url)}">${escapeHtml(t.action)}</a></p><p>${escapeHtml(t.session)}</p><p>${escapeHtml(t.expiry)}</p></div>`;
     try {
         await sendSystemMail(
             destination,
