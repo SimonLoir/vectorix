@@ -19,6 +19,8 @@ import { cookieCsrfIntegrationTests } from './cookie-csrf-integration';
 import { notificationLocaleIntegrationTests } from './notification-locale-integration';
 import { sessionOrganizationIntegrationTests } from './session-organization-integration';
 import { authorizationErrorIntegrationTests } from './authorization-error-integration';
+import { pushSubscriptionIntegrationTests } from './push-subscription-integration';
+import { pushDeliveryIntegrationTests } from './push-delivery-integration';
 
 if (
     !new URL(
@@ -425,6 +427,14 @@ void test('core journeys with real PostgreSQL and the HTTP transports', async (t
         organizationId: organizationIds[0]!,
         createBrowser: browser,
         registerUser: (id) => userIds.push(id),
+    });
+    await pushSubscriptionIntegrationTests(t, {
+        registerUser: (id) => userIds.push(id),
+        registerOrganization: (id) => organizationIds.push(id),
+    });
+    await pushDeliveryIntegrationTests(t, {
+        registerUser: (id) => userIds.push(id),
+        registerOrganization: (id) => organizationIds.push(id),
     });
     await superadminTransactionIntegrationTests(t, {
         createBrowser: browser,

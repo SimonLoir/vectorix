@@ -290,6 +290,31 @@ export async function notificationLocaleIntegrationTests(
                 );
             }
         );
+        await t.test(
+            'organization suspension skips pending external mail without sending',
+            async () => {
+                const owner = await account();
+                await enqueue(owner);
+                await prisma.organization.update({
+                    where: { id: owner.organizationId },
+                    data: { isActive: false },
+                });
+                const before = smtp.messages.length;
+                await processNotifications(prisma);
+                assert.equal(smtp.messages.length, before);
+                const delivery =
+                    await prisma.vectorixNotificationDelivery.findFirstOrThrow({
+                        where: {
+                            organizationId: owner.organizationId,
+                            channel: 'EMAIL',
+                        },
+                        select: { status: true, sentAt: true, skippedAt: true },
+                    });
+                assert.equal(delivery.status, 'SKIPPED');
+                assert.equal(delivery.sentAt, null);
+                assert.ok(delivery.skippedAt);
+            }
+        );
         smtp.assertHealthy();
     } finally {
         await smtp.close();

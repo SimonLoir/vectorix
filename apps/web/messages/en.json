@@ -73,8 +73,19 @@
                 "updating": "Updating…",
                 "disable": "Disable on this device",
                 "enable": "Enable on this device",
-                "error": "The push subscription could not be updated. Other channels remain available.",
-                "consentExplanation": "Enabling push asks for browser permission and may require installing Vectorix on an iPhone or iPad. You can withdraw this consent here at any time."
+                "consentExplanation": "Enabling push asks for browser permission and may require installing Vectorix on an iPhone or iPad. Cleanup revokes only this organization’s saved registration; removing the browser subscription also stops push for other organizations on this device.",
+                "servicePolicy": "This deployment accepts only push services approved by its operator. Your browser chooses the service; there is no endpoint to enter here.",
+                "retry": "Check again",
+                "checkFailed": "The browser subscription could not be checked. You can retry or attempt cleanup using the saved registration.",
+                "enabled": "Push registration is enabled for this organization on this device.",
+                "disabled": "The saved registration for this organization was revoked and the browser subscription was removed.",
+                "registrationRefused": "Registration was refused. The subscription may be invalid or its push service may not be approved for this deployment. Try again later or contact your operator. Other channels remain available.",
+                "enableFailed": "Push registration could not be confirmed. Try again or use cleanup if a browser subscription remains. Other channels remain available.",
+                "receiptUnavailable": "The registration receipt could not be saved or removed on this device. Keep this page open and retry cleanup; a reload may lose the confirmed server result.",
+                "localOnly": "The browser subscription was removed. No saved registration was available to confirm server revocation for this organization.",
+                "serverRevokeFailed": "Server revocation could not be confirmed. The saved registration has been kept so you can retry cleanup.",
+                "localCleanupFailed": "Browser cleanup could not be confirmed. Retry cleanup on this device in a supported browser.",
+                "serverRevoked": "The saved registration for this organization was revoked on the server."
             },
             "accountEmailExplanation": "Sign-in notices are sent by email by default. You can also enable in-app and push notifications."
         }

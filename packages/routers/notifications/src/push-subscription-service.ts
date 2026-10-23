@@ -9,12 +9,33 @@ import type { AuthorizedContext } from '@routers/utils/authorized';
 import { encrypt } from '@routers/utils/encryption';
 import { runSerializableTransaction } from '@routers/utils/transactions';
 import {
+    admitPushEndpoint,
+    createPushEndpointPolicy,
+    PushEndpointPolicyConfigurationError,
+} from '@routers/utils/push-endpoint-policy';
+import {
     assertExpectedOrganization,
     ensureMemberRecipient,
     getNotificationSession,
 } from './notification-session';
 
 const MAX_ACTIVE_PUSH_SUBSCRIPTIONS = 20;
+
+/** Reject untrusted destinations before encryption or any recipient/subscription write. */
+function requirePushDestination(endpoint: string): void {
+    try {
+        const policy = createPushEndpointPolicy(
+            process.env.VECTORIX_WEB_PUSH_ALLOWED_ORIGINS
+        );
+        if (admitPushEndpoint(endpoint, policy)) return;
+    } catch (error) {
+        if (!(error instanceof PushEndpointPolicyConfigurationError))
+            throw error;
+    }
+    throw new ORPCError('BAD_REQUEST', {
+        message: 'The push subscription endpoint is not allowed.',
+    });
+}
 
 type RegisterInput = z.infer<typeof VectorixNotificationPushRegisterV1Schema>;
 type RevokeInput = z.infer<typeof VectorixNotificationPushRevokeV1Schema>;
@@ -67,6 +88,7 @@ export async function registerPushSubscription(
         });
     }
     const session = await getNotificationSession(context);
+    requirePushDestination(input.endpoint);
     const encrypted = await encrypt(
         JSON.stringify({
             endpoint: input.endpoint,
