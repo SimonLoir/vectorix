@@ -17,6 +17,21 @@ spec.loader.exec_module(main)
 RUN = '0123456789ab'
 
 
+def setUpModule():
+    """Own a fresh test cache without changing ROOT or consulting operator state."""
+    directory = tempfile.TemporaryDirectory(
+        dir=common.ROOT / 'node_modules', prefix='vectorix-restore-guards-')
+    unittest.addModuleCleanup(directory.cleanup)
+    owner = Path(directory.name).stat()
+    assert owner.st_uid == os.getuid() and owner.st_mode & 0o777 == 0o700
+    cache = Path(directory.name) / '.cache/vectorix'
+    assert not cache.exists()
+    cache.mkdir(parents=True, mode=0o700)
+    cache_patch = patch.object(common, 'CACHE', cache)
+    cache_patch.start()
+    unittest.addModuleCleanup(cache_patch.stop)
+
+
 def state_fixture():
     prefix = 'vectorix-m7c-restore-' + RUN
     ports = dict(postgres=47001, vector=47002, redis=47003, rustfs=47004, ollama=47005)
