@@ -40,6 +40,13 @@ for app in web admin api workers migrator; do
     [[ -n "$image_user" && "$image_user" != root && "$image_user" != 0 ]]
 done
 
+# Exercise permissions as each configured runtime USER. Do not use --read-only:
+# an artificial read-only mount would hide writable application-file ownership.
+for app in api workers web admin migrator; do
+    docker run --rm -i --network none --entrypoint node -e TEST_APP="$app" \
+        "$prefix-$app:test" --input-type=module < tests/docker/runtime-hardening.mjs
+done
+
 # Check the complete pnpm store, not just top-level symlinks: optional peers
 # must not smuggle Next.js, compilers or the Prisma CLI into backend images.
 for app in api workers; do
@@ -114,13 +121,15 @@ for attempt in {1..60}; do
 done
 docker exec "$prefix-postgres" pg_isready -h 127.0.0.1 -U postgres -d vectorix_test
 
+# A nondefault API listener makes the image HEALTHCHECK prove runtime PORT use.
+api_port=3101
 runtime_env=(
     -e DATABASE_URL=postgresql://postgres:password@postgres:5432/vectorix_test
     -e REDIS_URL=redis://redis:6379
     -e BETTER_AUTH_SECRET=container-smoke-test-secret-at-least-32-characters
     -e ENCRYPTION_SECRET=0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
-    -e BETTER_AUTH_URL=http://api:3001
-    -e API_URL=http://api:3001
+    -e BETTER_AUTH_URL="http://api:$api_port"
+    -e API_URL="http://api:$api_port"
     -e TRUSTED_ORIGINS=http://localhost:3000,http://localhost:3006
     -e ALLOW_ACCOUNT_CREATION=true
     -e ALLOW_ORGANIZATION_CREATION=true
@@ -132,17 +141,33 @@ docker run --rm --network "$network" "${runtime_env[@]}" "$prefix-migrator:test"
 
 for app in api workers web admin; do
     containers+=("$prefix-$app")
+    app_env=()
+    if [[ "$app" == api ]]; then app_env=(-e PORT="$api_port"); fi
     docker run -d --name "$prefix-$app" --network "$network" --network-alias "$app" \
-        "${runtime_env[@]}" "$prefix-$app:test" >/dev/null
+        "${runtime_env[@]}" "${app_env[@]}" "$prefix-$app:test" >/dev/null
 done
 
 for app in api web admin; do
-    case "$app" in api) port=3001; path=/ready ;; web) port=3000; path=/sign-in ;; admin) port=3006; path=/sign-in ;; esac
+    case "$app" in api) port=$api_port; path=/ready ;; web) port=3000; path=/sign-in ;; admin) port=3006; path=/sign-in ;; esac
     for attempt in {1..60}; do
         if docker exec "$prefix-$app" node -e "fetch('http://127.0.0.1:$port$path').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))" >/dev/null 2>&1; then break; fi
         sleep 1
     done
     docker exec "$prefix-$app" node -e "fetch('http://127.0.0.1:$port$path').then(r=>{if(!r.ok)throw Error(r.status);console.log('$app ready')})"
+done
+
+# Inspect the real Docker HEALTHCHECK result without overriding its command or
+# intervals. Readiness alone would not exercise the image health configuration.
+for app in api web admin; do
+    health=missing
+    for attempt in {1..90}; do
+        health=$(docker inspect --format '{{if .State.Health}}{{.State.Health.Status}}{{else}}missing{{end}}' "$prefix-$app")
+        if [[ "$health" == healthy ]]; then break; fi
+        [[ $(docker inspect --format '{{.State.Running}}' "$prefix-$app") == true ]]
+        sleep 1
+    done
+    [[ "$health" == healthy ]]
+    printf 'Production %s Docker HEALTHCHECK healthy.\n' "$app"
 done
 
 # Exercise the packaged playground without installing Scalar in the runtime or
@@ -152,7 +177,7 @@ docker exec "$prefix-api" node --input-type=module -e '
     import { createHash } from "node:crypto";
     import { readFileSync, readdirSync, statSync } from "node:fs";
     import { createRequire } from "node:module";
-    const base = "http://127.0.0.1:3001";
+    const base = `http://127.0.0.1:${process.env.PORT}`;
     const bundlePath = "/app/dist/scalar-api-reference.js";
     const maximumBytes = 8 * 1024 * 1024;
     const info = statSync(bundlePath);
@@ -237,10 +262,11 @@ docker exec "$prefix-api" node --input-type=module -e '
 
 docker exec "$prefix-api" node --input-type=module -e '
     import assert from "node:assert/strict";
-    const spec = await fetch("http://127.0.0.1:3001/spec.json");
+    const base = `http://127.0.0.1:${process.env.PORT}`;
+    const spec = await fetch(base + "/spec.json");
     assert.equal(spec.status, 200);
     assert.ok(Object.keys((await spec.json()).paths).length > 0);
-    const signup = await fetch("http://127.0.0.1:3001/api/auth/sign-up/email", {
+    const signup = await fetch(base + "/api/auth/sign-up/email", {
         method: "POST",
         headers: { "content-type": "application/json", origin: "http://localhost:3000" },
         body: JSON.stringify({ name: "Container check", email: "container@example.test", password: "Temporary-container-check-73!" })
@@ -252,7 +278,7 @@ docker exec "$prefix-api" node --input-type=module -e '
 for app in web admin; do
     port=3000
     if [[ "$app" == admin ]]; then port=3006; fi
-    docker exec -i -e TEST_PORT="$port" -e TEST_APP="$app" "$prefix-$app" \
+    docker exec -i -e TEST_PORT="$port" -e TEST_APP="$app" -e TEST_API_PORT="$api_port" "$prefix-$app" \
         node --input-type=module < tests/dashboard/security-headers.mjs
 done
 
