@@ -7,6 +7,10 @@ import {
 } from '@aws-sdk/client-s3';
 import process from 'node:process';
 import { Buffer } from 'node:buffer';
+import {
+    isAllowedEndpoint,
+    parseEndpointAllowlist,
+} from './endpoint-allowlist';
 
 export type S3Configuration = {
     endpoint: string;
@@ -25,21 +29,23 @@ export class StorageError extends Error {
 /** Outbound destinations are operator-controlled; user-supplied endpoints alone never authorize network access. */
 export function assertStorageEndpoint(endpoint: string) {
     const normalize = (value: string) => new URL(value).href.replace(/\/$/, '');
-    const allowed = [
-        process.env.VECTORIX_DEFAULT_S3_ENDPOINT,
-        ...(process.env.VECTORIX_S3_ALLOWED_ENDPOINTS ?? '').split(','),
-    ].filter((value): value is string => Boolean(value?.trim()));
-    try {
-        if (
-            allowed.some(
-                (value) => normalize(value.trim()) === normalize(endpoint)
-            )
-        )
-            return;
-    } catch {
-        /* Reject malformed operator configuration without exposing values. */
-    }
-    throw new StorageError();
+    const allowed = parseEndpointAllowlist(
+        'storage',
+        [
+            {
+                name: 'VECTORIX_DEFAULT_S3_ENDPOINT',
+                value: process.env.VECTORIX_DEFAULT_S3_ENDPOINT,
+            },
+            {
+                name: 'VECTORIX_S3_ALLOWED_ENDPOINTS',
+                value: process.env.VECTORIX_S3_ALLOWED_ENDPOINTS,
+                list: true,
+            },
+        ],
+        normalize
+    );
+    if (!isAllowedEndpoint(endpoint, allowed, normalize))
+        throw new StorageError();
 }
 function client(configuration: S3Configuration) {
     assertStorageEndpoint(configuration.endpoint);

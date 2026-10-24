@@ -8,6 +8,10 @@ import {
     resolveCollectionCredential,
     resolveCredential,
 } from '../credential-resolution';
+import {
+    isAllowedEndpoint,
+    parseEndpointAllowlist,
+} from '@repo/storage/endpoint-allowlist';
 import { indexError } from './errors';
 
 function normalizeEndpoint(value: string) {
@@ -27,23 +31,22 @@ export function assertEmbeddingEndpoint(
     endpoint: string,
     provider: 'OLLAMA' | 'COHERE' | 'VOYAGE' | 'OPENAI' | 'MISTRAL' = 'OLLAMA'
 ) {
-    const allowed = [
-        process.env[`VECTORIX_DEFAULT_${provider}_ENDPOINT`],
-        ...(process.env.VECTORIX_EMBEDDING_ALLOWED_ENDPOINTS ?? '').split(','),
-    ].filter((value): value is string => Boolean(value?.trim()));
-    try {
-        const normalized = normalizeEndpoint(endpoint);
-        if (
-            allowed.some(
-                (candidate) =>
-                    normalizeEndpoint(candidate.trim()) === normalized
-            )
-        )
-            return;
-    } catch {
-        // Invalid operator configuration fails closed without echoing credentials or private destinations.
-    }
-    throw indexError('CREDENTIALS_INVALID');
+    const defaultName = `VECTORIX_DEFAULT_${provider}_ENDPOINT`;
+    // Invalid operator entries are skipped with a sanitized warning; they never hide later entries.
+    const allowed = parseEndpointAllowlist(
+        'embeddings',
+        [
+            { name: defaultName, value: process.env[defaultName] },
+            {
+                name: 'VECTORIX_EMBEDDING_ALLOWED_ENDPOINTS',
+                value: process.env.VECTORIX_EMBEDDING_ALLOWED_ENDPOINTS,
+                list: true,
+            },
+        ],
+        normalizeEndpoint
+    );
+    if (!isAllowedEndpoint(endpoint, allowed, normalizeEndpoint))
+        throw indexError('CREDENTIALS_INVALID');
 }
 /** Saved collection bindings take precedence over current organization selections; invalid bindings never fall back. */
 export async function boundEmbeddingConfiguration(

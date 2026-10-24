@@ -5,7 +5,6 @@
         "module": "esnext",
         "moduleResolution": "Bundler",
         "outDir": "dist",
-        "rootDir": "src",
         "declaration": false,
         "declarationMap": false,
         "composite": false,
@@ -13,5 +12,5 @@
         "tsBuildInfoFile": "dist/.tsbuildinfo",
         "types": ["node"]
     },
-    "include": ["src"]
+    "include": ["src", "tests"]
 }
