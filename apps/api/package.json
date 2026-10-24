@@ -11,7 +11,7 @@
         "dev": "tsx watch src/index.ts",
         "start": "node dist/index.mjs",
         "lint": "eslint",
-        "test": "tsx --test ../../packages/auth/tests/passkey-options.test.ts ../../packages/auth/tests/two-factor.test.ts ../../packages/auth/tests/password-reset-url.test.ts ../../packages/auth/tests/email-ownership.test.ts ../../packages/emails/src/system-mail.test.ts ../../packages/db/tests/bigint-defaults.test.ts ../../packages/queues/src/redis-connection.test.ts ../../packages/storage/src/endpoint-allowlist.test.ts src/authorization-error.test.ts src/authorization-error-socket.test.ts src/template.test.ts src/scalar-playground.test.ts src/http/request-body-limit.test.ts src/http/cookie-csrf.test.ts src/http/cookie-csrf-socket.test.ts src/http/trusted-origins.test.ts ../../packages/dashboard-core/src/lib/orpc-headers.test.ts ../../packages/dashboard-core/src/lib/request-errors.test.ts ../../packages/dashboard-core/src/lib/email-ownership.test.ts ../../packages/routers/rag/src/services/telemetry/tests/telemetry.test.ts ../../packages/i18n/src/*.test.ts ../../apps/workers/src/notifications/email.test.ts ../../packages/routers/utils/src/utils/notifications/push-endpoint-policy.test.ts ../../apps/workers/src/notifications/push-address-policy.test.ts ../../apps/workers/src/notifications/push-transport.test.ts ../../apps/web/lib/notification-push-actions.test.ts",
+        "test": "tsx --test ../../packages/auth/tests/passkey-options.test.ts ../../packages/auth/tests/two-factor.test.ts ../../packages/auth/tests/password-reset-url.test.ts ../../packages/auth/tests/email-ownership.test.ts ../../packages/emails/src/system-mail.test.ts ../../packages/db/tests/bigint-defaults.test.ts ../../packages/queues/src/redis-connection.test.ts ../../packages/queues/src/rate-limit.test.ts ../../packages/storage/src/endpoint-allowlist.test.ts src/authorization-error.test.ts src/authorization-error-socket.test.ts src/template.test.ts src/scalar-playground.test.ts src/http/request-body-limit.test.ts src/http/cookie-csrf.test.ts src/http/cookie-csrf-socket.test.ts src/http/trusted-origins.test.ts src/http/client-ip.test.ts ../../packages/dashboard-core/src/lib/orpc-headers.test.ts ../../packages/dashboard-core/src/lib/request-errors.test.ts ../../packages/dashboard-core/src/lib/email-ownership.test.ts ../../packages/routers/rag/src/services/telemetry/tests/telemetry.test.ts ../../packages/i18n/src/*.test.ts ../../apps/workers/src/notifications/email.test.ts ../../packages/routers/utils/src/utils/notifications/push-endpoint-policy.test.ts ../../apps/workers/src/notifications/push-address-policy.test.ts ../../apps/workers/src/notifications/push-transport.test.ts ../../apps/web/lib/notification-push-actions.test.ts",
         "test:integration": "tsx --test --test-concurrency=1 src/integration.test.ts src/rag.integration.test.ts"
     },
     "dependencies": {
@@ -28,6 +28,7 @@
         "@repo/queues": "workspace:*",
         "@routers/utils": "workspace:*",
         "hono": "^4.13.8",
+        "ioredis": "5.11.1",
         "pino": "^10.3.1",
         "zod": "^4.6.5",
         "bullmq": "^5.81.5",

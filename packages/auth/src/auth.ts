@@ -13,7 +13,7 @@ import { assertSystemMailConfigured } from '@repo/emails';
 import { assertPasswordResetUrlConfigured } from './password-reset-url';
 import { handleEmailOwnership } from './email-ownership/handler';
 import { sendEmailOwnershipVerification } from './email-ownership/mail';
-import { authRateLimitOptions } from './rate-limit';
+import { authIpAddressOptions, authRateLimitOptions } from './rate-limit';
 import { isAccountCreationAllowed } from './account-creation';
 import { isOrganizationCreationAllowed } from './organization-creation';
 import { APIError, createAuthMiddleware } from 'better-auth/api';
@@ -41,12 +41,14 @@ const getEnvValue = (key: string) => {
     return value && value.length > 0 ? value : undefined;
 };
 
-const getAdvancedOptions = (): BetterAuthAdvancedOptions | undefined => {
+const getAdvancedOptions = (): BetterAuthAdvancedOptions => {
     const rootDomain = getEnvValue('ROOT_DOMAIN');
     const cookieName = getEnvValue('BETTER_AUTH_COOKIE_NAME');
     const cookiePrefix = getEnvValue('BETTER_AUTH_COOKIE_PREFIX');
 
-    const advanced: BetterAuthAdvancedOptions = {};
+    const advanced: BetterAuthAdvancedOptions = {
+        ipAddress: authIpAddressOptions,
+    };
 
     if (rootDomain) {
         advanced.crossSubDomainCookies = {
@@ -67,7 +69,7 @@ const getAdvancedOptions = (): BetterAuthAdvancedOptions | undefined => {
         };
     }
 
-    return Object.keys(advanced).length > 0 ? advanced : undefined;
+    return advanced;
 };
 
 export const auth = betterAuth({

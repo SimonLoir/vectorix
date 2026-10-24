@@ -24,9 +24,18 @@ import {
 import { requestBodyLimit } from './http/request-body-limit';
 import { cookieCsrfProtection } from './http/cookie-csrf';
 import { resolveTrustedOrigins } from './http/trusted-origins';
+import { getConnInfo } from '@hono/node-server/conninfo';
+import {
+    parseTrustedProxies,
+    resolveClientIp,
+    withClientIp,
+} from './http/client-ip';
 import { VECTORIX_CSRF_HEADER } from '@repo/api/transport-security';
 export const app = new Hono();
 const origins = resolveTrustedOrigins(process.env.TRUSTED_ORIGINS);
+const trustedProxies = parseTrustedProxies(
+    process.env.VECTORIX_TRUSTED_PROXIES
+);
 app.use(
     '*',
     cors({
@@ -49,7 +58,20 @@ app.use(
 );
 app.use('*', cookieCsrfProtection(API_VERSION_REGISTRY, origins));
 app.use('*', requestBodyLimit(API_VERSION_REGISTRY));
-app.on(['GET', 'POST'], '/api/auth/*', (c) => auth.handler(c.req.raw));
+app.on(['GET', 'POST'], '/api/auth/*', (c) => {
+    let peer: string | undefined;
+    try {
+        peer = getConnInfo(c).remote.address;
+    } catch {
+        // In-process requests (tests) have no socket peer.
+    }
+    const clientIp = resolveClientIp(
+        peer,
+        c.req.raw.headers.get('x-forwarded-for'),
+        trustedProxies
+    );
+    return auth.handler(withClientIp(c.req.raw, clientIp));
+});
 app.get('/health', (c) => c.json({ status: 'ok' }));
 app.get('/ready', async (c) => {
     await prisma.organization.count();
