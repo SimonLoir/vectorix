@@ -57,11 +57,9 @@ export default class ResendClient extends MailClient {
                 contentType: a.contentType,
             })),
         });
-        if (result.error) {
-            return new MailClientError(result.error.message);
-        }
-
-        return new MailClientSuccess(result.data);
+        return result.error
+            ? new MailClientError(result.error.message)
+            : new MailClientSuccess(result.data);
     }
 
     async sendBulk(
@@ -92,10 +90,8 @@ export default class ResendClient extends MailClient {
                 })
             )
         );
-        if (result.error) {
-            return new MailClientError(result.error.message);
-        }
-
-        return new MailClientSuccess(result.data);
+        return result.error
+            ? new MailClientError(result.error.message)
+            : new MailClientSuccess(result.data);
     }
 }

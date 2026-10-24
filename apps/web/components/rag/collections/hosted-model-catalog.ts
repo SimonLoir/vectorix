@@ -25,20 +25,16 @@ export function hostedModelCatalog(provider: string): HostedCatalog | null {
     if (provider === 'COHERE') return cohereCatalog;
     if (provider === 'VOYAGE') return voyageCatalog;
     if (provider === 'OPENAI') return openaiCatalog;
-    if (provider === 'MISTRAL') return mistralCatalog;
-    return null;
+    return provider === 'MISTRAL' ? mistralCatalog : null;
 }
 
 /** Preserve any compatible saved/user-selected size, including nonstandard range values. */
 export function supportsHostedDimensions(model: HostedModel, value: number) {
     if (!Number.isInteger(value)) return false;
-    if (model.dimensionCapability) {
-        return (
-            value >= model.dimensionCapability.minimum &&
-            value <= model.dimensionCapability.maximum
-        );
-    }
-    return model.dimensions.includes(value);
+    return model.dimensionCapability
+        ? value >= model.dimensionCapability.minimum &&
+              value <= model.dimensionCapability.maximum
+        : model.dimensions.includes(value);
 }
 
 const cohereCatalog: HostedCatalog = {

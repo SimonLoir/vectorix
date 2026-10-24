@@ -11,8 +11,7 @@ export function getAuditActorFields(context: AuditActorContext): {
     if (context.user) {
         return { actorType: 'user', actorId: context.user.id };
     }
-    if (context.key) {
-        return { actorType: 'api-key', actorId: context.key.id };
-    }
-    return { actorType: 'unknown' };
+    return context.key
+        ? { actorType: 'api-key', actorId: context.key.id }
+        : { actorType: 'unknown' };
 }

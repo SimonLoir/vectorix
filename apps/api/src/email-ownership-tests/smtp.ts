@@ -74,9 +74,11 @@ export async function smtpCapture() {
                     data = undefined;
                     socket.write('250 Message accepted\r\n');
                 } else if (authentication > 0) {
-                    if (--authentication === 0)
-                        socket.write('235 Authentication successful\r\n');
-                    else socket.write('334 UGFzc3dvcmQ6\r\n');
+                    const response =
+                        --authentication === 0
+                            ? '235 Authentication successful\r\n'
+                            : '334 UGFzc3dvcmQ6\r\n';
+                    socket.write(response);
                 } else if (/^(?:EHLO|HELO) /i.test(line)) {
                     socket.write(
                         '250-controlled.example.test\r\n250 AUTH PLAIN LOGIN\r\n'
@@ -97,14 +99,14 @@ export async function smtpCapture() {
                 } else if (/^RCPT TO:/i.test(line)) {
                     const address = /<([^>]+)>/.exec(line)?.[1];
                     if (
-                        !address ||
-                        !/^[a-z\d._+-]+@example\.test$/i.test(address)
+                        address &&
+                        /^[a-z\d._+-]+@example\.test$/i.test(address)
                     ) {
-                        failures.push('SMTP_RECIPIENT_REFUSED');
-                        socket.write('550 Controlled recipients only\r\n');
-                    } else {
                         recipient = address;
                         socket.write('250 Recipient accepted\r\n');
+                    } else {
+                        failures.push('SMTP_RECIPIENT_REFUSED');
+                        socket.write('550 Controlled recipients only\r\n');
                     }
                 } else if (line.toUpperCase() === 'DATA') {
                     data = [];

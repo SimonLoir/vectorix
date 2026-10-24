@@ -159,9 +159,9 @@ export function indexErrorCode(error: unknown): IndexFailure {
         ].includes(error.code)
             ? 'VECTOR_BINDING_CHANGED'
             : 'VECTOR_UNAVAILABLE';
-    if (error instanceof ORPCError)
-        return rpcIndexErrorCode(error.data, error.code);
-    return 'PROCESSING_FAILED';
+    return error instanceof ORPCError
+        ? rpcIndexErrorCode(error.data, error.code)
+        : 'PROCESSING_FAILED';
 }
 
 /** Preserve typed domain diagnostics while keeping untrusted RPC details out of durable worker state. */

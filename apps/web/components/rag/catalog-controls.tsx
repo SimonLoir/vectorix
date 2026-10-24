@@ -106,6 +106,5 @@ export function CatalogQueryState({
                 onRetry={query.refetch}
             />
         );
-    if (query.isPending) return <p role='status'>{tr('common.loading')}</p>;
-    return null;
+    return query.isPending ? <p role='status'>{tr('common.loading')}</p> : null;
 }

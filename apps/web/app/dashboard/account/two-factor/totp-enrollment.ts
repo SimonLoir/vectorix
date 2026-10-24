@@ -8,6 +8,5 @@ type EnrollmentData = NonNullable<
 
 /** Only the native TOTP branch may advance authenticator enrollment; other methods keep the password step. */
 export function getTotpEnrollment(data?: EnrollmentData | null) {
-    if (!data || data.method !== 'totp') return null;
-    return data;
+    return data && data.method === 'totp' ? data : null;
 }
