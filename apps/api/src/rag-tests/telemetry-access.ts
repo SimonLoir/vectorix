@@ -186,7 +186,7 @@ export async function telemetryAccessTests(t: TestContext) {
                         typeof spec.info === 'object' &&
                         'version' in spec.info
                 );
-                assert.equal(spec.info.version, '1.20.0');
+                assert.equal(spec.info.version, '1.21.0');
                 assert(
                     'paths' in spec &&
                         spec.paths &&

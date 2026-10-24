@@ -332,4 +332,240 @@ export async function credentialTests(t: TestContext) {
             });
         }
     );
+
+    await t.test(
+        'changing endpoint, bucket, or S3 addressing mode requires re-entering secrets',
+        async () => {
+            const cohere = await api.credentials.create({
+                name: 'Destination Cohere',
+                data: {
+                    provider: 'COHERE',
+                    endpoint: 'https://cohere-a.test',
+                    apiKey: 'destination-cohere-secret',
+                },
+                activate: false,
+            });
+            const storedKey = async () =>
+                (
+                    await prisma.cohereCredentials.findUniqueOrThrow({
+                        where: { id: cohere.id },
+                    })
+                ).apiKey;
+            const before = await storedKey();
+            await assert.rejects(
+                api.credentials.update({
+                    id: cohere.id,
+                    expectedRevision: cohere.revision,
+                    name: cohere.name,
+                    data: {
+                        provider: 'COHERE',
+                        endpoint: 'https://cohere-b.test',
+                    },
+                }),
+                { code: 'BAD_REQUEST' }
+            );
+            assert.equal(await storedKey(), before);
+            assert.equal(
+                (
+                    await prisma.credentials.findUniqueOrThrow({
+                        where: { id: cohere.id },
+                    })
+                ).revision,
+                cohere.revision
+            );
+            const moved = await api.credentials.update({
+                id: cohere.id,
+                expectedRevision: cohere.revision,
+                name: cohere.name,
+                data: {
+                    provider: 'COHERE',
+                    endpoint: 'https://cohere-b.test',
+                    apiKey: 'destination-cohere-reentered',
+                },
+            });
+            assert.equal(
+                decrypt(await storedKey()),
+                'destination-cohere-reentered'
+            );
+            const entries = await prisma.ragAuditLog.findMany({
+                where: {
+                    organizationId: f.org,
+                    action: 'credential.update',
+                    targetId: cohere.id,
+                },
+                orderBy: { createdAt: 'asc' },
+            });
+            assert.deepEqual(entries.at(-1)?.details, {
+                revision: moved.revision,
+                destinationChanged: true,
+            });
+            assert.ok(!JSON.stringify(entries).includes('cohere-b.test'));
+
+            const s3Data = {
+                provider: 'S3' as const,
+                endpoint: 'http://rustfs-destination.test:9000',
+                bucket: 'destination-a',
+                region: 'us-east-1',
+                forcePathStyle: true,
+            };
+            const s3 = await api.credentials.create({
+                name: 'Destination S3',
+                data: {
+                    ...s3Data,
+                    accessKeyId: 'destination-access',
+                    secretAccessKey: 'destination-secret',
+                },
+                activate: false,
+            });
+            const s3Before = await prisma.s3Credentials.findUniqueOrThrow({
+                where: { id: s3.id },
+            });
+            for (const destination of [
+                { endpoint: 'http://rustfs-other-destination.test:9000' },
+                { bucket: 'destination-b' },
+                { forcePathStyle: false },
+            ]) {
+                for (const partial of [
+                    {},
+                    { secretAccessKey: 'only-the-secret' },
+                    { accessKeyId: 'only-the-access-key' },
+                ])
+                    await assert.rejects(
+                        api.credentials.update({
+                            id: s3.id,
+                            expectedRevision: s3.revision,
+                            name: s3.name,
+                            data: {
+                                ...s3Data,
+                                ...destination,
+                                ...partial,
+                            },
+                        }),
+                        { code: 'BAD_REQUEST' }
+                    );
+            }
+            const rejectedS3 = await prisma.s3Credentials.findUniqueOrThrow({
+                where: { id: s3.id },
+            });
+            assert.ok(JSON.stringify(rejectedS3) === JSON.stringify(s3Before));
+            assert.equal(
+                (
+                    await prisma.credentials.findUniqueOrThrow({
+                        where: { id: s3.id },
+                    })
+                ).revision,
+                s3.revision
+            );
+            assert.equal(
+                await prisma.ragAuditLog.count({
+                    where: {
+                        organizationId: f.org,
+                        action: 'credential.update',
+                        targetId: s3.id,
+                    },
+                }),
+                0
+            );
+            // Region alone keeps the explicitly configured request destination.
+            const regional = await api.credentials.update({
+                id: s3.id,
+                expectedRevision: s3.revision,
+                name: s3.name,
+                data: { ...s3Data, region: 'eu-west-1' },
+            });
+            const addressed = await api.credentials.update({
+                id: s3.id,
+                expectedRevision: regional.revision,
+                name: s3.name,
+                data: {
+                    ...s3Data,
+                    region: 'eu-west-1',
+                    forcePathStyle: false,
+                    accessKeyId: 'destination-access-reentered',
+                    secretAccessKey: 'destination-secret-reentered',
+                },
+            });
+            await api.credentials.update({
+                id: s3.id,
+                expectedRevision: addressed.revision,
+                name: s3.name,
+                data: {
+                    ...s3Data,
+                    bucket: 'destination-b',
+                    accessKeyId: 'destination-access-2',
+                    secretAccessKey: 'destination-secret-2',
+                },
+            });
+
+            const keyless = await api.credentials.create({
+                name: 'Destination keyless Ollama',
+                data: {
+                    provider: 'OLLAMA',
+                    endpoint: 'http://ollama-a.test:11434',
+                    apiKey: null,
+                },
+                activate: false,
+            });
+            await api.credentials.update({
+                id: keyless.id,
+                expectedRevision: keyless.revision,
+                name: keyless.name,
+                data: {
+                    provider: 'OLLAMA',
+                    endpoint: 'http://ollama-b.test:11434',
+                },
+            });
+            const keyed = await api.credentials.create({
+                name: 'Destination keyed Ollama',
+                data: {
+                    provider: 'OLLAMA',
+                    endpoint: 'http://ollama-a.test:11434',
+                    apiKey: 'destination-ollama-secret',
+                },
+                activate: false,
+            });
+            await assert.rejects(
+                api.credentials.update({
+                    id: keyed.id,
+                    expectedRevision: keyed.revision,
+                    name: keyed.name,
+                    data: {
+                        provider: 'OLLAMA',
+                        endpoint: 'http://ollama-b.test:11434',
+                    },
+                }),
+                { code: 'BAD_REQUEST' }
+            );
+            // Removing the key while moving sends no stored secret anywhere.
+            await api.credentials.update({
+                id: keyed.id,
+                expectedRevision: keyed.revision,
+                name: keyed.name,
+                data: {
+                    provider: 'OLLAMA',
+                    endpoint: 'http://ollama-b.test:11434',
+                    apiKey: null,
+                },
+            });
+            assert.equal(
+                (
+                    await prisma.ollamaCredentials.findUniqueOrThrow({
+                        where: { id: keyed.id },
+                    })
+                ).apiKey,
+                null
+            );
+            for (const id of [cohere.id, s3.id, keyless.id, keyed.id]) {
+                const { revision } = await prisma.credentials.findUniqueOrThrow(
+                    {
+                        where: { id },
+                    }
+                );
+                await api.credentials.delete({
+                    id,
+                    expectedRevision: revision,
+                });
+            }
+        }
+    );
 }

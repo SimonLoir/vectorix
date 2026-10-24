@@ -21,6 +21,7 @@ Vectorix is a multi-tenant application foundation. Preserve its reusable authent
 - Reuse `@routers/utils/base` for explicitly public operations, `@routers/utils/authorized` for organization operations, and the existing superadmin guard for global administration.
 - Resolve organization identity through authenticated context and scope database reads and writes accordingly. Validate related identifiers within the same organization; possession of an identifier never grants access.
 - Register private operations in `packages/auth/src/permissions/`, including compound effects. Unknown private operations must fail closed. UI visibility is not an authorization check.
+- Keep API personal request throttling before permissions. Invoke the optional request-scoped `AuthorizedContext.admitProviderRequest` only after resource and saved-binding guards, immediately before the admitted provider operation; preserve post-I/O rechecks. Memoized request admission is not native usage or billing.
 - Preserve session-only restrictions and explicit API key scopes. Key creation or updates must not grant permissions the issuer does not hold, and initialization must not grant existing keys automatic privileges.
 - On every organization API-key admission, intersect stored permissions with the bound issuer's current roles; reject missing membership, unbound and legacy keys, and keep key contexts sessionless.
 - Preserve organization suspension checks, member removal behavior, explicit feature grants, and audit records. Licensing provider failure or expiration must not grant access.
