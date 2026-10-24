@@ -6,7 +6,7 @@
 # -----------------------
 # 1) Base image with pnpm
 # -----------------------
-FROM node:24-alpine AS base
+FROM node:24-alpine@sha256:06d7adf3e0ef61a13f1d28682726366f97a15aa1888c934d3ecec86c33918b53 AS base
 
 # Runtime dependencies commonly needed by Node native modules & Prisma
 RUN apk add --no-cache libc6-compat openssl
@@ -64,7 +64,7 @@ RUN pnpm --config.inject-workspace-packages=true deploy --filter api --prod --no
 # -----------------------
 # 4) Runtime layer (Alpine)
 # -----------------------
-FROM node:24-alpine AS runner
+FROM node:24-alpine@sha256:06d7adf3e0ef61a13f1d28682726366f97a15aa1888c934d3ecec86c33918b53 AS runner
 
 ENV NODE_ENV=production
 
@@ -77,14 +77,16 @@ RUN adduser -D api
 WORKDIR /app
 
 # Copy the pruned deployment from build stage
-COPY --from=build --chown=api:node /out/package.json ./package.json
-COPY --from=build --chown=api:node /out/node_modules ./node_modules
-COPY --from=build --chown=api:node /app/apps/api/dist ./dist
+COPY --from=build /out/package.json ./package.json
+COPY --from=build /out/node_modules ./node_modules
+COPY --from=build /app/apps/api/dist ./dist
 
 USER api
 
 ENV PORT=3001
 EXPOSE 3001
 
+HEALTHCHECK --interval=30s --timeout=5s --start-period=30s --retries=3 \
+    CMD ["node", "-e", "fetch('http://127.0.0.1:'+(process.env.PORT||3001)+'/health',{redirect:'manual'}).then(r=>process.exit(r.status<500?0:1),()=>process.exit(1))"]
 # Start the api process
 CMD ["node", "dist/index.mjs"]

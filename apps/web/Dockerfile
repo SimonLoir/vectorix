@@ -6,7 +6,7 @@
 # -----------------------
 # 1) Base image with pnpm
 # -----------------------
-FROM node:24-alpine AS base
+FROM node:24-alpine@sha256:06d7adf3e0ef61a13f1d28682726366f97a15aa1888c934d3ecec86c33918b53 AS base
 # Install runtime dependencies for Node.js and Prisma
 # - libc6-compat: provides glibc compatibility for Alpine's musl libc (required for some Node.js native modules)
 # - openssl: required by Prisma
@@ -62,7 +62,7 @@ RUN pnpm --filter web build
 # 4) Runtime layer
 #    - copy Next.js standalone output only
 # -----------------------
-FROM node:24-alpine AS runner
+FROM node:24-alpine@sha256:06d7adf3e0ef61a13f1d28682726366f97a15aa1888c934d3ecec86c33918b53 AS runner
 RUN apk add --no-cache libc6-compat openssl
 WORKDIR /app
 ENV NODE_ENV=production
@@ -73,11 +73,11 @@ RUN adduser -D nextjs
 
 # Copy the standalone server and required assets from the build stage
 # Next.js standalone places a full minimal Node.js server and node_modules into .next/standalone
-COPY --from=build --chown=nextjs:node /app/apps/web/.next/standalone ./
+COPY --from=build /app/apps/web/.next/standalone ./
 # Static assets used by the server
-COPY --from=build --chown=nextjs:node /app/apps/web/.next/static ./apps/web/.next/static
+COPY --from=build /app/apps/web/.next/static ./apps/web/.next/static
 # Public assets used at runtime
-COPY --from=build --chown=nextjs:node /app/apps/web/public ./apps/web/public
+COPY --from=build /app/apps/web/public ./apps/web/public
 
 # The app listens on PORT (defaults to 3000)
 ENV PORT=3000
@@ -85,9 +85,13 @@ ENV PORT=3000
 EXPOSE 3000
 
 # Switch to the non-root user
+# Application files stay root-owned; only the Next.js cache is writable.
+RUN mkdir -p apps/web/.next/cache && chown nextjs:node apps/web/.next/cache
 USER nextjs
 
 # Switch to the app directory inside standalone output and run the server
 WORKDIR /app/apps/web
 
+HEALTHCHECK --interval=30s --timeout=5s --start-period=30s --retries=3 \
+    CMD ["node", "-e", "fetch('http://127.0.0.1:'+(process.env.PORT||3000)+'/',{redirect:'manual'}).then(r=>process.exit(r.status<500?0:1),()=>process.exit(1))"]
 CMD ["node", "server.js"]
