@@ -104,11 +104,28 @@ docker run --rm --entrypoint node -v "$PWD/tests/documents/fixtures:/fixtures:ro
     assert.ok(mixedNative.stderr.includes(repairLine) && mixedNative.stderr.includes("Syntax Error:"), "Mixed corruption must include both repair and fatal diagnostics despite exiting zero");
     const baseline = await parseRichDocument(await readFile("/fixtures/text-fr-en.pdf"), PDF_MEDIA_TYPE);
     assert.deepEqual(await parseRichDocument(repaired, PDF_MEDIA_TYPE), baseline, "Repair must preserve the complete canonical text, pages and source geometry");
+    const lengthWarning = "Syntax Warning: Length in linearization table is invalid";
+    for (const filename of ["linearization-warning.pdf", "linearization-xref-reconstructed.pdf"]) {
+        for (const tool of ["pdfinfo", "pdftotext"]) {
+            const result = nativePdf(tool, `/fixtures/${filename}`);
+            const lines = result.stderr.trim().split(/\r?\n/u);
+            assert.ok(lines.includes(lengthWarning), "Packaged Poppler must actually emit the supported warning");
+            assert.ok(lines.every(line => line === lengthWarning || line === repairLine));
+            assert.equal(lines.includes(repairLine), filename === "linearization-xref-reconstructed.pdf");
+            if (tool === "pdftotext") assert.equal(result.stdout, nativePdf(tool, "/fixtures/text-fr-en.pdf").stdout);
+        }
+        assert.deepEqual(await parseRichDocument(await readFile(`/fixtures/${filename}`), PDF_MEDIA_TYPE), baseline);
+    }
+    for (const filename of ["linearization-partial-corrupt.pdf", "linearization-xref-partial-corrupt.pdf"]) {
+        const native = nativePdf("pdftotext", `/fixtures/${filename}`);
+        assert.ok(native.stderr.includes(lengthWarning) && native.stderr.includes("Syntax Error: Unterminated string") && native.stderr.includes("Syntax Error: Leftover args in content stream"));
+        await assert.rejects(parseRichDocument(await readFile(`/fixtures/${filename}`), PDF_MEDIA_TYPE), {code: "FILE_INVALID"});
+    }
     await assert.rejects(parseRichDocument(mixed, PDF_MEDIA_TYPE), {code: "FILE_INVALID"});
     await assert.rejects(parseRichDocument(await readFile("/fixtures/partial-corrupt.pdf"), PDF_MEDIA_TYPE), {code: "FILE_INVALID"});
     await assert.rejects(parseRichDocument(await readFile("/fixtures/scanned.pdf"), PDF_MEDIA_TYPE), {code: "PDF_OCR_UNAVAILABLE"});
     await assert.rejects(parseRichDocument(await readFile("/fixtures/zipbomb.docx"), DOCX_MEDIA_TYPE), {code: "PARSER_LIMIT"});
-    console.log("Production PDF and DOCX parsers, exact xref recovery and mixed-corruption refusal passed");
+    console.log("Production PDF and DOCX parsers, exact xref/linearization recovery and mixed-corruption refusal passed");
 '
 docker run --rm --entrypoint node "$prefix-api:test" --input-type=module -e '
     import assert from "node:assert/strict";

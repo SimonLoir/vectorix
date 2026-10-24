@@ -4,6 +4,7 @@ import type { TestContext } from 'node:test';
 import { prisma } from '@repo/db';
 import { processDocumentCleanups } from '@routers/rag/cleanup';
 import { app } from '../app';
+import { documentPdfWarningTests } from './document-pdf-warning';
 import { fixture as f, readGrant } from './fixtures';
 import { object } from '../user-locale-tests/http';
 import {
@@ -508,6 +509,7 @@ export async function documentPdfXrefTests(t: TestContext) {
                 );
             }
         );
+        await documentPdfWarningTests(t, environment);
     } finally {
         await environment.close();
     }

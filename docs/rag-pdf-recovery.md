@@ -1,6 +1,6 @@
-# Narrow PDF cross-reference recovery
+# Recoverable PDF diagnostics
 
-This follow-up to [issue #16](https://github.com/SimonLoir/vectorix/issues/16) is delivered in [PR #71](https://github.com/SimonLoir/vectorix/pull/71), squash `c0dec633ff37dd33ef8dd1f7644e296c56e92dc0`. Local automated checks, production dashboard acceptance and both exact-head CI workflows pass. It addresses the demonstrated cross-reference reconstruction case; arbitrary font, hint-table and other syntax warnings remain unsupported, so issue #16 stays open for that broader scope.
+[PR #71](https://github.com/SimonLoir/vectorix/pull/71), squash `c0dec633ff37dd33ef8dd1f7644e296c56e92dc0`, delivered the demonstrated cross-reference reconstruction case from [issue #16](https://github.com/SimonLoir/vectorix/issues/16). Its historical validation is recorded below. This follow-up adds the exact optional linearization-length warning, with native complete-text and mixed-corruption fixtures. Other font, hint-table and syntax diagnostics remain unsupported; a zero exit and some usable text do not establish a complete extraction.
 
 ## Diagnostic boundary
 
@@ -12,13 +12,13 @@ Internal Error: xref num 1 not found but needed, try to reconstruct
 
 The previous worker's generic `not found` check misclassifies this as unavailable parser infrastructure before its `Error:` check can classify it as invalid content. Accepting every zero-exit result would also admit the existing partial-corruption fixture, whose native output contains usable but incomplete text.
 
-The worker's [diagnostic classifier](../apps/workers/src/extraction/poppler-diagnostics.ts) permits only empty diagnostics or complete recognized xref-reconstruction lines after a successful process exit. Object numbers must be bounded positive decimal integers. Prefixes, suffixes, same-line additions, syntax warnings, syntax errors and unknown nonempty diagnostics remain failures. A recognized repair line never overrides another diagnostic, a nonzero exit, encryption, a signal, a resource limit or an expired deadline. Unknown chatter that previously escaped the broad error-expression checks is now rejected explicitly; this is an intentional compatibility tightening.
+The worker's [diagnostic classifier](../apps/workers/src/extraction/poppler-diagnostics.ts) permits only empty diagnostics, complete recognized xref-reconstruction lines or the exact linearization-length warning below after a successful process exit. Object numbers must be bounded positive decimal integers. Prefixes, suffixes, same-line additions, other syntax warnings, syntax errors and unknown nonempty diagnostics remain failures. A recognized repair line never overrides another diagnostic, a nonzero exit, encryption, a signal, a resource limit or an expired deadline. Unknown chatter that previously escaped the broad error-expression checks is now rejected explicitly; this is an intentional compatibility tightening.
 
 ```mermaid
 flowchart TD
     A[Run bounded native PDF tools] --> B{Process and resource checks pass}
     B -->|No| E[Safe parser failure]
-    B -->|Yes| C{Every diagnostic is empty or exact xref repair}
+    B -->|Yes| C{Every diagnostic is empty or an exact supported repair or warning}
     C -->|No| E
     C -->|Yes| D[Validate physical pages UTF8 text and source bounds]
     D --> F[Publish through existing fenced ingestion]
@@ -26,6 +26,52 @@ flowchart TD
 ```
 
 No raw native stderr, filename, path or document content becomes a public error. Existing safe error codes and retry rules distinguish unavailable infrastructure from invalid content. No new schema, API revision or extraction-artifact version is introduced.
+
+## Invalid optional linearization length — issue #16 follow-up
+
+The only newly accepted whole line is:
+
+```text
+Syntax Warning: Length in linearization table is invalid
+```
+
+Linearization provides optional fast-web-view hints. The tested synthetic files add `/Linearized 1 /L 0` to the first Catalog object and rebuild the classic xref offsets. Every other object, including page dictionaries, fonts and compressed content streams, remains byte-identical. Both installed native tools actually emit the warning and exit zero; their complete text, two physical pages, canonical ranges and encoded extraction artifact match the clean FR/EN baseline. A second positive fixture combines it with the existing xref reconstruction.
+
+The exception is an exact literal, not a `Syntax Warning` prefix rule. Blank lines, repeated recognized lines and combinations of these two known diagnostics are allowed within the unchanged stderr bound. Warning-plus-corrupt-content fixtures still exit zero and print usable text, but contain `Unterminated string` and `Leftover args in content stream` errors and must fail. A recognized warning never rescues a nonzero exit, signal, encryption, launcher failure, deadline or output limit. Raw stderr is neither logged nor persisted in public artifacts.
+
+The relevant entry points are [the classifier](../apps/workers/src/extraction/poppler-diagnostics.ts), [deterministic fixture generator](../tests/documents/fixtures/generate-linearization-warning.py), [native parser regressions](../tests/documents/parser.test.mts), [library replacement regressions](../apps/api/src/rag-tests/document-pdf-warning.ts) and [packaged parser checks](../scripts/test-docker.sh). No schema, public contract, parser artifact version, retry rule or original object changes.
+
+### Dashboard acceptance for the new warning
+
+Prerequisites: fresh isolated `_test` stores, production API/web/workers, installed Poppler, private S3 fallback and a synthetic library manager. Use an authenticated native curl session for uploads, replacements and reads of this unassigned library document, with secret material in private local files. API-key reading additionally requires a collection attachment, a current collection grant and matching key scopes; this library-only recipe does not create that separate setup. File transfers use curl.
+
+1. Upload `linearization-warning.pdf` through curl. In the dashboard, wait for READY and inspect both bilingual sources and their physical page navigation. Compare original bytes through a bounded authenticated curl read.
+2. Replace it through curl with `linearization-xref-partial-corrupt.pdf` and normal retention. Confirm the safe failed-replacement state and that the prior READY version remains readable with the same page text and original bytes.
+3. Replace the failed latest attempt through curl with `linearization-xref-reconstructed.pdf`, retaining the normal seven-day selection. Verify READY v3, both sources and the new original bytes.
+4. Check EN/FR/nl-BE states and reloads, account navigation, console feedback and normal logout. Stop only the owned services and remove their isolated stores; preserve normal application retention deadlines.
+
+The new host checks pass: frozen installation and client generation with an unreachable synthetic database URL, deterministic regeneration of all 43 fixtures, all 60 real parser/limit/classifier cases, API/workers types and lint, the root unit command and both backend builds. All 39 historical binary fixtures and expected entries are unchanged. The first API type check caught a missing direct test dependency; an independent expected artifact avoids adding a production dependency. The first catalog run then exposed the expected artifact's JSON key order; correcting only that expectation preserves the exact 333-byte assertion. The fresh disposable catalog run passes all 329 cases, including READY warning extraction and failed replacement with the prior original/source retained. No production behavior changes after the initial classifier patch.
+
+All six image and infrastructure checks pass in 235.634 seconds, including actual packaged-native warning emission, complete artifact equivalence and mixed-corruption refusal. Four standalone/backend production builds at `748b67d3` pass with their assets present and protected source declarations restored.
+
+The first dashboard trial `035f41fcea81` verifies native login and the empty library, then stops during the curl helper's authentication phase before any PDF dispatch. Two native POSTs return HTTP 200; the original failure cause is not captured, and the secondary signout also fails in the helper. Source review identifies a deterministic cookie-variable TDZ that needs a regression before retrying in a fresh environment. All four processes and stores/volumes are removed, the tab is closed and disabled helpers are restored. This incomplete attempt establishes no document publication or successful logout. A pure regression using the actual cookie consumer reproduces the shadowed-binding error; the focused rename then passes all twelve helper tests. This does not establish the original unrecorded native exception. The earlier PR71 results below do not validate this follow-up.
+
+### Current composition and actual dashboard results
+
+After integrating PR95, checkpoint `1e47fb3b` passes a fresh frozen installation, ignored client generation, all 25 workspace type and lint tasks (zero errors, 46 existing warnings), 506 unit cases and all 60 real document cases. Four fresh serial production builds pass: API 0.601 s, workers 0.601 s, web 26.218 s and admin 23.617 s. Standalone assets are present; protected declaration files and the lockfile are restored exactly. The 329-case local catalog and six-image results above precede this main composition; final PR CI validates the composed source separately.
+
+Production dashboard run `83745eb3e296` uses these current builds, native Poppler and private RustFS:
+
+- Session curl uploads the warning-only PDF; v1 becomes READY. Both English/French physical pages, next-source navigation and direct source-number access work. Bounded curl reads match the original 1,092 bytes and exact source content.
+- The combined warning/xref/content-corruption replacement becomes FAILED v2 after one attempt with `FILE_INVALID`. The safe dashboard explanation appears; v1's French page and exact original remain readable.
+- The valid combined warning/xref replacement becomes published READY v3 with both complete pages and its own exact original bytes. The document adopts the successful version's filename. All six one-shot curl modes pass, totaling 39 native HTTP calls, with normal helper signout after each mode. No browser file transfer occurs.
+- EN, Belgian Dutch and French states/reloads, personal account navigation and return, source navigation and normal French logout work. The final page shows the normal sign-in screen and successful-logout feedback. The browser console has zero warnings/errors; owned tab 72 is closed.
+
+The formal active, ready and failed-replacement observations pass. The formal replaced observation stops at a stale private-helper assertion requiring the initial document name after a successful replacement; native ingestion correctly adopts v3's filename. That failed intent remains unchanged and is never replayed; the formal signed-out phase is not run. A separately reviewed, one-shot read-only metadata supplement confirms the three exact version identities/hashes, READY/FAILED/READY tasks, current v3 name, derived latest/published v3, unchanged v1 retention deadline and zero sessions for the ordinary French-locale owner. It performs no S3 I/O or native HTTP and does not replace the failed formal observation or establish an atomic cross-store snapshot.
+
+Actual loopback SMTP accepts seven messages across seven connections, totaling 3,837 MIME bytes, with zero refusals or capture failure. Its seven private capture files total 6,014 bytes; those are different serialization bytes. The observer's pg 8 parallel-query deprecation warning is separate from the clean browser console. No hosted mail, embedding provider or capacity result is claimed.
+
+Owned cleanup passes: four processes, four containers and four volumes are absent, the resource map is empty, all disabled helpers are restored and all seven entry gates are true. Private captures remain protected; no document-retention deadline is shortened and no application-level reclamation after seven days is claimed. The earlier incomplete trial remains distinct from this successful functional dashboard journey and its explicitly partial formal observation.
 
 ## Original bytes, text and source positions
 
@@ -45,7 +91,7 @@ All production bounds remain: 25 MiB default original upload, 10 MiB rich-extrac
 
 Six bounded native exploratory candidates were tested before implementation against Poppler 26.01.0. The selected minimal first-offset mutation and a broader all-offset mutation both produce the known repair line and preserve canonical text. A startxref-only mutation has no warning and would be a vacuous positive fixture. The original partial-corruption and mixed repair/corruption cases exit zero with extra syntax errors. These are exploratory observations, not successful patched-parser, API, container or browser tests.
 
-## Dashboard acceptance recipe
+## Historical PR71 dashboard acceptance recipe
 
 Use production web, API and workers with fresh isolated PostgreSQL, Redis and private RustFS, an ordinary native owner and the platform storage fallback. No browser key, role, credential or notification-permission change is needed.
 
@@ -56,7 +102,7 @@ Use production web, API and workers with fresh isolated PostgreSQL, Redis and pr
 
 The real worker also runs its native notification lane. Any account-sign-in email stays inside the bounded private loopback SMTP capture; its numeric results must be reported honestly. This recipe does not exercise hosted mail, embeddings, vector indexing or capacity. Full capacity continues to wait for the requested compute upgrade.
 
-## Actual validation
+## Historical PR71 actual validation
 
 Frozen installation, 24 workspace type checks, 24 lint tasks, 149 API/backend tests, 11 utility tests, all 53 document tests and all 313 disposable catalog tests pass. All 39 binary fixtures regenerate deterministically; the 37 historical inputs remain byte-identical to HEAD. Four production builds and all six image/runtime/infrastructure checks pass, including the packaged native reconstruction diagnostic, complete baseline-artifact equivalence and zero-exit mixed-corruption refusal. The initial test-helper declaration error is corrected with explicit public Prisma payload/Promise types, without changing its queries or assertions. Independent implementation reviews are clear.
 
