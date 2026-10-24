@@ -1,0 +1,26 @@
+{
+    "schemaVersion": 1,
+    "format": "UTF8_TEXT",
+    "versions": [
+        {
+            "version": 1,
+            "fileName": "s3-outage-v1.txt",
+            "bytes": 522,
+            "sha256": "110bf3def2634f5a3c6addd02b8b61d35fddd3e3ea776077144041e6c2599719",
+            "canonicalBytes": 522,
+            "canonicalSha256": "110bf3def2634f5a3c6addd02b8b61d35fddd3e3ea776077144041e6c2599719",
+            "utf16Characters": 512,
+            "extractorVersion": "utf8-text-v1"
+        },
+        {
+            "version": 2,
+            "fileName": "s3-outage-v2.txt",
+            "bytes": 620,
+            "sha256": "ef488f9ba8481a42e7f79aceafde979d9f09ddc0072f2edc0577e6b064cc3d2f",
+            "canonicalBytes": 620,
+            "canonicalSha256": "ef488f9ba8481a42e7f79aceafde979d9f09ddc0072f2edc0577e6b064cc3d2f",
+            "utf16Characters": 609,
+            "extractorVersion": "utf8-text-v1"
+        }
+    ]
+}
