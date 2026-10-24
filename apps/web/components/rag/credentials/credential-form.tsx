@@ -12,7 +12,10 @@ import { CatalogDialog } from '../catalog-dialog';
 import { ActionError, useCatalogAction } from '../catalog-action';
 import { TextField, SelectField, CheckField } from '../form-fields';
 import { CredentialProviderFields } from './credential-provider-fields';
-import { credentialFormData } from './credential-form-data';
+import {
+    credentialFormData,
+    requiresSecretReentry,
+} from './credential-form-data';
 import type { Credential } from '../types';
 
 export function CredentialForm({
@@ -23,6 +26,7 @@ export function CredentialForm({
     const { client } = useORPC();
     const mutation = useCatalogAction();
     const [provider, setProvider] = useState(existing?.provider ?? 'OLLAMA');
+    const [secretRequired, setSecretRequired] = useState(false);
     const current = existing?.data;
     return (
         <CatalogDialog
@@ -33,6 +37,15 @@ export function CredentialForm({
         >
             <form
                 className='space-y-4'
+                onChange={(event) => {
+                    if (existing)
+                        setSecretRequired(
+                            requiresSecretReentry(
+                                existing.data,
+                                new FormData(event.currentTarget)
+                            )
+                        );
+                }}
                 onSubmit={(event) => {
                     event.preventDefault();
                     const form = new FormData(event.currentTarget);
@@ -102,7 +115,16 @@ export function CredentialForm({
                     <CredentialProviderFields
                         provider={provider}
                         existing={existing}
+                        secretRequired={secretRequired}
                     />
+                    {secretRequired && (
+                        <p
+                            role='status'
+                            className='rounded-md border p-3 text-sm'
+                        >
+                            {tr('credentials.destinationSecretHint')}
+                        </p>
+                    )}
                     {existing ? (
                         <p className='text-sm text-muted-foreground'>
                             {tr('credentials.referencedHint')}
