@@ -1,13 +1,56 @@
 import type { Prisma } from '@repo/db';
 import { encrypt } from '@routers/utils/encryption';
 import { credentialUpdateData } from '@repo/api-contracts/v1/rag/credentials';
-import type { StoredCredential } from './credential-data';
+import type { credentialDto, StoredCredential } from './credential-data';
+
+type CredentialUpdateData = typeof credentialUpdateData._output;
+
+/**
+ * True when the update moves the stored secret to another host or bucket.
+ * Region and path style alone do not change where an S3 secret is sent.
+ */
+export function changesSecretDestination(
+    current: ReturnType<typeof credentialDto>['data'],
+    next: CredentialUpdateData
+): boolean {
+    return (
+        current.endpoint !== next.endpoint ||
+        (current.provider === 'S3' &&
+            next.provider === 'S3' &&
+            current.bucket !== next.bucket)
+    );
+}
+
+/**
+ * A new destination must never receive a stored secret its editor did not
+ * supply: every secret field is required in the same request. An Ollama
+ * credential without a key, or an explicit key removal, has nothing to leak.
+ */
+export function suppliesSecretsForDestination(
+    current: ReturnType<typeof credentialDto>['data'],
+    next: CredentialUpdateData
+): boolean {
+    switch (next.provider) {
+        case 'S3':
+            return (
+                next.accessKeyId !== undefined &&
+                next.secretAccessKey !== undefined
+            );
+        case 'OLLAMA':
+            return (
+                next.apiKey !== undefined ||
+                (current.provider === 'OLLAMA' && current.apiKey === null)
+            );
+        default:
+            return next.apiKey !== undefined;
+    }
+}
 
 /** Preserve omitted secrets byte-for-byte; full replacement can repair corrupt ciphertext. */
 export async function updateProviderData(
     db: Prisma.TransactionClient,
     current: StoredCredential,
-    inputData: typeof credentialUpdateData._output
+    inputData: CredentialUpdateData
 ) {
     switch (inputData.provider) {
         case 'S3':

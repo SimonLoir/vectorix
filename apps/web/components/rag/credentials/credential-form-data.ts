@@ -25,3 +25,22 @@ export function credentialFormData(
               (provider === 'OLLAMA' && !updating ? null : undefined)),
     };
 }
+
+/**
+ * Mirror of the server rule: a new service URL or bucket must not reuse a
+ * stored secret, so the dialog asks for it again. An Ollama credential with no
+ * stored key, or whose key is being removed, has no secret to resend.
+ */
+export function requiresSecretReentry(
+    current: Credential['data'],
+    form: FormData
+): boolean {
+    const moved =
+        String(form.get('endpoint') ?? '') !== current.endpoint ||
+        (current.provider === 'S3' &&
+            String(form.get('bucket') ?? '') !== current.bucket);
+    if (!moved) return false;
+    if (current.provider === 'OLLAMA')
+        return current.apiKey !== null && !form.has('removeKey');
+    return true;
+}
