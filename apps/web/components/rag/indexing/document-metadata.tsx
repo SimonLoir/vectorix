@@ -18,7 +18,10 @@ export function typedMetadataValue(
     switch (type) {
         case 'NUMBER': {
             const number = Number(value);
-            if (!Number.isFinite(number)) throw new Error('Invalid metadata.');
+            if (!Number.isFinite(number)) {
+                // eslint-disable-next-line unicorn/prefer-type-error -- Invalid numeric values preserve the existing Error contract.
+                throw new Error('Invalid metadata.');
+            }
             return number;
         }
         case 'BOOLEAN':
@@ -27,8 +30,10 @@ export function typedMetadataValue(
             return value === 'true';
         case 'DATE': {
             const date = new Date(value);
-            if (!Number.isFinite(date.getTime()))
+            if (!Number.isFinite(date.getTime())) {
+                // eslint-disable-next-line unicorn/prefer-type-error -- Invalid date values preserve the existing Error contract.
                 throw new Error('Invalid metadata.');
+            }
             return date.toISOString();
         }
         default:
@@ -172,12 +177,10 @@ export function DocumentMetadata({
     );
 }
 function documentMetadataLanguage(value: FormDataEntryValue | null) {
-    if (
-        value === 'FR' ||
+    return value === 'FR' ||
         value === 'EN' ||
         value === 'MIXED' ||
         value === 'UNDETERMINED'
-    )
-        return value;
-    return 'UNDETERMINED';
+        ? value
+        : 'UNDETERMINED';
 }

@@ -3,7 +3,7 @@ import eslintConfigPrettier from 'eslint-config-prettier';
 import turboPlugin from 'eslint-plugin-turbo';
 import sonarjs from 'eslint-plugin-sonarjs';
 import tseslint from 'typescript-eslint';
-import eslintPluginUnicorn from 'eslint-plugin-unicorn';
+import { unicorn63Config } from './unicorn-63-compat.js';
 
 /**
  * A shared ESLint configuration for the repository.
@@ -11,7 +11,7 @@ import eslintPluginUnicorn from 'eslint-plugin-unicorn';
  * @type {import("eslint").Linter.Config[]}
  * */
 export const config = [
-    eslintPluginUnicorn.configs.unopinionated,
+    unicorn63Config,
     js.configs.recommended,
     eslintConfigPrettier,
     ...tseslint.configs.recommended,

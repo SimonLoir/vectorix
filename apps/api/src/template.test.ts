@@ -127,13 +127,14 @@ function operations(
         );
         return { [path.join('.')]: value['~orpc'].route };
     }
-    if (!value || typeof value !== 'object') return {};
-    return Object.assign(
-        {},
-        ...Object.entries(value).map(([key, item]) =>
-            operations(item, [...path, key])
-        )
-    );
+    return value && typeof value === 'object'
+        ? Object.assign(
+              {},
+              ...Object.entries(value).map(([key, item]) =>
+                  operations(item, [...path, key])
+              )
+          )
+        : {};
 }
 
 void test('supported contracts and runtime operations have identical paths and route metadata', () => {

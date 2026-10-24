@@ -30,9 +30,9 @@ export function notificationPushSupport(): NotificationPushSupport {
         return { supported: false, reason: 'NOTIFICATION_API' };
     if (!('serviceWorker' in navigator))
         return { supported: false, reason: 'SERVICE_WORKER' };
-    if (!('PushManager' in globalThis.window))
-        return { supported: false, reason: 'PUSH_MANAGER' };
-    return { supported: true };
+    return 'PushManager' in globalThis.window
+        ? { supported: true }
+        : { supported: false, reason: 'PUSH_MANAGER' };
 }
 
 export function notificationPushDeviceId() {

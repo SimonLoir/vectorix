@@ -61,11 +61,14 @@ function preferenceSignature(result: PreferencesResult) {
 }
 
 function isConflict(error: unknown) {
-    if (typeof error !== 'object' || error === null) return false;
-    if ('code' in error && error.code === 'CONFLICT') return true;
-    if ('message' in error && typeof error.message === 'string')
-        return error.message.includes('CONFLICT');
-    return false;
+    return (
+        typeof error === 'object' &&
+        error !== null &&
+        (('code' in error && error.code === 'CONFLICT') ||
+            ('message' in error &&
+                typeof error.message === 'string' &&
+                error.message.includes('CONFLICT')))
+    );
 }
 
 /** Personal notification choices for one immutable user/session/organization scope. */

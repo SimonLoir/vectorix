@@ -204,10 +204,10 @@ function extendedParentBytes(
 ) {
     // UTF-8 bytes are never fewer than UTF-16 code units. Avoid even slicing
     // a large canonical gap when this inexpensive lower bound cannot fit.
-    if (end - current.start > maximum) return maximum + 1;
-    return (
-        current.bytes + Buffer.byteLength(text.slice(current.end, end), 'utf8')
-    );
+    return end - current.start > maximum
+        ? maximum + 1
+        : current.bytes +
+              Buffer.byteLength(text.slice(current.end, end), 'utf8');
 }
 
 /**

@@ -19,12 +19,10 @@ export function isCurrentSynchronizationGeneration(
     collection: SynchronizationAccess['collection']
 ) {
     if (collection.deletedAt) return false;
-    if (generation.status === 'ACTIVE')
-        return generation.id === collection.activeGenerationId;
-    return (
-        ['PROVISIONING', 'BUILDING', 'FAILED'].includes(generation.status) &&
-        generation.previousGenerationId === collection.activeGenerationId
-    );
+    return generation.status === 'ACTIVE'
+        ? generation.id === collection.activeGenerationId
+        : ['PROVISIONING', 'BUILDING', 'FAILED'].includes(generation.status) &&
+              generation.previousGenerationId === collection.activeGenerationId;
 }
 
 /**

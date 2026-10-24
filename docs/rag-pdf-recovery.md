@@ -51,7 +51,9 @@ Prerequisites: fresh isolated `_test` stores, production API/web/workers, instal
 
 The new host checks pass: frozen installation and client generation with an unreachable synthetic database URL, deterministic regeneration of all 43 fixtures, all 60 real parser/limit/classifier cases, API/workers types and lint, the root unit command and both backend builds. All 39 historical binary fixtures and expected entries are unchanged. The first API type check caught a missing direct test dependency; an independent expected artifact avoids adding a production dependency. The first catalog run then exposed the expected artifact's JSON key order; correcting only that expectation preserves the exact 333-byte assertion. The fresh disposable catalog run passes all 329 cases, including READY warning extraction and failed replacement with the prior original/source retained. No production behavior changes after the initial classifier patch.
 
-Image and browser validation remain pending. The earlier PR71 results below do not validate this follow-up.
+All six image and infrastructure checks pass in 235.634 seconds, including actual packaged-native warning emission, complete artifact equivalence and mixed-corruption refusal. Four standalone/backend production builds at `748b67d3` pass with their assets present and protected source declarations restored.
+
+The first dashboard trial `035f41fcea81` verifies native login and the empty library, then stops during the curl helper's authentication phase before any PDF dispatch. Two native POSTs return HTTP 200; the original failure cause is not captured, and the secondary signout also fails in the helper. Source review identifies a deterministic cookie-variable TDZ that needs a regression before retrying in a fresh environment. All four processes and stores/volumes are removed, the tab is closed and disabled helpers are restored. This incomplete attempt establishes no document publication or successful logout. Fresh browser acceptance remains pending. The earlier PR71 results below do not validate this follow-up.
 
 ## Original bytes, text and source positions
 

@@ -13,6 +13,26 @@ All actions stay pinned by commit SHA.
 
 Docker updates for `node` exclude major-version changes. A Node major upgrade must coordinate the root `package.json` engine range, the catalog workflow's selected Node version and all five service Dockerfiles in one reviewed change, with the applicable validation repeated. Minor, patch and digest updates remain eligible for review; this restriction does not change the other base-image policies.
 
+## Versioned lint policy on the Unicorn 78 engine
+
+The Unicorn 78 engine uses a reviewed [version 63 policy snapshot](../packages/eslint-config/unicorn-63-policy.json), preserving the project's existing **unopinionated** rule selection, two core-rule overrides and 62 built-in globals. The [compatibility configuration](../packages/eslint-config/unicorn-63-compat.js) applies that policy before the existing Prettier, TypeScript, React and Next overrides. All 111 previously enabled checks remain backed by live implementations. New rule adoption is a separate policy change; the configuration does not inherit the expanded version 78 preset.
+
+Two legacy IDs use their current implementations: `no-array-for-each` maps to `no-for-each`, and `prefer-dom-node-dataset` maps to `dom-node-dataset`. The removed `no-hex-escape` implementation needs a small [compatibility rule](../packages/eslint-config/no-hex-escape.js) with the [upstream MIT notice](../packages/eslint-config/no-hex-escape.LICENSE), because the replacement rules omit the old JSX and custom-tagged-template checks. A local plugin clone supplies these implementations without mutating the imported plugin or adding a version 63 dependency.
+
+Explicit supported options retain fractional digit groups of three, comment-only file checks, the previous ignored-element threshold and small or unknown-size Set candidates. Fallback-expression checking stays enabled to retain legacy alias-declaration checks. Ternary checks retain `always`, with the optional varying-base and computed-member checks disabled. This preserves configured policy and the selected legacy coverage; upgraded implementations can still add diagnostics or safety exclusions. It does not promise identical results for every possible program.
+
+Run the produced-configuration and real ESLint RuleTester regressions with:
+
+```sh
+pnpm --filter @repo/eslint-config test
+```
+
+All 55 focused tests pass, covering all 25 lint workspaces, representative TS and TSX files, the exact active rule set, live aliases, changed defaults and hexadecimal escapes in strings, JSX, tagged templates and regular expressions. The initial expanded-preset inventory records 397 errors and 48 warnings; the compatibility-only inventory retains 42 errors for separate review.
+
+A bounded manual cleanup preserves lazy evaluation, adds explicit undefined defaults while retaining existing null guards, and uses an ordered three-state Set. Saved S3 `false` values remain false. Two metadata value validations retain their existing `Error` class and message through narrow, explained lint exceptions. No broad autofix or `PURE` annotation is used.
+
+The combined validation passes all 25 workspace type and lint checks: the full pass covers the unchanged workspaces, followed by whole-web checks after the final two web-only expressions. Existing lint warnings remain at 48, with zero errors. All six root unit tasks pass (505 cases, including the 55 lint-policy cases), and API, workers, web and admin build in sequence. The original and intermediate lint failures remain recorded in [the build log](build-task-log.md#unicorn-78--versioned-lint-policy-compatibility). Both Next declarations and the lockfile are restored exactly, and the fresh private compiler cache is removed. This validates the lint-engine migration; no native application or browser acceptance is claimed.
+
 ## Images
 
 - Every `node:24-alpine` stage, and the Compose `postgres:18-alpine` and `redis:8-alpine` services, are pinned by multi-architecture index digest, alongside the tag for readability, as RustFS, aws-cli and postgres-vector already were. Dependabot proposes digest updates.

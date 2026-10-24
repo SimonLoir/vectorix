@@ -6,8 +6,9 @@ function normalizeDetails(
     details: Prisma.JsonValue | null
 ): Record<string, unknown> | null {
     if (details === null) return null;
-    if (typeof details === 'object' && !Array.isArray(details)) return details;
-    return { value: details };
+    return typeof details === 'object' && !Array.isArray(details)
+        ? details
+        : { value: details };
 }
 
 export const listSuperAdminAuditLogs = superAdminV1.audit.list.handler(

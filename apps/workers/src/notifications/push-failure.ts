@@ -63,13 +63,11 @@ function safeProviderMessage(error: unknown): string | null {
         /\b(invalid|expired|unauthorized|rejected)\b/i.test(response)
     )
         return 'VAPID credentials rejected by push provider';
-    if (
-        /\b(rate.?limit(?:ed|ing)?|too many requests|quota exceeded)\b/i.test(
-            response
-        )
+    return /\b(rate.?limit(?:ed|ing)?|too many requests|quota exceeded)\b/i.test(
+        response
     )
-        return 'Push provider rate limit';
-    return null;
+        ? 'Push provider rate limit'
+        : null;
 }
 
 export function classifyPushProviderFailure(

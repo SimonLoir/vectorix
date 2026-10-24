@@ -154,7 +154,43 @@ export function VerifyEmail({
                 <CardTitle>{t('title')}</CardTitle>
             </CardHeader>
             <CardContent className='space-y-4'>
-                {!token || !resume ? (
+                {token && resume ? (
+                    isPending ? (
+                        <p role='status'>{ownership('loadingSession')}</p>
+                    ) : error ? (
+                        <>
+                            <p role='alert'>{ownership('sessionError')}</p>
+                            <Button
+                                variant='outline'
+                                onClick={() => {
+                                    void refetch();
+                                }}
+                            >
+                                {ownership('reloadSession')}
+                            </Button>
+                        </>
+                    ) : session ? (
+                        <VerificationAction
+                            key={`${session.session.id}:${session.user.id}`}
+                            token={token}
+                            returnTo={returnTo}
+                            email={session.user.email}
+                            refresh={refetch}
+                        />
+                    ) : (
+                        <>
+                            <p>{t('signInRequired')}</p>
+                            <Button asChild>
+                                <Link
+                                    href={`/sign-in?${new URLSearchParams({ returnTo: resume })}`}
+                                    prefetch={false}
+                                >
+                                    {t('signIn')}
+                                </Link>
+                            </Button>
+                        </>
+                    )
+                ) : (
                     <>
                         <p role='alert'>{t('invalidLink')}</p>
                         <Link
@@ -164,40 +200,6 @@ export function VerifyEmail({
                         >
                             {t('requestNewLink')}
                         </Link>
-                    </>
-                ) : isPending ? (
-                    <p role='status'>{ownership('loadingSession')}</p>
-                ) : error ? (
-                    <>
-                        <p role='alert'>{ownership('sessionError')}</p>
-                        <Button
-                            variant='outline'
-                            onClick={() => {
-                                void refetch();
-                            }}
-                        >
-                            {ownership('reloadSession')}
-                        </Button>
-                    </>
-                ) : session ? (
-                    <VerificationAction
-                        key={`${session.session.id}:${session.user.id}`}
-                        token={token}
-                        returnTo={returnTo}
-                        email={session.user.email}
-                        refresh={refetch}
-                    />
-                ) : (
-                    <>
-                        <p>{t('signInRequired')}</p>
-                        <Button asChild>
-                            <Link
-                                href={`/sign-in?${new URLSearchParams({ returnTo: resume })}`}
-                                prefetch={false}
-                            >
-                                {t('signIn')}
-                            </Link>
-                        </Button>
                     </>
                 )}
             </CardContent>

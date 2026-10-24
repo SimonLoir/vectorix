@@ -118,7 +118,7 @@ export class RagTelemetryRecorder {
         if (!this.stopped) this.lanes[lane].start = start;
         let finished = false;
         return {
-            finish: (outcome, failure) => {
+            finish: (outcome, failure = 'UNKNOWN') => {
                 if (finished || this.stopped) return;
                 finished = true;
                 this.lanes[lane].finish = {

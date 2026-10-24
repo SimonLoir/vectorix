@@ -77,6 +77,5 @@ export function IndexQueryState({
                 </Button>
             </div>
         );
-    if (query.isPending) return <p role='status'>{tr('common.loading')}</p>;
-    return null;
+    return query.isPending ? <p role='status'>{tr('common.loading')}</p> : null;
 }

@@ -61,13 +61,11 @@ function windowEnd(
     budget: ReturnType<typeof windowBudgets>
 ) {
     const end = cutForward(text, start, text.length, budget.target);
-    if (
-        end < text.length &&
+    return end < text.length &&
         cutForward(text, start, text.length, budget.maximum) === text.length &&
         Buffer.byteLength(text.slice(end), 'utf8') < budget.minimum
-    )
-        return text.length;
-    return end;
+        ? text.length
+        : end;
 }
 
 /** Clip every intersecting source; never promote one source's heading to the whole window. */
