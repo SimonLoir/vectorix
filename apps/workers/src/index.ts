@@ -1,3 +1,4 @@
+import './startup-config';
 import { Worker } from 'bullmq';
 import { connection, getQueues, QueueName, closeQueues } from '@repo/queues';
 import { prisma } from '@repo/db';

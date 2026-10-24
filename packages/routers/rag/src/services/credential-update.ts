@@ -1,5 +1,5 @@
 import type { Prisma } from '@repo/db';
-import { encrypt } from '@routers/utils/encryption';
+import { credentialSecretContext, encrypt } from '@routers/utils/encryption';
 import { credentialUpdateData } from '@repo/api-contracts/v1/rag/credentials';
 import type { credentialDto, StoredCredential } from './credential-data';
 
@@ -54,6 +54,14 @@ export async function updateProviderData(
     current: StoredCredential,
     inputData: CredentialUpdateData
 ) {
+    const seal = (
+        plaintext: string,
+        field: 'accessKeyId' | 'secretAccessKey' | 'apiKey'
+    ) =>
+        encrypt(
+            plaintext,
+            credentialSecretContext(current.organizationId, current.id, field)
+        );
     switch (inputData.provider) {
         case 'S3':
             await db.s3Credentials.update({
@@ -66,13 +74,17 @@ export async function updateProviderData(
                     ...(inputData.accessKeyId === undefined
                         ? {}
                         : {
-                              accessKeyId: await encrypt(inputData.accessKeyId),
+                              accessKeyId: await seal(
+                                  inputData.accessKeyId,
+                                  'accessKeyId'
+                              ),
                           }),
                     ...(inputData.secretAccessKey === undefined
                         ? {}
                         : {
-                              secretAccessKey: await encrypt(
-                                  inputData.secretAccessKey
+                              secretAccessKey: await seal(
+                                  inputData.secretAccessKey,
+                                  'secretAccessKey'
                               ),
                           }),
                 },
@@ -89,7 +101,7 @@ export async function updateProviderData(
                               apiKey:
                                   inputData.apiKey === null
                                       ? null
-                                      : await encrypt(inputData.apiKey),
+                                      : await seal(inputData.apiKey, 'apiKey'),
                           }),
                 },
             });
@@ -101,7 +113,7 @@ export async function updateProviderData(
                     endpoint: inputData.endpoint,
                     ...(inputData.apiKey === undefined
                         ? {}
-                        : { apiKey: await encrypt(inputData.apiKey) }),
+                        : { apiKey: await seal(inputData.apiKey, 'apiKey') }),
                 },
             });
             break;
@@ -112,7 +124,7 @@ export async function updateProviderData(
                     endpoint: inputData.endpoint,
                     ...(inputData.apiKey === undefined
                         ? {}
-                        : { apiKey: await encrypt(inputData.apiKey) }),
+                        : { apiKey: await seal(inputData.apiKey, 'apiKey') }),
                 },
             });
             break;
@@ -123,7 +135,7 @@ export async function updateProviderData(
                     endpoint: inputData.endpoint,
                     ...(inputData.apiKey === undefined
                         ? {}
-                        : { apiKey: await encrypt(inputData.apiKey) }),
+                        : { apiKey: await seal(inputData.apiKey, 'apiKey') }),
                 },
             });
             break;
@@ -134,7 +146,7 @@ export async function updateProviderData(
                     endpoint: inputData.endpoint,
                     ...(inputData.apiKey === undefined
                         ? {}
-                        : { apiKey: await encrypt(inputData.apiKey) }),
+                        : { apiKey: await seal(inputData.apiKey, 'apiKey') }),
                 },
             });
             break;

@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import type { TestContext } from 'node:test';
 import { prisma } from '@repo/db';
-import { decrypt } from '@routers/utils/encryption';
+import { credentialSecretContext, decrypt } from '@routers/utils/encryption';
 import {
     resolveCredential,
     resolveCollectionCredential,
@@ -80,7 +80,17 @@ export async function embeddingProviderTests(t: TestContext) {
                     });
                     const stored = await read(credential.id);
                     assert.notEqual(stored.apiKey, secret);
-                    assert.equal(decrypt(stored.apiKey), secret);
+                    assert.equal(
+                        decrypt(
+                            stored.apiKey,
+                            credentialSecretContext(
+                                f.org,
+                                credential.id,
+                                'apiKey'
+                            )
+                        ),
+                        secret
+                    );
                     assert.equal(
                         'apiKey' in credential.data && credential.data.apiKey,
                         '********'

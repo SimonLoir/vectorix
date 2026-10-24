@@ -1,3 +1,4 @@
+import './startup-config';
 import { serve } from '@hono/node-server';
 import { app } from './app';
 import { prisma } from '@repo/db';
