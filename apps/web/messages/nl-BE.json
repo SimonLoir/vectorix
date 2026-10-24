@@ -661,7 +661,7 @@
             "secretKey": "Geheime S3-toegangssleutel",
             "keepSecret": "Laat leeg om ongewijzigd te behouden",
             "reenterSecret": "Verplicht omdat de bestemming is gewijzigd",
-            "destinationSecretHint": "Als je de service-URL of bucket wijzigt, zou het opgeslagen geheim naar een nieuwe bestemming gaan. Voer het geheim opnieuw in om deze wijziging op te slaan.",
+            "destinationSecretHint": "Als je de service-URL, bucket of S3-adresseringsmodus wijzigt, kan de bestemming van geauthenticeerde verzoeken veranderen. Voer alle vereiste geheimen opnieuw in om deze wijziging op te slaan.",
             "apiKey": "API-sleutel",
             "optionalKey": "API-sleutel (optioneel)",
             "removeKey": "Huidige API-sleutel verwijderen",

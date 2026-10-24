@@ -334,7 +334,7 @@ export async function credentialTests(t: TestContext) {
     );
 
     await t.test(
-        'moving a secret to another endpoint or bucket requires re-entering it',
+        'changing endpoint, bucket, or S3 addressing mode requires re-entering secrets',
         async () => {
             const cohere = await api.credentials.create({
                 name: 'Destination Cohere',
@@ -417,34 +417,77 @@ export async function credentialTests(t: TestContext) {
                 },
                 activate: false,
             });
-            for (const partial of [
-                {},
-                { secretAccessKey: 'only-the-secret' },
-                { accessKeyId: 'only-the-access-key' },
-            ])
-                await assert.rejects(
-                    api.credentials.update({
-                        id: s3.id,
-                        expectedRevision: s3.revision,
-                        name: s3.name,
-                        data: {
-                            ...s3Data,
-                            bucket: 'destination-b',
-                            ...partial,
-                        },
-                    }),
-                    { code: 'BAD_REQUEST' }
-                );
-            // Region and path style alone keep the secret on the same host and bucket.
+            const s3Before = await prisma.s3Credentials.findUniqueOrThrow({
+                where: { id: s3.id },
+            });
+            for (const destination of [
+                { endpoint: 'http://rustfs-other-destination.test:9000' },
+                { bucket: 'destination-b' },
+                { forcePathStyle: false },
+            ]) {
+                for (const partial of [
+                    {},
+                    { secretAccessKey: 'only-the-secret' },
+                    { accessKeyId: 'only-the-access-key' },
+                ])
+                    await assert.rejects(
+                        api.credentials.update({
+                            id: s3.id,
+                            expectedRevision: s3.revision,
+                            name: s3.name,
+                            data: {
+                                ...s3Data,
+                                ...destination,
+                                ...partial,
+                            },
+                        }),
+                        { code: 'BAD_REQUEST' }
+                    );
+            }
+            const rejectedS3 = await prisma.s3Credentials.findUniqueOrThrow({
+                where: { id: s3.id },
+            });
+            assert.ok(JSON.stringify(rejectedS3) === JSON.stringify(s3Before));
+            assert.equal(
+                (
+                    await prisma.credentials.findUniqueOrThrow({
+                        where: { id: s3.id },
+                    })
+                ).revision,
+                s3.revision
+            );
+            assert.equal(
+                await prisma.ragAuditLog.count({
+                    where: {
+                        organizationId: f.org,
+                        action: 'credential.update',
+                        targetId: s3.id,
+                    },
+                }),
+                0
+            );
+            // Region alone keeps the explicitly configured request destination.
             const regional = await api.credentials.update({
                 id: s3.id,
                 expectedRevision: s3.revision,
                 name: s3.name,
-                data: { ...s3Data, region: 'eu-west-1', forcePathStyle: false },
+                data: { ...s3Data, region: 'eu-west-1' },
+            });
+            const addressed = await api.credentials.update({
+                id: s3.id,
+                expectedRevision: regional.revision,
+                name: s3.name,
+                data: {
+                    ...s3Data,
+                    region: 'eu-west-1',
+                    forcePathStyle: false,
+                    accessKeyId: 'destination-access-reentered',
+                    secretAccessKey: 'destination-secret-reentered',
+                },
             });
             await api.credentials.update({
                 id: s3.id,
-                expectedRevision: regional.revision,
+                expectedRevision: addressed.revision,
                 name: s3.name,
                 data: {
                     ...s3Data,

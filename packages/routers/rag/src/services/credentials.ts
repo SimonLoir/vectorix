@@ -129,7 +129,7 @@ export function updateCredential(
             if (movedSecret && !suppliesSecretsForDestination(old, input.data))
                 throw new ORPCError('BAD_REQUEST', {
                     message:
-                        'Re-enter the secret when changing the endpoint or bucket.',
+                        'Re-enter the secret when changing the endpoint, bucket, or S3 addressing mode.',
                 });
             await updateProviderData(db, current, input.data);
             const result = await db.credentials.update({
