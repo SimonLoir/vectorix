@@ -55,6 +55,8 @@ def require_clean_evidence(state):
 
 def fresh_admission(state, phase, field, kind, version):
     """Consume the independent observer's exact source evidence, never an operator-invented ID."""
+    if state['scenario'] == 'VECTOR_PROVISION_V1':
+        return fresh_vector_admission(state, phase, field, kind)
     filename = directory(state) / ('observe-' + phase + '.json')
     raw = l.read_private_bytes(filename, 32768)
     proof = json.loads(raw)
@@ -94,7 +96,7 @@ def fresh_admission(state, phase, field, kind, version):
     if field in {'faultEnrollmentAdmission', 'faultAdmission'}:
         l.require(value['workerPid'] == state['processes']['workers']['pid']
             and value['workerStartTicks'] == state['processes']['workers']['startTicks']
-            and value['rustfsContainerId'] == state['resources']['rustfs']['id'], 'm7c-s3-outage-observer-process-binding')
+            and value['rustfsContainerId'] == state['resources'][l.fault_store(state)]['id'], 'm7c-s3-outage-observer-process-binding')
     if field == 'faultEnrollmentAdmission':
         l.require(value['liveClaims'] == 0, 'm7c-s3-outage-baseline-idle')
     elif field == 'faultAdmission' and state['scenario'] == 'CLEANUP_V1':
@@ -109,8 +111,50 @@ def fresh_admission(state, phase, field, kind, version):
     return value, l.digest(raw)
 
 
+def fresh_vector_admission(state, phase, field, kind):
+    """Bind vector fault actions to the independently observed G1/G2 task and immutable source."""
+    raw = l.read_private_bytes(directory(state) / ('observe-' + phase + '.json'), 32768)
+    proof = json.loads(raw)
+    fixture = read(state, 'fixture.json', 16384)
+    value = proof.get(field) if isinstance(proof, dict) else None
+    common = {'schemaVersion', 'kind', 'organizationId', 'documentId', 'versionId', 'version',
+        'originalSha256', 'observedAt', 'activeGenerationId'}
+    extra = {'faultEnrollmentAdmission': {'liveClaims', 'workerPid', 'workerStartTicks', 'vectorContainerId'},
+        'faultAdmission': {'targetGenerationId', 'taskId', 'status', 'attempts', 'provisioned', 'liveClaims',
+            'workerPid', 'workerStartTicks', 'vectorContainerId'},
+        'faultRecoveryAdmission': {'targetGenerationId', 'taskId', 'status', 'attempts', 'errorCode'}}
+    l.require(l.receipt_matches(state, proof) and proof.get('namespace') == state['namespace'] and proof.get('phase') == phase
+        and proof.get('status') == 'OBSERVED' and field in extra and isinstance(value, dict)
+        and set(value) == common | extra[field] and value['schemaVersion'] == 1 and value['kind'] == kind
+        and value['organizationId'] == fixture['organization']['id'] and value['version'] == 1
+        and value['originalSha256'] == state['inputs']['textFixtures']['s3-outage-v1.txt']['sha256'], 'm7c-vector-proof-scope')
+    for key in ['organizationId', 'documentId', 'versionId', 'activeGenerationId', *(['targetGenerationId', 'taskId'] if field != 'faultEnrollmentAdmission' else [])]:
+        l.require(isinstance(value.get(key), str) and re.fullmatch('[A-Za-z0-9_-]{1,128}', value[key]), 'm7c-vector-proof-identity')
+    try:
+        observed = value['observedAt']
+        l.require(isinstance(observed, str) and len(observed) <= 64 and (observed.endswith('Z') or observed.endswith('+00:00')), 'm7c-vector-proof-time')
+        age = (datetime.now(timezone.utc) - datetime.fromisoformat(observed.replace('Z', '+00:00'))).total_seconds()
+    except (ValueError, TypeError):
+        raise l.GuardError('m7c-vector-proof-time') from None
+    l.require(0 <= age <= MAX_PROOF_AGE_SECONDS, 'm7c-vector-proof-stale')
+    if field != 'faultRecoveryAdmission':
+        l.require(value['workerPid'] == state['processes']['workers']['pid'] and value['workerStartTicks'] == state['processes']['workers']['startTicks']
+            and value['vectorContainerId'] == state['resources']['vector']['id'] and value['liveClaims'] == 0, 'm7c-vector-proof-process')
+    if field == 'faultAdmission':
+        l.require(value['targetGenerationId'] != value['activeGenerationId'] and value['status'] == 'PENDING'
+            and value['attempts'] == 0 and value['provisioned'] is False, 'm7c-vector-unclaimed-provision-required')
+    if field == 'faultRecoveryAdmission':
+        l.require(value['targetGenerationId'] != value['activeGenerationId'] and value['status'] == 'FAILED'
+            and value['attempts'] == 5 and value['errorCode'] == 'VECTOR_UNAVAILABLE', 'm7c-vector-terminal-required')
+    return value, l.digest(raw)
+
+
 def scenario_plan(state):
     l.scenario_spec(state['scenario'])
+    if state['scenario'] == 'VECTOR_PROVISION_V1':
+        return {'baselinePhase': 'vector-g1-ready', 'baselineKind': 'VECTOR_G1_READY_IDLE',
+            'stagedPhase': 'vector-g2-staged', 'stagedKind': 'VECTOR_PROVISION_ACCEPTED',
+            'failedPhase': 'vector-outage-failed', 'failedKind': 'VECTOR_PROVISION_FAILED', 'version': 1}
     if state['scenario'] == 'INGESTION_V1':
         return {'baselinePhase': 'v1-ready', 'baselineKind': 'V1_READY_IDLE',
             'stagedPhase': 'v2-staged', 'stagedKind': 'STAGED_ORIGINAL_CONFIRMED',
@@ -121,7 +165,7 @@ def scenario_plan(state):
 
 
 def require_remaining(state, ack):
-    minimum = 625 if state['scenario'] == 'CLEANUP_V1' else 120
+    minimum = 625 if state['scenario'] in {'CLEANUP_V1', 'VECTOR_PROVISION_V1'} else 120
     l.require(int(ack['deadlineMonotonicNs']) - time.monotonic_ns() >= minimum * 1000000000,
         'm7c-s3-outage-insufficient-original-budget')
 
@@ -129,7 +173,7 @@ def require_remaining(state, ack):
 def abort_incomplete(state):
     """Restore only enrolled identities; an immutable intervention permanently forbids PASS."""
     ack = read(state, 'watchdog-ack.json', 8192)
-    l.require(ack.get('worker') == state['processes']['workers'] and ack.get('rustfs') == state['resources']['rustfs'],
+    l.require(ack.get('worker') == state['processes']['workers'] and ack.get(l.fault_store(state)) == state['resources'][l.fault_store(state)],
         'm7c-s3-outage-abort-enrollment-binding')
     try:
         if not (directory(state) / 'watchdog-intervention.json').exists():
@@ -167,10 +211,10 @@ def restore_owned(state):
     """Safety restoration tries both independent actions; a failed store start must not strand a stopped worker."""
     storage_restored, worker_resumed = False, False
     try:
-        value = l.owned(state, 'rustfs')
+        value = l.owned(state, l.fault_store(state))
         if value['State']['Running'] is False:
-            l.run(['docker', 'start', state['resources']['rustfs']['id']], timeout=30)
-        l.owned(state, 'rustfs', running=True)
+            l.run(['docker', 'start', state['resources'][l.fault_store(state)]['id']], timeout=30)
+        l.owned(state, l.fault_store(state), running=True)
         storage_restored = True
     except BaseException:
         pass
@@ -224,7 +268,7 @@ def watchdog(state):
 
         for code in [signal.SIGTERM, signal.SIGINT]:
             signal.signal(code, terminate)
-        ack = {'control': control, 'worker': state['processes']['workers'], 'rustfs': state['resources']['rustfs'],
+        ack = {'control': control, 'worker': state['processes']['workers'], l.fault_store(state): state['resources'][l.fault_store(state)],
             'budgetSeconds': BUDGET_SECONDS, 'enrolledAt': enrolled_at.isoformat(),
             'deadlineAt': datetime.fromtimestamp(enrolled_at.timestamp() + BUDGET_SECONDS, timezone.utc).isoformat(),
             'deadlineMonotonicNs': str(deadline_ns), 'baselineSha256': baseline_sha, 'baseline': baseline}
@@ -243,7 +287,7 @@ def watchdog(state):
             if reason is not None:
                 break
             if l.fault_phase(state) in {'RESTORED', 'COMPLETE'}:
-                l.owned(state, 'rustfs', running=True)
+                l.owned(state, l.fault_store(state), running=True)
                 l.require(l.process_alive(state, state['processes']['workers'])
                     and l.process_identity(state['processes']['workers']['pid'])['state'] not in {'T', 't'},
                     'm7c-s3-outage-operator-restoration-not-confirmed')
@@ -284,18 +328,20 @@ def storage_outage(state):
     plan = scenario_plan(state)
     staged, staged_sha = fresh_admission(state, plan['stagedPhase'], 'faultAdmission', plan['stagedKind'], plan['version'])
     l.require(staged['documentId'] == ack['baseline']['documentId'], 'm7c-s3-outage-replacement-document-binding')
+    if state['scenario'] == 'VECTOR_PROVISION_V1':
+        l.require(all(staged[key] == ack['baseline'][key] for key in ['versionId', 'originalSha256', 'activeGenerationId']), 'm7c-vector-staged-g1-binding')
     record(state, 'fault-storage-outage-intent.json', {'at': stamp(), 'stagedProofSha256': staged_sha,
-        'rustfs': state['resources']['rustfs'], 'staged': staged})
-    l.owned(state, 'rustfs', running=True)
+        l.fault_store(state): state['resources'][l.fault_store(state)], 'staged': staged})
+    l.owned(state, l.fault_store(state), running=True)
     require_remaining(state, ack)  # Last check immediately before the destructive store stop.
-    l.run(['docker', 'stop', '-t', '55', state['resources']['rustfs']['id']], timeout=60)
-    l.owned(state, 'rustfs', running=False)
+    l.run(['docker', 'stop', '-t', '55', state['resources'][l.fault_store(state)]['id']], timeout=60)
+    l.owned(state, l.fault_store(state), running=False)
     l.watchdog_admission(state)
     worker_signal(state, signal.SIGCONT)
     l.watchdog_admission(state)
     record(state, 'fault-storage-outage-receipt.json', {'at': stamp(), 'stagedProofSha256': staged_sha,
         'staged': staged, 'storageStopped': True, 'sameWorkerResumed': True,
-        'worker': state['processes']['workers'], 'rustfs': state['resources']['rustfs']})
+        'worker': state['processes']['workers'], l.fault_store(state): state['resources'][l.fault_store(state)]})
 
 
 def restore(state):
@@ -307,6 +353,8 @@ def restore(state):
     staged = read(state, 'fault-storage-outage-receipt.json', 8192)['staged']
     l.require(all(failed[key] == staged[key] for key in ['organizationId', 'documentId', 'versionId', 'originalSha256']),
         'm7c-s3-outage-restoration-version-binding')
+    if state['scenario'] == 'VECTOR_PROVISION_V1':
+        l.require(all(failed[key] == staged[key] for key in ['activeGenerationId', 'targetGenerationId', 'taskId']), 'm7c-vector-restoration-generation-binding')
     if state['scenario'] == 'CLEANUP_V1':
         l.require(failed['scheduledAt'] == staged['scheduledAt'], 'm7c-s3-outage-cleanup-schedule-binding')
     record(state, 'fault-restore-intent.json', {'at': stamp(), 'failedProofSha256': failed_sha})
@@ -314,7 +362,7 @@ def restore(state):
     l.watchdog_admission(state)
     l.require(all(result.values()), 'm7c-s3-outage-operator-restore-incomplete')
     record(state, 'fault-restore-receipt.json', {'at': stamp(), 'failedProofSha256': failed_sha,
-        'worker': state['processes']['workers'], 'rustfs': state['resources']['rustfs'], **result})
+        'worker': state['processes']['workers'], l.fault_store(state): state['resources'][l.fault_store(state)], **result})
 
 
 class Arguments(argparse.ArgumentParser):
@@ -332,7 +380,7 @@ def main():
     parser.add_argument('--fixture-ready', action='store_true')
     args = parser.parse_args()
     expected_file = args.mode == 'pause-worker' and args.scenario == 'INGESTION_V1'
-    expected_fixture = args.mode == 'pause-worker' and args.scenario == 'CLEANUP_V1'
+    expected_fixture = args.mode == 'pause-worker' and args.scenario in {'CLEANUP_V1', 'VECTOR_PROVISION_V1'}
     l.require(args.file_selected is expected_file and args.fixture_ready is expected_fixture, 'm7c-s3-outage-fault-selection-arguments')
     state = l.load(args.run, args.scenario)
     l.require(state['phase'] == 'READY', 'm7c-s3-outage-fault-ready-required')
@@ -350,7 +398,7 @@ def main():
                 try:
                     storage_outage(state)
                 except BaseException:
-                    if state['scenario'] == 'CLEANUP_V1':
+                    if state['scenario'] in {'CLEANUP_V1', 'VECTOR_PROVISION_V1'}:
                         abort_incomplete(state)
                     raise
             else:

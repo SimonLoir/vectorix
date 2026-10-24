@@ -263,5 +263,44 @@ class CleanupFaultTests(unittest.TestCase):
             restore.assert_not_called()
 
 
+class VectorFaultTests(unittest.TestCase):
+    def vector_state(self):
+        value = state()
+        value.update(scenario='VECTOR_PROVISION_V1', namespace='vectorix-m7c-vector-provision')
+        value['resources']['vector'] = {'id': 'b' * 64}
+        return value
+
+    def vector_proof(self):
+        value = self.vector_state()
+        admission = {'schemaVersion': 1, 'kind': 'VECTOR_PROVISION_ACCEPTED', 'organizationId': 'org-owned', 'documentId': 'doc-owned', 'versionId': 'version-one', 'version': 1, 'originalSha256': SHA1, 'observedAt': datetime.now(timezone.utc).isoformat(), 'activeGenerationId': 'generation-one', 'targetGenerationId': 'generation-two', 'taskId': 'provision-two', 'status': 'PENDING', 'attempts': 0, 'provisioned': False, 'liveClaims': 0, 'workerPid': 123, 'workerStartTicks': '42', 'vectorContainerId': 'b' * 64}
+        return {**f.l.receipt_scope(value), 'namespace': value['namespace'], 'phase': 'vector-g2-staged', 'status': 'OBSERVED', 'faultAdmission': admission}
+
+    def test_vector_staged_proof_has_exact_source_generation_process_and_unclaimed_binding(self):
+        value, proof = self.vector_state(), self.vector_proof()
+        for mutate in [None, lambda p: p.update(scenario='CLEANUP_V1'), lambda p: p['faultAdmission'].update(vectorContainerId='a'*64), lambda p: p['faultAdmission'].update(attempts=1), lambda p: p['faultAdmission'].update(provisioned=True), lambda p: p['faultAdmission'].update(targetGenerationId='generation-one'), lambda p: p['faultAdmission'].update(extra='rejected')]:
+            candidate = json.loads(json.dumps(proof))
+            if mutate: mutate(candidate)
+            with mock.patch.object(f, 'read', return_value={'organization': {'id': 'org-owned'}}), mock.patch.object(f.l, 'read_private_bytes', return_value=json.dumps(candidate).encode()):
+                if mutate:
+                    with self.assertRaises(f.l.GuardError): f.fresh_admission(value, 'vector-g2-staged', 'faultAdmission', 'VECTOR_PROVISION_ACCEPTED', 1)
+                else:
+                    self.assertEqual(f.fresh_admission(value, 'vector-g2-staged', 'faultAdmission', 'VECTOR_PROVISION_ACCEPTED', 1)[0]['targetGenerationId'], 'generation-two')
+
+    def test_vector_last_moment_budget_is_original_and_does_not_admit_late_stop(self):
+        value = self.vector_state()
+        with mock.patch.object(f.time, 'monotonic_ns', return_value=1000000000):
+            f.require_remaining(value, {'deadlineMonotonicNs': str(626000000000)})
+            with self.assertRaisesRegex(f.l.GuardError, 'original-budget'):
+                f.require_remaining(value, {'deadlineMonotonicNs': str(625999999999)})
+
+    def test_safety_restore_targets_only_exact_vector_and_resumes_same_worker(self):
+        value = self.vector_state()
+        with mock.patch.object(f.l, 'owned', return_value={'State': {'Running': False}}) as owned, mock.patch.object(f.l, 'run') as run, mock.patch.object(f.l, 'process_alive', return_value=True), mock.patch.object(f.l, 'process_identity', side_effect=[{'state': 'T'}, {'state': 'S'}]), mock.patch.object(f, 'worker_signal') as signal_worker:
+            self.assertEqual(f.restore_owned(value), {'storageRunning': True, 'sameWorkerResumed': True})
+            self.assertEqual([args.args[1] for args in owned.call_args_list], ['vector', 'vector'])
+            run.assert_called_once_with(['docker', 'start', 'b' * 64], timeout=30)
+            signal_worker.assert_called_once_with(value, signal.SIGCONT)
+
+
 if __name__ == '__main__':
     unittest.main()

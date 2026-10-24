@@ -342,5 +342,511 @@
         },
         "nativeValidation": "NOT_RERUN",
         "historicalRecord": "All preceding provenance fields retain their original checkpoint and trial meanings. Run 8070c4f9162b used the historical source inventory, exited successfully and had its close verified; it does not attest this patch."
+    },
+    "vectorProvisionPreparation": {
+        "schemaVersion": 1,
+        "protocolVersion": 2,
+        "scenario": "VECTOR_PROVISION_V1",
+        "namespace": "vectorix-m7c-vector-provision",
+        "status": "DISABLED_FOUNDATION_OFFLINE_VALIDATED_NATIVE_NOT_RUN_REVIEW_PENDING",
+        "actualMainBaseCommit": "c93e30c7b1194d9440a33effe7949038fe32da1d",
+        "dependencyMergeCommit": "2f801a54b25dd478f5bcca0834b9f1ed7a2405ea",
+        "cleanupDependency": {
+            "commit": "79bd1893edbed567be3eb3f802cb10504f50b2eb",
+            "historicalSources": {
+                "README.md": {
+                    "bytes": 20295,
+                    "sha256": "2da002f08042624944a85b9478478c8031347eb16ccf5fc3e5a2d11508ccc754"
+                },
+                "bucket.mjs": {
+                    "bytes": 6679,
+                    "sha256": "84ec4e6f176d63a1b1122f13de65f71d876a5391bfb0eecfc75f6004eebf4f24"
+                },
+                "cleanup-fixture.mjs": {
+                    "bytes": 13025,
+                    "sha256": "fc54ad3f0045dbef1c720dd902dd920c3a409547668798a3d48c0c05df552bbb"
+                },
+                "cleanup-observe.mjs": {
+                    "bytes": 33495,
+                    "sha256": "0152a23220bc4827e434710ca3bf5ec7995ce08c6dddd34f42a52831205f869c"
+                },
+                "cleanup.test.mjs": {
+                    "bytes": 22103,
+                    "sha256": "581aeb09a39315db748f883f3636d9c4623fa5ef5db51dfcd6d6a07ded121da8"
+                },
+                "fault.py": {
+                    "bytes": 19588,
+                    "sha256": "e09e2059cb501d10d3ef007de56daf05c81b46177a1d8dfb9b1a17adf87a50c3"
+                },
+                "fault_test.py": {
+                    "bytes": 15737,
+                    "sha256": "63430cb47f45940c6ce293baf3dbe3f70f7f921f29d40ec75b8d01f65bbf8e8d"
+                },
+                "fixtures/expected.json": {
+                    "bytes": 926,
+                    "sha256": "67c562dfb951d9751d76468f4cf29b89d6fae3432ed9debb5c7f0790cb4fac7d"
+                },
+                "fixtures/s3-outage-v1.txt": {
+                    "bytes": 522,
+                    "sha256": "110bf3def2634f5a3c6addd02b8b61d35fddd3e3ea776077144041e6c2599719"
+                },
+                "fixtures/s3-outage-v2.txt": {
+                    "bytes": 620,
+                    "sha256": "ef488f9ba8481a42e7f79aceafde979d9f09ddc0072f2edc0577e6b064cc3d2f"
+                },
+                "lifecycle.py": {
+                    "bytes": 43220,
+                    "sha256": "2ca6518813c7d7c4636519f7480741e18b7ac03ee117faa567dd94cfe8c34834"
+                },
+                "lifecycle_test.py": {
+                    "bytes": 10562,
+                    "sha256": "030cb7e82ffdab4632601ce9781a3e627cb4d50d4164f71eff44dc96907f7c15"
+                },
+                "objects.mjs": {
+                    "bytes": 16033,
+                    "sha256": "a0ca8db7a7b46ddcdba416da74f1c13d26e931a5effa9df4de1fc2232623faaf"
+                },
+                "objects.test.mjs": {
+                    "bytes": 7304,
+                    "sha256": "1a5a90b04a6502b14337ac843d7c20f88df87f4d0c18758cb1b94031fcab0d36"
+                },
+                "observe.mjs": {
+                    "bytes": 46519,
+                    "sha256": "4772ce32a66e3a37a7a6a9d9ebb92cad1c1d3d67199a8506162e2be1ac347161"
+                },
+                "observe.test.mjs": {
+                    "bytes": 19167,
+                    "sha256": "00f9dfc507b9b856cb199f4e740eaa6c8e202d3f95d177438c6021171a2d2dd6"
+                },
+                "private.mjs": {
+                    "bytes": 10586,
+                    "sha256": "626727b6b345c9b5220bfea54810949981fc96b2e417ae23f7844e008f811576"
+                },
+                "seed.mjs": {
+                    "bytes": 11447,
+                    "sha256": "4282e9d27f7dcfbfb0b0530cf5de0a28e04bcc42c63c57420d11a1eac2866d4c"
+                },
+                "smtp.mjs": {
+                    "bytes": 10728,
+                    "sha256": "82523128c0ad7a77d7b8d8d3743f278482d079fb7b1a26e9ee31e625b50b86f5"
+                }
+            },
+            "historicalSourcesSha256": "42edaf605a99fc7c421e87c425ecaa7569e97bf16ffe737f1e9920cca322f4b1",
+            "adoption": "LOCAL_MERGE_ANCESTOR_NOT_NATIVE_REPLAY"
+        },
+        "reviewedRedisReuse": {
+            "commit": "80e61f0adf4aa92013e0a020fd346e7b87e34cf1",
+            "seedBytesIdenticalSha256": "f9e10a8fbde5c655b8fb09f26644ec994a554331d284ada182b0f0a8eca40d69",
+            "privateGuardTimeout": "SAME_REVIEWED_BOUNDED_TIMEOUT_HUNK_WITH_VECTOR_SCENARIO_ADDITION",
+            "curlDerivation": {
+                "source": "tests/acceptance/redis-outage/curl.mjs",
+                "sourceSha256": "3aa230c61d9a9c43c621dc4930b1657c79cc54ac89d1132894babf9e920c9826",
+                "adaptation": "PRIVATE_IMPORT_AND_CLOSED_VECTOR_ROUTE_SET_ONLY"
+            }
+        },
+        "currentSources": {
+            "README.md": {
+                "bytes": 20721,
+                "sha256": "98571969eb542ac173e021fe0681506ac0dbfb9b10e65eba4cf502b8c4538103"
+            },
+            "bucket.mjs": {
+                "bytes": 6679,
+                "sha256": "84ec4e6f176d63a1b1122f13de65f71d876a5391bfb0eecfc75f6004eebf4f24"
+            },
+            "cleanup-fixture.mjs": {
+                "bytes": 13025,
+                "sha256": "fc54ad3f0045dbef1c720dd902dd920c3a409547668798a3d48c0c05df552bbb"
+            },
+            "cleanup-observe.mjs": {
+                "bytes": 33495,
+                "sha256": "0152a23220bc4827e434710ca3bf5ec7995ce08c6dddd34f42a52831205f869c"
+            },
+            "cleanup.test.mjs": {
+                "bytes": 22103,
+                "sha256": "581aeb09a39315db748f883f3636d9c4623fa5ef5db51dfcd6d6a07ded121da8"
+            },
+            "fault.py": {
+                "bytes": 23931,
+                "sha256": "4df4a461529a27ce4e812a32352d7c0f356cf908b08dbe10ba403b9087b68ac0"
+            },
+            "fault_test.py": {
+                "bytes": 19222,
+                "sha256": "ec9a5dda206002eaf3eaac55b864004d4f8bb4da814aff75af293b5f33e198d3"
+            },
+            "fixtures/expected.json": {
+                "bytes": 926,
+                "sha256": "67c562dfb951d9751d76468f4cf29b89d6fae3432ed9debb5c7f0790cb4fac7d"
+            },
+            "fixtures/s3-outage-v1.txt": {
+                "bytes": 522,
+                "sha256": "110bf3def2634f5a3c6addd02b8b61d35fddd3e3ea776077144041e6c2599719"
+            },
+            "fixtures/s3-outage-v2.txt": {
+                "bytes": 620,
+                "sha256": "ef488f9ba8481a42e7f79aceafde979d9f09ddc0072f2edc0577e6b064cc3d2f"
+            },
+            "lifecycle.py": {
+                "bytes": 46196,
+                "sha256": "1e3a5a2e9499339457e498d38e5d854b82c2160c81a646d413bb7cbf61057c3f"
+            },
+            "lifecycle_test.py": {
+                "bytes": 12572,
+                "sha256": "da06bc9f5463eba9b4be96fb9af76028c22f745a309b56198debd5051e97fcb0"
+            },
+            "objects.mjs": {
+                "bytes": 16033,
+                "sha256": "a0ca8db7a7b46ddcdba416da74f1c13d26e931a5effa9df4de1fc2232623faaf"
+            },
+            "objects.test.mjs": {
+                "bytes": 7304,
+                "sha256": "1a5a90b04a6502b14337ac843d7c20f88df87f4d0c18758cb1b94031fcab0d36"
+            },
+            "observe.mjs": {
+                "bytes": 46519,
+                "sha256": "4772ce32a66e3a37a7a6a9d9ebb92cad1c1d3d67199a8506162e2be1ac347161"
+            },
+            "observe.test.mjs": {
+                "bytes": 19167,
+                "sha256": "00f9dfc507b9b856cb199f4e740eaa6c8e202d3f95d177438c6021171a2d2dd6"
+            },
+            "private.mjs": {
+                "bytes": 11069,
+                "sha256": "8bc9d92a0d6f4fd07002a68db891998b985d69743f8f966a957d03b07b8d1d71"
+            },
+            "seed.mjs": {
+                "bytes": 11621,
+                "sha256": "f9e10a8fbde5c655b8fb09f26644ec994a554331d284ada182b0f0a8eca40d69"
+            },
+            "smtp.mjs": {
+                "bytes": 10728,
+                "sha256": "82523128c0ad7a77d7b8d8d3743f278482d079fb7b1a26e9ee31e625b50b86f5"
+            },
+            "vector-curl.mjs": {
+                "bytes": 8104,
+                "sha256": "6041c0e5aa61644f4aca46ce26b19150260f1932a82ac4edf29c3976504ae2c5"
+            },
+            "vector-embedding.mjs": {
+                "bytes": 7854,
+                "sha256": "91d2fbb69b1c71c02b44df459080305b85f7683806f87eecb7bda1d50f773a4f"
+            },
+            "vector-observation.mjs": {
+                "bytes": 16671,
+                "sha256": "57fd5a1160b8d499e49f9b9852305955f77d0a05323bc8a10eb61b495cd3bdc9"
+            },
+            "vector-observe.mjs": {
+                "bytes": 18202,
+                "sha256": "dea5128abc15194f8c215dc5eec52367c8f03003291de797dc5b41b8d485e104"
+            },
+            "vector-snapshot.mjs": {
+                "bytes": 14862,
+                "sha256": "69797f4cf9e350074be895168bc3509e59d15c639004f11886b701919243368b"
+            },
+            "vector-workflow.mjs": {
+                "bytes": 20085,
+                "sha256": "78b05f2749862555d77e2cbb63f07560b9956693e8c01217ecd73aa7ce9a265f"
+            },
+            "vector.test.mjs": {
+                "bytes": 26164,
+                "sha256": "602ddce4511071d443037932a7823319575360656e44f53ae218f84eafb81f1d"
+            }
+        },
+        "currentSourcesSha256": "9765f986f6172970ef309a6a591ef247f741a799b11f08275a4219ca983aaf97",
+        "runtimeHelpers": [
+            "lifecycle.py",
+            "fault.py",
+            "private.mjs",
+            "seed.mjs",
+            "bucket.mjs",
+            "smtp.mjs",
+            "observe.mjs",
+            "objects.mjs",
+            "cleanup-fixture.mjs",
+            "cleanup-observe.mjs",
+            "vector-embedding.mjs",
+            "vector-curl.mjs",
+            "vector-workflow.mjs",
+            "vector-observe.mjs",
+            "vector-observation.mjs",
+            "vector-snapshot.mjs"
+        ],
+        "localModuleClosure": {
+            "private.mjs": [],
+            "seed.mjs": ["private.mjs"],
+            "bucket.mjs": ["private.mjs"],
+            "smtp.mjs": ["private.mjs"],
+            "observe.mjs": ["objects.mjs", "private.mjs"],
+            "objects.mjs": ["private.mjs"],
+            "cleanup-fixture.mjs": ["private.mjs"],
+            "cleanup-observe.mjs": [
+                "objects.mjs",
+                "observe.mjs",
+                "private.mjs"
+            ],
+            "vector-embedding.mjs": ["private.mjs"],
+            "vector-curl.mjs": ["private.mjs"],
+            "vector-workflow.mjs": [
+                "private.mjs",
+                "vector-curl.mjs",
+                "vector-embedding.mjs"
+            ],
+            "vector-observe.mjs": [
+                "cleanup-observe.mjs",
+                "observe.mjs",
+                "private.mjs",
+                "vector-embedding.mjs",
+                "vector-observation.mjs",
+                "vector-snapshot.mjs",
+                "vector-workflow.mjs"
+            ],
+            "vector-observation.mjs": [
+                "private.mjs",
+                "vector-embedding.mjs",
+                "vector-workflow.mjs"
+            ],
+            "vector-snapshot.mjs": [
+                "private.mjs",
+                "vector-observation.mjs",
+                "vector-workflow.mjs"
+            ]
+        },
+        "sharedRestoreCommonSha256": "a2c2471e02841cc26f56ebe85dd58bd3440a0db575e1e962ffdf643fc960d597",
+        "runtimeGates": {
+            "allDisabled": true,
+            "count": 13,
+            "entries": {
+                "lifecycle.py": true,
+                "fault.py": true,
+                "seed.mjs": true,
+                "bucket.mjs": true,
+                "smtp.mjs": true,
+                "observe.mjs": true,
+                "objects.mjs": true,
+                "cleanup-fixture.mjs": true,
+                "cleanup-observe.mjs": true,
+                "vector-embedding.mjs": true,
+                "vector-curl.mjs": true,
+                "vector-workflow.mjs": true,
+                "vector-observe.mjs": true
+            },
+            "futureVectorActivationEntries": [
+                "lifecycle.py",
+                "fault.py",
+                "seed.mjs",
+                "bucket.mjs",
+                "smtp.mjs",
+                "vector-embedding.mjs",
+                "vector-curl.mjs",
+                "vector-workflow.mjs",
+                "vector-observe.mjs"
+            ],
+            "unrelatedEntriesRemainDisabled": [
+                "observe.mjs",
+                "objects.mjs",
+                "cleanup-fixture.mjs",
+                "cleanup-observe.mjs"
+            ]
+        },
+        "inputs": {
+            "run": "NOT_SELECTED",
+            "nativeEmbedding": "SYNTHETIC_OLLAMA_PROTOCOL_FIXTURE_NOT_MODEL_WEIGHT_ATTESTATION",
+            "sourceFixture": "fixtures/s3-outage-v1.txt",
+            "sessionCurlOnly": true,
+            "organizationCredentialOrApiKeyCreated": false,
+            "originalWatchdogSeconds": 900,
+            "minimumRemainingBeforeStopSeconds": 625,
+            "naturalIndexBackoffSeconds": [10, 20, 40, 80]
+        },
+        "offlineValidation": {
+            "status": "PASS",
+            "pythonTests": 37,
+            "nodeTests": 43,
+            "nodeSyntaxChecks": 14,
+            "pythonAstChecks": 4,
+            "documents": 3,
+            "mermaidDiagrams": 1,
+            "localMarkdownLinks": 79,
+            "guardLogSha256": "bcfc6a59762bdc09993d2ea2df90553d91e7a4af383cf20e4690cc17085850e1",
+            "executionReceiptSha256": "9177a8b038fab39eac931bd86b42f7b0987aa070e6e0b1ea86c83d6598f9b976",
+            "documentationResultSha256": "281faef500af116add26cd27057c08c4fc7a113c1126d0686970242aa2c708b3",
+            "independentSourceReview": "PENDING"
+        },
+        "nativeValidation": {
+            "plannerExecution": "NOT_RUN",
+            "currentAppBuilds": "NOT_RUN",
+            "nativeHttpOrSourceTransfers": "NOT_RUN",
+            "indexingSearchOrOutage": "NOT_RUN",
+            "dashboardRetry": "NOT_RUN",
+            "resourceTeardown": "NOT_RUN"
+        },
+        "historicalRecord": "Every preceding provenance field retains its original source checkpoint and native-trial meaning. This inventory is a disabled new preparation, not evidence that any historical run used these current files."
+    },
+    "vectorProvisionReviewRevision1": {
+        "schemaVersion": 1,
+        "scenario": "VECTOR_PROVISION_V1",
+        "status": "DISABLED_OFFLINE_VALIDATED_INDEPENDENT_CODE_REVIEW_CLEAR_NATIVE_NOT_RUN",
+        "baseCommit": "2f801a54b25dd478f5bcca0834b9f1ed7a2405ea",
+        "precedingSourceFreezeSha256": "0b1efa07826cfefb6b428b56dea767b55c79664a5ece71fc470df9f8f30dcb85",
+        "precedingCurrentSourcesSha256": "9765f986f6172970ef309a6a591ef247f741a799b11f08275a4219ca983aaf97",
+        "precedingDisabledArchiveInventorySha256": "af211073b5ad85a74d13ead7ef238c413c1508858a21616febf7b169a46cb1b1",
+        "scope": [
+            "REMAINING_BUDGET_BEFORE_EVERY_PHYSICAL_QUERY_INCLUDING_COMMIT_WITH_ROLLBACK_RELEASE_DRAINED",
+            "INITIAL_G1_APPLICATION_AND_SEALED_PHYSICAL_MANIFEST_PUBLICATION_DESTINATION_CONTINUITY",
+            "SAME_G2_PROVISION_TASK_AND_ADVANCING_RETRY_EPOCH_STABLE_THROUGH_SIGNOUT"
+        ],
+        "changedSources": {
+            "vector-snapshot.mjs": {
+                "bytes": 15318,
+                "sha256": "771ce4d74c1f93a9def8f0f6f15f59d41ca5b029b1980799ddc83db32ae7c706"
+            },
+            "vector-observation.mjs": {
+                "bytes": 18807,
+                "sha256": "618fcd163cb9f03efcc181480a7302fd27f3a148235200f504ca9fd839204fff"
+            },
+            "vector-observe.mjs": {
+                "bytes": 18495,
+                "sha256": "fe5de79f807e493bba9869478eb63b3013e65fa5de8df8629ccbc07a8d1963f6"
+            },
+            "vector.test.mjs": {
+                "bytes": 38571,
+                "sha256": "395a1110b79a9016e22a86df7a88c821c804eaa99d485fc00f7b214d09478eaf"
+            }
+        },
+        "currentSources": {
+            "README.md": {
+                "bytes": 20721,
+                "sha256": "98571969eb542ac173e021fe0681506ac0dbfb9b10e65eba4cf502b8c4538103"
+            },
+            "bucket.mjs": {
+                "bytes": 6679,
+                "sha256": "84ec4e6f176d63a1b1122f13de65f71d876a5391bfb0eecfc75f6004eebf4f24"
+            },
+            "cleanup-fixture.mjs": {
+                "bytes": 13025,
+                "sha256": "fc54ad3f0045dbef1c720dd902dd920c3a409547668798a3d48c0c05df552bbb"
+            },
+            "cleanup-observe.mjs": {
+                "bytes": 33495,
+                "sha256": "0152a23220bc4827e434710ca3bf5ec7995ce08c6dddd34f42a52831205f869c"
+            },
+            "cleanup.test.mjs": {
+                "bytes": 22103,
+                "sha256": "581aeb09a39315db748f883f3636d9c4623fa5ef5db51dfcd6d6a07ded121da8"
+            },
+            "fault.py": {
+                "bytes": 23931,
+                "sha256": "4df4a461529a27ce4e812a32352d7c0f356cf908b08dbe10ba403b9087b68ac0"
+            },
+            "fault_test.py": {
+                "bytes": 19222,
+                "sha256": "ec9a5dda206002eaf3eaac55b864004d4f8bb4da814aff75af293b5f33e198d3"
+            },
+            "fixtures/expected.json": {
+                "bytes": 926,
+                "sha256": "67c562dfb951d9751d76468f4cf29b89d6fae3432ed9debb5c7f0790cb4fac7d"
+            },
+            "fixtures/s3-outage-v1.txt": {
+                "bytes": 522,
+                "sha256": "110bf3def2634f5a3c6addd02b8b61d35fddd3e3ea776077144041e6c2599719"
+            },
+            "fixtures/s3-outage-v2.txt": {
+                "bytes": 620,
+                "sha256": "ef488f9ba8481a42e7f79aceafde979d9f09ddc0072f2edc0577e6b064cc3d2f"
+            },
+            "lifecycle.py": {
+                "bytes": 46196,
+                "sha256": "1e3a5a2e9499339457e498d38e5d854b82c2160c81a646d413bb7cbf61057c3f"
+            },
+            "lifecycle_test.py": {
+                "bytes": 12572,
+                "sha256": "da06bc9f5463eba9b4be96fb9af76028c22f745a309b56198debd5051e97fcb0"
+            },
+            "objects.mjs": {
+                "bytes": 16033,
+                "sha256": "a0ca8db7a7b46ddcdba416da74f1c13d26e931a5effa9df4de1fc2232623faaf"
+            },
+            "objects.test.mjs": {
+                "bytes": 7304,
+                "sha256": "1a5a90b04a6502b14337ac843d7c20f88df87f4d0c18758cb1b94031fcab0d36"
+            },
+            "observe.mjs": {
+                "bytes": 46519,
+                "sha256": "4772ce32a66e3a37a7a6a9d9ebb92cad1c1d3d67199a8506162e2be1ac347161"
+            },
+            "observe.test.mjs": {
+                "bytes": 19167,
+                "sha256": "00f9dfc507b9b856cb199f4e740eaa6c8e202d3f95d177438c6021171a2d2dd6"
+            },
+            "private.mjs": {
+                "bytes": 11069,
+                "sha256": "8bc9d92a0d6f4fd07002a68db891998b985d69743f8f966a957d03b07b8d1d71"
+            },
+            "seed.mjs": {
+                "bytes": 11621,
+                "sha256": "f9e10a8fbde5c655b8fb09f26644ec994a554331d284ada182b0f0a8eca40d69"
+            },
+            "smtp.mjs": {
+                "bytes": 10728,
+                "sha256": "82523128c0ad7a77d7b8d8d3743f278482d079fb7b1a26e9ee31e625b50b86f5"
+            },
+            "vector-curl.mjs": {
+                "bytes": 8104,
+                "sha256": "6041c0e5aa61644f4aca46ce26b19150260f1932a82ac4edf29c3976504ae2c5"
+            },
+            "vector-embedding.mjs": {
+                "bytes": 7854,
+                "sha256": "91d2fbb69b1c71c02b44df459080305b85f7683806f87eecb7bda1d50f773a4f"
+            },
+            "vector-observation.mjs": {
+                "bytes": 18807,
+                "sha256": "618fcd163cb9f03efcc181480a7302fd27f3a148235200f504ca9fd839204fff"
+            },
+            "vector-observe.mjs": {
+                "bytes": 18495,
+                "sha256": "fe5de79f807e493bba9869478eb63b3013e65fa5de8df8629ccbc07a8d1963f6"
+            },
+            "vector-snapshot.mjs": {
+                "bytes": 15318,
+                "sha256": "771ce4d74c1f93a9def8f0f6f15f59d41ca5b029b1980799ddc83db32ae7c706"
+            },
+            "vector-workflow.mjs": {
+                "bytes": 20085,
+                "sha256": "78b05f2749862555d77e2cbb63f07560b9956693e8c01217ecd73aa7ce9a265f"
+            },
+            "vector.test.mjs": {
+                "bytes": 38571,
+                "sha256": "395a1110b79a9016e22a86df7a88c821c804eaa99d485fc00f7b214d09478eaf"
+            }
+        },
+        "currentSourcesSha256": "99c8ee26fa6a7191d925ddc01f446bd86b69f60650291a91e81e0f37cee6f6bd",
+        "runtimeGates": {
+            "allDisabled": true,
+            "count": 13
+        },
+        "run": "NOT_SELECTED",
+        "offlineValidation": {
+            "status": "PASS",
+            "pythonTests": 37,
+            "nodeTests": 47,
+            "addedInjectedNodeTests": 4,
+            "nodeSyntaxChecks": 14,
+            "pythonAstChecks": 4,
+            "documents": 3,
+            "mermaidDiagrams": 1,
+            "localMarkdownLinks": 79,
+            "guardLogSha256": "5c9c002bb040fae3d873a76e1d09baaafe7c0a81358785c1eeadd9ca0245b1f9",
+            "executionReceiptSha256": "acbe10ee16bbde02f10df1f853cd1df50f028a90d5895baf563e2e6f3f52ff03",
+            "documentationResultSha256": "281faef500af116add26cd27057c08c4fc7a113c1126d0686970242aa2c708b3",
+            "independentSourceReview": "CLEAR_SOURCE_ONLY_NO_RERUN"
+        },
+        "precedingRevisionPass": {
+            "pythonTests": 37,
+            "nodePass": 46,
+            "nodeTotal": 47,
+            "status": "FAILED_NEW_POSITIVE_MOCK_OMITTED_ORGANIZATION_BINDING",
+            "correction": "FIXTURE_ONLY_SUPPLIES_THE_REAL_CLI_BINDING_NO_GUARD_CHANGE",
+            "guardLogSha256": "6074981d0ff38b7575c905d27b07f4786e33b5cb74fce389ef24efbf900369de"
+        },
+        "nativeValidation": "NOT_RUN",
+        "historicalRecord": "Every preceding field, including vectorProvisionPreparation, remains byte-semantic historical source/preparation evidence. This revision does not relabel any archived native or disabled run."
     }
 }

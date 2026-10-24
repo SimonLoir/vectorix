@@ -29,6 +29,8 @@ PROTOCOL_VERSION = 2
 SCENARIOS = {
     'INGESTION_V1': {'namespace': 'vectorix-m7c-s3-outage', 'label': 'vectorix.m7c-s3-outage',
         'databaseStem': 'vectorix_m7c_s3_outage', 'objectPrefix': 'm7c-s3-outage'},
+    'VECTOR_PROVISION_V1': {'namespace': 'vectorix-m7c-vector-provision', 'label': 'vectorix.m7c-vector-provision',
+        'databaseStem': 'vectorix_m7c_vector_provision', 'objectPrefix': 'm7c-vector-provision'},
     'CLEANUP_V1': {'namespace': 'vectorix-m7c-s3-cleanup', 'label': 'vectorix.m7c-s3-cleanup',
         'databaseStem': 'vectorix_m7c_s3_cleanup', 'objectPrefix': 'm7c-s3-cleanup'},
 }
@@ -37,6 +39,16 @@ SCENARIOS = {
 def scenario_spec(scenario):
     require(type(scenario) is str and scenario in SCENARIOS, 'm7c-s3-outage-scenario-required')
     return SCENARIOS[scenario]
+
+
+def app_roles(state):
+    scenario_spec(state['scenario'])
+    return (*APPS, 'embedding') if state['scenario'] == 'VECTOR_PROVISION_V1' else APPS
+
+
+def fault_store(state):
+    scenario_spec(state['scenario'])
+    return 'vector' if state['scenario'] == 'VECTOR_PROVISION_V1' else 'rustfs'
 
 
 def receipt_scope(state):
@@ -61,7 +73,7 @@ BUILT_APPS = ('api', 'workers', 'web', 'admin')
 APPS = ('api', 'web', 'smtp', 'workers')
 DOTENV = {'.env', '.env.local', '.env.production', '.env.production.local', '.env.development'}
 PRODUCTION = ['apps/api', 'apps/workers', 'apps/web', 'apps/admin', 'packages', 'pnpm-lock.yaml', 'package.json']
-HELPERS = ['lifecycle.py', 'fault.py', 'private.mjs', 'seed.mjs', 'bucket.mjs', 'smtp.mjs', 'observe.mjs', 'objects.mjs', 'cleanup-fixture.mjs', 'cleanup-observe.mjs']
+HELPERS = ['lifecycle.py', 'fault.py', 'private.mjs', 'seed.mjs', 'bucket.mjs', 'smtp.mjs', 'observe.mjs', 'objects.mjs', 'cleanup-fixture.mjs', 'cleanup-observe.mjs', 'vector-embedding.mjs', 'vector-curl.mjs', 'vector-workflow.mjs', 'vector-observe.mjs', 'vector-observation.mjs', 'vector-snapshot.mjs']
 PHASES = {'PREPARING', 'SCHEMA_REQUIRED', 'SCHEMA_READY', 'SEEDING', 'READY', 'CLEANING', 'CLEANED_EVIDENCE_RETAINED'}
 
 
@@ -234,10 +246,11 @@ def validate(state, run_id, scenario):
     require(state['applicationDatabase'] == spec['databaseStem'] + '_app_' + run_id + '_test'
         and state['vectorDatabase'] == spec['databaseStem'] + '_vectors_' + run_id + '_test', 'm7c-s3-outage-test-databases')
     require(state['images'] == IMAGES and set(state['resources']).issubset(SERVICES)
-        and set(state['processes']).issubset(APPS), 'm7c-s3-outage-state-resource-set')
-    require(set(state['ports']) == {*SERVICES, 'api', 'web', 'admin', 'smtp'}
+        and set(state['processes']).issubset(app_roles(state)), 'm7c-s3-outage-state-resource-set')
+    port_names = {*SERVICES, 'api', 'web', 'admin', 'smtp'} | ({'embedding'} if state['scenario'] == 'VECTOR_PROVISION_V1' else set())
+    require(set(state['ports']) == port_names
         and all(type(p) is int and 1024 < p < 65536 for p in state['ports'].values())
-        and len(set(state['ports'].values())) == 8, 'm7c-s3-outage-port-bindings')
+        and len(set(state['ports'].values())) == len(port_names), 'm7c-s3-outage-port-bindings')
     require(state['environment'] == environment(state), 'm7c-s3-outage-exact-isolated-environment')
     for app, saved in state['processes'].items():
         require(saved['service'] == app and saved['entry'] == str(app_entry(state, app))
@@ -252,14 +265,18 @@ def load(run_id, scenario):
 
 
 def app_entry(state, service):
-    return HERE / 'smtp.mjs' if service in {'smtp'} else Path(state['inputs']['builds'][service]['entry'])
+    return HERE / ('smtp.mjs' if service == 'smtp' else 'vector-embedding.mjs') if service in {'smtp', 'embedding'} else Path(state['inputs']['builds'][service]['entry'])
 
 
 def app_entry_hash(state, service):
-    return state['inputs']['helpers']['smtp.mjs'] if service in {'smtp'} else state['inputs']['builds'][service]['entrySha256']
+    return state['inputs']['helpers']['smtp.mjs' if service == 'smtp' else 'vector-embedding.mjs'] if service in {'smtp', 'embedding'} else state['inputs']['builds'][service]['entrySha256']
 
 
 def app_environment(state, service):
+    if service == 'embedding':
+        require(state['scenario'] == 'VECTOR_PROVISION_V1', 'm7c-vector-fixture-scenario')
+        return {'NODE_ENV': 'production', 'TZ': 'UTC', 'VECTORIX_M7C_S3_OUTAGE_RUN': state['runId'],
+            'VECTORIX_M7C_S3_OUTAGE_ROLE': service, 'VECTORIX_M7C_S3_SCENARIO': state['scenario']}
     return {**state['environment'], 'VECTORIX_M7C_S3_OUTAGE_RUN': state['runId'],
         'VECTORIX_M7C_S3_OUTAGE_ROLE': service, 'VECTORIX_M7C_S3_SCENARIO': state['scenario']}
 
@@ -324,6 +341,8 @@ def environment(state):
         VECTORIX_DEFAULT_S3_FORCE_PATH_STYLE='true', VECTORIX_DEFAULT_S3_ACCESS_KEY_ID=spec['objectPrefix'] + '-' + state['runId'],
         VECTORIX_DEFAULT_S3_SECRET_ACCESS_KEY=secret['s3'],
         PASSKEY_RP_ID='127.0.0.1', PASSKEY_RP_NAME='Vectorix isolated S3 recovery', PASSKEY_ORIGINS=trust)
+    if state['scenario'] == 'VECTOR_PROVISION_V1':
+        env.update(VECTORIX_DEFAULT_OLLAMA_ENDPOINT=origin('embedding'), VECTORIX_EMBEDDING_ALLOWED_ENDPOINTS=origin('embedding'))
     return env
 
 
@@ -361,8 +380,16 @@ def owned(state, service, running=None):
     return value
 
 
+def curl_manifest():
+    file = Path('/usr/bin/curl')
+    info = file.lstat()
+    require(stat.S_ISREG(info.st_mode) and not info.st_mode & 0o022 and file.resolve() == file and info.st_size <= 16 * 1024 ** 2, 'm7c-vector-curl-binary')
+    return {'path': str(file), 'sha256': digest(file.read_bytes())}
+
+
 def pins(state):
-    require(inputs() == state['inputs'], 'm7c-s3-outage-source-build-helper-migration-drift')
+    expected = {**inputs(), **({'curl': curl_manifest()} if state['scenario'] == 'VECTOR_PROVISION_V1' else {})}
+    require(expected == state['inputs'], 'm7c-s3-outage-source-build-helper-migration-drift')
 
 
 def create_service(state, service):
@@ -439,7 +466,7 @@ def prepare(run_id, scenario):
     path = state_path(run_id, scenario)
     require(not path.parent.exists() and shutil.disk_usage(CACHE).free >= 4 * 1024 ** 3, 'm7c-s3-outage-fresh-directory-and-disk-required')
     ports = {}
-    for service in [*SERVICES, 'api', 'web', 'admin', 'smtp']:
+    for service in [*SERVICES, 'api', 'web', 'admin', 'smtp', *(['embedding'] if scenario == 'VECTOR_PROVISION_V1' else [])]:
         ports[service] = free_port()
         require(len(set(ports.values())) == len(ports), 'm7c-s3-outage-distinct-selected-ports')
     for service, identifier in IMAGES.items():
@@ -449,7 +476,7 @@ def prepare(run_id, scenario):
     state = {'schemaVersion': 1, 'protocolVersion': PROTOCOL_VERSION, 'scenario': scenario,
         'namespace': spec['namespace'], 'runId': run_id, 'prefix': spec['namespace'] + '-' + run_id,
         'phase': 'PREPARING', 'ports': ports, 'images': IMAGES, 'resources': {}, 'processes': {},
-        'inputs': inputs(), 'commit': run(['git', 'rev-parse', 'HEAD']).decode().strip(),
+        'inputs': {**inputs(), **({'curl': curl_manifest()} if scenario == 'VECTOR_PROVISION_V1' else {})}, 'commit': run(['git', 'rev-parse', 'HEAD']).decode().strip(),
         'applicationDatabase': spec['databaseStem'] + '_app_' + run_id + '_test',
         'vectorDatabase': spec['databaseStem'] + '_vectors_' + run_id + '_test',
         'secrets': {**{k: secrets.token_urlsafe(32) for k in ['postgres', 'indexer', 'runtime', 's3', 'auth']},
@@ -517,7 +544,7 @@ def process_alive(state, saved):
 
 
 def app(state, service):
-    require(service in APPS and state['phase'] in ({'SCHEMA_READY', 'SEEDING', 'READY'} if service in {'api', 'smtp'} else {'READY'}),
+    require(service in app_roles(state) and state['phase'] in ({'SCHEMA_READY', 'SEEDING', 'READY'} if service in {'api', 'smtp', 'embedding'} else {'READY'}),
         'm7c-s3-outage-application-phase')
     pins(state)
     for item in SERVICES:
@@ -527,6 +554,9 @@ def app(state, service):
         require('smtp' in state['processes'] and process_alive(state, state['processes']['smtp']),
             'm7c-s3-outage-owned-smtp-before-api')
         smtp_ready(state)
+    if state['scenario'] == 'VECTOR_PROVISION_V1' and service in {'api', 'workers'}:
+        require('embedding' in state['processes'] and process_alive(state, state['processes']['embedding']), 'm7c-vector-owned-embedding-required')
+        require(json.loads(read_private_bytes(state_path(state['runId'], state['scenario']).parent / 'embedding-ready.json', 4096)) == {**receipt_scope(state), 'port': state['ports']['embedding'], 'synthetic': True}, 'm7c-vector-fixture-ready')
     entry = app_entry(state, service)
     require(not any((entry.parent / filename).exists() for filename in DOTENV), 'm7c-s3-outage-runtime-dotenv-refused')
     env = {**base_environment(), **app_environment(state, service)}
@@ -561,7 +591,7 @@ def app(state, service):
     os.dup2(fd, 2)
     os.close(fd)
     os.chdir(entry.parent)
-    os.execvpe(arguments[0], arguments + [str(entry)] + (['--run', state['runId'], '--scenario', state['scenario']] if service in {'smtp'} else []), env)
+    os.execvpe(arguments[0], arguments + [str(entry)] + (['--run', state['runId'], '--scenario', state['scenario']] if service in {'smtp', 'embedding'} else []), env)
 
 
 def fault_phase(state):
@@ -598,7 +628,7 @@ def watchdog_admission(state):
     ack = json.loads(read_private_bytes(directory / 'watchdog-ack.json', 8192))
     require(receipt_matches(state, ack)
         and ack.get('budgetSeconds') == 900 and ack.get('worker') == state['processes']['workers']
-        and ack.get('rustfs') == state['resources']['rustfs'] and control_alive(ack['control'])
+        and ack.get(fault_store(state)) == state['resources'][fault_store(state)] and control_alive(ack['control'])
         and type(ack.get('deadlineMonotonicNs')) is str and ack['deadlineMonotonicNs'].isdigit()
         and time.monotonic_ns() < int(ack['deadlineMonotonicNs'])
         and not (directory / 'watchdog-intervention.json').exists(),
@@ -607,13 +637,13 @@ def watchdog_admission(state):
 
 
 def guard(state, purpose):
-    purposes = {'bucket', 'seed', 'check', 'smtp', 'observe', 'staged-observe', 'outage-observe'}
+    purposes = {'bucket', 'seed', 'check', 'smtp', 'embedding', 'observe', 'staged-observe', 'outage-observe'}
     require(purpose in purposes, 'm7c-s3-outage-guard-purpose')
     pins(state)
     require(set(state['resources']) == set(SERVICES), 'm7c-s3-outage-four-owned-stores-required')
     phase = fault_phase(state)
     for service in SERVICES:
-        owned(state, service, running=not (service == 'rustfs' and purpose == 'outage-observe'))
+        owned(state, service, running=not (service == fault_store(state) and (purpose == 'outage-observe' or (purpose == 'embedding' and phase == 'OUTAGE'))))
     schema(state)
     if purpose in {'bucket', 'seed'}:
         require(state['phase'] in ({'SCHEMA_REQUIRED'} if purpose == 'bucket' else {'SEEDING'}), 'm7c-s3-outage-setup-phase')
@@ -625,6 +655,10 @@ def guard(state, purpose):
     if purpose == 'smtp':
         require(state['phase'] in {'SCHEMA_READY', 'SEEDING', 'READY'} and 'smtp' in state['processes']
             and process_alive(state, state['processes']['smtp']), 'm7c-s3-outage-smtp-start-phase')
+    if purpose == 'embedding':
+        require(state['scenario'] == 'VECTOR_PROVISION_V1' and state['phase'] in {'SCHEMA_READY', 'SEEDING', 'READY'} and 'embedding' in state['processes'] and process_alive(state, state['processes']['embedding']), 'm7c-vector-fixture-start-phase')
+        if phase in {'PAUSED', 'OUTAGE'}:
+            watchdog_admission(state)
     if purpose in {'check', 'observe', 'staged-observe', 'outage-observe'}:
         for service, saved in state['processes'].items():
             require(process_alive(state, saved), 'm7c-s3-outage-recorded-process-not-live')
@@ -633,7 +667,7 @@ def guard(state, purpose):
             require((actual['state'] == 'T') if stopped else actual['state'] not in {'T', 't'},
                 'm7c-s3-outage-exact-process-run-state')
     if purpose in {'observe', 'staged-observe', 'outage-observe'}:
-        require(state['phase'] == 'READY' and set(state['processes']) == set(APPS), 'm7c-s3-outage-observe-four-processes-required')
+        require(state['phase'] == 'READY' and set(state['processes']) == set(app_roles(state)), 'm7c-s3-outage-observe-four-processes-required')
         if purpose == 'staged-observe':
             require(phase == 'PAUSED', 'm7c-s3-outage-stage-phase')
             watchdog_admission(state)
@@ -759,8 +793,8 @@ def main():
     parser.add_argument('--run', required=True)
     parser.add_argument('--scenario', required=True, choices=sorted(SCENARIOS))
     parser.add_argument('--mode', required=True, choices=['prepare', 'deploy-existing-migrations', 'app-api',
-        'app-web', 'app-smtp', 'app-workers', 'seed', 'check', 'cleanup', 'guard'])
-    parser.add_argument('--purpose', choices=['bucket', 'seed', 'check', 'smtp', 'observe', 'staged-observe', 'outage-observe'])
+        'app-web', 'app-smtp', 'app-workers', 'app-embedding', 'seed', 'check', 'cleanup', 'guard'])
+    parser.add_argument('--purpose', choices=['bucket', 'seed', 'check', 'smtp', 'embedding', 'observe', 'staged-observe', 'outage-observe'])
     args = parser.parse_args()
     source = HERE.lstat()
     require(stat.S_ISDIR(source.st_mode) and source.st_uid == os.getuid()

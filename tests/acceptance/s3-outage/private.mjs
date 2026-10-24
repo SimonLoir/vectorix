@@ -9,13 +9,18 @@ import { pathToFileURL } from 'node:url';
 export const HERE = path.dirname(fileURLToPath(import.meta.url));
 export const ROOT = path.resolve(HERE, '../../..');
 export const PROTOCOL_VERSION = 2;
-/** Exactly two scenarios; historical protocol-1 states cannot be adopted. */
+/** Closed scenarios; historical protocol-1 states cannot be adopted. */
 export function scenarioSpec(scenario) {
     const specs = {
         INGESTION_V1: {
             namespace: 'vectorix-m7c-s3-outage',
             databaseStem: 'vectorix_m7c_s3_outage',
             objectPrefix: 'm7c-s3-outage',
+        },
+        VECTOR_PROVISION_V1: {
+            namespace: 'vectorix-m7c-vector-provision',
+            databaseStem: 'vectorix_m7c_vector_provision',
+            objectPrefix: 'm7c-vector-provision',
         },
         CLEANUP_V1: {
             namespace: 'vectorix-m7c-s3-cleanup',
@@ -127,6 +132,7 @@ export function context(args, purpose) {
             'bucket',
             'check',
             'smtp',
+            'embedding',
             'observe',
             'staged-observe',
             'outage-observe',
@@ -164,7 +170,13 @@ export function context(args, purpose) {
             state.vectorDatabase === `${spec.databaseStem}_vectors_${run}_test`,
         'M7C_S3_OUTAGE_STATE'
     );
-    const recheck = () => {
+    const recheck = (maximumMilliseconds = 120000) => {
+        need(
+            Number.isSafeInteger(maximumMilliseconds) &&
+                maximumMilliseconds >= 1 &&
+                maximumMilliseconds <= 120000,
+            'M7C_S3_OUTAGE_GUARD_TIMEOUT'
+        );
         const result = spawnSync(
             'python3',
             [
@@ -181,7 +193,7 @@ export function context(args, purpose) {
             {
                 cwd: ROOT,
                 env: cleanEnvironment(),
-                timeout: 120000,
+                timeout: maximumMilliseconds,
                 maxBuffer: 16384,
                 encoding: 'utf8',
                 stdio: ['ignore', 'pipe', 'ignore'],

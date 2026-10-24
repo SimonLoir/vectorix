@@ -185,5 +185,33 @@ class ProtocolTests(unittest.TestCase):
                     l.validate({**l.receipt_scope(state()), 'namespace': 'vectorix-m7c-s3-outage'}, RUN, 'CLEANUP_V1')
 
 
+class VectorLifecycleTests(unittest.TestCase):
+    def test_vector_namespace_roles_and_fault_target_are_closed(self):
+        value = {'scenario': 'VECTOR_PROVISION_V1'}
+        self.assertEqual(l.fault_store(value), 'vector')
+        self.assertEqual(l.app_roles(value), (*l.APPS, 'embedding'))
+        self.assertNotEqual(l.state_path(RUN, value['scenario']), l.state_path(RUN, 'CLEANUP_V1'))
+        self.assertEqual(l.scenario_spec(value['scenario'])['namespace'], 'vectorix-m7c-vector-provision')
+
+    def test_vector_outage_guard_refuses_any_other_store_or_worker_change(self):
+        value = state()
+        value.update(scenario='VECTOR_PROVISION_V1', namespace='vectorix-m7c-vector-provision')
+        value['processes']['embedding'] = {'pid': 999, 'service': 'embedding'}
+        calls = []
+        def owned(_value, service, running=None):
+            calls.append((service, running))
+        with contextlib.ExitStack() as stack:
+            for name, replacement in [('pins', lambda *_: None), ('schema', lambda *_: None), ('smtp_ready', lambda *_: None), ('owned', owned), ('fault_phase', lambda *_: 'OUTAGE'), ('watchdog_admission', lambda *_: None), ('process_alive', lambda *_: True), ('process_identity', lambda *_: {'state': 'S'})]:
+                stack.enter_context(mock.patch.object(l, name, replacement))
+            self.assertTrue(l.guard(value, 'outage-observe')['resourceOwnership'])
+        self.assertEqual(dict(calls), {name: name != 'vector' for name in l.SERVICES})
+
+    def test_synthetic_fixture_environment_contains_no_database_or_smtp_secrets(self):
+        value = {'scenario': 'VECTOR_PROVISION_V1', 'runId': RUN, 'environment': {'DATABASE_URL': 'must-not-forward', 'ENCRYPTION_SECRET': 'must-not-forward'}}
+        result = l.app_environment(value, 'embedding')
+        self.assertEqual(set(result), {'NODE_ENV', 'TZ', 'VECTORIX_M7C_S3_OUTAGE_RUN', 'VECTORIX_M7C_S3_OUTAGE_ROLE', 'VECTORIX_M7C_S3_SCENARIO'})
+        self.assertNotIn('must-not-forward', str(result))
+
+
 if __name__ == '__main__':
     unittest.main()
