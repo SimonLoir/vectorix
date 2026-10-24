@@ -1123,6 +1123,20 @@ The correction branch subsequently integrates verified PR #79 main `9ab10ffc6383
 
 Delivered in [PR #74](https://github.com/SimonLoir/vectorix/pull/74), squash `1ac9cd866143f3dfef74d9cdcf9e6700fd4f9e71` at 12:01:48 UTC on October 24, 2026. Exact corrected head `1ddc0522ced0d929ea7b6a973d12477f972e89bc` passes [catalog CI](https://github.com/SimonLoir/vectorix/actions/runs/40091463691) and [all six images](https://github.com/SimonLoir/vectorix/actions/runs/40091463693) before the coordinated authorized merge. Fetched main and the squash/PR trees match; the primary checkout and protected admin declaration are preserved.
 
+## PR92 — Update the development build tools
+
+- [x] Update root Turbo to 2.11.10 and API/workers Vite to 8.3.5, preserving application code, runtime dependency versions, public contracts, permissions, schema and migrations.
+- [x] Integrate the reviewed candidate stack without dropping its build-log history; verify that the residual dependency diff contains only the root/API/workers manifests and lockfile.
+- [x] Compare the parsed lock graph: 28 importers, 1,259 packages and 1,260 snapshots, with only the eight expected package replacements and fourteen version/peer locator changes; all other package metadata and policy remain unchanged, with zero unresolved references.
+- [x] Run frozen installation, Prisma generation and schema validation under a closed synthetic environment without a developer `.env` or application database.
+- [x] Run 24 uncached scoped Turbo tasks: 21 type checks, API/workers lint, 11 discovery tests and 215 API Node tests. Lint has zero errors and retains seven API/eight workers warnings in unchanged source.
+- [x] Build the API and workers production bundles directly and in series with Vite 8.3.5; preserve both Next declaration states and the lockfile bytes/modes exactly.
+- [ ] Complete the final exact-head PR checks after reviewed publication. Successful checks on the original Dependabot head remain historical evidence.
+
+The two bundle checks transform 452 API modules and 244 worker modules. The installed tools are compatible with the repository's Node 24 engine declaration. Workers has no separate unit-test task. This is build-tool maintenance, not a new dashboard milestone: no Next build, catalog, Docker, provider or native acceptance is claimed for the combined update. Later integration changes only reorganize the build log and add this checklist; the tested dependency/runtime bytes remain unchanged.
+
+Touched files: [root manifest](../package.json), [API manifest](../apps/api/package.json), [workers manifest](../apps/workers/package.json) and [lockfile](../pnpm-lock.yaml).
+
 ## Issue #15 — Clear the reported transitive advisories
 
 - [x] Bump the Prisma CLI from 7.10.0 to 7.10.1 in `packages/db`. Its pinned dependencies move `mysql2` from 3.15.3 to 3.24.4 (GHSA-3f6p-5ww8-9rcr, GHSA-rgwj-5xj2-c3m3) and `@prisma/config`'s `deepmerge-ts` from 7.1.5 to 8.0.2.
