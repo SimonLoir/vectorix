@@ -5,6 +5,8 @@ import { createHash } from 'node:crypto';
 import { fileURLToPath } from 'node:url';
 import {
     HERE,
+    receiptScope,
+    sameScope,
     context,
     need,
     privateBytes,
@@ -879,10 +881,10 @@ async function main() {
     need(!STATIC_DRAFT_ONLY, 'S3_OUTAGE_OBSERVER_DRAFT_REVIEW_REQUIRED');
     const args = process.argv.slice(2);
     need(
-        args.length === 4 && args[2] === '--phase' && PHASES.includes(args[3]),
+        args.length === 6 && args[4] === '--phase' && PHASES.includes(args[5]),
         'S3_OUTAGE_OBSERVER_ARGUMENTS'
     );
-    const phase = args[3],
+    const phase = args[5],
         purpose =
             phase === 'v2-staged'
                 ? 'staged-observe'
@@ -890,10 +892,12 @@ async function main() {
                   ? 'outage-observe'
                   : 'observe';
     const { state, run, directory, recheck } = context(
-        args.slice(0, 2),
+        args.slice(0, 4),
         purpose
     );
+    need(state.scenario === 'INGESTION_V1', 'S3_OUTAGE_INGESTION_SCENARIO');
     const fixture = privateJson(path.join(directory, 'fixture.json'), 16384);
+    need(sameScope(state, fixture), 'S3_OUTAGE_FIXTURE_PROTOCOL');
     need(
         fixture.namespace === state.namespace &&
             fixture.runId === run &&
@@ -918,7 +922,8 @@ async function main() {
             : null;
     need(
         !previous ||
-            (previous.phase === previousPhase &&
+            (sameScope(state, previous) &&
+                previous.phase === previousPhase &&
                 previous.status === 'OBSERVED' &&
                 previous.namespace === state.namespace),
         'S3_OUTAGE_OBSERVER_PHASE_CHAIN'
@@ -929,7 +934,7 @@ async function main() {
         'S3_OUTAGE_OBSERVER_FIXTURE_CHAIN'
     );
     writePrivate(path.join(directory, `observe-${phase}-intent.json`), {
-        schemaVersion: 1,
+        ...receiptScope(state),
         namespace: state.namespace,
         runId: run,
         phase,
@@ -1142,7 +1147,7 @@ async function main() {
                 'S3_OUTAGE_OBSERVER_WATCHDOG_ACK_CHANGED'
             );
         const result = stringifySafe({
-            schemaVersion: 1,
+            ...receiptScope(state),
             namespace: state.namespace,
             runId: run,
             phase,
@@ -1246,7 +1251,7 @@ async function main() {
             writePrivate(
                 path.join(directory, `observe-${phase}-incomplete.json`),
                 {
-                    schemaVersion: 1,
+                    ...receiptScope(state),
                     namespace: state.namespace,
                     runId: run,
                     phase,
