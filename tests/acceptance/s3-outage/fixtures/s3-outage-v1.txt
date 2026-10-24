@@ -1,0 +1,5 @@
+S3 recovery baseline — version 1
+
+FR : Le dossier de la bibliothèque conserve son premier original et son texte extrait. Une panne du stockage privé ne doit pas transformer une version incomplète en document prêt. Le repère stable est SOURCE-V1-FORET-731.
+
+EN: The library keeps this first original and its extracted text. A private storage outage must not publish an incomplete replacement. The stable source marker is SOURCE-V1-FOREST-731. Accents, café and the tree 🌳 remain part of these exact UTF-8 bytes.
