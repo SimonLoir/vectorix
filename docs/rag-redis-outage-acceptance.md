@@ -84,6 +84,8 @@ The same Redis ID/volume and worker PID/start ticks are required throughout. No 
 
 `bash scripts/test-s3-outage-guards.sh` passes 45 Python and 48 Node pure/injected cases plus fourteen Node syntax checks for the final accepted-before-loss design. The earlier private-transfer checkpoint (43 Python and 47 Node cases) remains separate history. The final delta adds mandatory precut staged admission, immutable accepted dates and the actual DB-only outage predicate. These cover all three closed scenarios, exact selected-container fault/refusal, owned queue admission before network, bounded RESP parsing, unchanged stored source/reservation, genuine monotonic pending duration, and shared remaining-time budgets. No live Redis, Docker, database, S3 SDK, application, browser or provider is used by this pass. The first focused run is retained as a failed new assertion caused by a fixture expecting the S3-only retry count; the corrected checkpoint and subsequent stricter timing/queue checks are separate receipts.
 
+Alignment with merged S3 cleanup `dc314fcfe02bbc30877bb1a4a1720d1bb3abccde` preserves all application/dependency bytes and imports the reviewed cleanup observer-finalization guard and its three regressions. The integrated offline suite passes 45 Python and 51 Node cases plus fourteen syntax checks. Historical native receipts remain bound to their original source commits; no new native run or browser result is claimed for this alignment.
+
 After separate reviewed activation and setup, the finite fault/observation sequence is:
 
 ```bash

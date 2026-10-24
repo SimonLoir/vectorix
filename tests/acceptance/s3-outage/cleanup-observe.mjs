@@ -518,6 +518,22 @@ export function validateCleanupTrace(changes) {
     };
 }
 
+/** Publish a consumable observation only after both readers close and admission is rechecked. */
+export async function finalizeCleanupObservation({
+    objects,
+    client,
+    recheck,
+    publish,
+}) {
+    try {
+        objects?.close();
+    } finally {
+        if (client) await client.$disconnect();
+    }
+    recheck();
+    return publish();
+}
+
 async function main() {
     need(
         !STATIC_DRAFT_ONLY,
@@ -607,7 +623,8 @@ async function main() {
     let client,
         objects,
         snapshots = 0,
-        latest;
+        latest,
+        finalizationStarted = false;
     const changes = [];
     try {
         if (phase === 'cleanup-staged') {
@@ -769,20 +786,23 @@ async function main() {
                 'S3_OUTAGE_CLEANUP_POST_OBJECT_METADATA_CHANGED'
             );
         }
-        recheck();
-        need(
-            !fs.existsSync(
-                path.join(directory, 'watchdog-intervention.json')
-            ) &&
-                (!ackBytes ||
-                    sha(
-                        privateBytes(
-                            path.join(directory, 'watchdog-ack.json'),
-                            16384
-                        )
-                    ) === sha(ackBytes)),
-            'S3_OUTAGE_CLEANUP_INTERVENTION'
-        );
+        const finalRecheck = () => {
+            recheck();
+            need(
+                !fs.existsSync(
+                    path.join(directory, 'watchdog-intervention.json')
+                ) &&
+                    (!ackBytes ||
+                        sha(
+                            privateBytes(
+                                path.join(directory, 'watchdog-ack.json'),
+                                16384
+                            )
+                        ) === sha(ackBytes)),
+                'S3_OUTAGE_CLEANUP_INTERVENTION'
+            );
+        };
+        finalRecheck();
         const common = {
                 schemaVersion: 1,
                 ...assessed.source,
@@ -846,30 +866,28 @@ async function main() {
                   }
                 : {}),
         };
-        objects?.close();
-        objects = null;
-        const activeClient = client;
-        client = null;
-        await activeClient.$disconnect();
-        recheck();
-        need(
-            !fs.existsSync(path.join(directory, 'watchdog-intervention.json')),
-            'S3_OUTAGE_CLEANUP_WATCHDOG_INTERVENED'
-        );
-        writePrivate(
-            path.join(directory, `observe-${phase}.json`),
-            JSON.parse(json(result))
-        );
-        console.log(
-            json({
-                ...receiptScope(state),
-                completed: true,
-                phase,
-                status: 'OBSERVED',
-                storageBytes: assessed.quota.storageBytes,
-                snapshots,
-            })
-        );
+        finalizationStarted = true;
+        await finalizeCleanupObservation({
+            objects,
+            client,
+            recheck: finalRecheck,
+            publish: () => {
+                writePrivate(
+                    path.join(directory, `observe-${phase}.json`),
+                    JSON.parse(json(result))
+                );
+                console.log(
+                    json({
+                        ...receiptScope(state),
+                        completed: true,
+                        phase,
+                        status: 'OBSERVED',
+                        storageBytes: assessed.quota.storageBytes,
+                        snapshots,
+                    })
+                );
+            },
+        });
     } catch (error) {
         try {
             writePrivate(
@@ -889,8 +907,13 @@ async function main() {
         }
         throw error;
     } finally {
-        objects?.close();
-        if (client) await client.$disconnect();
+        if (!finalizationStarted) {
+            try {
+                objects?.close();
+            } finally {
+                if (client) await client.$disconnect();
+            }
+        }
     }
 }
 if (

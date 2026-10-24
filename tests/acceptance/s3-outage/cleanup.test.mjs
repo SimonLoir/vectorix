@@ -17,6 +17,7 @@ import {
     assessCleanupSnapshot,
     validateCleanupTrace,
     readCleanupSnapshot,
+    finalizeCleanupObservation,
     STATIC_DRAFT_ONLY as observerDraft,
 } from './cleanup-observe.mjs';
 import { assertObjectDescriptor, assertOnlineObjectPhase } from './objects.mjs';
@@ -586,4 +587,95 @@ test('actual snapshot reader scopes all quota sums and projects only lease predi
     );
     assert.equal(JSON.stringify(projections).includes('leaseToken'), false);
     assert.ok(projections.every((query) => query.take <= 9));
+});
+
+test('cleanup success waits for disconnect and the final guard before publishing', async () => {
+    const events = [];
+    let release;
+    const disconnected = new Promise((resolve) => {
+        release = resolve;
+    });
+    const finished = finalizeCleanupObservation({
+        objects: { close: () => events.push('objects-closed') },
+        client: {
+            $disconnect: async () => {
+                events.push('disconnect-started');
+                await disconnected;
+                events.push('disconnected');
+            },
+        },
+        recheck: () => events.push('guard'),
+        publish: () => {
+            events.push('proof-and-completed');
+            return 'published';
+        },
+    });
+    assert.deepEqual(events, ['objects-closed', 'disconnect-started']);
+    release();
+    assert.equal(await finished, 'published');
+    assert.deepEqual(events, [
+        'objects-closed',
+        'disconnect-started',
+        'disconnected',
+        'guard',
+        'proof-and-completed',
+    ]);
+});
+
+test('cleanup reader close failures cannot publish a consumable observation', async () => {
+    for (const failedReader of ['objects', 'prisma']) {
+        const failure = new Error('synthetic close failure');
+        let disconnects = 0,
+            guards = 0,
+            publications = 0;
+        await assert.rejects(
+            finalizeCleanupObservation({
+                objects: {
+                    close: () => {
+                        if (failedReader === 'objects') throw failure;
+                    },
+                },
+                client: {
+                    $disconnect: async () => {
+                        disconnects++;
+                        if (failedReader === 'prisma') throw failure;
+                    },
+                },
+                recheck: () => {
+                    guards++;
+                },
+                publish: () => {
+                    publications++;
+                },
+            }),
+            (error) => error === failure
+        );
+        assert.equal(disconnects, 1);
+        assert.equal(guards, 0);
+        assert.equal(publications, 0);
+    }
+});
+
+test('cleanup post-disconnect guard refusal cannot publish a consumable observation', async () => {
+    const failure = new Error('synthetic final guard refusal');
+    const events = [];
+    await assert.rejects(
+        finalizeCleanupObservation({
+            objects: { close: () => events.push('objects-closed') },
+            client: {
+                $disconnect: async () => {
+                    events.push('disconnected');
+                },
+            },
+            recheck: () => {
+                events.push('guard');
+                throw failure;
+            },
+            publish: () => {
+                events.push('proof-and-completed');
+            },
+        }),
+        (error) => error === failure
+    );
+    assert.deepEqual(events, ['objects-closed', 'disconnected', 'guard']);
 });
