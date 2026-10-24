@@ -3,7 +3,12 @@ import { test } from 'node:test';
 import fs from 'node:fs';
 import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
-import { receiptScope, sameScope, scenarioSpec } from './private.mjs';
+import {
+    receiptScope,
+    sameScope,
+    scenarioSpec,
+    RecipeError,
+} from './private.mjs';
 import {
     syntheticResponse,
     admitSyntheticConnection,
@@ -34,7 +39,11 @@ import {
     assertVectorContinuity,
     validateVectorTrace,
 } from './vector-observation.mjs';
-import { readVectorSnapshot, readPhysicalVector } from './vector-snapshot.mjs';
+import {
+    readVectorSnapshot,
+    readVectorAppSnapshot,
+    readPhysicalVector,
+} from './vector-snapshot.mjs';
 import {
     finalizeVectorObservation,
     STATIC_DRAFT_ONLY as observerDraft,
@@ -1020,6 +1029,146 @@ test('query builder bounds projections, scopes source IDs and never selects raw 
                 row[2]?.where?.leaseToken?.not === null
         ),
         true
+    );
+});
+test('actual app reader parameter-array type follows the migrated Chunk generationId column', async () => {
+    const migration = fs.readFileSync(
+        new URL(
+            '../../../packages/db/prisma/migrations/20261026000000_rag_indexing/migration.sql',
+            import.meta.url
+        ),
+        'utf8'
+    );
+    const chunkTable = /CREATE TABLE "Chunk" \(([\s\S]*?)\n\);/u.exec(
+        migration
+    )?.[1];
+    assert.ok(chunkTable);
+    const columnType = /^\s*"generationId"\s+([A-Z]+)\s+NOT NULL/mu.exec(
+        chunkTable
+    )?.[1];
+    assert.ok(columnType);
+    const statements = [];
+    let rawCalls = 0;
+    const assertArrayType = (sql) => {
+        const cast = /"generationId"=ANY\(\$2::([a-z]+)\[\]\)/u.exec(sql)?.[1];
+        assert.ok(cast);
+        assert.equal(cast.toUpperCase(), columnType);
+        assert.doesNotMatch(sql, /"generationId"::/u);
+    };
+    const tx = new Proxy(
+        {},
+        {
+            get(_target, name) {
+                if (name === '$executeRawUnsafe')
+                    return async (sql) => {
+                        statements.push(sql);
+                        return 0;
+                    };
+                if (name === '$queryRawUnsafe')
+                    return async (sql, ...params) => {
+                        rawCalls++;
+                        assertArrayType(sql);
+                        // This must reject the original regression against the actual migrated type.
+                        const originalWrongCast = sql.replace(
+                            '::' + columnType.toLowerCase() + '[]',
+                            '::uuid[]'
+                        );
+                        assert.throws(() => assertArrayType(originalWrongCast));
+                        assert.deepEqual(params, ['org', [g1, g2]]);
+                        assert.match(sql, /"organizationId"=\$1/u);
+                        assert.match(sql, /LIMIT 33/u);
+                        assert.match(sql, /LIMIT 64/u);
+                        return [];
+                    };
+                return new Proxy(
+                    {},
+                    {
+                        get(_model, method) {
+                            return async () =>
+                                method === 'aggregate'
+                                    ? {
+                                          _sum: {
+                                              byteSize: 0n,
+                                              reservedBytes: 0n,
+                                          },
+                                      }
+                                    : method === 'count'
+                                      ? 0
+                                      : method === 'findMany'
+                                        ? []
+                                        : null;
+                        },
+                    }
+                );
+            },
+        }
+    );
+    const result = await readVectorAppSnapshot(
+        {
+            $transaction: async (callback, options) => {
+                assert.deepEqual(options, {
+                    isolationLevel: 'RepeatableRead',
+                    maxWait: 1000,
+                    timeout: 15000,
+                });
+                return callback(tx);
+            },
+        },
+        fixture,
+        binding
+    );
+    assert.equal(rawCalls, 1);
+    assert.deepEqual(statements, [
+        'SET TRANSACTION READ ONLY',
+        'SET LOCAL statement_timeout=10000',
+    ]);
+    assert.deepEqual(result.chunks, []);
+});
+test('app snapshot failures retain known guard errors and hide arbitrary native payloads behind a fixed stage', async () => {
+    let reads = 0;
+    const hostile = {};
+    for (const field of ['message', 'code', 'stack', 'cause', 'name'])
+        Object.defineProperty(hostile, field, {
+            get() {
+                reads++;
+                throw new Error('must not inspect');
+            },
+        });
+    const revoked = Proxy.revocable({}, {});
+    revoked.revoke();
+    for (const error of [
+        new Error('synthetic native failure'),
+        hostile,
+        revoked.proxy,
+    ]) {
+        await assert.rejects(
+            readVectorAppSnapshot(
+                {
+                    $transaction: async () => {
+                        throw error;
+                    },
+                },
+                fixture,
+                binding
+            ),
+            (failure) =>
+                failure instanceof RecipeError &&
+                failure.message === 'S3_OUTAGE_VECTOR_READ_APP_SNAPSHOT'
+        );
+    }
+    assert.equal(reads, 0);
+    const known = new RecipeError('S3_OUTAGE_VECTOR_QUERY_SCOPE');
+    await assert.rejects(
+        readVectorAppSnapshot(
+            {
+                $transaction: async () => {
+                    throw known;
+                },
+            },
+            fixture,
+            binding
+        ),
+        (error) => error === known
     );
 });
 test('physical reader always releases and rolls back on wrong database before table I/O', async () => {

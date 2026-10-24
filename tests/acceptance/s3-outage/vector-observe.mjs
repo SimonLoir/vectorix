@@ -34,7 +34,7 @@ import {
     canonical,
 } from './vector-observation.mjs';
 import {
-    readVectorSnapshot,
+    readVectorAppSnapshot,
     vectorPool,
     readPhysicalVector,
 } from './vector-snapshot.mjs';
@@ -229,20 +229,7 @@ async function main() {
         app = await openFixturePrisma(state, true);
         const read = async () => {
             finalGuard();
-            const value = await app.$transaction(
-                async (tx) => {
-                    await tx.$executeRawUnsafe('SET TRANSACTION READ ONLY');
-                    await tx.$executeRawUnsafe(
-                        'SET LOCAL statement_timeout=10000'
-                    );
-                    return readVectorSnapshot(tx, fixture, binding);
-                },
-                {
-                    isolationLevel: 'RepeatableRead',
-                    maxWait: 1000,
-                    timeout: 15000,
-                }
-            );
+            const value = await readVectorAppSnapshot(app, fixture, binding);
             finalGuard();
             return value;
         };

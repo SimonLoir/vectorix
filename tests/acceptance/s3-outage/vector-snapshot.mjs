@@ -2,7 +2,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { createRequire } from 'node:module';
-import { ROOT } from './private.mjs';
+import { ROOT, RecipeError } from './private.mjs';
 import { failure, canonical } from './vector-observation.mjs';
 import { sha, id } from './vector-workflow.mjs';
 const same = (a, b) => canonical(a) === canonical(b);
@@ -117,7 +117,7 @@ export async function readVectorSnapshot(tx, fixture, binding) {
         },
     });
     const chunks = await tx.$queryRawUnsafe(
-        `SELECT id,"generationId","indexedDocumentId",ordinal,kind,"parentId","textHash","embeddingInputHash","startOffset","endOffset",CASE WHEN octet_length(text)<=4096 THEN text END AS text,jsonb_array_length("sourceSpans") AS "sourceSpanCount",(SELECT coalesce(jsonb_agg(value ORDER BY ord),'[]') FROM (SELECT value,ord FROM jsonb_array_elements("sourceSpans") WITH ORDINALITY v(value,ord) ORDER BY ord LIMIT 64) bounded) AS "sourceSpans" FROM "Chunk" WHERE "organizationId"=$1 AND "generationId"=ANY($2::uuid[]) ORDER BY "generationId",ordinal LIMIT 33`,
+        `SELECT id,"generationId","indexedDocumentId",ordinal,kind,"parentId","textHash","embeddingInputHash","startOffset","endOffset",CASE WHEN octet_length(text)<=4096 THEN text END AS text,jsonb_array_length("sourceSpans") AS "sourceSpanCount",(SELECT coalesce(jsonb_agg(value ORDER BY ord),'[]') FROM (SELECT value,ord FROM jsonb_array_elements("sourceSpans") WITH ORDINALITY v(value,ord) ORDER BY ord LIMIT 64) bounded) AS "sourceSpans" FROM "Chunk" WHERE "organizationId"=$1 AND "generationId"=ANY($2::text[]) ORDER BY "generationId",ordinal LIMIT 33`,
         org,
         generations
     );
@@ -235,6 +235,28 @@ export async function readVectorSnapshot(tx, fixture, binding) {
             },
         }),
     };
+}
+/** Keep native READ ONLY transaction failures behind a fixed stage; never inspect database error payloads. */
+export async function readVectorAppSnapshot(app, fixture, binding) {
+    try {
+        return await app.$transaction(
+            async (tx) => {
+                await tx.$executeRawUnsafe('SET TRANSACTION READ ONLY');
+                await tx.$executeRawUnsafe('SET LOCAL statement_timeout=10000');
+                return readVectorSnapshot(tx, fixture, binding);
+            },
+            { isolationLevel: 'RepeatableRead', maxWait: 1000, timeout: 15000 }
+        );
+    } catch (error) {
+        let known = false;
+        try {
+            known = error instanceof RecipeError;
+        } catch {
+            /* hostile values remain unknown */
+        }
+        if (known) throw error;
+        failure(false, 'READ_APP_SNAPSHOT');
+    }
 }
 export async function vectorPool(state) {
     const uri = new URL(state.environment.VECTOR_DATABASE_URL);

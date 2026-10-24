@@ -1345,5 +1345,220 @@
         "applicationBuilds": "PREVIOUS_4_PASS_UNCHANGED_NOT_REPEATED",
         "historicalRecord": "All sixteen preceding fields and every archived source, receipt and native result remain unchanged. The source-supported bodyless-signout refusal is not a retroactive measured HTTP status. Separate ACTIVE/READY database facts do not complete the failed one-shot setup. This correction has no replacement native execution.",
         "currentSourcesSha256": "1d317d743d3b34d9f5877525b4cdcaec39169ce520848ed38505bb80a0918dfd"
+    },
+    "vectorProvisionReviewRevision4": {
+        "schemaVersion": 1,
+        "scenario": "VECTOR_PROVISION_V1",
+        "status": "DISABLED_APP_READER_TYPE_CORRECTION_HERMETIC_PASS_NATIVE_SQL_NOT_RETESTED",
+        "checkpointBeforePatch": "950ee085c78651613ec1c1a977430b91dd4d9b50",
+        "beforeArchiveSha256": "1f6165014ea83032f13cdafa7012760b165279e90f75c7edadc8bbb91066bac2",
+        "nativeTrial": {
+            "runId": "24d0469b8d95",
+            "sourceCommit": "950ee085c78651613ec1c1a977430b91dd4d9b50",
+            "preparationManifestSha256": "792bdc737e4e026dccb487c01fa07a05a1598965e36bfff89bf48030bcc73abd",
+            "outcome": "INCOMPLETE_FORMAL_READY_OBSERVATION_NO_REPLAY",
+            "separateCompletedWorkflows": {
+                "prepare-g1": {
+                    "completed": true,
+                    "httpCalls": 13,
+                    "statuses": [200],
+                    "signOutConfirmed": true,
+                    "finalizationSha256": "7ba8f17f0ca4b48887b1971056ae06b4608d73a0167f8d532eb1eb0a31f53b74"
+                },
+                "search-g1": {
+                    "completed": true,
+                    "httpCalls": 13,
+                    "statuses": [200],
+                    "signOutConfirmed": true,
+                    "finalizationSha256": "cc88d5fd7d5ea70680e695ae8163b860b85c88e8e9775e202fc0fa97732c7736"
+                }
+            },
+            "searchReceiptSha256": "607f3bafb84b457aee09b286640eb7e5becef1b887c6c439a1e58f9d3abfd3bc",
+            "firstFailedPhase": "vector-g1-ready",
+            "firstDiagnostic": "M7C_S3_OUTAGE_SANITIZED_FAILURE",
+            "completedSnapshots": 0,
+            "incompleteReceiptSha256": "e06be9a9ac1b53a8e00d7b1128e67b5ded57c5111bd3cc8db85626526f819463",
+            "formalBaselinePublished": false,
+            "watchdogStarted": false,
+            "faultStarted": false,
+            "rootBrowser": {
+                "normalLogin": "CONFIRMED",
+                "readOnlyLanguage": "EN",
+                "activeGeneration": "G1",
+                "publishedDocuments": 1,
+                "children": 1,
+                "retainedChunks": 0,
+                "reservedChunks": 0,
+                "completeTasks": 2,
+                "consoleErrors": 0,
+                "browserTransfers": false,
+                "retryAction": false,
+                "tabClosed": true,
+                "sessionZeroBeforeTeardown": "NOT_CLAIMED"
+            },
+            "syntheticEmbeddingFinal": {
+                "sha256": "bb649627c79e962730971192b81dc253a8b75f3e899d0b1b39f32311dca9b8d3",
+                "counters": {
+                    "requests": 13,
+                    "embeddings": 4,
+                    "inputs": 4,
+                    "rejected": 0,
+                    "connections": 13
+                }
+            },
+            "cleanupReceiptSha256": "213bff3deebb04d16ccb0d8864f2a460dbdb33981ef1e32e707702bd62063982",
+            "teardownReceiptSha256": "88bc20d1cc1986265eb5322ced63370f395faeca954470079664f35fb4755d89",
+            "exactDisabledRestoreReceiptSha256": "caa01d7cfb10dca0a6015c58d8f1c1224c55e24172f9a153f45b7679a95e7cbd",
+            "cleanup": "CLEANED_EVIDENCE_RETAINED_0_OWNED_PROCESSES_STORES_VOLUMES"
+        },
+        "sourceDiagnosis": {
+            "applicationColumn": "Chunk.generationId",
+            "migratedType": "TEXT",
+            "incorrectParameterType": "uuid[]",
+            "correctedParameterType": "text[]",
+            "inferredSqlstate": "42883_SOURCE_INFERRED_NOT_CAPTURED_IN_TRIAL",
+            "pureProductionPlannerReproduction": {
+                "status": "PASS",
+                "sourceBytes": 522,
+                "sourceSha256": "110bf3def2634f5a3c6addd02b8b61d35fddd3e3ea776077144041e6c2599719",
+                "children": 1,
+                "parents": 1,
+                "childRanges": [[0, 511]],
+                "nativeCalls": 0
+            }
+        },
+        "corrections": [
+            "SCHEMA_COMPATIBLE_TEXT_ARRAY_PARAMETER_WITHOUT_COLUMN_CAST",
+            "FIXED_READ_APP_SNAPSHOT_STAGE_FOR_UNKNOWN_TRANSACTION_FAILURES"
+        ],
+        "currentSources": {
+            "README.md": {
+                "bytes": 21919,
+                "sha256": "640a64fa3dad0c080c7eb50e33f80c14e0837c26369a2c53146cd45c40669b67"
+            },
+            "bucket.mjs": {
+                "bytes": 6679,
+                "sha256": "84ec4e6f176d63a1b1122f13de65f71d876a5391bfb0eecfc75f6004eebf4f24"
+            },
+            "cleanup-fixture.mjs": {
+                "bytes": 13025,
+                "sha256": "fc54ad3f0045dbef1c720dd902dd920c3a409547668798a3d48c0c05df552bbb"
+            },
+            "cleanup-observe.mjs": {
+                "bytes": 33495,
+                "sha256": "0152a23220bc4827e434710ca3bf5ec7995ce08c6dddd34f42a52831205f869c"
+            },
+            "cleanup.test.mjs": {
+                "bytes": 22103,
+                "sha256": "581aeb09a39315db748f883f3636d9c4623fa5ef5db51dfcd6d6a07ded121da8"
+            },
+            "fault.py": {
+                "bytes": 23931,
+                "sha256": "4df4a461529a27ce4e812a32352d7c0f356cf908b08dbe10ba403b9087b68ac0"
+            },
+            "fault_test.py": {
+                "bytes": 19222,
+                "sha256": "ec9a5dda206002eaf3eaac55b864004d4f8bb4da814aff75af293b5f33e198d3"
+            },
+            "fixtures/expected.json": {
+                "bytes": 926,
+                "sha256": "67c562dfb951d9751d76468f4cf29b89d6fae3432ed9debb5c7f0790cb4fac7d"
+            },
+            "fixtures/s3-outage-v1.txt": {
+                "bytes": 522,
+                "sha256": "110bf3def2634f5a3c6addd02b8b61d35fddd3e3ea776077144041e6c2599719"
+            },
+            "fixtures/s3-outage-v2.txt": {
+                "bytes": 620,
+                "sha256": "ef488f9ba8481a42e7f79aceafde979d9f09ddc0072f2edc0577e6b064cc3d2f"
+            },
+            "lifecycle.py": {
+                "bytes": 46196,
+                "sha256": "1e3a5a2e9499339457e498d38e5d854b82c2160c81a646d413bb7cbf61057c3f"
+            },
+            "lifecycle_test.py": {
+                "bytes": 12572,
+                "sha256": "da06bc9f5463eba9b4be96fb9af76028c22f745a309b56198debd5051e97fcb0"
+            },
+            "objects.mjs": {
+                "bytes": 16033,
+                "sha256": "a0ca8db7a7b46ddcdba416da74f1c13d26e931a5effa9df4de1fc2232623faaf"
+            },
+            "objects.test.mjs": {
+                "bytes": 7304,
+                "sha256": "1a5a90b04a6502b14337ac843d7c20f88df87f4d0c18758cb1b94031fcab0d36"
+            },
+            "observe.mjs": {
+                "bytes": 46519,
+                "sha256": "4772ce32a66e3a37a7a6a9d9ebb92cad1c1d3d67199a8506162e2be1ac347161"
+            },
+            "observe.test.mjs": {
+                "bytes": 19167,
+                "sha256": "00f9dfc507b9b856cb199f4e740eaa6c8e202d3f95d177438c6021171a2d2dd6"
+            },
+            "private.mjs": {
+                "bytes": 11069,
+                "sha256": "8bc9d92a0d6f4fd07002a68db891998b985d69743f8f966a957d03b07b8d1d71"
+            },
+            "seed.mjs": {
+                "bytes": 11621,
+                "sha256": "f9e10a8fbde5c655b8fb09f26644ec994a554331d284ada182b0f0a8eca40d69"
+            },
+            "smtp.mjs": {
+                "bytes": 10728,
+                "sha256": "82523128c0ad7a77d7b8d8d3743f278482d079fb7b1a26e9ee31e625b50b86f5"
+            },
+            "vector-curl.mjs": {
+                "bytes": 8657,
+                "sha256": "d71fab7fc8e41462af1fa7b780221c9ce36347df8983440ae11234c7547016e8"
+            },
+            "vector-embedding.mjs": {
+                "bytes": 7998,
+                "sha256": "3812d99f3ed80021791f707201ac9494b6240b530b2c5ab63ac4a95c501efac4"
+            },
+            "vector-observation.mjs": {
+                "bytes": 18807,
+                "sha256": "618fcd163cb9f03efcc181480a7302fd27f3a148235200f504ca9fd839204fff"
+            },
+            "vector-observe.mjs": {
+                "bytes": 18022,
+                "sha256": "0dfd219ca8e9f4613fd1f3239a5d7e436bd81c45708a6211e2db8ee41587e97b"
+            },
+            "vector-snapshot.mjs": {
+                "bytes": 16187,
+                "sha256": "a14eb0a223abcebf12340514acac558304992c0286e9c00ce986c3a6b689e172"
+            },
+            "vector-workflow.mjs": {
+                "bytes": 23900,
+                "sha256": "9cf06c6da67d2d1bbc7ffa08462b1576a0049e49eb41e57e603f40716d77d4f5"
+            },
+            "vector.test.mjs": {
+                "bytes": 57190,
+                "sha256": "f45ad785062a5b005a015855cc3248e681b1f350aa4ca999b37eca3df96109ff"
+            }
+        },
+        "offlineValidation": {
+            "status": "PASS",
+            "pythonTests": 37,
+            "nodeTests": 60,
+            "addedNodeTests": 2,
+            "nodeSyntaxChecks": 14,
+            "pythonAstChecks": 4,
+            "documents": 3,
+            "mermaidDiagrams": 1,
+            "localMarkdownLinks": 80,
+            "resultSha256": "5a8f338f23866334380f61ea1d23972fceb73d877aa241c5c209e0c09045efcd",
+            "guardLogSha256": "ea08e6f8496d9b1e4e0a1cf4a9412075aa8e6bf01af4ca564a384f2276289fdb"
+        },
+        "runtimeGates": {
+            "allDisabled": true,
+            "count": 13
+        },
+        "replacementRun": "NOT_SELECTED",
+        "nativeSqlExecutionAfterCorrection": "NOT_RUN_REQUIRES_NEW_MIGRATED_TEST_RUN_AND_READY",
+        "applicationBuilds": "PREVIOUS_4_PASS_PRODUCT_UNCHANGED_NOT_REPEATED",
+        "productionPackageLockAndCiBytes": "IDENTICAL_TO_SELECTED_MAIN_DC314FC",
+        "historicalRecord": "All seventeen preceding fields and their archives/results remain unchanged. The failed READY trial is INCOMPLETE, its prior setup/search successes remain separate, and the source-inferred SQLSTATE is not a captured native error. Pure schema-contract tests do not establish PostgreSQL execution or native recovery.",
+        "currentSourcesSha256": "d5de02042993ee5db8598a7484e0666c86872d88622e4857e5e9d7e497d66926"
     }
 }
