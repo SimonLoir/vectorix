@@ -1146,5 +1146,204 @@
         "nativeValidation": "NOT_RUN",
         "historicalRecord": "All fifteen preceding fields and their archived sources/results remain unchanged. This acceptance-only correction is not an executed native inventory and does not replay or replace any previous trial.",
         "currentSourcesSha256": "2c7f2b2bd2a3199c8c2f1b2d8dab5dff214d479979c8adbc6e252a21f2bbcd0d"
+    },
+    "vectorProvisionReviewRevision3": {
+        "schemaVersion": 1,
+        "scenario": "VECTOR_PROVISION_V1",
+        "status": "DISABLED_POST_SETUP_REFUSAL_CORRECTION_HERMETIC_PASS",
+        "checkpointBeforePatch": "e6d4c3d4dc887bb356238532ed9d853362d681f0",
+        "beforeArchiveSha256": "cb82ca85963d50c0edcd464ab937033fdeb76abe0f6e34ccc4b82296e08c3f19",
+        "nativeSetupTrial": {
+            "runId": "2aedbacc86f9",
+            "sourceCommit": "e6d4c3d4dc887bb356238532ed9d853362d681f0",
+            "preparationManifestSha256": "cbac048e87c133205a5f9223759729177035b0138ce67c74bb9783ac3c74e7cb",
+            "outcome": "INCOMPLETE_BEFORE_BASELINE_NO_REPLAY",
+            "firstDiagnostic": "S3_OUTAGE_VECTOR_HTTP_UNKNOWN_NO_REPLAY",
+            "failingHttpStatus": "UNKNOWN_NOT_RECORDED",
+            "failingOrdinal": "UNKNOWN_NOT_RECORDED",
+            "readonlyProjectionSha256": "8e4ecdcc3392120c37a84b9840f262bf270cb68d5cb11b9f01c91cfb0e24e8ea",
+            "separateReadOnlyDatabaseFacts": {
+                "users": 1,
+                "organizations": 1,
+                "sessions": 1,
+                "collections": 1,
+                "documents": 1,
+                "versions": 1,
+                "generations": 1,
+                "tasks": 2,
+                "credentials": 0,
+                "keys": 0,
+                "generationStates": ["ACTIVE"],
+                "taskStates": [
+                    {
+                        "kind": "PROVISION",
+                        "status": "COMPLETE",
+                        "attempts": 1,
+                        "errorCode": null
+                    },
+                    {
+                        "kind": "INDEX_DOCUMENT",
+                        "status": "COMPLETE",
+                        "attempts": 1,
+                        "errorCode": null
+                    }
+                ],
+                "versionStates": ["READY"]
+            },
+            "unexpectedApiCategories": [],
+            "baselineCreated": false,
+            "watchdogStarted": false,
+            "faultStarted": false,
+            "browserAction": false,
+            "syntheticEmbeddingFinal": {
+                "sha256": "5fdd5816f31b3d7f28888c9a6cee2305e40fb30a714b00c836c7dae481857adf",
+                "counters": {
+                    "requests": 7,
+                    "embeddings": 2,
+                    "inputs": 2,
+                    "rejected": 0,
+                    "connections": 7
+                }
+            },
+            "cleanupReceiptSha256": "b0b6b64d793b8c4f94c4a9b9e1410085bd8754ccf4d3858877306c93c2e9b94a",
+            "teardownReceiptSha256": "4c27941624ddf06643490cb95867defaf5d9b24fc9eb4106d0cba1b9c7c29252",
+            "exactDisabledRestorationReceiptSha256": "24d88ba617b6bf07fb527125603058dfb4e51a7e4ef774951b28d1d68f5db7db",
+            "cleanup": "CLEANED_EVIDENCE_RETAINED_0_OWNED_PROCESSES_STORES_VOLUMES",
+            "historicalHttpStatusNotInferredFromSource": true
+        },
+        "corrections": [
+            "EXPLICIT_NATIVE_JSON_EMPTY_SIGNOUT_BODY",
+            "PRESERVE_PRIMARY_WORKFLOW_FAILURE_OVER_SIGNOUT_OR_RECEIPT_FAILURE",
+            "BOUNDED_PRIVATE_BEFORE_AFTER_HTTP_MODE_ORDINAL_METHOD_STATUS_RECEIPTS"
+        ],
+        "currentSources": {
+            "README.md": {
+                "bytes": 21919,
+                "sha256": "640a64fa3dad0c080c7eb50e33f80c14e0837c26369a2c53146cd45c40669b67"
+            },
+            "bucket.mjs": {
+                "bytes": 6679,
+                "sha256": "84ec4e6f176d63a1b1122f13de65f71d876a5391bfb0eecfc75f6004eebf4f24"
+            },
+            "cleanup-fixture.mjs": {
+                "bytes": 13025,
+                "sha256": "fc54ad3f0045dbef1c720dd902dd920c3a409547668798a3d48c0c05df552bbb"
+            },
+            "cleanup-observe.mjs": {
+                "bytes": 33495,
+                "sha256": "0152a23220bc4827e434710ca3bf5ec7995ce08c6dddd34f42a52831205f869c"
+            },
+            "cleanup.test.mjs": {
+                "bytes": 22103,
+                "sha256": "581aeb09a39315db748f883f3636d9c4623fa5ef5db51dfcd6d6a07ded121da8"
+            },
+            "fault.py": {
+                "bytes": 23931,
+                "sha256": "4df4a461529a27ce4e812a32352d7c0f356cf908b08dbe10ba403b9087b68ac0"
+            },
+            "fault_test.py": {
+                "bytes": 19222,
+                "sha256": "ec9a5dda206002eaf3eaac55b864004d4f8bb4da814aff75af293b5f33e198d3"
+            },
+            "fixtures/expected.json": {
+                "bytes": 926,
+                "sha256": "67c562dfb951d9751d76468f4cf29b89d6fae3432ed9debb5c7f0790cb4fac7d"
+            },
+            "fixtures/s3-outage-v1.txt": {
+                "bytes": 522,
+                "sha256": "110bf3def2634f5a3c6addd02b8b61d35fddd3e3ea776077144041e6c2599719"
+            },
+            "fixtures/s3-outage-v2.txt": {
+                "bytes": 620,
+                "sha256": "ef488f9ba8481a42e7f79aceafde979d9f09ddc0072f2edc0577e6b064cc3d2f"
+            },
+            "lifecycle.py": {
+                "bytes": 46196,
+                "sha256": "1e3a5a2e9499339457e498d38e5d854b82c2160c81a646d413bb7cbf61057c3f"
+            },
+            "lifecycle_test.py": {
+                "bytes": 12572,
+                "sha256": "da06bc9f5463eba9b4be96fb9af76028c22f745a309b56198debd5051e97fcb0"
+            },
+            "objects.mjs": {
+                "bytes": 16033,
+                "sha256": "a0ca8db7a7b46ddcdba416da74f1c13d26e931a5effa9df4de1fc2232623faaf"
+            },
+            "objects.test.mjs": {
+                "bytes": 7304,
+                "sha256": "1a5a90b04a6502b14337ac843d7c20f88df87f4d0c18758cb1b94031fcab0d36"
+            },
+            "observe.mjs": {
+                "bytes": 46519,
+                "sha256": "4772ce32a66e3a37a7a6a9d9ebb92cad1c1d3d67199a8506162e2be1ac347161"
+            },
+            "observe.test.mjs": {
+                "bytes": 19167,
+                "sha256": "00f9dfc507b9b856cb199f4e740eaa6c8e202d3f95d177438c6021171a2d2dd6"
+            },
+            "private.mjs": {
+                "bytes": 11069,
+                "sha256": "8bc9d92a0d6f4fd07002a68db891998b985d69743f8f966a957d03b07b8d1d71"
+            },
+            "seed.mjs": {
+                "bytes": 11621,
+                "sha256": "f9e10a8fbde5c655b8fb09f26644ec994a554331d284ada182b0f0a8eca40d69"
+            },
+            "smtp.mjs": {
+                "bytes": 10728,
+                "sha256": "82523128c0ad7a77d7b8d8d3743f278482d079fb7b1a26e9ee31e625b50b86f5"
+            },
+            "vector-curl.mjs": {
+                "bytes": 8657,
+                "sha256": "d71fab7fc8e41462af1fa7b780221c9ce36347df8983440ae11234c7547016e8"
+            },
+            "vector-embedding.mjs": {
+                "bytes": 7998,
+                "sha256": "3812d99f3ed80021791f707201ac9494b6240b530b2c5ab63ac4a95c501efac4"
+            },
+            "vector-observation.mjs": {
+                "bytes": 18807,
+                "sha256": "618fcd163cb9f03efcc181480a7302fd27f3a148235200f504ca9fd839204fff"
+            },
+            "vector-observe.mjs": {
+                "bytes": 18495,
+                "sha256": "fe5de79f807e493bba9869478eb63b3013e65fa5de8df8629ccbc07a8d1963f6"
+            },
+            "vector-snapshot.mjs": {
+                "bytes": 15318,
+                "sha256": "771ce4d74c1f93a9def8f0f6f15f59d41ca5b029b1980799ddc83db32ae7c706"
+            },
+            "vector-workflow.mjs": {
+                "bytes": 23900,
+                "sha256": "9cf06c6da67d2d1bbc7ffa08462b1576a0049e49eb41e57e603f40716d77d4f5"
+            },
+            "vector.test.mjs": {
+                "bytes": 52178,
+                "sha256": "b6846bddee81dc0400e2a7df41166bb33061859e89ce67edb5c5e45248db7b85"
+            }
+        },
+        "offlineValidation": {
+            "status": "PASS",
+            "pythonTests": 37,
+            "nodeTests": 58,
+            "addedNodeTests": 6,
+            "nodeSyntaxChecks": 14,
+            "pythonAstChecks": 4,
+            "documents": 3,
+            "mermaidDiagrams": 1,
+            "localMarkdownLinks": 80,
+            "resultSha256": "7e28f4dc7540add75a214b5cf45d937ec823d4c2d7be3a23c8c018e6b3ef5000",
+            "guardLogSha256": "2f2abbb7f89dca941a2e73e2c86242060a420ee20d572cc2088d9fb4e3f0fdcc"
+        },
+        "runtimeGates": {
+            "allDisabled": true,
+            "count": 13
+        },
+        "replacementRun": "NOT_SELECTED",
+        "nativeRerun": "NOT_RUN",
+        "productionPackageLockAndCiBytes": "IDENTICAL_TO_SELECTED_MAIN_DC314FC",
+        "applicationBuilds": "PREVIOUS_4_PASS_UNCHANGED_NOT_REPEATED",
+        "historicalRecord": "All sixteen preceding fields and every archived source, receipt and native result remain unchanged. The source-supported bodyless-signout refusal is not a retroactive measured HTTP status. Separate ACTIVE/READY database facts do not complete the failed one-shot setup. This correction has no replacement native execution.",
+        "currentSourcesSha256": "1d317d743d3b34d9f5877525b4cdcaec39169ce520848ed38505bb80a0918dfd"
     }
 }

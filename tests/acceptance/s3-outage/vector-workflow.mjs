@@ -123,6 +123,64 @@ export function assertVectorSearch(value, binding, target, original) {
         );
     }
 }
+const VECTOR_MODES = [
+    'prepare-g1',
+    'rebuild-g2',
+    'search-g1',
+    'search-outage',
+    'search-g2',
+];
+/** Journal only closed mode/ordinal/method/status before validation; never include a route or payload. */
+export function observeVectorHttpAttempt({
+    mode,
+    ordinal,
+    method,
+    remainingMilliseconds,
+    dispatch,
+    record,
+}) {
+    need(
+        VECTOR_MODES.includes(mode) &&
+            Number.isSafeInteger(ordinal) &&
+            ordinal >= 1 &&
+            ordinal <= 81 &&
+            ['GET', 'POST', 'PUT'].includes(method) &&
+            typeof remainingMilliseconds === 'function' &&
+            typeof dispatch === 'function' &&
+            typeof record === 'function',
+        'S3_OUTAGE_VECTOR_HTTP_JOURNAL_SCOPE'
+    );
+    const fields = { mode, ordinal, method };
+    record({ ...fields, moment: 'BEFORE', status: null });
+    let response,
+        status = null,
+        failed = false,
+        failure;
+    try {
+        need(remainingMilliseconds() > 0, 'S3_OUTAGE_VECTOR_HTTP_BOUND');
+        response = dispatch();
+        need(
+            Number.isInteger(response.status) &&
+                response.status >= 200 &&
+                response.status <= 599,
+            'S3_OUTAGE_VECTOR_HTTP_JOURNAL_STATUS'
+        );
+        status = response.status;
+    } catch (error) {
+        failed = true;
+        failure = error;
+    }
+    try {
+        record({ ...fields, moment: 'AFTER', status });
+    } catch (error) {
+        if (!failed) {
+            failed = true;
+            failure = error;
+        }
+    }
+    if (failed) throw failure;
+    return response;
+}
 /** The same injected/native workflow enforces one mutation path and a confirmed finally sign-out. */
 export async function executeVectorWorkflow({
     mode,
@@ -130,9 +188,12 @@ export async function executeVectorWorkflow({
     fixture,
     bindings,
     original,
+    recordFinalization = () => {},
 }) {
     let signedIn = false,
-        result;
+        result,
+        failed = false,
+        failure;
     try {
         const login = await request('POST', '/api/auth/sign-in/email', {
             email: fixture.users.owner.email,
@@ -309,25 +370,49 @@ export async function executeVectorWorkflow({
                 syntheticQuality: 'NOT_MEASURED',
             };
         }
-    } finally {
-        if (signedIn)
+    } catch (error) {
+        failed = true;
+        failure = error;
+    }
+    const primaryFailureObserved = failed;
+    let signOutConfirmed = false,
+        signOutFailed = false;
+    if (signedIn) {
+        try {
             need(
-                (await request('POST', '/api/auth/sign-out')).success === true,
+                (await request('POST', '/api/auth/sign-out', {})).success ===
+                    true,
                 'S3_OUTAGE_VECTOR_SIGNOUT'
             );
+            signOutConfirmed = true;
+        } catch (error) {
+            signOutFailed = true;
+            if (!failed) {
+                failed = true;
+                failure = error;
+            }
+        }
     }
+    try {
+        recordFinalization({
+            primaryFailureObserved,
+            signOutAttempted: signedIn,
+            signOutConfirmed,
+            secondarySignOutFailure: primaryFailureObserved && signOutFailed,
+        });
+    } catch (error) {
+        if (!failed) {
+            failed = true;
+            failure = error;
+        }
+    }
+    if (failed) throw failure;
     return result;
 }
 async function main() {
     need(!STATIC_DRAFT_ONLY, 'S3_OUTAGE_VECTOR_WORKFLOW_DRAFT_REVIEW_REQUIRED');
     const args = process.argv.slice(2),
-        mode = parseVectorArgs(args, '--mode', [
-            'prepare-g1',
-            'rebuild-g2',
-            'search-g1',
-            'search-outage',
-            'search-g2',
-        ]),
+        mode = parseVectorArgs(args, '--mode', VECTOR_MODES),
         purpose =
             mode === 'rebuild-g2'
                 ? 'staged-observe'
@@ -404,51 +489,75 @@ async function main() {
         const multipart = value?.contentType?.startsWith('multipart/form-data;')
             ? value
             : null;
-        const response = runPrivateCurl({
-            directory,
-            origin: `http://127.0.0.1:${state.ports.api}`,
-            route,
+        const response = observeVectorHttpAttempt({
+            mode,
+            ordinal: calls,
             method,
-            curl: state.inputs.curl,
-            admit: () => {
-                need(
-                    performance.now() < requestUntil,
-                    'S3_OUTAGE_VECTOR_HTTP_BOUND'
-                );
-                recheck(
-                    Math.max(
-                        1,
-                        Math.min(
-                            120000,
-                            Math.floor(requestUntil - performance.now())
-                        )
-                    )
-                );
-            },
             remainingMilliseconds: () => requestUntil - performance.now(),
-            headers: [
-                ['Origin', `http://127.0.0.1:${state.ports.web}`],
-                ['Vectorix-CSRF', 'orpc'],
-                ...(jar.size
-                    ? [
-                          [
-                              'Cookie',
-                              [...jar].map(([k, v]) => k + '=' + v).join('; '),
-                          ],
-                      ]
-                    : []),
-                ...(value
-                    ? [
-                          [
-                              'content-type',
-                              multipart?.contentType ?? 'application/json',
-                          ],
-                      ]
-                    : []),
-            ],
-            body: value
-                ? (multipart?.body ?? Buffer.from(JSON.stringify(value)))
-                : undefined,
+            record: (event) =>
+                writePrivate(
+                    path.join(
+                        directory,
+                        `vector-${mode}-http-${calls}-${event.moment.toLowerCase()}.json`
+                    ),
+                    {
+                        ...receiptScope(state),
+                        ...event,
+                        at: new Date().toISOString(),
+                    }
+                ),
+            dispatch: () =>
+                runPrivateCurl({
+                    directory,
+                    origin: `http://127.0.0.1:${state.ports.api}`,
+                    route,
+                    method,
+                    curl: state.inputs.curl,
+                    admit: () => {
+                        need(
+                            performance.now() < requestUntil,
+                            'S3_OUTAGE_VECTOR_HTTP_BOUND'
+                        );
+                        recheck(
+                            Math.max(
+                                1,
+                                Math.min(
+                                    120000,
+                                    Math.floor(requestUntil - performance.now())
+                                )
+                            )
+                        );
+                    },
+                    remainingMilliseconds: () =>
+                        requestUntil - performance.now(),
+                    headers: [
+                        ['Origin', `http://127.0.0.1:${state.ports.web}`],
+                        ['Vectorix-CSRF', 'orpc'],
+                        ...(jar.size
+                            ? [
+                                  [
+                                      'Cookie',
+                                      [...jar]
+                                          .map(([k, v]) => k + '=' + v)
+                                          .join('; '),
+                                  ],
+                              ]
+                            : []),
+                        ...(value
+                            ? [
+                                  [
+                                      'content-type',
+                                      multipart?.contentType ??
+                                          'application/json',
+                                  ],
+                              ]
+                            : []),
+                    ],
+                    body: value
+                        ? (multipart?.body ??
+                          Buffer.from(JSON.stringify(value)))
+                        : undefined,
+                }),
         });
         for (const [name, line] of response.headers)
             if (name === 'set-cookie') {
@@ -497,6 +606,11 @@ async function main() {
             fixture,
             bindings,
             original: readVectorOriginal(state),
+            recordFinalization: (finalization) =>
+                writePrivate(
+                    path.join(directory, `vector-${mode}-finalization.json`),
+                    { ...receiptScope(state), mode, ...finalization }
+                ),
         });
         recheck();
         need(

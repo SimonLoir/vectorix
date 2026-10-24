@@ -16,6 +16,7 @@ import {
 import {
     sha,
     executeVectorWorkflow,
+    observeVectorHttpAttempt,
     assertVectorSearch,
     parseVectorArgs,
     multipartOriginal,
@@ -628,6 +629,246 @@ test('actual workflow confirms current session before rebuild and signs out afte
         calls.some((row) => row[1].endsWith('index-rebuilds')),
         false
     );
+});
+function nativeWorkflowRequest({ failMain, failSignOut, calls }) {
+    return async (method, route, body) => {
+        calls.push({ method, route, body });
+        if (route.endsWith('sign-in/email')) return { user: { id: 'owner' } };
+        if (route.endsWith('get-session'))
+            return {
+                user: { id: 'owner' },
+                session: { activeOrganizationId: 'org' },
+            };
+        if (route.endsWith('index-rebuilds')) {
+            if (failMain) throw failMain;
+            return { generationId: g2 };
+        }
+        if (route.endsWith('sign-out')) {
+            assert.deepEqual(body, {});
+            // The real request serializer adds application/json and two body bytes for this value.
+            assert.equal(Buffer.from(JSON.stringify(body)).toString(), '{}');
+            if (failSignOut) throw failSignOut;
+            return { success: true };
+        }
+        return {};
+    };
+}
+test('actual workflow sends explicit empty JSON on native sign-out before returning successful bindings', async () => {
+    const calls = [],
+        final = [];
+    const result = await executeVectorWorkflow({
+        mode: 'rebuild-g2',
+        request: nativeWorkflowRequest({ calls }),
+        fixture,
+        bindings: binding,
+        original,
+        recordFinalization: (value) => final.push(value),
+    });
+    assert.equal(result.g2, g2);
+    assert.equal(calls.length, 5);
+    assert.equal(calls.at(-1).route, '/api/auth/sign-out');
+    assert.deepEqual(calls.at(-1).body, {});
+    assert.deepEqual(final, [
+        {
+            primaryFailureObserved: false,
+            signOutAttempted: true,
+            signOutConfirmed: true,
+            secondarySignOutFailure: false,
+        },
+    ]);
+});
+test('workflow keeps the original failure when sign-out and finalization also fail', async () => {
+    const primary = new Error('primary fixture refusal'),
+        secondary = new Error('secondary fixture refusal');
+    const calls = [],
+        final = [];
+    await assert.rejects(
+        executeVectorWorkflow({
+            mode: 'rebuild-g2',
+            request: nativeWorkflowRequest({
+                calls,
+                failMain: primary,
+                failSignOut: secondary,
+            }),
+            fixture,
+            bindings: binding,
+            original,
+            recordFinalization: (value) => {
+                final.push(value);
+                throw new Error('receipt fixture refusal');
+            },
+        }),
+        (error) => error === primary
+    );
+    assert.equal(calls.length, 5);
+    assert.deepEqual(final, [
+        {
+            primaryFailureObserved: true,
+            signOutAttempted: true,
+            signOutConfirmed: false,
+            secondarySignOutFailure: true,
+        },
+    ]);
+});
+test('sign-out failure alone prevents successful workflow output and is retained', async () => {
+    const closing = new Error('closing fixture refusal'),
+        calls = [],
+        final = [];
+    await assert.rejects(
+        executeVectorWorkflow({
+            mode: 'rebuild-g2',
+            request: nativeWorkflowRequest({ calls, failSignOut: closing }),
+            fixture,
+            bindings: binding,
+            original,
+            recordFinalization: (value) => final.push(value),
+        }),
+        (error) => error === closing
+    );
+    assert.equal(calls.length, 5);
+    assert.deepEqual(final, [
+        {
+            primaryFailureObserved: false,
+            signOutAttempted: true,
+            signOutConfirmed: false,
+            secondarySignOutFailure: false,
+        },
+    ]);
+});
+test('actual HTTP attempt wrapper records finite status before the caller asserts strict 200', () => {
+    for (const status of [200, 415, 429]) {
+        const events = [];
+        let calls = 0;
+        const result = observeVectorHttpAttempt({
+            mode: 'prepare-g1',
+            ordinal: 81,
+            method: 'POST',
+            remainingMilliseconds: () => 100,
+            record: (event) => events.push(event),
+            dispatch: () => {
+                assert.equal(events[0].moment, 'BEFORE');
+                calls++;
+                return { status };
+            },
+        });
+        assert.equal(calls, 1);
+        assert.equal(result.status, status);
+        assert.deepEqual(
+            events.map(({ moment, status }) => ({ moment, status })),
+            [
+                { moment: 'BEFORE', status: null },
+                { moment: 'AFTER', status },
+            ]
+        );
+        for (const event of events)
+            assert.deepEqual(Object.keys(event).sort(), [
+                'method',
+                'mode',
+                'moment',
+                'ordinal',
+                'status',
+            ]);
+        if (status !== 200)
+            assert.throws(() => assert.equal(result.status, 200));
+    }
+});
+test('HTTP attempt unknown failure and late durable BEFORE never replay and retain AFTER null', () => {
+    const failure = new Error('transport fixture refusal');
+    for (const late of [false, true]) {
+        const events = [];
+        let calls = 0;
+        assert.throws(
+            () =>
+                observeVectorHttpAttempt({
+                    mode: 'search-g1',
+                    ordinal: 1,
+                    method: 'GET',
+                    remainingMilliseconds: () => (late ? 0 : 100),
+                    record: (event) => events.push(event),
+                    dispatch: () => {
+                        calls++;
+                        throw failure;
+                    },
+                }),
+            late ? /HTTP_BOUND/u : (error) => error === failure
+        );
+        assert.equal(calls, late ? 0 : 1);
+        assert.deepEqual(
+            events.map(({ moment, status }) => ({ moment, status })),
+            [
+                { moment: 'BEFORE', status: null },
+                { moment: 'AFTER', status: null },
+            ]
+        );
+    }
+    let calls = 0;
+    assert.throws(
+        () =>
+            observeVectorHttpAttempt({
+                mode: 'prepare-g1',
+                ordinal: 1,
+                method: 'POST',
+                remainingMilliseconds: () => 100,
+                record: (event) => {
+                    if (event.moment === 'AFTER')
+                        throw new Error('receipt fixture refusal');
+                },
+                dispatch: () => {
+                    calls++;
+                    throw failure;
+                },
+            }),
+        (error) => error === failure
+    );
+    assert.equal(calls, 1);
+});
+test('HTTP journal rejects nonclosed scope or a failed BEFORE before dispatch', () => {
+    for (const change of [
+        { mode: '../unknown' },
+        { ordinal: 0 },
+        { ordinal: 82 },
+        { method: 'DELETE' },
+    ]) {
+        let records = 0,
+            calls = 0;
+        assert.throws(
+            () =>
+                observeVectorHttpAttempt({
+                    mode: 'prepare-g1',
+                    ordinal: 1,
+                    method: 'POST',
+                    remainingMilliseconds: () => 100,
+                    record: () => {
+                        records++;
+                    },
+                    dispatch: () => {
+                        calls++;
+                    },
+                    ...change,
+                }),
+            /JOURNAL_SCOPE/u
+        );
+        assert.equal(records, 0);
+        assert.equal(calls, 0);
+    }
+    let calls = 0;
+    assert.throws(
+        () =>
+            observeVectorHttpAttempt({
+                mode: 'prepare-g1',
+                ordinal: 1,
+                method: 'POST',
+                remainingMilliseconds: () => 100,
+                record: () => {
+                    throw new Error('before fixture refusal');
+                },
+                dispatch: () => {
+                    calls++;
+                },
+            }),
+        /before fixture refusal/u
+    );
+    assert.equal(calls, 0);
 });
 test('G1 stays active through staged/fifth-failure/restored states; only a complete G2 switches it', () => {
     for (const phase of [
