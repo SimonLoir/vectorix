@@ -264,6 +264,7 @@ Implement changes on a dedicated `codex/*` branch and open a pull request agains
 - [Bounded member and API-key lists](docs/member-key-list-windows.md): optional `offset`/`limit`/`query` windows with `total`, and paged dashboard tables.
 - [Versioned API rate limiting](docs/api-rate-limiting.md): Redis-shared personal and authorized provider-operation request budgets, 429 responses with `Retry-After`, and configuration.
 - [Authentication rate limiting](docs/auth-rate-limiting.md): Redis-shared opaque Better Auth counters, preserved native second-factor rules, reset budgets and `VECTORIX_TRUSTED_PROXIES` client-address resolution.
+- [Supply-chain and image hardening](docs/supply-chain.md): Dependabot, CodeQL, Trivy image scans, digest-pinned bases, root-owned runtime files and health checks.
 - [Redis connections](docs/redis-connections.md): encoded URL credentials, raw fallback precedence and isolated queue/worker acceptance.
 - [Canonical password-reset links](docs/password-reset-links.md): server-only destinations, strict configuration precedence and reset-request acceptance.
 - [HTTP request limits](docs/http-request-limits.md): pre-parser body budgets, upload exceptions, actual-byte counting and acceptance.

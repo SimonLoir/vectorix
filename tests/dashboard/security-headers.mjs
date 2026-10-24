@@ -18,7 +18,12 @@ assert.ok(
     'Only the two isolated frontend smoke targets are allowed'
 );
 const base = `http://127.0.0.1:${port}`;
-const api = 'http://api:3001';
+const apiPort = process.env.TEST_API_PORT ?? '3001';
+assert.ok(
+    apiPort === '3001' || apiPort === '3101',
+    'Only the isolated smoke API ports are allowed'
+);
+const api = `http://api:${apiPort}`;
 const trustedOrigin = `http://localhost:${port}`;
 const protectedPath = app === 'web' ? '/dashboard' : '/';
 const identifier = randomUUID();
