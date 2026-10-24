@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import {
     closeSync,
     constants,
+    fstatSync,
     mkdtempSync,
     openSync,
     readFileSync,
@@ -89,15 +90,13 @@ for (const directory of ['/app', '/app/node_modules', ...target.directories]) {
     );
 }
 for (const file of target.files) {
-    const info = statSync(file);
-    assert.ok(
-        info.isFile() && info.uid === 0,
-        'Application files must remain root-owned'
-    );
     let writable = false;
     try {
-        // O_WRONLY tests real write admission without truncating or changing code.
-        const descriptor = openSync(file, constants.O_WRONLY);
+        // Test write admission directly, without a prior path check or truncation.
+        const descriptor = openSync(
+            file,
+            constants.O_WRONLY | constants.O_NOFOLLOW
+        );
         closeSync(descriptor);
         writable = true;
     } catch (error) {
@@ -108,6 +107,18 @@ for (const file of target.files) {
         false,
         'Runtime USER must not open application code for writing'
     );
+    // Inspect the opened read descriptor, so ownership checks cannot race a
+    // later path-based open. Symlinks at the selected entry itself are refused.
+    const reader = openSync(file, constants.O_RDONLY | constants.O_NOFOLLOW);
+    try {
+        const info = fstatSync(reader);
+        assert.ok(
+            info.isFile() && info.uid === 0,
+            'Application files must remain root-owned'
+        );
+    } finally {
+        closeSync(reader);
+    }
 }
 if (target.cache) {
     assert.ok(
