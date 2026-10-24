@@ -29,6 +29,8 @@ PROTOCOL_VERSION = 2
 SCENARIOS = {
     'INGESTION_V1': {'namespace': 'vectorix-m7c-s3-outage', 'label': 'vectorix.m7c-s3-outage',
         'databaseStem': 'vectorix_m7c_s3_outage', 'objectPrefix': 'm7c-s3-outage'},
+    'VECTOR_PROVISION_V1': {'namespace': 'vectorix-m7c-vector-provision', 'label': 'vectorix.m7c-vector-provision',
+        'databaseStem': 'vectorix_m7c_vector_provision', 'objectPrefix': 'm7c-vector-provision'},
     'CLEANUP_V1': {'namespace': 'vectorix-m7c-s3-cleanup', 'label': 'vectorix.m7c-s3-cleanup',
         'databaseStem': 'vectorix_m7c_s3_cleanup', 'objectPrefix': 'm7c-s3-cleanup'},
     'REDIS_V1': {'namespace': 'vectorix-m7c-redis-outage', 'label': 'vectorix.m7c-redis-outage',
@@ -39,6 +41,17 @@ SCENARIOS = {
 def scenario_spec(scenario):
     require(type(scenario) is str and scenario in SCENARIOS, 'm7c-s3-outage-scenario-required')
     return SCENARIOS[scenario]
+
+
+def app_roles(state):
+    scenario_spec(state['scenario'])
+    return (*APPS, 'embedding') if state['scenario'] == 'VECTOR_PROVISION_V1' else APPS
+
+
+def fault_store(state):
+    scenario_spec(state['scenario'])
+    return {'INGESTION_V1': 'rustfs', 'CLEANUP_V1': 'rustfs', 'REDIS_V1': 'redis',
+        'VECTOR_PROVISION_V1': 'vector'}[state['scenario']]
 
 
 def receipt_scope(state):
@@ -63,7 +76,7 @@ BUILT_APPS = ('api', 'workers', 'web', 'admin')
 APPS = ('api', 'web', 'smtp', 'workers')
 DOTENV = {'.env', '.env.local', '.env.production', '.env.production.local', '.env.development'}
 PRODUCTION = ['apps/api', 'apps/workers', 'apps/web', 'apps/admin', 'packages', 'pnpm-lock.yaml', 'package.json']
-HELPERS = ['lifecycle.py', 'fault.py', 'private.mjs', 'seed.mjs', 'bucket.mjs', 'smtp.mjs', 'observe.mjs', 'objects.mjs', 'cleanup-fixture.mjs', 'cleanup-observe.mjs', '../redis-outage/pending.mjs', '../redis-outage/redis_queue.py', '../redis-outage/curl.mjs', '../redis-outage/transfers.mjs', '../redis-outage/key-policy.mjs']
+HELPERS = ['lifecycle.py', 'fault.py', 'private.mjs', 'seed.mjs', 'bucket.mjs', 'smtp.mjs', 'observe.mjs', 'objects.mjs', 'cleanup-fixture.mjs', 'cleanup-observe.mjs', 'vector-embedding.mjs', 'vector-curl.mjs', 'vector-workflow.mjs', 'vector-observe.mjs', 'vector-observation.mjs', 'vector-snapshot.mjs', '../redis-outage/pending.mjs', '../redis-outage/redis_queue.py', '../redis-outage/curl.mjs', '../redis-outage/transfers.mjs', '../redis-outage/key-policy.mjs']
 PHASES = {'PREPARING', 'SCHEMA_REQUIRED', 'SCHEMA_READY', 'SEEDING', 'READY', 'CLEANING', 'CLEANED_EVIDENCE_RETAINED'}
 
 
@@ -225,11 +238,10 @@ def inputs(scenario=None):
         'prismaConfigSha256': file_hash(ROOT / 'packages/db/prisma.config.ts'),
         'helpers': {**{name: file_hash(HERE / name) for name in HELPERS},
             'shared-restore-common.py': file_hash(ROOT / 'tests/acceptance/restore/m7c_restore_common.py')}}
-    if scenario == 'REDIS_V1':
-        binary = Path('/usr/bin/curl')
-        require(binary.is_file() and not binary.is_symlink() and binary.resolve() == binary
-            and binary.stat().st_mode & 0o022 == 0 and binary.stat().st_size <= 16 * 1024 ** 2, 'm7c-redis-curl-binary')
-        result['curl'] = {'path': str(binary), 'sha256': digest(binary.read_bytes())}
+    if scenario is not None:
+        scenario_spec(scenario)
+    if scenario in {'REDIS_V1', 'VECTOR_PROVISION_V1'}:
+        result['curl'] = curl_manifest()
     return result
 
 
@@ -242,10 +254,11 @@ def validate(state, run_id, scenario):
     require(state['applicationDatabase'] == spec['databaseStem'] + '_app_' + run_id + '_test'
         and state['vectorDatabase'] == spec['databaseStem'] + '_vectors_' + run_id + '_test', 'm7c-s3-outage-test-databases')
     require(state['images'] == IMAGES and set(state['resources']).issubset(SERVICES)
-        and set(state['processes']).issubset(APPS), 'm7c-s3-outage-state-resource-set')
-    require(set(state['ports']) == {*SERVICES, 'api', 'web', 'admin', 'smtp'}
+        and set(state['processes']).issubset(app_roles(state)), 'm7c-s3-outage-state-resource-set')
+    port_names = {*SERVICES, 'api', 'web', 'admin', 'smtp'} | ({'embedding'} if state['scenario'] == 'VECTOR_PROVISION_V1' else set())
+    require(set(state['ports']) == port_names
         and all(type(p) is int and 1024 < p < 65536 for p in state['ports'].values())
-        and len(set(state['ports'].values())) == 8, 'm7c-s3-outage-port-bindings')
+        and len(set(state['ports'].values())) == len(port_names), 'm7c-s3-outage-port-bindings')
     require(state['environment'] == environment(state), 'm7c-s3-outage-exact-isolated-environment')
     for app, saved in state['processes'].items():
         require(saved['service'] == app and saved['entry'] == str(app_entry(state, app))
@@ -260,14 +273,18 @@ def load(run_id, scenario):
 
 
 def app_entry(state, service):
-    return HERE / 'smtp.mjs' if service in {'smtp'} else Path(state['inputs']['builds'][service]['entry'])
+    return HERE / ('smtp.mjs' if service == 'smtp' else 'vector-embedding.mjs') if service in {'smtp', 'embedding'} else Path(state['inputs']['builds'][service]['entry'])
 
 
 def app_entry_hash(state, service):
-    return state['inputs']['helpers']['smtp.mjs'] if service in {'smtp'} else state['inputs']['builds'][service]['entrySha256']
+    return state['inputs']['helpers']['smtp.mjs' if service == 'smtp' else 'vector-embedding.mjs'] if service in {'smtp', 'embedding'} else state['inputs']['builds'][service]['entrySha256']
 
 
 def app_environment(state, service):
+    if service == 'embedding':
+        require(state['scenario'] == 'VECTOR_PROVISION_V1', 'm7c-vector-fixture-scenario')
+        return {'NODE_ENV': 'production', 'TZ': 'UTC', 'VECTORIX_M7C_S3_OUTAGE_RUN': state['runId'],
+            'VECTORIX_M7C_S3_OUTAGE_ROLE': service, 'VECTORIX_M7C_S3_SCENARIO': state['scenario']}
     return {**state['environment'], 'VECTORIX_M7C_S3_OUTAGE_RUN': state['runId'],
         'VECTORIX_M7C_S3_OUTAGE_ROLE': service, 'VECTORIX_M7C_S3_SCENARIO': state['scenario']}
 
@@ -332,6 +349,8 @@ def environment(state):
         VECTORIX_DEFAULT_S3_FORCE_PATH_STYLE='true', VECTORIX_DEFAULT_S3_ACCESS_KEY_ID=spec['objectPrefix'] + '-' + state['runId'],
         VECTORIX_DEFAULT_S3_SECRET_ACCESS_KEY=secret['s3'],
         PASSKEY_RP_ID='127.0.0.1', PASSKEY_RP_NAME='Vectorix isolated S3 recovery', PASSKEY_ORIGINS=trust)
+    if state['scenario'] == 'VECTOR_PROVISION_V1':
+        env.update(VECTORIX_DEFAULT_OLLAMA_ENDPOINT=origin('embedding'), VECTORIX_EMBEDDING_ALLOWED_ENDPOINTS=origin('embedding'))
     return env
 
 
@@ -367,6 +386,13 @@ def owned(state, service, running=None):
     if running is not None:
         require(value['State']['Running'] is running, 'm7c-s3-outage-container-running-state')
     return value
+
+
+def curl_manifest():
+    file = Path('/usr/bin/curl')
+    info = file.lstat()
+    require(stat.S_ISREG(info.st_mode) and not info.st_mode & 0o022 and file.resolve() == file and info.st_size <= 16 * 1024 ** 2, 'm7c-vector-curl-binary')
+    return {'path': str(file), 'sha256': digest(file.read_bytes())}
 
 
 def pins(state):
@@ -447,7 +473,7 @@ def prepare(run_id, scenario):
     path = state_path(run_id, scenario)
     require(not path.parent.exists() and shutil.disk_usage(CACHE).free >= 4 * 1024 ** 3, 'm7c-s3-outage-fresh-directory-and-disk-required')
     ports = {}
-    for service in [*SERVICES, 'api', 'web', 'admin', 'smtp']:
+    for service in [*SERVICES, 'api', 'web', 'admin', 'smtp', *(['embedding'] if scenario == 'VECTOR_PROVISION_V1' else [])]:
         ports[service] = free_port()
         require(len(set(ports.values())) == len(ports), 'm7c-s3-outage-distinct-selected-ports')
     for service, identifier in IMAGES.items():
@@ -525,7 +551,7 @@ def process_alive(state, saved):
 
 
 def app(state, service):
-    require(service in APPS and state['phase'] in ({'SCHEMA_READY', 'SEEDING', 'READY'} if service in {'api', 'smtp'} else {'READY'}),
+    require(service in app_roles(state) and state['phase'] in ({'SCHEMA_READY', 'SEEDING', 'READY'} if service in {'api', 'smtp', 'embedding'} else {'READY'}),
         'm7c-s3-outage-application-phase')
     pins(state)
     for item in SERVICES:
@@ -535,6 +561,9 @@ def app(state, service):
         require('smtp' in state['processes'] and process_alive(state, state['processes']['smtp']),
             'm7c-s3-outage-owned-smtp-before-api')
         smtp_ready(state)
+    if state['scenario'] == 'VECTOR_PROVISION_V1' and service in {'api', 'workers'}:
+        require('embedding' in state['processes'] and process_alive(state, state['processes']['embedding']), 'm7c-vector-owned-embedding-required')
+        require(json.loads(read_private_bytes(state_path(state['runId'], state['scenario']).parent / 'embedding-ready.json', 4096)) == {**receipt_scope(state), 'port': state['ports']['embedding'], 'synthetic': True}, 'm7c-vector-fixture-ready')
     entry = app_entry(state, service)
     require(not any((entry.parent / filename).exists() for filename in DOTENV), 'm7c-s3-outage-runtime-dotenv-refused')
     env = {**base_environment(), **app_environment(state, service)}
@@ -569,17 +598,18 @@ def app(state, service):
     os.dup2(fd, 2)
     os.close(fd)
     os.chdir(entry.parent)
-    os.execvpe(arguments[0], arguments + [str(entry)] + (['--run', state['runId'], '--scenario', state['scenario']] if service in {'smtp'} else []), env)
+    os.execvpe(arguments[0], arguments + [str(entry)] + (['--run', state['runId'], '--scenario', state['scenario']] if service in {'smtp', 'embedding'} else []), env)
 
 
-def fault_service(state):
-    """Only the closed REDIS_V1 scenario may stop Redis; S3 scenarios retain RustFS."""
-    scenario_spec(state['scenario'])
-    return 'redis' if state['scenario'] == 'REDIS_V1' else 'rustfs'
+def watchdog_resources(state):
+    """Keep each scenario's immutable watchdog resource envelope distinct."""
+    service = fault_store(state)
+    return ({'rustfs': state['resources']['rustfs'], 'redis': state['resources']['redis']}
+        if service == 'redis' else {service: state['resources'][service]})
 
 
 def outage_receipt_name(state):
-    return 'fault-redis-outage-receipt.json' if fault_service(state) == 'redis' else 'fault-storage-outage-receipt.json'
+    return 'fault-redis-outage-receipt.json' if fault_store(state) == 'redis' else 'fault-storage-outage-receipt.json'
 
 
 def fault_phase(state):
@@ -616,8 +646,7 @@ def watchdog_admission(state):
     ack = json.loads(read_private_bytes(directory / 'watchdog-ack.json', 8192))
     require(receipt_matches(state, ack)
         and ack.get('budgetSeconds') == 900 and ack.get('worker') == state['processes']['workers']
-        and ack.get('rustfs') == state['resources']['rustfs']
-        and (state['scenario'] != 'REDIS_V1' or ack.get('redis') == state['resources']['redis'])
+        and all(ack.get(key) == value for key, value in watchdog_resources(state).items())
         and control_alive(ack['control'])
         and type(ack.get('deadlineMonotonicNs')) is str and ack['deadlineMonotonicNs'].isdigit()
         and time.monotonic_ns() < int(ack['deadlineMonotonicNs'])
@@ -626,34 +655,168 @@ def watchdog_admission(state):
     return ack
 
 
-def guard(state, purpose):
-    purposes = {'bucket', 'seed', 'check', 'smtp', 'observe', 'staged-observe', 'outage-observe'}
+def vector_observer_admission(state, *, ready=False, fresh=False, live=False):
+    """Read immutable observer control evidence; no caller-supplied PID can authorize a signal or fault."""
+    require(state['scenario'] == 'VECTOR_PROVISION_V1', 'm7c-vector-observer-scenario')
+    directory = state_path(state['runId'], state['scenario']).parent
+    raw = read_private_bytes(directory / 'observe-vector-outage-failed-intent.json', 16384)
+    intent = json.loads(raw)
+    staged_raw = read_private_bytes(directory / 'observe-vector-g2-staged.json', 32768)
+    staged = json.loads(staged_raw)
+    watchdog_raw = read_private_bytes(directory / 'watchdog-ack.json', 8192)
+    watchdog = json.loads(watchdog_raw)
+    common = {**receipt_scope(state), 'namespace': state['namespace'], 'phase': 'vector-outage-failed',
+        'sourceCommit': state['commit'], 'helperPinsSha256': digest(canonical(state['inputs']['helpers'])),
+        'stagedProofSha256': digest(staged_raw), 'watchdogAckSha256': digest(watchdog_raw),
+        'deadlineMonotonicNs': watchdog.get('deadlineMonotonicNs'),
+        'workerPid': state['processes']['workers']['pid'], 'workerStartTicks': state['processes']['workers']['startTicks'],
+        'vectorContainerId': state['resources']['vector']['id']}
+    require(receipt_matches(state, staged) and staged.get('phase') == 'vector-g2-staged' and staged.get('status') == 'OBSERVED'
+        and receipt_matches(state, watchdog), 'm7c-vector-observer-reference-scope')
+    require(isinstance(intent, dict) and set(intent) == set(common) | {'status', 'control'}
+        and all(intent.get(k) == v for k, v in common.items()) and intent['status'] == 'ONE_SHOT_READ_ONLY',
+        'm7c-vector-observer-intent-binding')
+    control = intent['control']
+    require(isinstance(control, dict) and set(control) == {'pid', 'startTicks', 'bootId', 'cwd', 'commandSha256'}
+        and type(control['pid']) is int and control['pid'] > 1
+        and control['pid'] not in {state['processes']['workers']['pid'], watchdog['control']['pid']}
+        and isinstance(control['startTicks'], str) and re.fullmatch('[0-9]{1,32}', control['startTicks'])
+        and isinstance(control['bootId'], str) and re.fullmatch('[a-f0-9-]{36}', control['bootId'])
+        and control['cwd'] == str(ROOT) and isinstance(control['commandSha256'], str)
+        and re.fullmatch('[a-f0-9]{64}', control['commandSha256']), 'm7c-vector-observer-control-shape')
+    alive = control_alive(control)
+    if live:
+        require(alive, 'm7c-vector-observer-not-live')
+    if alive:
+        actual = process_identity(control['pid'])
+        tail = [b'--run', state['runId'].encode(), b'--scenario', b'VECTOR_PROVISION_V1', b'--phase', b'vector-outage-failed', b'']
+        require(actual is not None and (not live or actual['state'] not in {'T', 't', 'Z', 'X', 'x'})
+            and len(actual['command']) == 9 and actual['command'][2:] == tail
+            and actual['command'][1] in {str(HERE / 'vector-observe.mjs').encode(), b'tests/acceptance/s3-outage/vector-observe.mjs'},
+            'm7c-vector-observer-command-state')
+    if not ready:
+        return {'control': control, 'intent': intent, 'intentSha256': digest(raw)}
+    ready_raw = read_private_bytes(directory / 'vector-observer-ready.json', 16384)
+    value = json.loads(ready_raw)
+    require(isinstance(value, dict) and set(value) == set(common) | {'status', 'control', 'intentSha256', 'armedAt', 'armedMonotonicNs'}
+        and all(value.get(k) == v for k, v in common.items()) and value['status'] == 'ARMED'
+        and value['control'] == control and value['intentSha256'] == digest(raw)
+        and isinstance(value['armedMonotonicNs'], str) and re.fullmatch('[0-9]{1,32}', value['armedMonotonicNs']),
+        'm7c-vector-observer-ready-binding')
+    from datetime import datetime, timezone
+    try:
+        armed = value['armedAt']
+        require(isinstance(armed, str) and len(armed) <= 64 and (armed.endswith('Z') or armed.endswith('+00:00')), 'm7c-vector-observer-ready-time')
+        elapsed = (datetime.now(timezone.utc) - datetime.fromisoformat(armed.replace('Z', '+00:00'))).total_seconds()
+    except (ValueError, TypeError):
+        raise GuardError('m7c-vector-observer-ready-time') from None
+    monotonic_age = time.monotonic_ns() - int(value['armedMonotonicNs'])
+    require(elapsed >= 0 and monotonic_age >= 0, 'm7c-vector-observer-ready-time')
+    if fresh:
+        require(elapsed <= 90 and monotonic_age <= 90000000000, 'm7c-vector-observer-ready-stale')
+    return {'control': control, 'ready': value, 'readySha256': digest(ready_raw), 'intent': intent, 'intentSha256': digest(raw)}
+
+
+def vector_observer_transition(state, storage_running, worker_stopped, sampled_phase):
+    """Only a source-bound fault intent permits the vector poller to cross stop/resume transitions."""
+    require(state['scenario'] == 'VECTOR_PROVISION_V1' and sampled_phase in {'PAUSED', 'OUTAGE'},
+        'm7c-vector-observer-transition-phase')
+    directory = state_path(state['runId'], state['scenario']).parent
+    staged_raw = read_private_bytes(directory / 'observe-vector-g2-staged.json', 32768)
+    staged = json.loads(staged_raw)
+    require(receipt_matches(state, staged) and staged.get('phase') == 'vector-g2-staged' and staged.get('status') == 'OBSERVED',
+        'm7c-vector-observer-staged-scope')
+    intent_path = directory / 'fault-storage-outage-intent.json'
+    if not intent_path.exists():
+        require(sampled_phase == 'PAUSED' and storage_running and worker_stopped,
+            'm7c-vector-observer-before-intent')
+        return 'UP_PAUSED'
+    admission = vector_observer_admission(state, ready=True, live=True)
+    intent = json.loads(read_private_bytes(intent_path, 16384))
+    require(receipt_matches(state, intent) and intent.get('stagedProofSha256') == digest(staged_raw)
+        and intent.get('observerReadySha256') == admission['readySha256'] and intent.get('vector') == state['resources']['vector']
+        and intent.get('staged') == staged.get('faultAdmission'), 'm7c-vector-observer-transition-intent')
+    if sampled_phase == 'OUTAGE':
+        receipt = json.loads(read_private_bytes(directory / 'fault-storage-outage-receipt.json', 16384))
+        require(receipt_matches(state, receipt) and receipt.get('observerReadySha256') == admission['readySha256']
+            and receipt.get('stagedProofSha256') == digest(staged_raw) and receipt.get('storageStopped') is True
+            and receipt.get('sameWorkerResumed') is True and not storage_running and not worker_stopped,
+            'm7c-vector-observer-outage-pair')
+    else:
+        require(time.monotonic_ns() - int(admission['ready']['armedMonotonicNs']) <= 90000000000,
+            'm7c-vector-observer-transition-timeout')
+    require(not storage_running or worker_stopped, 'm7c-vector-observer-invalid-pair')
+    return 'UP_PAUSED' if storage_running else 'DOWN_PAUSED' if worker_stopped else 'DOWN_RUNNING'
+
+
+GUARD_STAGES = frozenset({'ADMISSION', 'STATE', 'SOURCE_PINS', 'STORE_IDENTITY', 'SCHEMA',
+    'PROCESS_IDENTITY', 'PROCESS_RUNSTATE', 'SMTP', 'CONTROL_PHASE'})
+
+
+def mark_guard_stage(progress, stage):
+    """Track only code-selected stages; never infer diagnostics from an exception's contents."""
+    require(stage in GUARD_STAGES, 'm7c-s3-outage-guard-diagnostic-stage')
+    if progress is not None:
+        progress['stage'] = stage
+
+
+def guard(state, purpose, progress=None):
+    purposes = {'bucket', 'seed', 'check', 'smtp', 'embedding', 'observe', 'staged-observe', 'outage-observe', 'vector-outage-watch'}
     require(purpose in purposes, 'm7c-s3-outage-guard-purpose')
+    mark_guard_stage(progress, 'SOURCE_PINS')
     pins(state)
+    mark_guard_stage(progress, 'STORE_IDENTITY')
     require(set(state['resources']) == set(SERVICES), 'm7c-s3-outage-four-owned-stores-required')
+    mark_guard_stage(progress, 'CONTROL_PHASE')
     phase = fault_phase(state)
+    vector_watch = purpose == 'vector-outage-watch'
+    require(not vector_watch or state['scenario'] == 'VECTOR_PROVISION_V1', 'm7c-vector-observer-scenario')
+    storage_running = None
+    mark_guard_stage(progress, 'STORE_IDENTITY')
     for service in SERVICES:
-        owned(state, service, running=not (service == fault_service(state) and purpose == 'outage-observe'))
+        value = owned(state, service, running=None if vector_watch and service == 'vector' else not (service == fault_store(state) and (purpose == 'outage-observe' or (purpose == 'embedding' and phase == 'OUTAGE'))))
+        if vector_watch and service == 'vector':
+            storage_running = value['State']['Running']
+    mark_guard_stage(progress, 'SCHEMA')
     schema(state)
     if purpose in {'bucket', 'seed'}:
+        mark_guard_stage(progress, 'CONTROL_PHASE')
         require(state['phase'] in ({'SCHEMA_REQUIRED'} if purpose == 'bucket' else {'SEEDING'}), 'm7c-s3-outage-setup-phase')
+        mark_guard_stage(progress, 'SCHEMA')
         empty(state)
-    if purpose in {'seed', 'check', 'observe', 'staged-observe', 'outage-observe'}:
+    if purpose in {'seed', 'check', 'observe', 'staged-observe', 'outage-observe', 'vector-outage-watch'}:
+        mark_guard_stage(progress, 'PROCESS_IDENTITY')
         require('api' in state['processes'] and process_alive(state, state['processes']['api']), 'm7c-s3-outage-owned-api-required')
+        mark_guard_stage(progress, 'SMTP')
         require('smtp' in state['processes'] and process_alive(state, state['processes']['smtp']), 'm7c-s3-outage-owned-smtp-required')
         smtp_ready(state)
     if purpose == 'smtp':
+        mark_guard_stage(progress, 'SMTP')
         require(state['phase'] in {'SCHEMA_READY', 'SEEDING', 'READY'} and 'smtp' in state['processes']
             and process_alive(state, state['processes']['smtp']), 'm7c-s3-outage-smtp-start-phase')
-    if purpose in {'check', 'observe', 'staged-observe', 'outage-observe'}:
+    if purpose == 'embedding':
+        mark_guard_stage(progress, 'PROCESS_IDENTITY')
+        require(state['scenario'] == 'VECTOR_PROVISION_V1' and state['phase'] in {'SCHEMA_READY', 'SEEDING', 'READY'} and 'embedding' in state['processes'] and process_alive(state, state['processes']['embedding']), 'm7c-vector-fixture-start-phase')
+        if phase in {'PAUSED', 'OUTAGE'}:
+            mark_guard_stage(progress, 'CONTROL_PHASE')
+            watchdog_admission(state)
+    worker_stopped = None
+    if purpose in {'check', 'observe', 'staged-observe', 'outage-observe', 'vector-outage-watch'}:
         for service, saved in state['processes'].items():
+            mark_guard_stage(progress, 'PROCESS_IDENTITY')
             require(process_alive(state, saved), 'm7c-s3-outage-recorded-process-not-live')
             actual = process_identity(saved['pid'])
+            mark_guard_stage(progress, 'PROCESS_RUNSTATE')
             stopped = service == 'workers' and purpose == 'staged-observe'
-            require((actual['state'] == 'T') if stopped else actual['state'] not in {'T', 't'},
-                'm7c-s3-outage-exact-process-run-state')
+            if vector_watch and service == 'workers':
+                require(actual['state'] != 't', 'm7c-vector-observer-worker-debug-stop')
+                worker_stopped = actual['state'] == 'T'
+            else:
+                require((actual['state'] == 'T') if stopped else actual['state'] not in {'T', 't'},
+                    'm7c-s3-outage-exact-process-run-state')
     if purpose in {'observe', 'staged-observe', 'outage-observe'}:
-        require(state['phase'] == 'READY' and set(state['processes']) == set(APPS), 'm7c-s3-outage-observe-four-processes-required')
+        mark_guard_stage(progress, 'CONTROL_PHASE')
+        require(state['phase'] == 'READY' and set(state['processes']) == set(app_roles(state)), 'm7c-s3-outage-observe-four-processes-required')
         if purpose == 'staged-observe':
             require(phase == 'PAUSED', 'm7c-s3-outage-stage-phase')
             watchdog_admission(state)
@@ -668,8 +831,25 @@ def guard(state, purpose):
                     and final.get('intervened') is False
                     and final.get('redisRunning' if state['scenario'] == 'REDIS_V1' else 'storageRunning') is True
                     and final.get('sameWorkerResumed') is True, 'm7c-s3-outage-watchdog-normal-stop-required')
+    transition = {}
+    if vector_watch:
+        mark_guard_stage(progress, 'CONTROL_PHASE')
+        require(state['phase'] == 'READY' and set(state['processes']) == set(app_roles(state)), 'm7c-vector-observer-process-inventory')
+        watchdog_admission(state)
+        sampled_phase = fault_phase(state)
+        mark_guard_stage(progress, 'PROCESS_IDENTITY')
+        require(process_alive(state, state['processes']['workers']), 'm7c-vector-observer-worker-identity')
+        actual = process_identity(state['processes']['workers']['pid'])
+        require(actual is not None and actual['state'] != 't', 'm7c-vector-observer-worker-state')
+        mark_guard_stage(progress, 'PROCESS_RUNSTATE')
+        worker_stopped = actual['state'] == 'T'
+        # Read the worker before storage: stop->resume cannot manufacture an UP/running mixed-time pair.
+        mark_guard_stage(progress, 'STORE_IDENTITY')
+        storage_running = owned(state, 'vector')['State']['Running']
+        mark_guard_stage(progress, 'CONTROL_PHASE')
+        transition = {'vectorTransition': vector_observer_transition(state, storage_running, worker_stopped, sampled_phase)}
     return {**receipt_scope(state), 'namespace': state['namespace'], 'purpose': purpose,
-        'resourceOwnership': True, 'exactTestDatabases': True, 'sourceBuildPins': True}
+        'resourceOwnership': True, 'exactTestDatabases': True, 'sourceBuildPins': True, **transition}
 
 
 def child(state, operation):
@@ -719,6 +899,22 @@ def cleanup(state):
             until = time.monotonic() + 65
             while control_alive(control):
                 require(time.monotonic() < until, 'm7c-s3-outage-watchdog-graceful-stop-timeout')
+                time.sleep(0.1)
+    observer_intent = state_path(state['runId'], state['scenario']).parent / 'observe-vector-outage-failed-intent.json'
+    if state['scenario'] == 'VECTOR_PROVISION_V1' and observer_intent.exists():
+        control = vector_observer_admission(state)['control']
+        if control_alive(control):
+            descriptor = os.pidfd_open(control['pid'])
+            try:
+                if control_alive(control):
+                    if process_identity(control['pid'])['state'] == 'T':
+                        signal.pidfd_send_signal(descriptor, signal.SIGCONT)
+                    signal.pidfd_send_signal(descriptor, signal.SIGTERM)
+            finally:
+                os.close(descriptor)
+            until = time.monotonic() + 55
+            while control_alive(control):
+                require(time.monotonic() < until, 'm7c-vector-observer-graceful-stop-timeout-no-kill')
                 time.sleep(0.1)
     worker = state['processes'].get('workers')
     if worker and process_alive(state, worker) and process_identity(worker['pid'])['state'] == 'T':
@@ -774,15 +970,7 @@ def summary(state):
         'browserAcceptance': 'NOT_RUN_BY_HELPER'}
 
 
-def main():
-    require(not STATIC_DRAFT_ONLY, 'm7c-s3-outage-draft-awaiting-root-review')
-    parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument('--run', required=True)
-    parser.add_argument('--scenario', required=True, choices=sorted(SCENARIOS))
-    parser.add_argument('--mode', required=True, choices=['prepare', 'deploy-existing-migrations', 'app-api',
-        'app-web', 'app-smtp', 'app-workers', 'seed', 'check', 'cleanup', 'guard'])
-    parser.add_argument('--purpose', choices=['bucket', 'seed', 'check', 'smtp', 'observe', 'staged-observe', 'outage-observe'])
-    args = parser.parse_args()
+def check_directories():
     source = HERE.lstat()
     require(stat.S_ISDIR(source.st_mode) and source.st_uid == os.getuid()
         and stat.S_IMODE(source.st_mode) in {0o700, 0o755} and HERE.resolve() == HERE,
@@ -792,9 +980,46 @@ def main():
     require(stat.S_ISDIR(cache.st_mode) and cache.st_uid == os.getuid()
         and stat.S_IMODE(cache.st_mode) in {0o700, 0o755} and CACHE.resolve() == CACHE,
         'm7c-s3-outage-cache-directory')
+
+
+def guard_command(run_id, scenario, purpose):
+    """Emit only a bound, finite failure envelope; normal guard proofs retain their exact shape."""
+    spec = scenario_spec(scenario)
+    require(type(run_id) is str and re.fullmatch('[a-f0-9]{12}', run_id) is not None
+        and purpose in {'bucket', 'seed', 'check', 'smtp', 'embedding', 'observe',
+            'staged-observe', 'outage-observe', 'vector-outage-watch'}, 'm7c-s3-outage-guard-binding')
+    source_sha256 = file_hash(HERE / 'lifecycle.py')
+    progress = {'stage': 'ADMISSION'}
+    try:
+        check_directories()
+        mark_guard_stage(progress, 'STATE')
+        state = load(run_id, scenario)
+        proof = guard(state, purpose, progress)
+    except BaseException as error:
+        # Neither str(error) nor stderr/cause is inspected or retained at this boundary.
+        category = 'REFUSED' if isinstance(error, GuardError) else (
+            'INTERRUPTED' if isinstance(error, (KeyboardInterrupt, SystemExit)) else 'ERROR')
+        print(json.dumps({'schemaVersion': 1, 'protocolVersion': PROTOCOL_VERSION, 'guardProtocol': 1,
+            'scenario': scenario, 'namespace': spec['namespace'], 'runId': run_id, 'purpose': purpose,
+            'sourceSha256': source_sha256, 'completed': False, 'stage': progress['stage'],
+            'category': category}, sort_keys=True))
+        return 1
+    print(json.dumps(proof, sort_keys=True))
+    return 0
+
+
+def main():
+    require(not STATIC_DRAFT_ONLY, 'm7c-s3-outage-draft-awaiting-root-review')
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument('--run', required=True)
+    parser.add_argument('--scenario', required=True, choices=sorted(SCENARIOS))
+    parser.add_argument('--mode', required=True, choices=['prepare', 'deploy-existing-migrations', 'app-api',
+        'app-web', 'app-smtp', 'app-workers', 'app-embedding', 'seed', 'check', 'cleanup', 'guard'])
+    parser.add_argument('--purpose', choices=['bucket', 'seed', 'check', 'smtp', 'embedding', 'observe', 'staged-observe', 'outage-observe', 'vector-outage-watch'])
+    args = parser.parse_args()
     if args.mode == 'guard':
-        print(json.dumps(guard(load(args.run, args.scenario), args.purpose), sort_keys=True))
-        return
+        return guard_command(args.run, args.scenario, args.purpose)
+    check_directories()
     with lifecycle_lock(args.scenario):
         if args.mode == 'prepare':
             state = prepare(args.run, args.scenario)
@@ -815,8 +1040,9 @@ def main():
 
 if __name__ == '__main__':
     try:
-        main()
+        exit_code = main()
     except BaseException as error:
         code = str(error) if isinstance(error, GuardError) and re.fullmatch('[a-z0-9-]{1,100}', str(error)) else 'm7c-s3-outage-sanitized-failure'
         print(json.dumps({'completed': False, 'diagnostic': code}), file=sys.stderr)
         sys.exit(1)
+    sys.exit(exit_code)

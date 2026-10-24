@@ -263,5 +263,127 @@ class CleanupFaultTests(unittest.TestCase):
             restore.assert_not_called()
 
 
+class VectorFaultTests(unittest.TestCase):
+    def vector_state(self):
+        value = state()
+        value.update(scenario='VECTOR_PROVISION_V1', namespace='vectorix-m7c-vector-provision')
+        value['resources']['vector'] = {'id': 'b' * 64}
+        return value
+
+    def vector_proof(self):
+        value = self.vector_state()
+        admission = {'schemaVersion': 1, 'kind': 'VECTOR_PROVISION_ACCEPTED', 'organizationId': 'org-owned', 'documentId': 'doc-owned', 'versionId': 'version-one', 'version': 1, 'originalSha256': SHA1, 'observedAt': datetime.now(timezone.utc).isoformat(), 'activeGenerationId': 'generation-one', 'targetGenerationId': 'generation-two', 'taskId': 'provision-two', 'status': 'PENDING', 'attempts': 0, 'provisioned': False, 'liveClaims': 0, 'workerPid': 123, 'workerStartTicks': '42', 'vectorContainerId': 'b' * 64}
+        return {**f.l.receipt_scope(value), 'namespace': value['namespace'], 'phase': 'vector-g2-staged', 'status': 'OBSERVED', 'faultAdmission': admission}
+
+    def test_vector_staged_proof_has_exact_source_generation_process_and_unclaimed_binding(self):
+        value, proof = self.vector_state(), self.vector_proof()
+        for mutate in [None, lambda p: p.update(scenario='CLEANUP_V1'), lambda p: p['faultAdmission'].update(vectorContainerId='a'*64), lambda p: p['faultAdmission'].update(attempts=1), lambda p: p['faultAdmission'].update(provisioned=True), lambda p: p['faultAdmission'].update(targetGenerationId='generation-one'), lambda p: p['faultAdmission'].update(extra='rejected')]:
+            candidate = json.loads(json.dumps(proof))
+            if mutate: mutate(candidate)
+            with mock.patch.object(f, 'read', return_value={'organization': {'id': 'org-owned'}}), mock.patch.object(f.l, 'read_private_bytes', return_value=json.dumps(candidate).encode()):
+                if mutate:
+                    with self.assertRaises(f.l.GuardError): f.fresh_admission(value, 'vector-g2-staged', 'faultAdmission', 'VECTOR_PROVISION_ACCEPTED', 1)
+                else:
+                    self.assertEqual(f.fresh_admission(value, 'vector-g2-staged', 'faultAdmission', 'VECTOR_PROVISION_ACCEPTED', 1)[0]['targetGenerationId'], 'generation-two')
+
+    def test_vector_last_moment_budget_is_original_and_does_not_admit_late_stop(self):
+        value = self.vector_state()
+        with mock.patch.object(f.time, 'monotonic_ns', return_value=1000000000):
+            f.require_remaining(value, {'deadlineMonotonicNs': str(626000000000)})
+            with self.assertRaisesRegex(f.l.GuardError, 'original-budget'):
+                f.require_remaining(value, {'deadlineMonotonicNs': str(625999999999)})
+
+    def test_safety_restore_targets_only_exact_vector_and_resumes_same_worker(self):
+        value = self.vector_state()
+        with mock.patch.object(f.l, 'owned', return_value={'State': {'Running': False}}) as owned, mock.patch.object(f.l, 'run') as run, mock.patch.object(f.l, 'process_alive', return_value=True), mock.patch.object(f.l, 'process_identity', side_effect=[{'state': 'T'}, {'state': 'S'}]), mock.patch.object(f, 'worker_signal') as signal_worker:
+            self.assertEqual(f.restore_owned(value), {'storageRunning': True, 'sameWorkerResumed': True})
+            self.assertEqual([args.args[1] for args in owned.call_args_list], ['vector', 'vector'])
+            run.assert_called_once_with(['docker', 'start', 'b' * 64], timeout=30)
+            signal_worker.assert_called_once_with(value, signal.SIGCONT)
+
+
+class PrimedVectorFaultTests(unittest.TestCase):
+    vector_state = VectorFaultTests.vector_state
+    vector_proof = VectorFaultTests.vector_proof
+    def fault_mocks(self, stack, refuse_at=None):
+        value = self.vector_state(); staged = self.vector_proof()['faultAdmission']; events = []; calls = 0
+        stack.enter_context(mock.patch.object(f.l, 'fault_phase', return_value='PAUSED'))
+        stack.enter_context(mock.patch.object(f.l, 'guard'))
+        stack.enter_context(mock.patch.object(f.l, 'watchdog_admission', return_value={'baseline': staged}))
+        stack.enter_context(mock.patch.object(f, 'fresh_admission', return_value=(staged, 'stage-sha')))
+        def ready(*_args, **kwargs):
+            nonlocal calls
+            calls += 1; events.append('ACK' + str(calls))
+            self.assertEqual(kwargs, {'ready': True, 'fresh': True, 'live': True})
+            if calls == refuse_at: raise f.l.GuardError('controlled-observer-refusal')
+            return {'readySha256': 'ack-sha'}
+        stack.enter_context(mock.patch.object(f.l, 'vector_observer_admission', side_effect=ready))
+        stack.enter_context(mock.patch.object(f, 'record', side_effect=lambda *_args: events.append('RECORD')))
+        stack.enter_context(mock.patch.object(f.l, 'owned'))
+        stack.enter_context(mock.patch.object(f, 'require_remaining', side_effect=lambda *_args: events.append('BUDGET')))
+        stack.enter_context(mock.patch.object(f.l, 'run', side_effect=lambda *_args, **_kwargs: events.append('STOP')))
+        stack.enter_context(mock.patch.object(f, 'worker_signal', side_effect=lambda *_args: events.append('RESUME')))
+        return value, events
+
+    def test_fault_consumes_live_ack_before_intent_stop_and_same_worker_resume(self):
+        with contextlib.ExitStack() as stack:
+            value, events = self.fault_mocks(stack)
+            f.storage_outage(value)
+        self.assertEqual(events, ['ACK1', 'RECORD', 'ACK2', 'BUDGET', 'STOP', 'ACK3', 'RESUME', 'RECORD'])
+
+    def test_missing_or_changed_ack_prevents_the_next_destructive_action(self):
+        for refuse_at in [1, 2, 3]:
+            with self.subTest(refuse_at=refuse_at), contextlib.ExitStack() as stack:
+                value, events = self.fault_mocks(stack, refuse_at)
+                with self.assertRaisesRegex(f.l.GuardError, 'observer-refusal'): f.storage_outage(value)
+                self.assertNotIn('RESUME', events)
+                self.assertEqual('STOP' in events, refuse_at == 3)
+
+    def test_fault_intent_is_atomically_complete_before_poller_visibility(self):
+        with tempfile.TemporaryDirectory(dir=common.CACHE) as temporary, mock.patch.object(f, 'directory', return_value=Path(temporary)):
+            target = Path(temporary) / 'fault-storage-outage-intent.json'
+            original_link = f.os.link
+            def link(source, destination, **kwargs):
+                self.assertFalse(target.exists())
+                staged = json.loads((Path(temporary) / source).read_bytes())
+                self.assertEqual(staged['observerReadySha256'], 'a' * 64)
+                return original_link(source, destination, **kwargs)
+            with mock.patch.object(f.os, 'link', side_effect=link):
+                f.record(self.vector_state(), target.name, {'observerReadySha256': 'a' * 64})
+            self.assertEqual(json.loads(target.read_bytes())['observerReadySha256'], 'a' * 64)
+
+
+class ComposedFaultTests(unittest.TestCase):
+    def test_existing_per_scenario_remaining_budgets_are_not_retuned(self):
+        for scenario in f.l.SCENARIOS:
+            minimum = 625 if scenario in {'CLEANUP_V1', 'VECTOR_PROVISION_V1'} else 120
+            with mock.patch.object(f.time, 'monotonic_ns', return_value=1000000000):
+                f.require_remaining({'scenario': scenario}, {'deadlineMonotonicNs': str((minimum + 1) * 1000000000)})
+                with self.assertRaisesRegex(f.l.GuardError, 'original-budget'):
+                    f.require_remaining({'scenario': scenario}, {'deadlineMonotonicNs': str((minimum + 1) * 1000000000 - 1)})
+
+    def test_cli_routes_vector_and_redis_only_to_their_own_fault_modes(self):
+        cases = [('VECTOR_PROVISION_V1', 'storage-outage', 'storage_outage'), ('REDIS_V1', 'redis-outage', 'redis_outage')]
+        for scenario, mode, operation in cases:
+            value = state(); value['scenario'] = scenario
+            with mock.patch.object(f, 'STATIC_DRAFT_ONLY', False), mock.patch.object(f.l, 'STATIC_DRAFT_ONLY', False), mock.patch.object(f.l, 'load', return_value=value), mock.patch.object(f, 'require_clean_evidence'), mock.patch.object(f.l, 'lifecycle_lock', return_value=contextlib.nullcontext()), mock.patch.object(f, operation) as action, mock.patch.object(sys, 'argv', ['fault.py', '--run', RUN, '--scenario', scenario, '--mode', mode]), contextlib.redirect_stdout(io.StringIO()):
+                f.main()
+                action.assert_called_once_with(value)
+        for scenario, mode in [('VECTOR_PROVISION_V1', 'redis-outage'), ('VECTOR_PROVISION_V1', 'queue-observation'), ('REDIS_V1', 'storage-outage')]:
+            with mock.patch.object(f, 'STATIC_DRAFT_ONLY', False), mock.patch.object(f.l, 'STATIC_DRAFT_ONLY', False), mock.patch.object(f.l, 'load', side_effect=AssertionError('no state IO')) as load, mock.patch.object(sys, 'argv', ['fault.py', '--run', RUN, '--scenario', scenario, '--mode', mode]):
+                with self.assertRaisesRegex(f.l.GuardError, 'mode-scenario'): f.main()
+                load.assert_not_called()
+
+    def test_restore_owned_preserves_each_target_and_native_final_flag(self):
+        for scenario in f.l.SCENARIOS:
+            value = state(); value['scenario'] = scenario
+            value['resources'] = {name: {'id': name + '-owned'} for name in f.l.SERVICES}
+            service = f.l.fault_store(value)
+            with mock.patch.object(f.l, 'owned', return_value={'State': {'Running': False}}) as owned, mock.patch.object(f.l, 'run') as run, mock.patch.object(f.l, 'process_alive', return_value=True), mock.patch.object(f.l, 'process_identity', return_value={'state': 'S'}):
+                self.assertEqual(f.restore_owned(value), {('redisRunning' if scenario == 'REDIS_V1' else 'storageRunning'): True, 'sameWorkerResumed': True})
+                self.assertEqual([call.args[1] for call in owned.call_args_list], [service, service])
+                run.assert_called_once_with(['docker', 'start', service + '-owned'], timeout=30)
+
+
 if __name__ == '__main__':
     unittest.main()

@@ -109,11 +109,11 @@ class RedisTests(unittest.TestCase):
                 load.assert_not_called()
 
     def test_scenarios_choose_only_their_fixed_dependency(self):
-        self.assertEqual(l.fault_service(state()), 'redis')
-        self.assertEqual(l.fault_service(state('INGESTION_V1')), 'rustfs')
-        self.assertEqual(l.fault_service(state('CLEANUP_V1')), 'rustfs')
+        self.assertEqual(l.fault_store(state()), 'redis')
+        self.assertEqual(l.fault_store(state('INGESTION_V1')), 'rustfs')
+        self.assertEqual(l.fault_store(state('CLEANUP_V1')), 'rustfs')
         with self.assertRaises(l.GuardError):
-            l.fault_service({'scenario': 'OTHER'})
+            l.fault_store({'scenario': 'OTHER'})
         self.assertEqual(l.outage_receipt_name(state()), 'fault-redis-outage-receipt.json')
 
     def test_outage_guard_requires_redis_down_and_s3_online_without_reusing_s3_fault(self):

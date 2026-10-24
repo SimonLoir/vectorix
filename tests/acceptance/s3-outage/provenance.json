@@ -780,5 +780,2468 @@
         "scope": "ONE_ACCEPTED_DOCUMENT_REPLACEMENT_REDIS_INTERRUPTION_NOT_CAPACITY_PROVIDER_OR_FULL_RECOVERY_MATRIX",
         "laterDocumentationOrIntegrationHeadNativeValidation": "NOT_RUN",
         "historicalFields": "All prior fields including NOT_RUN preparation records remain unchanged; this appended record is the actual Redis execution."
+    },
+    "vectorProvisionPreparation": {
+        "schemaVersion": 1,
+        "protocolVersion": 2,
+        "scenario": "VECTOR_PROVISION_V1",
+        "namespace": "vectorix-m7c-vector-provision",
+        "status": "DISABLED_FOUNDATION_OFFLINE_VALIDATED_NATIVE_NOT_RUN_REVIEW_PENDING",
+        "actualMainBaseCommit": "c93e30c7b1194d9440a33effe7949038fe32da1d",
+        "dependencyMergeCommit": "2f801a54b25dd478f5bcca0834b9f1ed7a2405ea",
+        "cleanupDependency": {
+            "commit": "79bd1893edbed567be3eb3f802cb10504f50b2eb",
+            "historicalSources": {
+                "README.md": {
+                    "bytes": 20295,
+                    "sha256": "2da002f08042624944a85b9478478c8031347eb16ccf5fc3e5a2d11508ccc754"
+                },
+                "bucket.mjs": {
+                    "bytes": 6679,
+                    "sha256": "84ec4e6f176d63a1b1122f13de65f71d876a5391bfb0eecfc75f6004eebf4f24"
+                },
+                "cleanup-fixture.mjs": {
+                    "bytes": 13025,
+                    "sha256": "fc54ad3f0045dbef1c720dd902dd920c3a409547668798a3d48c0c05df552bbb"
+                },
+                "cleanup-observe.mjs": {
+                    "bytes": 33495,
+                    "sha256": "0152a23220bc4827e434710ca3bf5ec7995ce08c6dddd34f42a52831205f869c"
+                },
+                "cleanup.test.mjs": {
+                    "bytes": 22103,
+                    "sha256": "581aeb09a39315db748f883f3636d9c4623fa5ef5db51dfcd6d6a07ded121da8"
+                },
+                "fault.py": {
+                    "bytes": 19588,
+                    "sha256": "e09e2059cb501d10d3ef007de56daf05c81b46177a1d8dfb9b1a17adf87a50c3"
+                },
+                "fault_test.py": {
+                    "bytes": 15737,
+                    "sha256": "63430cb47f45940c6ce293baf3dbe3f70f7f921f29d40ec75b8d01f65bbf8e8d"
+                },
+                "fixtures/expected.json": {
+                    "bytes": 926,
+                    "sha256": "67c562dfb951d9751d76468f4cf29b89d6fae3432ed9debb5c7f0790cb4fac7d"
+                },
+                "fixtures/s3-outage-v1.txt": {
+                    "bytes": 522,
+                    "sha256": "110bf3def2634f5a3c6addd02b8b61d35fddd3e3ea776077144041e6c2599719"
+                },
+                "fixtures/s3-outage-v2.txt": {
+                    "bytes": 620,
+                    "sha256": "ef488f9ba8481a42e7f79aceafde979d9f09ddc0072f2edc0577e6b064cc3d2f"
+                },
+                "lifecycle.py": {
+                    "bytes": 43220,
+                    "sha256": "2ca6518813c7d7c4636519f7480741e18b7ac03ee117faa567dd94cfe8c34834"
+                },
+                "lifecycle_test.py": {
+                    "bytes": 10562,
+                    "sha256": "030cb7e82ffdab4632601ce9781a3e627cb4d50d4164f71eff44dc96907f7c15"
+                },
+                "objects.mjs": {
+                    "bytes": 16033,
+                    "sha256": "a0ca8db7a7b46ddcdba416da74f1c13d26e931a5effa9df4de1fc2232623faaf"
+                },
+                "objects.test.mjs": {
+                    "bytes": 7304,
+                    "sha256": "1a5a90b04a6502b14337ac843d7c20f88df87f4d0c18758cb1b94031fcab0d36"
+                },
+                "observe.mjs": {
+                    "bytes": 46519,
+                    "sha256": "4772ce32a66e3a37a7a6a9d9ebb92cad1c1d3d67199a8506162e2be1ac347161"
+                },
+                "observe.test.mjs": {
+                    "bytes": 19167,
+                    "sha256": "00f9dfc507b9b856cb199f4e740eaa6c8e202d3f95d177438c6021171a2d2dd6"
+                },
+                "private.mjs": {
+                    "bytes": 10586,
+                    "sha256": "626727b6b345c9b5220bfea54810949981fc96b2e417ae23f7844e008f811576"
+                },
+                "seed.mjs": {
+                    "bytes": 11447,
+                    "sha256": "4282e9d27f7dcfbfb0b0530cf5de0a28e04bcc42c63c57420d11a1eac2866d4c"
+                },
+                "smtp.mjs": {
+                    "bytes": 10728,
+                    "sha256": "82523128c0ad7a77d7b8d8d3743f278482d079fb7b1a26e9ee31e625b50b86f5"
+                }
+            },
+            "historicalSourcesSha256": "42edaf605a99fc7c421e87c425ecaa7569e97bf16ffe737f1e9920cca322f4b1",
+            "adoption": "LOCAL_MERGE_ANCESTOR_NOT_NATIVE_REPLAY"
+        },
+        "reviewedRedisReuse": {
+            "commit": "80e61f0adf4aa92013e0a020fd346e7b87e34cf1",
+            "seedBytesIdenticalSha256": "f9e10a8fbde5c655b8fb09f26644ec994a554331d284ada182b0f0a8eca40d69",
+            "privateGuardTimeout": "SAME_REVIEWED_BOUNDED_TIMEOUT_HUNK_WITH_VECTOR_SCENARIO_ADDITION",
+            "curlDerivation": {
+                "source": "tests/acceptance/redis-outage/curl.mjs",
+                "sourceSha256": "3aa230c61d9a9c43c621dc4930b1657c79cc54ac89d1132894babf9e920c9826",
+                "adaptation": "PRIVATE_IMPORT_AND_CLOSED_VECTOR_ROUTE_SET_ONLY"
+            }
+        },
+        "currentSources": {
+            "README.md": {
+                "bytes": 20721,
+                "sha256": "98571969eb542ac173e021fe0681506ac0dbfb9b10e65eba4cf502b8c4538103"
+            },
+            "bucket.mjs": {
+                "bytes": 6679,
+                "sha256": "84ec4e6f176d63a1b1122f13de65f71d876a5391bfb0eecfc75f6004eebf4f24"
+            },
+            "cleanup-fixture.mjs": {
+                "bytes": 13025,
+                "sha256": "fc54ad3f0045dbef1c720dd902dd920c3a409547668798a3d48c0c05df552bbb"
+            },
+            "cleanup-observe.mjs": {
+                "bytes": 33495,
+                "sha256": "0152a23220bc4827e434710ca3bf5ec7995ce08c6dddd34f42a52831205f869c"
+            },
+            "cleanup.test.mjs": {
+                "bytes": 22103,
+                "sha256": "581aeb09a39315db748f883f3636d9c4623fa5ef5db51dfcd6d6a07ded121da8"
+            },
+            "fault.py": {
+                "bytes": 23931,
+                "sha256": "4df4a461529a27ce4e812a32352d7c0f356cf908b08dbe10ba403b9087b68ac0"
+            },
+            "fault_test.py": {
+                "bytes": 19222,
+                "sha256": "ec9a5dda206002eaf3eaac55b864004d4f8bb4da814aff75af293b5f33e198d3"
+            },
+            "fixtures/expected.json": {
+                "bytes": 926,
+                "sha256": "67c562dfb951d9751d76468f4cf29b89d6fae3432ed9debb5c7f0790cb4fac7d"
+            },
+            "fixtures/s3-outage-v1.txt": {
+                "bytes": 522,
+                "sha256": "110bf3def2634f5a3c6addd02b8b61d35fddd3e3ea776077144041e6c2599719"
+            },
+            "fixtures/s3-outage-v2.txt": {
+                "bytes": 620,
+                "sha256": "ef488f9ba8481a42e7f79aceafde979d9f09ddc0072f2edc0577e6b064cc3d2f"
+            },
+            "lifecycle.py": {
+                "bytes": 46196,
+                "sha256": "1e3a5a2e9499339457e498d38e5d854b82c2160c81a646d413bb7cbf61057c3f"
+            },
+            "lifecycle_test.py": {
+                "bytes": 12572,
+                "sha256": "da06bc9f5463eba9b4be96fb9af76028c22f745a309b56198debd5051e97fcb0"
+            },
+            "objects.mjs": {
+                "bytes": 16033,
+                "sha256": "a0ca8db7a7b46ddcdba416da74f1c13d26e931a5effa9df4de1fc2232623faaf"
+            },
+            "objects.test.mjs": {
+                "bytes": 7304,
+                "sha256": "1a5a90b04a6502b14337ac843d7c20f88df87f4d0c18758cb1b94031fcab0d36"
+            },
+            "observe.mjs": {
+                "bytes": 46519,
+                "sha256": "4772ce32a66e3a37a7a6a9d9ebb92cad1c1d3d67199a8506162e2be1ac347161"
+            },
+            "observe.test.mjs": {
+                "bytes": 19167,
+                "sha256": "00f9dfc507b9b856cb199f4e740eaa6c8e202d3f95d177438c6021171a2d2dd6"
+            },
+            "private.mjs": {
+                "bytes": 11069,
+                "sha256": "8bc9d92a0d6f4fd07002a68db891998b985d69743f8f966a957d03b07b8d1d71"
+            },
+            "seed.mjs": {
+                "bytes": 11621,
+                "sha256": "f9e10a8fbde5c655b8fb09f26644ec994a554331d284ada182b0f0a8eca40d69"
+            },
+            "smtp.mjs": {
+                "bytes": 10728,
+                "sha256": "82523128c0ad7a77d7b8d8d3743f278482d079fb7b1a26e9ee31e625b50b86f5"
+            },
+            "vector-curl.mjs": {
+                "bytes": 8104,
+                "sha256": "6041c0e5aa61644f4aca46ce26b19150260f1932a82ac4edf29c3976504ae2c5"
+            },
+            "vector-embedding.mjs": {
+                "bytes": 7854,
+                "sha256": "91d2fbb69b1c71c02b44df459080305b85f7683806f87eecb7bda1d50f773a4f"
+            },
+            "vector-observation.mjs": {
+                "bytes": 16671,
+                "sha256": "57fd5a1160b8d499e49f9b9852305955f77d0a05323bc8a10eb61b495cd3bdc9"
+            },
+            "vector-observe.mjs": {
+                "bytes": 18202,
+                "sha256": "dea5128abc15194f8c215dc5eec52367c8f03003291de797dc5b41b8d485e104"
+            },
+            "vector-snapshot.mjs": {
+                "bytes": 14862,
+                "sha256": "69797f4cf9e350074be895168bc3509e59d15c639004f11886b701919243368b"
+            },
+            "vector-workflow.mjs": {
+                "bytes": 20085,
+                "sha256": "78b05f2749862555d77e2cbb63f07560b9956693e8c01217ecd73aa7ce9a265f"
+            },
+            "vector.test.mjs": {
+                "bytes": 26164,
+                "sha256": "602ddce4511071d443037932a7823319575360656e44f53ae218f84eafb81f1d"
+            }
+        },
+        "currentSourcesSha256": "9765f986f6172970ef309a6a591ef247f741a799b11f08275a4219ca983aaf97",
+        "runtimeHelpers": [
+            "lifecycle.py",
+            "fault.py",
+            "private.mjs",
+            "seed.mjs",
+            "bucket.mjs",
+            "smtp.mjs",
+            "observe.mjs",
+            "objects.mjs",
+            "cleanup-fixture.mjs",
+            "cleanup-observe.mjs",
+            "vector-embedding.mjs",
+            "vector-curl.mjs",
+            "vector-workflow.mjs",
+            "vector-observe.mjs",
+            "vector-observation.mjs",
+            "vector-snapshot.mjs"
+        ],
+        "localModuleClosure": {
+            "private.mjs": [],
+            "seed.mjs": ["private.mjs"],
+            "bucket.mjs": ["private.mjs"],
+            "smtp.mjs": ["private.mjs"],
+            "observe.mjs": ["objects.mjs", "private.mjs"],
+            "objects.mjs": ["private.mjs"],
+            "cleanup-fixture.mjs": ["private.mjs"],
+            "cleanup-observe.mjs": [
+                "objects.mjs",
+                "observe.mjs",
+                "private.mjs"
+            ],
+            "vector-embedding.mjs": ["private.mjs"],
+            "vector-curl.mjs": ["private.mjs"],
+            "vector-workflow.mjs": [
+                "private.mjs",
+                "vector-curl.mjs",
+                "vector-embedding.mjs"
+            ],
+            "vector-observe.mjs": [
+                "cleanup-observe.mjs",
+                "observe.mjs",
+                "private.mjs",
+                "vector-embedding.mjs",
+                "vector-observation.mjs",
+                "vector-snapshot.mjs",
+                "vector-workflow.mjs"
+            ],
+            "vector-observation.mjs": [
+                "private.mjs",
+                "vector-embedding.mjs",
+                "vector-workflow.mjs"
+            ],
+            "vector-snapshot.mjs": [
+                "private.mjs",
+                "vector-observation.mjs",
+                "vector-workflow.mjs"
+            ]
+        },
+        "sharedRestoreCommonSha256": "a2c2471e02841cc26f56ebe85dd58bd3440a0db575e1e962ffdf643fc960d597",
+        "runtimeGates": {
+            "allDisabled": true,
+            "count": 13,
+            "entries": {
+                "lifecycle.py": true,
+                "fault.py": true,
+                "seed.mjs": true,
+                "bucket.mjs": true,
+                "smtp.mjs": true,
+                "observe.mjs": true,
+                "objects.mjs": true,
+                "cleanup-fixture.mjs": true,
+                "cleanup-observe.mjs": true,
+                "vector-embedding.mjs": true,
+                "vector-curl.mjs": true,
+                "vector-workflow.mjs": true,
+                "vector-observe.mjs": true
+            },
+            "futureVectorActivationEntries": [
+                "lifecycle.py",
+                "fault.py",
+                "seed.mjs",
+                "bucket.mjs",
+                "smtp.mjs",
+                "vector-embedding.mjs",
+                "vector-curl.mjs",
+                "vector-workflow.mjs",
+                "vector-observe.mjs"
+            ],
+            "unrelatedEntriesRemainDisabled": [
+                "observe.mjs",
+                "objects.mjs",
+                "cleanup-fixture.mjs",
+                "cleanup-observe.mjs"
+            ]
+        },
+        "inputs": {
+            "run": "NOT_SELECTED",
+            "nativeEmbedding": "SYNTHETIC_OLLAMA_PROTOCOL_FIXTURE_NOT_MODEL_WEIGHT_ATTESTATION",
+            "sourceFixture": "fixtures/s3-outage-v1.txt",
+            "sessionCurlOnly": true,
+            "organizationCredentialOrApiKeyCreated": false,
+            "originalWatchdogSeconds": 900,
+            "minimumRemainingBeforeStopSeconds": 625,
+            "naturalIndexBackoffSeconds": [10, 20, 40, 80]
+        },
+        "offlineValidation": {
+            "status": "PASS",
+            "pythonTests": 37,
+            "nodeTests": 43,
+            "nodeSyntaxChecks": 14,
+            "pythonAstChecks": 4,
+            "documents": 3,
+            "mermaidDiagrams": 1,
+            "localMarkdownLinks": 79,
+            "guardLogSha256": "bcfc6a59762bdc09993d2ea2df90553d91e7a4af383cf20e4690cc17085850e1",
+            "executionReceiptSha256": "9177a8b038fab39eac931bd86b42f7b0987aa070e6e0b1ea86c83d6598f9b976",
+            "documentationResultSha256": "281faef500af116add26cd27057c08c4fc7a113c1126d0686970242aa2c708b3",
+            "independentSourceReview": "PENDING"
+        },
+        "nativeValidation": {
+            "plannerExecution": "NOT_RUN",
+            "currentAppBuilds": "NOT_RUN",
+            "nativeHttpOrSourceTransfers": "NOT_RUN",
+            "indexingSearchOrOutage": "NOT_RUN",
+            "dashboardRetry": "NOT_RUN",
+            "resourceTeardown": "NOT_RUN"
+        },
+        "historicalRecord": "Every preceding provenance field retains its original source checkpoint and native-trial meaning. This inventory is a disabled new preparation, not evidence that any historical run used these current files."
+    },
+    "vectorProvisionReviewRevision1": {
+        "schemaVersion": 1,
+        "scenario": "VECTOR_PROVISION_V1",
+        "status": "DISABLED_OFFLINE_VALIDATED_INDEPENDENT_CODE_REVIEW_CLEAR_NATIVE_NOT_RUN",
+        "baseCommit": "2f801a54b25dd478f5bcca0834b9f1ed7a2405ea",
+        "precedingSourceFreezeSha256": "0b1efa07826cfefb6b428b56dea767b55c79664a5ece71fc470df9f8f30dcb85",
+        "precedingCurrentSourcesSha256": "9765f986f6172970ef309a6a591ef247f741a799b11f08275a4219ca983aaf97",
+        "precedingDisabledArchiveInventorySha256": "af211073b5ad85a74d13ead7ef238c413c1508858a21616febf7b169a46cb1b1",
+        "scope": [
+            "REMAINING_BUDGET_BEFORE_EVERY_PHYSICAL_QUERY_INCLUDING_COMMIT_WITH_ROLLBACK_RELEASE_DRAINED",
+            "INITIAL_G1_APPLICATION_AND_SEALED_PHYSICAL_MANIFEST_PUBLICATION_DESTINATION_CONTINUITY",
+            "SAME_G2_PROVISION_TASK_AND_ADVANCING_RETRY_EPOCH_STABLE_THROUGH_SIGNOUT"
+        ],
+        "changedSources": {
+            "vector-snapshot.mjs": {
+                "bytes": 15318,
+                "sha256": "771ce4d74c1f93a9def8f0f6f15f59d41ca5b029b1980799ddc83db32ae7c706"
+            },
+            "vector-observation.mjs": {
+                "bytes": 18807,
+                "sha256": "618fcd163cb9f03efcc181480a7302fd27f3a148235200f504ca9fd839204fff"
+            },
+            "vector-observe.mjs": {
+                "bytes": 18495,
+                "sha256": "fe5de79f807e493bba9869478eb63b3013e65fa5de8df8629ccbc07a8d1963f6"
+            },
+            "vector.test.mjs": {
+                "bytes": 38571,
+                "sha256": "395a1110b79a9016e22a86df7a88c821c804eaa99d485fc00f7b214d09478eaf"
+            }
+        },
+        "currentSources": {
+            "README.md": {
+                "bytes": 20721,
+                "sha256": "98571969eb542ac173e021fe0681506ac0dbfb9b10e65eba4cf502b8c4538103"
+            },
+            "bucket.mjs": {
+                "bytes": 6679,
+                "sha256": "84ec4e6f176d63a1b1122f13de65f71d876a5391bfb0eecfc75f6004eebf4f24"
+            },
+            "cleanup-fixture.mjs": {
+                "bytes": 13025,
+                "sha256": "fc54ad3f0045dbef1c720dd902dd920c3a409547668798a3d48c0c05df552bbb"
+            },
+            "cleanup-observe.mjs": {
+                "bytes": 33495,
+                "sha256": "0152a23220bc4827e434710ca3bf5ec7995ce08c6dddd34f42a52831205f869c"
+            },
+            "cleanup.test.mjs": {
+                "bytes": 22103,
+                "sha256": "581aeb09a39315db748f883f3636d9c4623fa5ef5db51dfcd6d6a07ded121da8"
+            },
+            "fault.py": {
+                "bytes": 23931,
+                "sha256": "4df4a461529a27ce4e812a32352d7c0f356cf908b08dbe10ba403b9087b68ac0"
+            },
+            "fault_test.py": {
+                "bytes": 19222,
+                "sha256": "ec9a5dda206002eaf3eaac55b864004d4f8bb4da814aff75af293b5f33e198d3"
+            },
+            "fixtures/expected.json": {
+                "bytes": 926,
+                "sha256": "67c562dfb951d9751d76468f4cf29b89d6fae3432ed9debb5c7f0790cb4fac7d"
+            },
+            "fixtures/s3-outage-v1.txt": {
+                "bytes": 522,
+                "sha256": "110bf3def2634f5a3c6addd02b8b61d35fddd3e3ea776077144041e6c2599719"
+            },
+            "fixtures/s3-outage-v2.txt": {
+                "bytes": 620,
+                "sha256": "ef488f9ba8481a42e7f79aceafde979d9f09ddc0072f2edc0577e6b064cc3d2f"
+            },
+            "lifecycle.py": {
+                "bytes": 46196,
+                "sha256": "1e3a5a2e9499339457e498d38e5d854b82c2160c81a646d413bb7cbf61057c3f"
+            },
+            "lifecycle_test.py": {
+                "bytes": 12572,
+                "sha256": "da06bc9f5463eba9b4be96fb9af76028c22f745a309b56198debd5051e97fcb0"
+            },
+            "objects.mjs": {
+                "bytes": 16033,
+                "sha256": "a0ca8db7a7b46ddcdba416da74f1c13d26e931a5effa9df4de1fc2232623faaf"
+            },
+            "objects.test.mjs": {
+                "bytes": 7304,
+                "sha256": "1a5a90b04a6502b14337ac843d7c20f88df87f4d0c18758cb1b94031fcab0d36"
+            },
+            "observe.mjs": {
+                "bytes": 46519,
+                "sha256": "4772ce32a66e3a37a7a6a9d9ebb92cad1c1d3d67199a8506162e2be1ac347161"
+            },
+            "observe.test.mjs": {
+                "bytes": 19167,
+                "sha256": "00f9dfc507b9b856cb199f4e740eaa6c8e202d3f95d177438c6021171a2d2dd6"
+            },
+            "private.mjs": {
+                "bytes": 11069,
+                "sha256": "8bc9d92a0d6f4fd07002a68db891998b985d69743f8f966a957d03b07b8d1d71"
+            },
+            "seed.mjs": {
+                "bytes": 11621,
+                "sha256": "f9e10a8fbde5c655b8fb09f26644ec994a554331d284ada182b0f0a8eca40d69"
+            },
+            "smtp.mjs": {
+                "bytes": 10728,
+                "sha256": "82523128c0ad7a77d7b8d8d3743f278482d079fb7b1a26e9ee31e625b50b86f5"
+            },
+            "vector-curl.mjs": {
+                "bytes": 8104,
+                "sha256": "6041c0e5aa61644f4aca46ce26b19150260f1932a82ac4edf29c3976504ae2c5"
+            },
+            "vector-embedding.mjs": {
+                "bytes": 7854,
+                "sha256": "91d2fbb69b1c71c02b44df459080305b85f7683806f87eecb7bda1d50f773a4f"
+            },
+            "vector-observation.mjs": {
+                "bytes": 18807,
+                "sha256": "618fcd163cb9f03efcc181480a7302fd27f3a148235200f504ca9fd839204fff"
+            },
+            "vector-observe.mjs": {
+                "bytes": 18495,
+                "sha256": "fe5de79f807e493bba9869478eb63b3013e65fa5de8df8629ccbc07a8d1963f6"
+            },
+            "vector-snapshot.mjs": {
+                "bytes": 15318,
+                "sha256": "771ce4d74c1f93a9def8f0f6f15f59d41ca5b029b1980799ddc83db32ae7c706"
+            },
+            "vector-workflow.mjs": {
+                "bytes": 20085,
+                "sha256": "78b05f2749862555d77e2cbb63f07560b9956693e8c01217ecd73aa7ce9a265f"
+            },
+            "vector.test.mjs": {
+                "bytes": 38571,
+                "sha256": "395a1110b79a9016e22a86df7a88c821c804eaa99d485fc00f7b214d09478eaf"
+            }
+        },
+        "currentSourcesSha256": "99c8ee26fa6a7191d925ddc01f446bd86b69f60650291a91e81e0f37cee6f6bd",
+        "runtimeGates": {
+            "allDisabled": true,
+            "count": 13
+        },
+        "run": "NOT_SELECTED",
+        "offlineValidation": {
+            "status": "PASS",
+            "pythonTests": 37,
+            "nodeTests": 47,
+            "addedInjectedNodeTests": 4,
+            "nodeSyntaxChecks": 14,
+            "pythonAstChecks": 4,
+            "documents": 3,
+            "mermaidDiagrams": 1,
+            "localMarkdownLinks": 79,
+            "guardLogSha256": "5c9c002bb040fae3d873a76e1d09baaafe7c0a81358785c1eeadd9ca0245b1f9",
+            "executionReceiptSha256": "acbe10ee16bbde02f10df1f853cd1df50f028a90d5895baf563e2e6f3f52ff03",
+            "documentationResultSha256": "281faef500af116add26cd27057c08c4fc7a113c1126d0686970242aa2c708b3",
+            "independentSourceReview": "CLEAR_SOURCE_ONLY_NO_RERUN"
+        },
+        "precedingRevisionPass": {
+            "pythonTests": 37,
+            "nodePass": 46,
+            "nodeTotal": 47,
+            "status": "FAILED_NEW_POSITIVE_MOCK_OMITTED_ORGANIZATION_BINDING",
+            "correction": "FIXTURE_ONLY_SUPPLIES_THE_REAL_CLI_BINDING_NO_GUARD_CHANGE",
+            "guardLogSha256": "6074981d0ff38b7575c905d27b07f4786e33b5cb74fce389ef24efbf900369de"
+        },
+        "nativeValidation": "NOT_RUN",
+        "historicalRecord": "Every preceding field, including vectorProvisionPreparation, remains byte-semantic historical source/preparation evidence. This revision does not relabel any archived native or disabled run."
+    },
+    "vectorProvisionActualMainAlignment": {
+        "schemaVersion": 1,
+        "scenario": "VECTOR_PROVISION_V1",
+        "status": "DISABLED_MAIN_ALIGNED_HERMETIC_PASS_BUILDS_PENDING_AT_CHECKPOINT",
+        "selectedMainCommit": "dc314fcfe02bbc30877bb1a4a1720d1bb3abccde",
+        "selectedMainTree": "8ad8f48d3033f598d61a695a8b44457f585f0690",
+        "vectorCheckpointCommit": "a7f99ca291dc329adc8f2e42ae5ea155f224cd3a",
+        "priorReviewSourceFreezeSha256": "15033a6a5d8dcb3b3c9e45f07261ddb5ec7e7429f3b0456894b1ede934c59fc1",
+        "runtimeAndTestBytes": "IDENTICAL_TO_REVIEWED_VECTOR_CHECKPOINT",
+        "productionPackageLockAndCiBytes": "IDENTICAL_TO_EXACT_SELECTED_MAIN",
+        "currentSources": {
+            "README.md": {
+                "bytes": 21919,
+                "sha256": "640a64fa3dad0c080c7eb50e33f80c14e0837c26369a2c53146cd45c40669b67"
+            },
+            "bucket.mjs": {
+                "bytes": 6679,
+                "sha256": "84ec4e6f176d63a1b1122f13de65f71d876a5391bfb0eecfc75f6004eebf4f24"
+            },
+            "cleanup-fixture.mjs": {
+                "bytes": 13025,
+                "sha256": "fc54ad3f0045dbef1c720dd902dd920c3a409547668798a3d48c0c05df552bbb"
+            },
+            "cleanup-observe.mjs": {
+                "bytes": 33495,
+                "sha256": "0152a23220bc4827e434710ca3bf5ec7995ce08c6dddd34f42a52831205f869c"
+            },
+            "cleanup.test.mjs": {
+                "bytes": 22103,
+                "sha256": "581aeb09a39315db748f883f3636d9c4623fa5ef5db51dfcd6d6a07ded121da8"
+            },
+            "fault.py": {
+                "bytes": 23931,
+                "sha256": "4df4a461529a27ce4e812a32352d7c0f356cf908b08dbe10ba403b9087b68ac0"
+            },
+            "fault_test.py": {
+                "bytes": 19222,
+                "sha256": "ec9a5dda206002eaf3eaac55b864004d4f8bb4da814aff75af293b5f33e198d3"
+            },
+            "fixtures/expected.json": {
+                "bytes": 926,
+                "sha256": "67c562dfb951d9751d76468f4cf29b89d6fae3432ed9debb5c7f0790cb4fac7d"
+            },
+            "fixtures/s3-outage-v1.txt": {
+                "bytes": 522,
+                "sha256": "110bf3def2634f5a3c6addd02b8b61d35fddd3e3ea776077144041e6c2599719"
+            },
+            "fixtures/s3-outage-v2.txt": {
+                "bytes": 620,
+                "sha256": "ef488f9ba8481a42e7f79aceafde979d9f09ddc0072f2edc0577e6b064cc3d2f"
+            },
+            "lifecycle.py": {
+                "bytes": 46196,
+                "sha256": "1e3a5a2e9499339457e498d38e5d854b82c2160c81a646d413bb7cbf61057c3f"
+            },
+            "lifecycle_test.py": {
+                "bytes": 12572,
+                "sha256": "da06bc9f5463eba9b4be96fb9af76028c22f745a309b56198debd5051e97fcb0"
+            },
+            "objects.mjs": {
+                "bytes": 16033,
+                "sha256": "a0ca8db7a7b46ddcdba416da74f1c13d26e931a5effa9df4de1fc2232623faaf"
+            },
+            "objects.test.mjs": {
+                "bytes": 7304,
+                "sha256": "1a5a90b04a6502b14337ac843d7c20f88df87f4d0c18758cb1b94031fcab0d36"
+            },
+            "observe.mjs": {
+                "bytes": 46519,
+                "sha256": "4772ce32a66e3a37a7a6a9d9ebb92cad1c1d3d67199a8506162e2be1ac347161"
+            },
+            "observe.test.mjs": {
+                "bytes": 19167,
+                "sha256": "00f9dfc507b9b856cb199f4e740eaa6c8e202d3f95d177438c6021171a2d2dd6"
+            },
+            "private.mjs": {
+                "bytes": 11069,
+                "sha256": "8bc9d92a0d6f4fd07002a68db891998b985d69743f8f966a957d03b07b8d1d71"
+            },
+            "seed.mjs": {
+                "bytes": 11621,
+                "sha256": "f9e10a8fbde5c655b8fb09f26644ec994a554331d284ada182b0f0a8eca40d69"
+            },
+            "smtp.mjs": {
+                "bytes": 10728,
+                "sha256": "82523128c0ad7a77d7b8d8d3743f278482d079fb7b1a26e9ee31e625b50b86f5"
+            },
+            "vector-curl.mjs": {
+                "bytes": 8104,
+                "sha256": "6041c0e5aa61644f4aca46ce26b19150260f1932a82ac4edf29c3976504ae2c5"
+            },
+            "vector-embedding.mjs": {
+                "bytes": 7854,
+                "sha256": "91d2fbb69b1c71c02b44df459080305b85f7683806f87eecb7bda1d50f773a4f"
+            },
+            "vector-observation.mjs": {
+                "bytes": 18807,
+                "sha256": "618fcd163cb9f03efcc181480a7302fd27f3a148235200f504ca9fd839204fff"
+            },
+            "vector-observe.mjs": {
+                "bytes": 18495,
+                "sha256": "fe5de79f807e493bba9869478eb63b3013e65fa5de8df8629ccbc07a8d1963f6"
+            },
+            "vector-snapshot.mjs": {
+                "bytes": 15318,
+                "sha256": "771ce4d74c1f93a9def8f0f6f15f59d41ca5b029b1980799ddc83db32ae7c706"
+            },
+            "vector-workflow.mjs": {
+                "bytes": 20085,
+                "sha256": "78b05f2749862555d77e2cbb63f07560b9956693e8c01217ecd73aa7ce9a265f"
+            },
+            "vector.test.mjs": {
+                "bytes": 38571,
+                "sha256": "395a1110b79a9016e22a86df7a88c821c804eaa99d485fc00f7b214d09478eaf"
+            }
+        },
+        "currentSourcesSha256": "4a8d40b709445468baf6b7b731f060d8dfe1b352b34801190266444721bf717e",
+        "runtimeGates": {
+            "allDisabled": true,
+            "count": 13
+        },
+        "run": "NOT_SELECTED",
+        "offlineValidation": {
+            "pythonTests": 37,
+            "nodeTests": 47,
+            "nodeSyntaxChecks": 14,
+            "pythonAstChecks": 4,
+            "documents": 3,
+            "mermaidDiagrams": 1,
+            "localMarkdownLinks": 80,
+            "guardLogSha256": "86942acf6cf533ae1b5a04c0e7cebce28538f6c88e65f7902240e43dd1c1b69c",
+            "documentationResultSha256": "6b527338a75967b7edc4a94a7cde98ba5ac4a105191b0bbd72815882b132784c"
+        },
+        "currentBuildValidation": "PENDING_SEPARATE_PRIVATE_RECEIPT",
+        "nativeValidation": "NOT_RUN",
+        "historicalRecord": "Every prior field is preserved, including the initial disabled vector inventory and review correction; source alignment does not replay a historical trial or replace its source commit."
+    },
+    "vectorProvisionReviewRevision2": {
+        "schemaVersion": 1,
+        "scenario": "VECTOR_PROVISION_V1",
+        "status": "DISABLED_HELPER_REVIEW_REVISION_HERMETIC_PASS_NATIVE_NOT_RUN",
+        "checkpointBeforePatch": "8e89e46f384cea89bb72dde9f7a98a4dda4299e9",
+        "selectedMainCommit": "dc314fcfe02bbc30877bb1a4a1720d1bb3abccde",
+        "beforeArchiveSha256": "beeee427aa53c166d2011b757a99597729086c2d7835ede9ad4cb768006abfa0",
+        "corrections": [
+            "EXACT_NATIVE_OLLAMA_PROBE_AND_DIMENSIONED_EMBED_DTOS",
+            "NOFOLLOW_SINGLE_DESCRIPTOR_CURL_METADATA_BYTES_AND_FINALLY_CLOSE"
+        ],
+        "changedRuntimeAndTests": {
+            "vector-curl.mjs": {
+                "bytes": 8657,
+                "sha256": "d71fab7fc8e41462af1fa7b780221c9ce36347df8983440ae11234c7547016e8"
+            },
+            "vector-embedding.mjs": {
+                "bytes": 7998,
+                "sha256": "3812d99f3ed80021791f707201ac9494b6240b530b2c5ab63ac4a95c501efac4"
+            },
+            "vector.test.mjs": {
+                "bytes": 44174,
+                "sha256": "9f12f2cb66c505061e65cd6382991688d509303696aa72b7ef07b7da719cb8e3"
+            }
+        },
+        "currentSources": {
+            "README.md": {
+                "bytes": 21919,
+                "sha256": "640a64fa3dad0c080c7eb50e33f80c14e0837c26369a2c53146cd45c40669b67"
+            },
+            "bucket.mjs": {
+                "bytes": 6679,
+                "sha256": "84ec4e6f176d63a1b1122f13de65f71d876a5391bfb0eecfc75f6004eebf4f24"
+            },
+            "cleanup-fixture.mjs": {
+                "bytes": 13025,
+                "sha256": "fc54ad3f0045dbef1c720dd902dd920c3a409547668798a3d48c0c05df552bbb"
+            },
+            "cleanup-observe.mjs": {
+                "bytes": 33495,
+                "sha256": "0152a23220bc4827e434710ca3bf5ec7995ce08c6dddd34f42a52831205f869c"
+            },
+            "cleanup.test.mjs": {
+                "bytes": 22103,
+                "sha256": "581aeb09a39315db748f883f3636d9c4623fa5ef5db51dfcd6d6a07ded121da8"
+            },
+            "fault.py": {
+                "bytes": 23931,
+                "sha256": "4df4a461529a27ce4e812a32352d7c0f356cf908b08dbe10ba403b9087b68ac0"
+            },
+            "fault_test.py": {
+                "bytes": 19222,
+                "sha256": "ec9a5dda206002eaf3eaac55b864004d4f8bb4da814aff75af293b5f33e198d3"
+            },
+            "fixtures/expected.json": {
+                "bytes": 926,
+                "sha256": "67c562dfb951d9751d76468f4cf29b89d6fae3432ed9debb5c7f0790cb4fac7d"
+            },
+            "fixtures/s3-outage-v1.txt": {
+                "bytes": 522,
+                "sha256": "110bf3def2634f5a3c6addd02b8b61d35fddd3e3ea776077144041e6c2599719"
+            },
+            "fixtures/s3-outage-v2.txt": {
+                "bytes": 620,
+                "sha256": "ef488f9ba8481a42e7f79aceafde979d9f09ddc0072f2edc0577e6b064cc3d2f"
+            },
+            "lifecycle.py": {
+                "bytes": 46196,
+                "sha256": "1e3a5a2e9499339457e498d38e5d854b82c2160c81a646d413bb7cbf61057c3f"
+            },
+            "lifecycle_test.py": {
+                "bytes": 12572,
+                "sha256": "da06bc9f5463eba9b4be96fb9af76028c22f745a309b56198debd5051e97fcb0"
+            },
+            "objects.mjs": {
+                "bytes": 16033,
+                "sha256": "a0ca8db7a7b46ddcdba416da74f1c13d26e931a5effa9df4de1fc2232623faaf"
+            },
+            "objects.test.mjs": {
+                "bytes": 7304,
+                "sha256": "1a5a90b04a6502b14337ac843d7c20f88df87f4d0c18758cb1b94031fcab0d36"
+            },
+            "observe.mjs": {
+                "bytes": 46519,
+                "sha256": "4772ce32a66e3a37a7a6a9d9ebb92cad1c1d3d67199a8506162e2be1ac347161"
+            },
+            "observe.test.mjs": {
+                "bytes": 19167,
+                "sha256": "00f9dfc507b9b856cb199f4e740eaa6c8e202d3f95d177438c6021171a2d2dd6"
+            },
+            "private.mjs": {
+                "bytes": 11069,
+                "sha256": "8bc9d92a0d6f4fd07002a68db891998b985d69743f8f966a957d03b07b8d1d71"
+            },
+            "seed.mjs": {
+                "bytes": 11621,
+                "sha256": "f9e10a8fbde5c655b8fb09f26644ec994a554331d284ada182b0f0a8eca40d69"
+            },
+            "smtp.mjs": {
+                "bytes": 10728,
+                "sha256": "82523128c0ad7a77d7b8d8d3743f278482d079fb7b1a26e9ee31e625b50b86f5"
+            },
+            "vector-curl.mjs": {
+                "bytes": 8657,
+                "sha256": "d71fab7fc8e41462af1fa7b780221c9ce36347df8983440ae11234c7547016e8"
+            },
+            "vector-embedding.mjs": {
+                "bytes": 7998,
+                "sha256": "3812d99f3ed80021791f707201ac9494b6240b530b2c5ab63ac4a95c501efac4"
+            },
+            "vector-observation.mjs": {
+                "bytes": 18807,
+                "sha256": "618fcd163cb9f03efcc181480a7302fd27f3a148235200f504ca9fd839204fff"
+            },
+            "vector-observe.mjs": {
+                "bytes": 18495,
+                "sha256": "fe5de79f807e493bba9869478eb63b3013e65fa5de8df8629ccbc07a8d1963f6"
+            },
+            "vector-snapshot.mjs": {
+                "bytes": 15318,
+                "sha256": "771ce4d74c1f93a9def8f0f6f15f59d41ca5b029b1980799ddc83db32ae7c706"
+            },
+            "vector-workflow.mjs": {
+                "bytes": 20085,
+                "sha256": "78b05f2749862555d77e2cbb63f07560b9956693e8c01217ecd73aa7ce9a265f"
+            },
+            "vector.test.mjs": {
+                "bytes": 44174,
+                "sha256": "9f12f2cb66c505061e65cd6382991688d509303696aa72b7ef07b7da719cb8e3"
+            }
+        },
+        "runtimeGates": {
+            "allDisabled": true,
+            "count": 13
+        },
+        "run": "NOT_SELECTED",
+        "offlineValidation": {
+            "status": "PASS",
+            "pythonTests": 37,
+            "nodeTests": 52,
+            "addedNodeTests": 5,
+            "nodeSyntaxChecks": 14,
+            "pythonAstChecks": 4,
+            "documents": 3,
+            "mermaidDiagrams": 1,
+            "localMarkdownLinks": 80,
+            "resultSha256": "ecb615c353b69d4e3f5f95155e0653b789f852ee62ba3bde5c5cdec924ba0379",
+            "guardLogSha256": "c78e100ff346cff52771030a48bd27ea394148ef0d68f4f9834a559c16b749dd"
+        },
+        "previousApplicationValidation": {
+            "receiptSha256": "ddd1adf7654c7f9fa35dfcecfebaca730e6dd96209ce71bc6f8abccce7320158",
+            "scopedTypeChecks": 4,
+            "scopedLintChecks": 4,
+            "productionBuilds": 4,
+            "status": "PASS_BEFORE_ACCEPTANCE_ONLY_CORRECTION_NOT_REPEATED"
+        },
+        "productionPackageLockAndCiBytes": "IDENTICAL_TO_EXACT_SELECTED_MAIN",
+        "nativeValidation": "NOT_RUN",
+        "historicalRecord": "All fifteen preceding fields and their archived sources/results remain unchanged. This acceptance-only correction is not an executed native inventory and does not replay or replace any previous trial.",
+        "currentSourcesSha256": "2c7f2b2bd2a3199c8c2f1b2d8dab5dff214d479979c8adbc6e252a21f2bbcd0d"
+    },
+    "vectorProvisionReviewRevision3": {
+        "schemaVersion": 1,
+        "scenario": "VECTOR_PROVISION_V1",
+        "status": "DISABLED_POST_SETUP_REFUSAL_CORRECTION_HERMETIC_PASS",
+        "checkpointBeforePatch": "e6d4c3d4dc887bb356238532ed9d853362d681f0",
+        "beforeArchiveSha256": "cb82ca85963d50c0edcd464ab937033fdeb76abe0f6e34ccc4b82296e08c3f19",
+        "nativeSetupTrial": {
+            "runId": "2aedbacc86f9",
+            "sourceCommit": "e6d4c3d4dc887bb356238532ed9d853362d681f0",
+            "preparationManifestSha256": "cbac048e87c133205a5f9223759729177035b0138ce67c74bb9783ac3c74e7cb",
+            "outcome": "INCOMPLETE_BEFORE_BASELINE_NO_REPLAY",
+            "firstDiagnostic": "S3_OUTAGE_VECTOR_HTTP_UNKNOWN_NO_REPLAY",
+            "failingHttpStatus": "UNKNOWN_NOT_RECORDED",
+            "failingOrdinal": "UNKNOWN_NOT_RECORDED",
+            "readonlyProjectionSha256": "8e4ecdcc3392120c37a84b9840f262bf270cb68d5cb11b9f01c91cfb0e24e8ea",
+            "separateReadOnlyDatabaseFacts": {
+                "users": 1,
+                "organizations": 1,
+                "sessions": 1,
+                "collections": 1,
+                "documents": 1,
+                "versions": 1,
+                "generations": 1,
+                "tasks": 2,
+                "credentials": 0,
+                "keys": 0,
+                "generationStates": ["ACTIVE"],
+                "taskStates": [
+                    {
+                        "kind": "PROVISION",
+                        "status": "COMPLETE",
+                        "attempts": 1,
+                        "errorCode": null
+                    },
+                    {
+                        "kind": "INDEX_DOCUMENT",
+                        "status": "COMPLETE",
+                        "attempts": 1,
+                        "errorCode": null
+                    }
+                ],
+                "versionStates": ["READY"]
+            },
+            "unexpectedApiCategories": [],
+            "baselineCreated": false,
+            "watchdogStarted": false,
+            "faultStarted": false,
+            "browserAction": false,
+            "syntheticEmbeddingFinal": {
+                "sha256": "5fdd5816f31b3d7f28888c9a6cee2305e40fb30a714b00c836c7dae481857adf",
+                "counters": {
+                    "requests": 7,
+                    "embeddings": 2,
+                    "inputs": 2,
+                    "rejected": 0,
+                    "connections": 7
+                }
+            },
+            "cleanupReceiptSha256": "b0b6b64d793b8c4f94c4a9b9e1410085bd8754ccf4d3858877306c93c2e9b94a",
+            "teardownReceiptSha256": "4c27941624ddf06643490cb95867defaf5d9b24fc9eb4106d0cba1b9c7c29252",
+            "exactDisabledRestorationReceiptSha256": "24d88ba617b6bf07fb527125603058dfb4e51a7e4ef774951b28d1d68f5db7db",
+            "cleanup": "CLEANED_EVIDENCE_RETAINED_0_OWNED_PROCESSES_STORES_VOLUMES",
+            "historicalHttpStatusNotInferredFromSource": true
+        },
+        "corrections": [
+            "EXPLICIT_NATIVE_JSON_EMPTY_SIGNOUT_BODY",
+            "PRESERVE_PRIMARY_WORKFLOW_FAILURE_OVER_SIGNOUT_OR_RECEIPT_FAILURE",
+            "BOUNDED_PRIVATE_BEFORE_AFTER_HTTP_MODE_ORDINAL_METHOD_STATUS_RECEIPTS"
+        ],
+        "currentSources": {
+            "README.md": {
+                "bytes": 21919,
+                "sha256": "640a64fa3dad0c080c7eb50e33f80c14e0837c26369a2c53146cd45c40669b67"
+            },
+            "bucket.mjs": {
+                "bytes": 6679,
+                "sha256": "84ec4e6f176d63a1b1122f13de65f71d876a5391bfb0eecfc75f6004eebf4f24"
+            },
+            "cleanup-fixture.mjs": {
+                "bytes": 13025,
+                "sha256": "fc54ad3f0045dbef1c720dd902dd920c3a409547668798a3d48c0c05df552bbb"
+            },
+            "cleanup-observe.mjs": {
+                "bytes": 33495,
+                "sha256": "0152a23220bc4827e434710ca3bf5ec7995ce08c6dddd34f42a52831205f869c"
+            },
+            "cleanup.test.mjs": {
+                "bytes": 22103,
+                "sha256": "581aeb09a39315db748f883f3636d9c4623fa5ef5db51dfcd6d6a07ded121da8"
+            },
+            "fault.py": {
+                "bytes": 23931,
+                "sha256": "4df4a461529a27ce4e812a32352d7c0f356cf908b08dbe10ba403b9087b68ac0"
+            },
+            "fault_test.py": {
+                "bytes": 19222,
+                "sha256": "ec9a5dda206002eaf3eaac55b864004d4f8bb4da814aff75af293b5f33e198d3"
+            },
+            "fixtures/expected.json": {
+                "bytes": 926,
+                "sha256": "67c562dfb951d9751d76468f4cf29b89d6fae3432ed9debb5c7f0790cb4fac7d"
+            },
+            "fixtures/s3-outage-v1.txt": {
+                "bytes": 522,
+                "sha256": "110bf3def2634f5a3c6addd02b8b61d35fddd3e3ea776077144041e6c2599719"
+            },
+            "fixtures/s3-outage-v2.txt": {
+                "bytes": 620,
+                "sha256": "ef488f9ba8481a42e7f79aceafde979d9f09ddc0072f2edc0577e6b064cc3d2f"
+            },
+            "lifecycle.py": {
+                "bytes": 46196,
+                "sha256": "1e3a5a2e9499339457e498d38e5d854b82c2160c81a646d413bb7cbf61057c3f"
+            },
+            "lifecycle_test.py": {
+                "bytes": 12572,
+                "sha256": "da06bc9f5463eba9b4be96fb9af76028c22f745a309b56198debd5051e97fcb0"
+            },
+            "objects.mjs": {
+                "bytes": 16033,
+                "sha256": "a0ca8db7a7b46ddcdba416da74f1c13d26e931a5effa9df4de1fc2232623faaf"
+            },
+            "objects.test.mjs": {
+                "bytes": 7304,
+                "sha256": "1a5a90b04a6502b14337ac843d7c20f88df87f4d0c18758cb1b94031fcab0d36"
+            },
+            "observe.mjs": {
+                "bytes": 46519,
+                "sha256": "4772ce32a66e3a37a7a6a9d9ebb92cad1c1d3d67199a8506162e2be1ac347161"
+            },
+            "observe.test.mjs": {
+                "bytes": 19167,
+                "sha256": "00f9dfc507b9b856cb199f4e740eaa6c8e202d3f95d177438c6021171a2d2dd6"
+            },
+            "private.mjs": {
+                "bytes": 11069,
+                "sha256": "8bc9d92a0d6f4fd07002a68db891998b985d69743f8f966a957d03b07b8d1d71"
+            },
+            "seed.mjs": {
+                "bytes": 11621,
+                "sha256": "f9e10a8fbde5c655b8fb09f26644ec994a554331d284ada182b0f0a8eca40d69"
+            },
+            "smtp.mjs": {
+                "bytes": 10728,
+                "sha256": "82523128c0ad7a77d7b8d8d3743f278482d079fb7b1a26e9ee31e625b50b86f5"
+            },
+            "vector-curl.mjs": {
+                "bytes": 8657,
+                "sha256": "d71fab7fc8e41462af1fa7b780221c9ce36347df8983440ae11234c7547016e8"
+            },
+            "vector-embedding.mjs": {
+                "bytes": 7998,
+                "sha256": "3812d99f3ed80021791f707201ac9494b6240b530b2c5ab63ac4a95c501efac4"
+            },
+            "vector-observation.mjs": {
+                "bytes": 18807,
+                "sha256": "618fcd163cb9f03efcc181480a7302fd27f3a148235200f504ca9fd839204fff"
+            },
+            "vector-observe.mjs": {
+                "bytes": 18495,
+                "sha256": "fe5de79f807e493bba9869478eb63b3013e65fa5de8df8629ccbc07a8d1963f6"
+            },
+            "vector-snapshot.mjs": {
+                "bytes": 15318,
+                "sha256": "771ce4d74c1f93a9def8f0f6f15f59d41ca5b029b1980799ddc83db32ae7c706"
+            },
+            "vector-workflow.mjs": {
+                "bytes": 23900,
+                "sha256": "9cf06c6da67d2d1bbc7ffa08462b1576a0049e49eb41e57e603f40716d77d4f5"
+            },
+            "vector.test.mjs": {
+                "bytes": 52178,
+                "sha256": "b6846bddee81dc0400e2a7df41166bb33061859e89ce67edb5c5e45248db7b85"
+            }
+        },
+        "offlineValidation": {
+            "status": "PASS",
+            "pythonTests": 37,
+            "nodeTests": 58,
+            "addedNodeTests": 6,
+            "nodeSyntaxChecks": 14,
+            "pythonAstChecks": 4,
+            "documents": 3,
+            "mermaidDiagrams": 1,
+            "localMarkdownLinks": 80,
+            "resultSha256": "7e28f4dc7540add75a214b5cf45d937ec823d4c2d7be3a23c8c018e6b3ef5000",
+            "guardLogSha256": "2f2abbb7f89dca941a2e73e2c86242060a420ee20d572cc2088d9fb4e3f0fdcc"
+        },
+        "runtimeGates": {
+            "allDisabled": true,
+            "count": 13
+        },
+        "replacementRun": "NOT_SELECTED",
+        "nativeRerun": "NOT_RUN",
+        "productionPackageLockAndCiBytes": "IDENTICAL_TO_SELECTED_MAIN_DC314FC",
+        "applicationBuilds": "PREVIOUS_4_PASS_UNCHANGED_NOT_REPEATED",
+        "historicalRecord": "All sixteen preceding fields and every archived source, receipt and native result remain unchanged. The source-supported bodyless-signout refusal is not a retroactive measured HTTP status. Separate ACTIVE/READY database facts do not complete the failed one-shot setup. This correction has no replacement native execution.",
+        "currentSourcesSha256": "1d317d743d3b34d9f5877525b4cdcaec39169ce520848ed38505bb80a0918dfd"
+    },
+    "vectorProvisionReviewRevision4": {
+        "schemaVersion": 1,
+        "scenario": "VECTOR_PROVISION_V1",
+        "status": "DISABLED_APP_READER_TYPE_CORRECTION_HERMETIC_PASS_NATIVE_SQL_NOT_RETESTED",
+        "checkpointBeforePatch": "950ee085c78651613ec1c1a977430b91dd4d9b50",
+        "beforeArchiveSha256": "1f6165014ea83032f13cdafa7012760b165279e90f75c7edadc8bbb91066bac2",
+        "nativeTrial": {
+            "runId": "24d0469b8d95",
+            "sourceCommit": "950ee085c78651613ec1c1a977430b91dd4d9b50",
+            "preparationManifestSha256": "792bdc737e4e026dccb487c01fa07a05a1598965e36bfff89bf48030bcc73abd",
+            "outcome": "INCOMPLETE_FORMAL_READY_OBSERVATION_NO_REPLAY",
+            "separateCompletedWorkflows": {
+                "prepare-g1": {
+                    "completed": true,
+                    "httpCalls": 13,
+                    "statuses": [200],
+                    "signOutConfirmed": true,
+                    "finalizationSha256": "7ba8f17f0ca4b48887b1971056ae06b4608d73a0167f8d532eb1eb0a31f53b74"
+                },
+                "search-g1": {
+                    "completed": true,
+                    "httpCalls": 13,
+                    "statuses": [200],
+                    "signOutConfirmed": true,
+                    "finalizationSha256": "cc88d5fd7d5ea70680e695ae8163b860b85c88e8e9775e202fc0fa97732c7736"
+                }
+            },
+            "searchReceiptSha256": "607f3bafb84b457aee09b286640eb7e5becef1b887c6c439a1e58f9d3abfd3bc",
+            "firstFailedPhase": "vector-g1-ready",
+            "firstDiagnostic": "M7C_S3_OUTAGE_SANITIZED_FAILURE",
+            "completedSnapshots": 0,
+            "incompleteReceiptSha256": "e06be9a9ac1b53a8e00d7b1128e67b5ded57c5111bd3cc8db85626526f819463",
+            "formalBaselinePublished": false,
+            "watchdogStarted": false,
+            "faultStarted": false,
+            "rootBrowser": {
+                "normalLogin": "CONFIRMED",
+                "readOnlyLanguage": "EN",
+                "activeGeneration": "G1",
+                "publishedDocuments": 1,
+                "children": 1,
+                "retainedChunks": 0,
+                "reservedChunks": 0,
+                "completeTasks": 2,
+                "consoleErrors": 0,
+                "browserTransfers": false,
+                "retryAction": false,
+                "tabClosed": true,
+                "sessionZeroBeforeTeardown": "NOT_CLAIMED"
+            },
+            "syntheticEmbeddingFinal": {
+                "sha256": "bb649627c79e962730971192b81dc253a8b75f3e899d0b1b39f32311dca9b8d3",
+                "counters": {
+                    "requests": 13,
+                    "embeddings": 4,
+                    "inputs": 4,
+                    "rejected": 0,
+                    "connections": 13
+                }
+            },
+            "cleanupReceiptSha256": "213bff3deebb04d16ccb0d8864f2a460dbdb33981ef1e32e707702bd62063982",
+            "teardownReceiptSha256": "88bc20d1cc1986265eb5322ced63370f395faeca954470079664f35fb4755d89",
+            "exactDisabledRestoreReceiptSha256": "caa01d7cfb10dca0a6015c58d8f1c1224c55e24172f9a153f45b7679a95e7cbd",
+            "cleanup": "CLEANED_EVIDENCE_RETAINED_0_OWNED_PROCESSES_STORES_VOLUMES"
+        },
+        "sourceDiagnosis": {
+            "applicationColumn": "Chunk.generationId",
+            "migratedType": "TEXT",
+            "incorrectParameterType": "uuid[]",
+            "correctedParameterType": "text[]",
+            "inferredSqlstate": "42883_SOURCE_INFERRED_NOT_CAPTURED_IN_TRIAL",
+            "pureProductionPlannerReproduction": {
+                "status": "PASS",
+                "sourceBytes": 522,
+                "sourceSha256": "110bf3def2634f5a3c6addd02b8b61d35fddd3e3ea776077144041e6c2599719",
+                "children": 1,
+                "parents": 1,
+                "childRanges": [[0, 511]],
+                "nativeCalls": 0
+            }
+        },
+        "corrections": [
+            "SCHEMA_COMPATIBLE_TEXT_ARRAY_PARAMETER_WITHOUT_COLUMN_CAST",
+            "FIXED_READ_APP_SNAPSHOT_STAGE_FOR_UNKNOWN_TRANSACTION_FAILURES"
+        ],
+        "currentSources": {
+            "README.md": {
+                "bytes": 21919,
+                "sha256": "640a64fa3dad0c080c7eb50e33f80c14e0837c26369a2c53146cd45c40669b67"
+            },
+            "bucket.mjs": {
+                "bytes": 6679,
+                "sha256": "84ec4e6f176d63a1b1122f13de65f71d876a5391bfb0eecfc75f6004eebf4f24"
+            },
+            "cleanup-fixture.mjs": {
+                "bytes": 13025,
+                "sha256": "fc54ad3f0045dbef1c720dd902dd920c3a409547668798a3d48c0c05df552bbb"
+            },
+            "cleanup-observe.mjs": {
+                "bytes": 33495,
+                "sha256": "0152a23220bc4827e434710ca3bf5ec7995ce08c6dddd34f42a52831205f869c"
+            },
+            "cleanup.test.mjs": {
+                "bytes": 22103,
+                "sha256": "581aeb09a39315db748f883f3636d9c4623fa5ef5db51dfcd6d6a07ded121da8"
+            },
+            "fault.py": {
+                "bytes": 23931,
+                "sha256": "4df4a461529a27ce4e812a32352d7c0f356cf908b08dbe10ba403b9087b68ac0"
+            },
+            "fault_test.py": {
+                "bytes": 19222,
+                "sha256": "ec9a5dda206002eaf3eaac55b864004d4f8bb4da814aff75af293b5f33e198d3"
+            },
+            "fixtures/expected.json": {
+                "bytes": 926,
+                "sha256": "67c562dfb951d9751d76468f4cf29b89d6fae3432ed9debb5c7f0790cb4fac7d"
+            },
+            "fixtures/s3-outage-v1.txt": {
+                "bytes": 522,
+                "sha256": "110bf3def2634f5a3c6addd02b8b61d35fddd3e3ea776077144041e6c2599719"
+            },
+            "fixtures/s3-outage-v2.txt": {
+                "bytes": 620,
+                "sha256": "ef488f9ba8481a42e7f79aceafde979d9f09ddc0072f2edc0577e6b064cc3d2f"
+            },
+            "lifecycle.py": {
+                "bytes": 46196,
+                "sha256": "1e3a5a2e9499339457e498d38e5d854b82c2160c81a646d413bb7cbf61057c3f"
+            },
+            "lifecycle_test.py": {
+                "bytes": 12572,
+                "sha256": "da06bc9f5463eba9b4be96fb9af76028c22f745a309b56198debd5051e97fcb0"
+            },
+            "objects.mjs": {
+                "bytes": 16033,
+                "sha256": "a0ca8db7a7b46ddcdba416da74f1c13d26e931a5effa9df4de1fc2232623faaf"
+            },
+            "objects.test.mjs": {
+                "bytes": 7304,
+                "sha256": "1a5a90b04a6502b14337ac843d7c20f88df87f4d0c18758cb1b94031fcab0d36"
+            },
+            "observe.mjs": {
+                "bytes": 46519,
+                "sha256": "4772ce32a66e3a37a7a6a9d9ebb92cad1c1d3d67199a8506162e2be1ac347161"
+            },
+            "observe.test.mjs": {
+                "bytes": 19167,
+                "sha256": "00f9dfc507b9b856cb199f4e740eaa6c8e202d3f95d177438c6021171a2d2dd6"
+            },
+            "private.mjs": {
+                "bytes": 11069,
+                "sha256": "8bc9d92a0d6f4fd07002a68db891998b985d69743f8f966a957d03b07b8d1d71"
+            },
+            "seed.mjs": {
+                "bytes": 11621,
+                "sha256": "f9e10a8fbde5c655b8fb09f26644ec994a554331d284ada182b0f0a8eca40d69"
+            },
+            "smtp.mjs": {
+                "bytes": 10728,
+                "sha256": "82523128c0ad7a77d7b8d8d3743f278482d079fb7b1a26e9ee31e625b50b86f5"
+            },
+            "vector-curl.mjs": {
+                "bytes": 8657,
+                "sha256": "d71fab7fc8e41462af1fa7b780221c9ce36347df8983440ae11234c7547016e8"
+            },
+            "vector-embedding.mjs": {
+                "bytes": 7998,
+                "sha256": "3812d99f3ed80021791f707201ac9494b6240b530b2c5ab63ac4a95c501efac4"
+            },
+            "vector-observation.mjs": {
+                "bytes": 18807,
+                "sha256": "618fcd163cb9f03efcc181480a7302fd27f3a148235200f504ca9fd839204fff"
+            },
+            "vector-observe.mjs": {
+                "bytes": 18022,
+                "sha256": "0dfd219ca8e9f4613fd1f3239a5d7e436bd81c45708a6211e2db8ee41587e97b"
+            },
+            "vector-snapshot.mjs": {
+                "bytes": 16187,
+                "sha256": "a14eb0a223abcebf12340514acac558304992c0286e9c00ce986c3a6b689e172"
+            },
+            "vector-workflow.mjs": {
+                "bytes": 23900,
+                "sha256": "9cf06c6da67d2d1bbc7ffa08462b1576a0049e49eb41e57e603f40716d77d4f5"
+            },
+            "vector.test.mjs": {
+                "bytes": 57190,
+                "sha256": "f45ad785062a5b005a015855cc3248e681b1f350aa4ca999b37eca3df96109ff"
+            }
+        },
+        "offlineValidation": {
+            "status": "PASS",
+            "pythonTests": 37,
+            "nodeTests": 60,
+            "addedNodeTests": 2,
+            "nodeSyntaxChecks": 14,
+            "pythonAstChecks": 4,
+            "documents": 3,
+            "mermaidDiagrams": 1,
+            "localMarkdownLinks": 80,
+            "resultSha256": "5a8f338f23866334380f61ea1d23972fceb73d877aa241c5c209e0c09045efcd",
+            "guardLogSha256": "ea08e6f8496d9b1e4e0a1cf4a9412075aa8e6bf01af4ca564a384f2276289fdb"
+        },
+        "runtimeGates": {
+            "allDisabled": true,
+            "count": 13
+        },
+        "replacementRun": "NOT_SELECTED",
+        "nativeSqlExecutionAfterCorrection": "NOT_RUN_REQUIRES_NEW_MIGRATED_TEST_RUN_AND_READY",
+        "applicationBuilds": "PREVIOUS_4_PASS_PRODUCT_UNCHANGED_NOT_REPEATED",
+        "productionPackageLockAndCiBytes": "IDENTICAL_TO_SELECTED_MAIN_DC314FC",
+        "historicalRecord": "All seventeen preceding fields and their archives/results remain unchanged. The failed READY trial is INCOMPLETE, its prior setup/search successes remain separate, and the source-inferred SQLSTATE is not a captured native error. Pure schema-contract tests do not establish PostgreSQL execution or native recovery.",
+        "currentSourcesSha256": "d5de02042993ee5db8598a7484e0666c86872d88622e4857e5e9d7e497d66926"
+    },
+    "vectorProvisionReviewRevision5": {
+        "schemaVersion": 1,
+        "scenario": "VECTOR_PROVISION_V1",
+        "status": "DISABLED_PRIMED_OBSERVER_HERMETIC_PASS_NATIVE_REVISION_NOT_RUN",
+        "checkpointBeforePatch": "ba755dbdfa13eb39e653b4df3a8d829175b479e4",
+        "beforeArchiveSha256": "74697ec3a274bd8bce5cdc4abe83c06d3b1a8b7c7d69af1605ac84aa3e3fefe7",
+        "nativeTrial": {
+            "runId": "8aa5a366fd76",
+            "sourceCommit": "ba755dbdfa13eb39e653b4df3a8d829175b479e4",
+            "selectedProductionMain": "dc314fcfe02bbc30877bb1a4a1720d1bb3abccde",
+            "preparationManifestSha256": "df02ba304c03ff3a2afdcb377ca187d87ea07a5e79aa9d20bf3c20e9f326e5b4",
+            "outcome": "INCOMPLETE_TRACE_BOUND_NO_REPLAY",
+            "separateCompletedWorkflows": {
+                "prepare-g1": {
+                    "completed": true,
+                    "httpCalls": 12,
+                    "statuses": {
+                        "200": 12
+                    },
+                    "signOutConfirmed": true,
+                    "finalizationSha256": "d4e50a08ecf40d2e82cabb760c6806284d007ea79f290db65d88c6b8ea9fa0a7"
+                },
+                "search-g1": {
+                    "completed": true,
+                    "httpCalls": 13,
+                    "statuses": {
+                        "200": 13
+                    },
+                    "signOutConfirmed": true,
+                    "finalizationSha256": "6d9acf8d9f13e837a521e14440cf3750af919399791b5a9ca47511915222599c"
+                },
+                "rebuild-g2": {
+                    "completed": true,
+                    "httpCalls": 5,
+                    "statuses": {
+                        "200": 5
+                    },
+                    "signOutConfirmed": true,
+                    "finalizationSha256": "8fb2dc1a88948ac2a3bdb9b30d3b6fe51d5764c2ab079e4f08ced8d90531c988"
+                },
+                "search-outage": {
+                    "completed": true,
+                    "httpCalls": 8,
+                    "statuses": {
+                        "200": 7,
+                        "409": 1
+                    },
+                    "signOutConfirmed": true,
+                    "finalizationSha256": "18ae3b15070f5cdb1e70c16561e05395b6c500d6366d03657cf89103d82e4e39"
+                }
+            },
+            "separateObservedPhases": {
+                "vector-g1-ready": {
+                    "status": "OBSERVED",
+                    "snapshots": 1,
+                    "sha256": "9230dc819d8eae02c56db2047f4f1f5c4676175ed96bf5d351d12a04afb5c666",
+                    "nativeApplicationSqlExecution": "PASS_AT_BA755"
+                },
+                "vector-g2-staged": {
+                    "status": "OBSERVED",
+                    "snapshots": 1,
+                    "sha256": "bd43afa6bfd3e71bc6d716156138198bb3d75b12f3fdd955f8125093574c3792"
+                }
+            },
+            "firstFailedPhase": "vector-outage-failed",
+            "firstDiagnostic": "S3_OUTAGE_VECTOR_TRACE_BOUND",
+            "snapshots": 40,
+            "incompleteReceiptSha256": "630774d535cf581f6f1478780be8f09e468ec1171a4220f84350974584820aa7",
+            "failedTraceRows": "NOT_RETAINED_IN_HISTORICAL_RECEIPT",
+            "traceBoundBranch": "UNKNOWN_COLLECTOR_OVERFLOW_OR_INCOMPLETE_FINAL_TRACE",
+            "fiveClaimsAndAllBackoffs": "NOT_ESTABLISHED",
+            "faultReceiptSha256": "601d919ecf1fd86c6886ab886ad230e6d544e23bec7bd09734e60386145e331d",
+            "storageStopped": true,
+            "sameWorkerResumed": true,
+            "measuredTimes": {
+                "faultReceiptAt": "2026-10-24T18:10:18.170913+00:00",
+                "observerIntentMtime": "2026-10-24T18:10:27.562467+00:00",
+                "elapsedBeforeIntentMillisecondsRounded": 9392,
+                "firstBackoffMissed": "UNKNOWN_NOT_INFERRED_FROM_TIMESTAMPS"
+            },
+            "rootBrowser": {
+                "language": "EN",
+                "activeGeneration": "G1",
+                "documents": 1,
+                "children": 1,
+                "retainedChunks": 0,
+                "reservedChunks": 0,
+                "completeTasks": 2,
+                "consoleErrors": 0,
+                "browserTransfers": false,
+                "retryAction": false,
+                "tabClosed": true,
+                "sessionZeroBeforeTeardown": "NOT_CLAIMED"
+            },
+            "abortDiagnostic": "INCOMPLETE_CONTROL_REQUESTED",
+            "watchdogIntervened": true,
+            "watchdogFinalSha256": "283dfb4deb6b958fee8b67c31b2fd037249d499b0022abea2a74d6720d68d679",
+            "syntheticEmbeddingFinal": {
+                "sha256": "f48dc19677ee2c16fe4056c13fa48954d1894cd278f79d35fee9479ff3869a6e",
+                "counters": {
+                    "requests": 20,
+                    "embeddings": 6,
+                    "inputs": 6,
+                    "rejected": 0,
+                    "connections": 20
+                }
+            },
+            "cleanupReceiptSha256": "6c7f108500f49422a85214d7dc0d1927feeeee0508b2ff9e6af9f64c8e8fc34f",
+            "teardownReceiptSha256": "6fc0199c07b5cc6fdcb995ed37e09eeb7d07a2942ea4f204d700be7f9705dc03",
+            "exactDisabledRestoreReceiptSha256": "7d2c96d8abe644e364bd923d192cc5872129a48629b9ab0114221c07f52b9441",
+            "cleanup": "CLEANED_EVIDENCE_RETAINED_0_OWNED_PROCESSES_STORES_VOLUMES"
+        },
+        "corrections": [
+            "ATOMIC_SOURCE_PROOF_PID_BOUND_READY_ACK_AFTER_STAGED_READER_PRIMING",
+            "VECTOR_ONLY_MONOTONE_STOP_RESUME_GUARD_WITH_COHERENT_PHASE_PAIR_SAMPLE",
+            "LIVE_OBSERVER_ACK_BEFORE_INTENT_STOP_AND_RESUME_WITH_ORIGINAL_DEADLINES",
+            "BOUNDED_FAILURE_TRACE_WITH_DISTINCT_OVERFLOW_AND_INCOMPLETE_CODES",
+            "EXACT_NATIVE_RETIRED_G1_CLEANUP_TASK_AND_PRODUCTION_RETENTION",
+            "METADATA_PROCESSIDENTITY_AND_TESTED_REAL_NODE_ACK_PUBLISHER"
+        ],
+        "bounds": {
+            "watchdogSeconds": 900,
+            "minimumRemainingBeforeFaultSeconds": 625,
+            "snapshotLimit": 360,
+            "traceMilliseconds": 720000,
+            "changedRows": 11,
+            "overflowEventLimit": 1,
+            "ackFreshnessAtFaultConsumptionSeconds": 90,
+            "preFaultWaitSeconds": 90,
+            "guardChildMilliseconds": 15000,
+            "appSnapshotMilliseconds": 15000,
+            "observerCleanupMilliseconds": 55000,
+            "claims": 5,
+            "backoffMilliseconds": [10000, 20000, 40000, 80000]
+        },
+        "currentSources": {
+            "README.md": {
+                "bytes": 23857,
+                "sha256": "926a4efda3adc0cab6bebc13d385ea4d15bf5face14cf772d2998f2ee8529bf1"
+            },
+            "bucket.mjs": {
+                "bytes": 6679,
+                "sha256": "84ec4e6f176d63a1b1122f13de65f71d876a5391bfb0eecfc75f6004eebf4f24"
+            },
+            "cleanup-fixture.mjs": {
+                "bytes": 13025,
+                "sha256": "fc54ad3f0045dbef1c720dd902dd920c3a409547668798a3d48c0c05df552bbb"
+            },
+            "cleanup-observe.mjs": {
+                "bytes": 33495,
+                "sha256": "0152a23220bc4827e434710ca3bf5ec7995ce08c6dddd34f42a52831205f869c"
+            },
+            "cleanup.test.mjs": {
+                "bytes": 22103,
+                "sha256": "581aeb09a39315db748f883f3636d9c4623fa5ef5db51dfcd6d6a07ded121da8"
+            },
+            "fault.py": {
+                "bytes": 24570,
+                "sha256": "ebffd21c7a2698b5bfb44a04053519d1269b4874ead51933f267391c767969da"
+            },
+            "fault_test.py": {
+                "bytes": 22627,
+                "sha256": "aca64500d1b58c657b5576e0bb4855b5ef1d6a2e58b118cab83770ad90301d81"
+            },
+            "fixtures/expected.json": {
+                "bytes": 926,
+                "sha256": "67c562dfb951d9751d76468f4cf29b89d6fae3432ed9debb5c7f0790cb4fac7d"
+            },
+            "fixtures/s3-outage-v1.txt": {
+                "bytes": 522,
+                "sha256": "110bf3def2634f5a3c6addd02b8b61d35fddd3e3ea776077144041e6c2599719"
+            },
+            "fixtures/s3-outage-v2.txt": {
+                "bytes": 620,
+                "sha256": "ef488f9ba8481a42e7f79aceafde979d9f09ddc0072f2edc0577e6b064cc3d2f"
+            },
+            "lifecycle.py": {
+                "bytes": 55643,
+                "sha256": "5acd933639910a6961871ecf7b8a02cc83519586b0dc145a4cfa177c22bfb85b"
+            },
+            "lifecycle_test.py": {
+                "bytes": 24684,
+                "sha256": "3fe9899a2d19c4fd06a67ac473cb26ac09ca3f4af50e7de63b30d0cc74d1a32a"
+            },
+            "objects.mjs": {
+                "bytes": 16033,
+                "sha256": "a0ca8db7a7b46ddcdba416da74f1c13d26e931a5effa9df4de1fc2232623faaf"
+            },
+            "objects.test.mjs": {
+                "bytes": 7304,
+                "sha256": "1a5a90b04a6502b14337ac843d7c20f88df87f4d0c18758cb1b94031fcab0d36"
+            },
+            "observe.mjs": {
+                "bytes": 46519,
+                "sha256": "4772ce32a66e3a37a7a6a9d9ebb92cad1c1d3d67199a8506162e2be1ac347161"
+            },
+            "observe.test.mjs": {
+                "bytes": 19167,
+                "sha256": "00f9dfc507b9b856cb199f4e740eaa6c8e202d3f95d177438c6021171a2d2dd6"
+            },
+            "private.mjs": {
+                "bytes": 12293,
+                "sha256": "da9c2d4f5e425556a9669f91273f9096b37fc2e46fe5f17f9412a1d59ceadaba"
+            },
+            "seed.mjs": {
+                "bytes": 11621,
+                "sha256": "f9e10a8fbde5c655b8fb09f26644ec994a554331d284ada182b0f0a8eca40d69"
+            },
+            "smtp.mjs": {
+                "bytes": 10728,
+                "sha256": "82523128c0ad7a77d7b8d8d3743f278482d079fb7b1a26e9ee31e625b50b86f5"
+            },
+            "vector-curl.mjs": {
+                "bytes": 8657,
+                "sha256": "d71fab7fc8e41462af1fa7b780221c9ce36347df8983440ae11234c7547016e8"
+            },
+            "vector-embedding.mjs": {
+                "bytes": 7998,
+                "sha256": "3812d99f3ed80021791f707201ac9494b6240b530b2c5ab63ac4a95c501efac4"
+            },
+            "vector-observation.mjs": {
+                "bytes": 23251,
+                "sha256": "a972aa1a5c47bde4ccc2766a43d7608029cd7122408438abc3d15677c68e6113"
+            },
+            "vector-observe.mjs": {
+                "bytes": 26392,
+                "sha256": "d11970b8d415e56893c43480791c6eab455ce73b87dbee61cc4a4ab50bf72ce0"
+            },
+            "vector-snapshot.mjs": {
+                "bytes": 16279,
+                "sha256": "da6b70f54e675ea69b9326ba35f2544d7ecddd6a6db5e9a231d1eb45c6ab3190"
+            },
+            "vector-workflow.mjs": {
+                "bytes": 23900,
+                "sha256": "9cf06c6da67d2d1bbc7ffa08462b1576a0049e49eb41e57e603f40716d77d4f5"
+            },
+            "vector.test.mjs": {
+                "bytes": 68848,
+                "sha256": "dbec3b90b106000c0971c674427772e32de5688b8eb25ff74a1a9f5045110b80"
+            }
+        },
+        "currentSourcesSha256": "c7a7c3cd9fecdb370bd6e38dcc1498e5cd8e80b3e1e64da2701b3379331064c0",
+        "offlineValidation": {
+            "status": "PASS",
+            "pythonTests": 46,
+            "nodeTests": 67,
+            "addedPythonTests": 9,
+            "addedNodeTests": 7,
+            "nodeSyntaxChecks": 14,
+            "pythonAstChecks": 4,
+            "documents": 3,
+            "mermaidDiagrams": 1,
+            "localMarkdownLinks": 81,
+            "guardLogSha256": "e694291adb1a521ab990981aa696811ca53203b64d0f20cefeaf72fee2da4e7a",
+            "resultSha256": "e336050a1a720401467dba82a2817814cc76fc726676ba0e131803971a1542f1"
+        },
+        "runtimeGates": {
+            "allDisabled": true,
+            "count": 13
+        },
+        "replacementRun": "NOT_SELECTED",
+        "nativeExecutionOfRevision5": "NOT_RUN",
+        "applicationBuilds": "PREVIOUS_4_PASS_PRODUCT_UNCHANGED_NOT_REPEATED",
+        "selectedProductionMain": "dc314fcfe02bbc30877bb1a4a1720d1bb3abccde",
+        "laterMainIntegration": "DEFERRED_UNTIL_COHERENT_NATIVE_RESULT",
+        "historicalRecord": "All eighteen preceding fields remain unchanged. Trial 8aa is INCOMPLETE with an ambiguous historical TRACE_BOUND, no retained failed rows and no reconstructed backoff completion. Separate native G1 READY executes the ba755 reader SQL successfully. Revised ACK/transition/inventory helpers have hermetic coverage only."
+    },
+    "vectorProvisionNativeTrial": {
+        "schemaVersion": 1,
+        "scenario": "VECTOR_PROVISION_V1",
+        "status": "NATIVE_PROVISION_OUTAGE_RECOVERY_AND_DASHBOARD_RETRY_PASS_CLEANED",
+        "runId": "5ffbaa5ed44c",
+        "sourceCommit": "9cef0fdf86dda0b03dee545f284d5894479d7d74",
+        "selectedProductionMain": "dc314fcfe02bbc30877bb1a4a1720d1bb3abccde",
+        "selectedApplicationBuildReceiptSha256": "ddd1adf7654c7f9fa35dfcecfebaca730e6dd96209ce71bc6f8abccce7320158",
+        "reviewedSourceFreezeSha256": "357d3ed61af8707919bf0cd2ce04b001b4e5767a3684677249f17f297245edda",
+        "reviewedSourceFileMapSha256": "fe2f9b9d3b1db782c4516747554d096cf60c86833d6de99ee76b1e458c536a03",
+        "preparationManifestSha256": "24f1898208474ed7b478e93fbab11c90ea156ea1900db928051a7a85723c258a",
+        "rootPreflightSha256": "027c7b0ff7763006d2b8889e0e574a63aa9119e82f599d8e7c223824ebc74910",
+        "executedPairedSourceInventory": {
+            "tests/acceptance/s3-outage/README.md": {
+                "bytes": 23857,
+                "mode": 436,
+                "disabledSha256": "926a4efda3adc0cab6bebc13d385ea4d15bf5face14cf772d2998f2ee8529bf1",
+                "executedEnabledSha256": "926a4efda3adc0cab6bebc13d385ea4d15bf5face14cf772d2998f2ee8529bf1",
+                "gateOnlyChange": false
+            },
+            "tests/acceptance/s3-outage/bucket.mjs": {
+                "bytes": 6680,
+                "mode": 436,
+                "disabledSha256": "84ec4e6f176d63a1b1122f13de65f71d876a5391bfb0eecfc75f6004eebf4f24",
+                "executedEnabledSha256": "2df06545b4ac75bdbf7c7777ae174d9cecb58a717a60de01483455becc1ad362",
+                "gateOnlyChange": true
+            },
+            "tests/acceptance/s3-outage/cleanup-fixture.mjs": {
+                "bytes": 13025,
+                "mode": 436,
+                "disabledSha256": "fc54ad3f0045dbef1c720dd902dd920c3a409547668798a3d48c0c05df552bbb",
+                "executedEnabledSha256": "fc54ad3f0045dbef1c720dd902dd920c3a409547668798a3d48c0c05df552bbb",
+                "gateOnlyChange": false
+            },
+            "tests/acceptance/s3-outage/cleanup-observe.mjs": {
+                "bytes": 33495,
+                "mode": 436,
+                "disabledSha256": "0152a23220bc4827e434710ca3bf5ec7995ce08c6dddd34f42a52831205f869c",
+                "executedEnabledSha256": "0152a23220bc4827e434710ca3bf5ec7995ce08c6dddd34f42a52831205f869c",
+                "gateOnlyChange": false
+            },
+            "tests/acceptance/s3-outage/cleanup.test.mjs": {
+                "bytes": 22103,
+                "mode": 436,
+                "disabledSha256": "581aeb09a39315db748f883f3636d9c4623fa5ef5db51dfcd6d6a07ded121da8",
+                "executedEnabledSha256": "581aeb09a39315db748f883f3636d9c4623fa5ef5db51dfcd6d6a07ded121da8",
+                "gateOnlyChange": false
+            },
+            "tests/acceptance/s3-outage/fault.py": {
+                "bytes": 24571,
+                "mode": 436,
+                "disabledSha256": "ebffd21c7a2698b5bfb44a04053519d1269b4874ead51933f267391c767969da",
+                "executedEnabledSha256": "eacd7151b68367473c72a7f6b63f557aea94bf1c6e71bd95fa42544c1931c65e",
+                "gateOnlyChange": true
+            },
+            "tests/acceptance/s3-outage/fault_test.py": {
+                "bytes": 22627,
+                "mode": 436,
+                "disabledSha256": "aca64500d1b58c657b5576e0bb4855b5ef1d6a2e58b118cab83770ad90301d81",
+                "executedEnabledSha256": "aca64500d1b58c657b5576e0bb4855b5ef1d6a2e58b118cab83770ad90301d81",
+                "gateOnlyChange": false
+            },
+            "tests/acceptance/s3-outage/fixtures/expected.json": {
+                "bytes": 926,
+                "mode": 436,
+                "disabledSha256": "67c562dfb951d9751d76468f4cf29b89d6fae3432ed9debb5c7f0790cb4fac7d",
+                "executedEnabledSha256": "67c562dfb951d9751d76468f4cf29b89d6fae3432ed9debb5c7f0790cb4fac7d",
+                "gateOnlyChange": false
+            },
+            "tests/acceptance/s3-outage/fixtures/s3-outage-v1.txt": {
+                "bytes": 522,
+                "mode": 436,
+                "disabledSha256": "110bf3def2634f5a3c6addd02b8b61d35fddd3e3ea776077144041e6c2599719",
+                "executedEnabledSha256": "110bf3def2634f5a3c6addd02b8b61d35fddd3e3ea776077144041e6c2599719",
+                "gateOnlyChange": false
+            },
+            "tests/acceptance/s3-outage/fixtures/s3-outage-v2.txt": {
+                "bytes": 620,
+                "mode": 436,
+                "disabledSha256": "ef488f9ba8481a42e7f79aceafde979d9f09ddc0072f2edc0577e6b064cc3d2f",
+                "executedEnabledSha256": "ef488f9ba8481a42e7f79aceafde979d9f09ddc0072f2edc0577e6b064cc3d2f",
+                "gateOnlyChange": false
+            },
+            "tests/acceptance/s3-outage/lifecycle.py": {
+                "bytes": 55644,
+                "mode": 436,
+                "disabledSha256": "5acd933639910a6961871ecf7b8a02cc83519586b0dc145a4cfa177c22bfb85b",
+                "executedEnabledSha256": "2fb0dd3949b45cb4be317d1bd183342cacae4cc3470787daf2ce886c013eb6ea",
+                "gateOnlyChange": true
+            },
+            "tests/acceptance/s3-outage/lifecycle_test.py": {
+                "bytes": 24684,
+                "mode": 436,
+                "disabledSha256": "3fe9899a2d19c4fd06a67ac473cb26ac09ca3f4af50e7de63b30d0cc74d1a32a",
+                "executedEnabledSha256": "3fe9899a2d19c4fd06a67ac473cb26ac09ca3f4af50e7de63b30d0cc74d1a32a",
+                "gateOnlyChange": false
+            },
+            "tests/acceptance/s3-outage/objects.mjs": {
+                "bytes": 16033,
+                "mode": 436,
+                "disabledSha256": "a0ca8db7a7b46ddcdba416da74f1c13d26e931a5effa9df4de1fc2232623faaf",
+                "executedEnabledSha256": "a0ca8db7a7b46ddcdba416da74f1c13d26e931a5effa9df4de1fc2232623faaf",
+                "gateOnlyChange": false
+            },
+            "tests/acceptance/s3-outage/objects.test.mjs": {
+                "bytes": 7304,
+                "mode": 436,
+                "disabledSha256": "1a5a90b04a6502b14337ac843d7c20f88df87f4d0c18758cb1b94031fcab0d36",
+                "executedEnabledSha256": "1a5a90b04a6502b14337ac843d7c20f88df87f4d0c18758cb1b94031fcab0d36",
+                "gateOnlyChange": false
+            },
+            "tests/acceptance/s3-outage/observe.mjs": {
+                "bytes": 46519,
+                "mode": 436,
+                "disabledSha256": "4772ce32a66e3a37a7a6a9d9ebb92cad1c1d3d67199a8506162e2be1ac347161",
+                "executedEnabledSha256": "4772ce32a66e3a37a7a6a9d9ebb92cad1c1d3d67199a8506162e2be1ac347161",
+                "gateOnlyChange": false
+            },
+            "tests/acceptance/s3-outage/observe.test.mjs": {
+                "bytes": 19167,
+                "mode": 436,
+                "disabledSha256": "00f9dfc507b9b856cb199f4e740eaa6c8e202d3f95d177438c6021171a2d2dd6",
+                "executedEnabledSha256": "00f9dfc507b9b856cb199f4e740eaa6c8e202d3f95d177438c6021171a2d2dd6",
+                "gateOnlyChange": false
+            },
+            "tests/acceptance/s3-outage/private.mjs": {
+                "bytes": 12293,
+                "mode": 436,
+                "disabledSha256": "da9c2d4f5e425556a9669f91273f9096b37fc2e46fe5f17f9412a1d59ceadaba",
+                "executedEnabledSha256": "da9c2d4f5e425556a9669f91273f9096b37fc2e46fe5f17f9412a1d59ceadaba",
+                "gateOnlyChange": false
+            },
+            "tests/acceptance/s3-outage/provenance.json": {
+                "bytes": 82754,
+                "mode": 436,
+                "disabledSha256": "4d11581fdbc5e36d7042042275e499a7e9e0fc7d31e36d787a7d7452b7e86444",
+                "executedEnabledSha256": "4d11581fdbc5e36d7042042275e499a7e9e0fc7d31e36d787a7d7452b7e86444",
+                "gateOnlyChange": false
+            },
+            "tests/acceptance/s3-outage/seed.mjs": {
+                "bytes": 11622,
+                "mode": 436,
+                "disabledSha256": "f9e10a8fbde5c655b8fb09f26644ec994a554331d284ada182b0f0a8eca40d69",
+                "executedEnabledSha256": "1b2be741a066319b8b98a5f505e074c42e649eebe9c63f5b8b21dea2b65bd228",
+                "gateOnlyChange": true
+            },
+            "tests/acceptance/s3-outage/smtp.mjs": {
+                "bytes": 10729,
+                "mode": 436,
+                "disabledSha256": "82523128c0ad7a77d7b8d8d3743f278482d079fb7b1a26e9ee31e625b50b86f5",
+                "executedEnabledSha256": "8761356a39c9cd3338768dbbf163b51a18fd863d2ebaccee701cbe72c879da0a",
+                "gateOnlyChange": true
+            },
+            "tests/acceptance/s3-outage/vector-curl.mjs": {
+                "bytes": 8658,
+                "mode": 436,
+                "disabledSha256": "d71fab7fc8e41462af1fa7b780221c9ce36347df8983440ae11234c7547016e8",
+                "executedEnabledSha256": "4a50e14cebce27ec30581bb95398fb439af8d0bb4122599fd5fe4e068d2d53d5",
+                "gateOnlyChange": true
+            },
+            "tests/acceptance/s3-outage/vector-embedding.mjs": {
+                "bytes": 7999,
+                "mode": 436,
+                "disabledSha256": "3812d99f3ed80021791f707201ac9494b6240b530b2c5ab63ac4a95c501efac4",
+                "executedEnabledSha256": "1b583f97ffc2ab3e9357fd19f92cd3c20fcd666119ee8d0c22bacfcf76d9f1b4",
+                "gateOnlyChange": true
+            },
+            "tests/acceptance/s3-outage/vector-observation.mjs": {
+                "bytes": 23251,
+                "mode": 436,
+                "disabledSha256": "a972aa1a5c47bde4ccc2766a43d7608029cd7122408438abc3d15677c68e6113",
+                "executedEnabledSha256": "a972aa1a5c47bde4ccc2766a43d7608029cd7122408438abc3d15677c68e6113",
+                "gateOnlyChange": false
+            },
+            "tests/acceptance/s3-outage/vector-observe.mjs": {
+                "bytes": 26393,
+                "mode": 436,
+                "disabledSha256": "d11970b8d415e56893c43480791c6eab455ce73b87dbee61cc4a4ab50bf72ce0",
+                "executedEnabledSha256": "6f90e9a97ff602fa98fa76a117cbdc02790b10296ba72599fa962fde08afff62",
+                "gateOnlyChange": true
+            },
+            "tests/acceptance/s3-outage/vector-snapshot.mjs": {
+                "bytes": 16279,
+                "mode": 436,
+                "disabledSha256": "da6b70f54e675ea69b9326ba35f2544d7ecddd6a6db5e9a231d1eb45c6ab3190",
+                "executedEnabledSha256": "da6b70f54e675ea69b9326ba35f2544d7ecddd6a6db5e9a231d1eb45c6ab3190",
+                "gateOnlyChange": false
+            },
+            "tests/acceptance/s3-outage/vector-workflow.mjs": {
+                "bytes": 23901,
+                "mode": 436,
+                "disabledSha256": "9cf06c6da67d2d1bbc7ffa08462b1576a0049e49eb41e57e603f40716d77d4f5",
+                "executedEnabledSha256": "75d0c1780f9b354dc164562acdddb8f44fac3a99e5f0cf835da0eea8fc401ffa",
+                "gateOnlyChange": true
+            },
+            "tests/acceptance/s3-outage/vector.test.mjs": {
+                "bytes": 68848,
+                "mode": 436,
+                "disabledSha256": "dbec3b90b106000c0971c674427772e32de5688b8eb25ff74a1a9f5045110b80",
+                "executedEnabledSha256": "dbec3b90b106000c0971c674427772e32de5688b8eb25ff74a1a9f5045110b80",
+                "gateOnlyChange": false
+            },
+            "docs/build-task-log.md": {
+                "bytes": 295959,
+                "mode": 436,
+                "disabledSha256": "22eac660d10621405ef0f9029062037bea579d430bfa5e34dc75e77e7eb7ad0f",
+                "executedEnabledSha256": "22eac660d10621405ef0f9029062037bea579d430bfa5e34dc75e77e7eb7ad0f",
+                "gateOnlyChange": false
+            },
+            "docs/rag-vector-outage-acceptance.md": {
+                "bytes": 30797,
+                "mode": 436,
+                "disabledSha256": "0e95c80de17d6af04eb6ada0a08e9735728b1eddfb717882c038edec405f002e",
+                "executedEnabledSha256": "0e95c80de17d6af04eb6ada0a08e9735728b1eddfb717882c038edec405f002e",
+                "gateOnlyChange": false
+            },
+            "scripts/test-s3-outage-guards.sh": {
+                "bytes": 828,
+                "mode": 436,
+                "disabledSha256": "25d8f26062b74c3eab2ab517cc5765b552dd11c61fe7b198aa6d6c9dc5841ab8",
+                "executedEnabledSha256": "25d8f26062b74c3eab2ab517cc5765b552dd11c61fe7b198aa6d6c9dc5841ab8",
+                "gateOnlyChange": false
+            },
+            "tests/acceptance/restore/m7c_restore_common.py": {
+                "bytes": 25874,
+                "mode": 436,
+                "disabledSha256": "a2c2471e02841cc26f56ebe85dd58bd3440a0db575e1e962ffdf643fc960d597",
+                "executedEnabledSha256": "a2c2471e02841cc26f56ebe85dd58bd3440a0db575e1e962ffdf643fc960d597",
+                "gateOnlyChange": false
+            }
+        },
+        "activation": {
+            "pairs": 31,
+            "gateOnlyChanges": 9,
+            "lifecycleLast": true,
+            "unrelatedDisabledGates": 4
+        },
+        "observations": {
+            "vector-g1-ready": {
+                "status": "OBSERVED",
+                "snapshots": 1,
+                "sha256": "84df988c3deb06214757f1b466a53fa5c15ee070e0cd17ce3bd4ecc4f7c38390"
+            },
+            "vector-g2-staged": {
+                "status": "OBSERVED",
+                "snapshots": 1,
+                "sha256": "d45c54802d66ad93ddf547939148937cad87129cd2016adc3a1d1c89c93d1c0c"
+            },
+            "vector-outage-failed": {
+                "status": "OBSERVED",
+                "snapshots": 44,
+                "sha256": "4daa479448445678d66cbf1e87c95975d0b9f0b573a553928b33f967e0381a4e"
+            },
+            "vector-restored-before-retry": {
+                "status": "OBSERVED",
+                "snapshots": 1,
+                "sha256": "fd28fb135ee9d2f78896ef7142de91972c0711e96110b520709706b86806e8f7"
+            },
+            "vector-g2-ready": {
+                "status": "OBSERVED",
+                "snapshots": 1,
+                "sha256": "573151a20c675b2a18e12fe72ff9ef54a410b8f5e04ae674d77b7b6dec567d8c"
+            },
+            "vector-signed-out": {
+                "status": "OBSERVED",
+                "snapshots": 1,
+                "sha256": "201396dff025db04d3cee62870cbf29e25b2748460fbcfb39a35863282036ac8"
+            }
+        },
+        "workflows": {
+            "prepare-g1": {
+                "requests": 12,
+                "statusCounts": {
+                    "200": 12
+                },
+                "signOutConfirmed": true,
+                "finalizationSha256": "0006fefd1a82d66ac849ee67b53b5ea32c4500a8f0450790ffb56847f00ab8c1"
+            },
+            "search-g1": {
+                "requests": 13,
+                "statusCounts": {
+                    "200": 13
+                },
+                "signOutConfirmed": true,
+                "finalizationSha256": "7fd6e12d238e6119fafe13da8741cf58e61dc70f89368f7bc97b4a93eeb4da9d"
+            },
+            "rebuild-g2": {
+                "requests": 5,
+                "statusCounts": {
+                    "200": 5
+                },
+                "signOutConfirmed": true,
+                "finalizationSha256": "4561d6bf7058b435f1a7260a8d45a80d1e3410eec2f495fc3041d375b06c4636"
+            },
+            "search-outage": {
+                "requests": 8,
+                "statusCounts": {
+                    "200": 7,
+                    "409": 1
+                },
+                "signOutConfirmed": true,
+                "finalizationSha256": "e2848099fdf624d329829f4863b9f0f9eb76de30f4da36e4a523bfe3204fd73d"
+            },
+            "search-g2": {
+                "requests": 13,
+                "statusCounts": {
+                    "200": 13
+                },
+                "signOutConfirmed": true,
+                "finalizationSha256": "4be042526c880f05104a4c36b8604b782764fc800f621e1a2c83b4111c915810"
+            }
+        },
+        "httpResponses": {
+            "total": 51,
+            "status200": 50,
+            "expectedTypedVectorUnavailable409": 1
+        },
+        "outage": {
+            "primedObserverAckSha256": "1bc60d4285f754e250b135a65448b624a4a460690f4941b4cf91815c5c65e6b8",
+            "originalWatchdogSeconds": 900,
+            "minimumRemainingBeforeFaultSeconds": 625,
+            "snapshots": 44,
+            "closedTraceRows": 5,
+            "claimAttempts": [1, 2, 3, 4, 5],
+            "claimLeaseEpochs": ["1", "2", "3", "4", "5"],
+            "naturalBackoffMilliseconds": [10000, 20000, 40000, 80000],
+            "sameProvisionTaskId": "f5de1542-2902-4d98-9a75-b3eb176fcc19",
+            "terminalStatus": "FAILED",
+            "terminalErrorCode": "VECTOR_UNAVAILABLE",
+            "terminalUnleased": true,
+            "g1ActiveThroughout": true,
+            "claimSemantics": "DURABLE_PROVISION_CLAIMS_NOT_WIRE_COUNT"
+        },
+        "recovery": {
+            "sameContainerAndVolume": true,
+            "watchdogIntervened": false,
+            "watchdogFinalSha256": "23ccbc569f2d62242410ee01cc489de5345feefd92d05374bffd8e6d29b5a0b7",
+            "sameWorkerResumed": true,
+            "sameTaskId": "f5de1542-2902-4d98-9a75-b3eb176fcc19",
+            "failedEpoch": "5",
+            "completeEpoch": "7",
+            "completeAttempts": 1,
+            "status": "COMPLETE",
+            "g2Active": true,
+            "g1Retired": true,
+            "usage": {
+                "activeChunks": "1",
+                "reservedChunks": "0",
+                "retainedChunks": "1"
+            },
+            "exactNativeG1CleanupTask": "PENDING_ACCEPTED_UNCLAIMED_AT_SAVED_PRODUCTION_RETENTION",
+            "stableThroughSignedOut": true
+        },
+        "rootBrowser": {
+            "receiptSha256": "6786d4a2c6356f7e6d7404a1ecf3968840674b009acde6d1da1b52be6ce861e0",
+            "language": "en",
+            "normalLoginCount": 1,
+            "retryTaskClicks": 1,
+            "normalLogoutCount": 1,
+            "consoleWarningOrErrorCount": 0,
+            "browserFileUploads": 0,
+            "browserFileDownloads": 0,
+            "keyRoleCredentialMutations": 0,
+            "ownedTabClosed": true,
+            "fixtureMemoryCleared": true,
+            "screenshots": {
+                "g1-active-en.png": {
+                    "bytes": 298807,
+                    "sha256": "7f44b5861cdebcaae0223bbed4d797b3a90e54b00a7932e50bca2432a69c55d5"
+                },
+                "failed-five-before-retry-en.png": {
+                    "bytes": 408189,
+                    "sha256": "e34ae0d2f9572c1d2f82d15c19a27dfac7027bb99633dbc966e0b75dc0eb5a6b"
+                },
+                "g2-active-after-retry-en.png": {
+                    "bytes": 386725,
+                    "sha256": "1dd543f33a16714e8694bad95aa21c364051ad1ec6867010b30e37ae6d140a26"
+                },
+                "signed-out-en.png": {
+                    "bytes": 6647,
+                    "sha256": "51782ad6456509cace9cabd1da28d621be6661e3bc5a2c88f9d3e0f16ccb04a7"
+                }
+            },
+            "navigationAfterLogin": "Normal navigation to / after success toast; no claim that a client redirect eventually failed.",
+            "backendPhysicalEvidence": "SEPARATE_NATIVE_OBSERVATIONS_NOT_INFERRED_FROM_BROWSER"
+        },
+        "signedOut": {
+            "formalObservationSha256": "201396dff025db04d3cee62870cbf29e25b2748460fbcfb39a35863282036ac8",
+            "zeroSessions": true,
+            "allWorkflowSignOutConfirmed": true
+        },
+        "syntheticEmbeddingFinal": {
+            "sha256": "f6b7cf2d2b6284d38a443f619053036d865b174dedc957b6abd20627adc95f11",
+            "synthetic": true,
+            "counters": {
+                "requests": 29,
+                "embeddings": 9,
+                "inputs": 9,
+                "rejected": 0,
+                "connections": 29
+            }
+        },
+        "cleanup": {
+            "phase": "CLEANED_EVIDENCE_RETAINED",
+            "exitCode": 0,
+            "resources": 0,
+            "appProcessesTerminal": 5,
+            "observerTerminal": true,
+            "watchdogTerminal": true,
+            "containersAbsent": 4,
+            "volumesAbsent": 4,
+            "receiptSha256": "0ebdc15fea65079e472055b59f068e42d0f87908d609f7a57dc41ad5466e3a69",
+            "teardownVerifiedSha256": "3e13d331ee5b9244a59471e1c1f30d1aaf97eeb53435085b0a047bddb893a367"
+        },
+        "disabledRestoration": {
+            "pairs": 31,
+            "gatesTrue": 13,
+            "lifecycleFirst": true,
+            "allSourceBytesAndModesExact": true,
+            "protectedNextLockExact": true,
+            "gitCleanAtSourceCommit": true,
+            "receiptSha256": "891b8e4622d16b13c4d564d3c8115b868f62c673014ee0408fef7f4788428701"
+        },
+        "nativeTerminalSummarySha256": "46f3bb6b8f1d75611e0f14f417895bbd11b145b85e9e42de3aed3928627c6654",
+        "independentRootFilesystemAuditSha256": "d4ef5ace75acee394e115a54b08a21b7607e293cda8954988dd578203192e34e",
+        "historicalPreservation": {
+            "existingFields": 19,
+            "beforeProvenanceSha256": "4d11581fdbc5e36d7042042275e499a7e9e0fc7d31e36d787a7d7452b7e86444",
+            "trials2aed24d8aa": "UNCHANGED_INCOMPLETE_NO_REPLAY"
+        },
+        "limitations": [
+            "SYNTHETIC_PROTOCOL_FIXTURE_NO_MODEL_WEIGHT_OR_QUALITY_ATTESTATION",
+            "NO_PAID_PROVIDER_BILLING_LATENCY_FAIRNESS_OR_CAPACITY_RESULT",
+            "PROVISION_DESTINATION_OUTAGE_NOT_INTRA_DDL_PARTIAL_WRITE_OR_SEAL",
+            "LATER_MAIN_AND_DEPENDENCY_UPDATES_NOT_EXECUTED",
+            "FINAL_MAIN_ALIGNMENT_AND_EXACT_HEAD_CI_PENDING"
+        ]
+    },
+    "vectorProvisionComposedMainAlignment": {
+        "schemaVersion": 1,
+        "status": "DISABLED_FOUR_SCENARIO_COMPOSITION_OFFLINE_AND_CURRENT_BUILDS_PASS_NATIVE_NOT_RUN",
+        "selectedActualMain": "77ac06bd99c113b8cf32e2f48bcaec79038dd94a",
+        "actualMainTree": "7985a480",
+        "nativeResultSourceCommit": "9cef0fdf86dda0b03dee545f284d5894479d7d74",
+        "nativeResultProductBuild": "dc314fcfe02bbc30877bb1a4a1720d1bb3abccde",
+        "outcomeDocumentationCheckpoint": "b86db1021abb19c7f83f079a1e17935883d29071",
+        "reconciliationPlanV2Sha256": "bbb6bbeaf90099033be494d0500af42e2171081eef593cb5e2a4aa0e907edb73",
+        "scenarios": [
+            "INGESTION_V1",
+            "CLEANUP_V1",
+            "REDIS_V1",
+            "VECTOR_PROVISION_V1"
+        ],
+        "disabledGateCount": 16,
+        "lateRemainingSeconds": {
+            "INGESTION_V1": 120,
+            "CLEANUP_V1": 625,
+            "REDIS_V1": 120,
+            "VECTOR_PROVISION_V1": 625
+        },
+        "watchdogSeconds": 900,
+        "preservation": {
+            "existingUnionFields": 23,
+            "mainFieldsUnchanged": 15,
+            "vectorFieldsUnchanged": 20,
+            "native5ff": "HISTORICAL_9CEF_DC314_UNCHANGED",
+            "redisNative": "HISTORICAL_80E61_F916_UNCHANGED",
+            "priorFailedVectorTrials": "UNCHANGED_INCOMPLETE"
+        },
+        "incomingProductPackageLockCiDeploy": "EXACT_ACTUAL_MAIN",
+        "incomingTransactionClassifier": "PR97_P2034_AND_TYPED_PG_40001_40P01",
+        "incomingDependencies": "PR94_DIRECT_IOREDIS6_BULLMQ_LOCKED5_AND_PR93_RESOLVER6",
+        "excluded": "PR95_UNICORN_MAJOR_DEFERRED",
+        "newNativeRun": "NOT_SELECTED",
+        "newApplicationBuilds": "FOUR_CURRENT_BUILDS_PASS_NATIVE_NOT_RUN",
+        "currentSources": {
+            "tests/acceptance/redis-outage/curl.mjs": {
+                "bytes": 8165,
+                "sha256": "622992f50845f8254eadc3fe31237eb7267f51306efd44cd6df909aaac3e2b49"
+            },
+            "tests/acceptance/redis-outage/key-policy.mjs": {
+                "bytes": 1830,
+                "sha256": "02ce821cdf588d3eb2aaaa3e9c83316555d6f30ac6a2ea2d3e2809fda0d015f3"
+            },
+            "tests/acceptance/redis-outage/pending.mjs": {
+                "bytes": 5843,
+                "sha256": "b82ad20d2b620ed983eb2f668969ceeebdd41833990c04dd9e75ab72c6c907cb"
+            },
+            "tests/acceptance/redis-outage/pending.test.mjs": {
+                "bytes": 7862,
+                "sha256": "695c1d80d5af2a7e58fb5206e68178922e67a6be1d566f5de9ab0cef527b616c"
+            },
+            "tests/acceptance/redis-outage/redis_queue.py": {
+                "bytes": 3844,
+                "sha256": "cd7c5015074ec6a5e67f1d103491901e1e69df617202df939a9f02b17c6da152"
+            },
+            "tests/acceptance/redis-outage/redis_test.py": {
+                "bytes": 12319,
+                "sha256": "2deee66193ea4c8c74358952f597d66b43a257c0e4ad5c443a82c868ba62b08e"
+            },
+            "tests/acceptance/redis-outage/transfers.mjs": {
+                "bytes": 19074,
+                "sha256": "a91f6db080bef8bb92022e35fe01be3cf67c5ce569c0d6da5a4f2958a8470330"
+            },
+            "tests/acceptance/redis-outage/transfers.test.mjs": {
+                "bytes": 17106,
+                "sha256": "e4f4039e785a8b1b797b7e89dc18ce8b990535cb290cd4faebff27044f842105"
+            },
+            "tests/acceptance/s3-outage/README.md": {
+                "bytes": 28387,
+                "sha256": "cb2fde02e0ec627b92c70030023c22629440cab30759c22eb3a9f9ee78f2866a"
+            },
+            "tests/acceptance/s3-outage/bucket.mjs": {
+                "bytes": 6679,
+                "sha256": "84ec4e6f176d63a1b1122f13de65f71d876a5391bfb0eecfc75f6004eebf4f24"
+            },
+            "tests/acceptance/s3-outage/cleanup-fixture.mjs": {
+                "bytes": 13025,
+                "sha256": "fc54ad3f0045dbef1c720dd902dd920c3a409547668798a3d48c0c05df552bbb"
+            },
+            "tests/acceptance/s3-outage/cleanup-observe.mjs": {
+                "bytes": 33495,
+                "sha256": "0152a23220bc4827e434710ca3bf5ec7995ce08c6dddd34f42a52831205f869c"
+            },
+            "tests/acceptance/s3-outage/cleanup.test.mjs": {
+                "bytes": 22103,
+                "sha256": "581aeb09a39315db748f883f3636d9c4623fa5ef5db51dfcd6d6a07ded121da8"
+            },
+            "tests/acceptance/s3-outage/fault.py": {
+                "bytes": 29980,
+                "sha256": "e5705b0147ded6355720ff6ec52f73652751801d6c00da5db9e924bb9b2ff925"
+            },
+            "tests/acceptance/s3-outage/fault_test.py": {
+                "bytes": 25683,
+                "sha256": "72d6b33e9a2c2b9cea12b4bd3f31c70c8f8065e73bdaf6f7bf1ec7e5cfe343ff"
+            },
+            "tests/acceptance/s3-outage/fixtures/expected.json": {
+                "bytes": 926,
+                "sha256": "67c562dfb951d9751d76468f4cf29b89d6fae3432ed9debb5c7f0790cb4fac7d"
+            },
+            "tests/acceptance/s3-outage/fixtures/s3-outage-v1.txt": {
+                "bytes": 522,
+                "sha256": "110bf3def2634f5a3c6addd02b8b61d35fddd3e3ea776077144041e6c2599719"
+            },
+            "tests/acceptance/s3-outage/fixtures/s3-outage-v2.txt": {
+                "bytes": 620,
+                "sha256": "ef488f9ba8481a42e7f79aceafde979d9f09ddc0072f2edc0577e6b064cc3d2f"
+            },
+            "tests/acceptance/s3-outage/lifecycle.py": {
+                "bytes": 56622,
+                "sha256": "ed997e9402c97a5f5ba705c461050cf4711904c572d1ddf52adf32bce98d9d9c"
+            },
+            "tests/acceptance/s3-outage/lifecycle_test.py": {
+                "bytes": 27607,
+                "sha256": "c1d27d7c61d986d386493d427a6ffd1185c56fb5069addfd27213a18daa8d42a"
+            },
+            "tests/acceptance/s3-outage/objects.mjs": {
+                "bytes": 16376,
+                "sha256": "0d4a840046ddd7430d14515891e9f25587e79785c1b2dcdcdaaf54e026af39dc"
+            },
+            "tests/acceptance/s3-outage/objects.test.mjs": {
+                "bytes": 7304,
+                "sha256": "1a5a90b04a6502b14337ac843d7c20f88df87f4d0c18758cb1b94031fcab0d36"
+            },
+            "tests/acceptance/s3-outage/observe.mjs": {
+                "bytes": 64530,
+                "sha256": "5a5c1fcef9f459a0ae1d509eb9eafda408c31537ed31f1705e7be41af7100198"
+            },
+            "tests/acceptance/s3-outage/observe.test.mjs": {
+                "bytes": 25059,
+                "sha256": "ebe39f5791042b948e7a732b82ba62a1f950b1fd25d74536b4030a673e075d02"
+            },
+            "tests/acceptance/s3-outage/private.mjs": {
+                "bytes": 12490,
+                "sha256": "041990c06f7a0ba892fd1063b25c05b1eea9b8b590422dc66b0d1e836c6c2bd9"
+            },
+            "tests/acceptance/s3-outage/seed.mjs": {
+                "bytes": 11621,
+                "sha256": "f9e10a8fbde5c655b8fb09f26644ec994a554331d284ada182b0f0a8eca40d69"
+            },
+            "tests/acceptance/s3-outage/smtp.mjs": {
+                "bytes": 10728,
+                "sha256": "82523128c0ad7a77d7b8d8d3743f278482d079fb7b1a26e9ee31e625b50b86f5"
+            },
+            "tests/acceptance/s3-outage/vector-curl.mjs": {
+                "bytes": 8657,
+                "sha256": "d71fab7fc8e41462af1fa7b780221c9ce36347df8983440ae11234c7547016e8"
+            },
+            "tests/acceptance/s3-outage/vector-embedding.mjs": {
+                "bytes": 7998,
+                "sha256": "3812d99f3ed80021791f707201ac9494b6240b530b2c5ab63ac4a95c501efac4"
+            },
+            "tests/acceptance/s3-outage/vector-observation.mjs": {
+                "bytes": 23251,
+                "sha256": "a972aa1a5c47bde4ccc2766a43d7608029cd7122408438abc3d15677c68e6113"
+            },
+            "tests/acceptance/s3-outage/vector-observe.mjs": {
+                "bytes": 26392,
+                "sha256": "d11970b8d415e56893c43480791c6eab455ce73b87dbee61cc4a4ab50bf72ce0"
+            },
+            "tests/acceptance/s3-outage/vector-snapshot.mjs": {
+                "bytes": 16279,
+                "sha256": "da6b70f54e675ea69b9326ba35f2544d7ecddd6a6db5e9a231d1eb45c6ab3190"
+            },
+            "tests/acceptance/s3-outage/vector-workflow.mjs": {
+                "bytes": 23900,
+                "sha256": "9cf06c6da67d2d1bbc7ffa08462b1576a0049e49eb41e57e603f40716d77d4f5"
+            },
+            "tests/acceptance/s3-outage/vector.test.mjs": {
+                "bytes": 68848,
+                "sha256": "dbec3b90b106000c0971c674427772e32de5688b8eb25ff74a1a9f5045110b80"
+            }
+        },
+        "currentSourcesSha256": "242655fba2fa94855cb9423abf1390b4034386fc5b1654514f1d5868ec235ffa",
+        "offlineValidation": {
+            "status": "PASS",
+            "pythonTests": 66,
+            "nodeTests": 93,
+            "nodeSyntaxChecks": 20,
+            "pythonAstChecks": 6,
+            "receiptSha256": "69005a70bdc2bb9dfc83861214416acaff46057a54f26abb9ce221bcf4d9cdae"
+        },
+        "applicationValidation": {
+            "status": "PASS",
+            "frozenInstall": true,
+            "dummyIgnoredClientGeneration": true,
+            "schemaValidation": true,
+            "uncachedTypes": 25,
+            "uncachedLint": 25,
+            "unitTasks": 5,
+            "unitCounts": {
+                "discovery": 11,
+                "apiBackend": 215,
+                "configuration": 7,
+                "chunking": 56,
+                "embeddings": 146,
+                "vitestUtilities": 11
+            },
+            "serializedBuilds": [
+                {
+                    "stage": "build-api",
+                    "exitCode": 0,
+                    "seconds": 0.515,
+                    "logSha256": "c660c5a882ce86c3480ce32acca8a19090e86b02cdc66ad5a5ca7a3652b4dd6f"
+                },
+                {
+                    "stage": "build-workers",
+                    "exitCode": 0,
+                    "seconds": 0.465,
+                    "logSha256": "867c148f6466b87c8afc7172ae96f0372bffcf7237c5783ffa79a6f256b22ccc"
+                },
+                {
+                    "stage": "build-web",
+                    "exitCode": 0,
+                    "seconds": 28.626,
+                    "logSha256": "198447fdeeb099775febac97fb4c54e46dc03b9aed77259af0570bc6b88fc5bb"
+                },
+                {
+                    "stage": "build-admin",
+                    "exitCode": 0,
+                    "seconds": 25.138,
+                    "logSha256": "73d7a12c0d2fe752b07d47ae692521b688b7f577ed007e4807e4d744eeac296d"
+                }
+            ],
+            "receiptSha256": "2d23c8bb1d3b96815b94a39ac1b753c910b5f22e0fde20bdc8441f44886cc4c5",
+            "protectedNextLockExact": true,
+            "noServiceOrMigration": true
+        },
+        "standaloneAssetsReceiptSha256": "ce549789b69d6bc28c2088f6e85bd2f3480ffefd4822a38ae2e0373c6c20654e",
+        "disabledFilesystemInputInventorySha256": "5d59d0db161ba57bf58be1a5a9faba49a424be5c9be436c6e2cc7de5121f3d06",
+        "sourceReview": "ROOT_AND_INDEPENDENT_7_CODE_PINS_CLEAR_FINAL_METADATA_REVIEW_PENDING"
+    },
+    "vectorProvisionGuardDiagnosticsRevision1": {
+        "status": "OFFLINE_VALIDATED_NATIVE_NOT_RUN",
+        "basedOnHelperCommit": "0ccc1719c65e85bb3a2a249b0e2a166477f5ab73",
+        "selectedProductBuildCommit": "77ac06bd99c113b8cf32e2f48bcaec79038dd94a",
+        "priorFieldsPreserved": 24,
+        "priorProvenanceSha256": "07ee20b28bf0675d528a8ad243fb0d81e7fbb3b0df109b2cc2cd8dbb54b18b40",
+        "immutableBeforeArchiveSha256": "a9a009d5b33b7774df5df426e6f78a04c5c58100cbd8a4728aaf125af40d9374",
+        "codeInventory": {
+            "scripts/test-s3-outage-guards.sh": {
+                "bytes": 1193,
+                "mode": 436,
+                "sha256": "2c4ca0b6b348ec568e2ff4d5d1ca4ca5aa3cfc2c58ee55682b1d8d3290d64e63"
+            },
+            "tests/acceptance/s3-outage/lifecycle.py": {
+                "bytes": 59565,
+                "mode": 436,
+                "sha256": "69ab35035ff46f4f33a3ec10969da8b51ef2bd284691068120c2e80dcfc691c1"
+            },
+            "tests/acceptance/s3-outage/lifecycle_test.py": {
+                "bytes": 31956,
+                "mode": 436,
+                "sha256": "95b181d6adf1996ea2eb8775a5eaddca0213e6d93f164a2bac9bf4257bc21798"
+            },
+            "tests/acceptance/s3-outage/private.mjs": {
+                "bytes": 17034,
+                "mode": 436,
+                "sha256": "f25ddb879da274466a04eb339810fd2ba10ebcf0a1a2d5f0a1edd20395aee57a"
+            },
+            "tests/acceptance/s3-outage/vector-workflow.mjs": {
+                "bytes": 24193,
+                "mode": 436,
+                "sha256": "53e1657e5d56518734ec0758e01cebb4d6f6bf9f9c783ccd0f67726dcd25da78"
+            },
+            "tests/acceptance/s3-outage/vector-observe.mjs": {
+                "bytes": 26549,
+                "mode": 436,
+                "sha256": "41231a0f1b4e79f0e831293124ab3ccbae0ef5e07232ebaf94f6161087d9ce53"
+            },
+            "tests/acceptance/s3-outage/guard.test.mjs": {
+                "bytes": 12098,
+                "mode": 436,
+                "sha256": "29ca52767523f9a629357d9a9082771a50c8459c86b3e74369fac86bc85ace42"
+            }
+        },
+        "failureProtocol": {
+            "version": 1,
+            "scope": [
+                "sourceSha256",
+                "protocolVersion",
+                "scenario",
+                "namespace",
+                "runId",
+                "purpose"
+            ],
+            "stages": [
+                "ADMISSION",
+                "STATE",
+                "SOURCE_PINS",
+                "STORE_IDENTITY",
+                "SCHEMA",
+                "PROCESS_IDENTITY",
+                "PROCESS_RUNSTATE",
+                "SMTP",
+                "CONTROL_PHASE"
+            ],
+            "categories": ["REFUSED", "ERROR", "INTERRUPTED"],
+            "localProtocolCategories": [
+                "UNKNOWN",
+                "INVALID_PROTOCOL",
+                "CONTEXT_MISMATCH"
+            ],
+            "childOutcomes": [
+                "INVALID_RESULT",
+                "EXIT_ZERO",
+                "NONZERO",
+                "TIMEOUT",
+                "SIGNAL",
+                "SPAWN_ERROR"
+            ],
+            "maximumChildOutputBytes": 16384,
+            "maximumExitStatus": 255,
+            "rawDiagnostics": "DISCARDED",
+            "successProofShape": "UNCHANGED",
+            "primaryAndSignOutDescriptors": "SEPARATE"
+        },
+        "offlineValidation": {
+            "pythonTests": 70,
+            "nodeTests": 100,
+            "nodeSyntaxChecks": 21,
+            "pythonAstChecks": 6,
+            "executionReceiptSha256": "4b4963124bb19befdc9c52a107ee396a05fa7cef30fdf335728c2e6ef4651e6a",
+            "logSha256": "7695dea237b1ddbd1c5d7c88891d899af96b8561c3bf8783f11fcd2949b3ca56",
+            "realCliRecheckFinalizationCoverage": true,
+            "nativeOrServices": false
+        },
+        "historicalComposedTrial": {
+            "runId": "778e85d66c6d",
+            "status": "INCOMPLETE",
+            "nestedGuardCause": "UNKNOWN_NOT_RECORDED",
+            "observationsPassed": 5,
+            "workflowsCompleted": 4,
+            "confirmedHttpResponses": 45,
+            "http200": 44,
+            "typedHttp409": 1,
+            "nullAfterStatuses": 2,
+            "wireDispatchNotInferred": true,
+            "outageSnapshots": 44,
+            "closedClaimRows": 5,
+            "naturalBackoffsMilliseconds": [10000, 20000, 40000, 80000],
+            "sameTaskFailedEpoch": "5",
+            "sameTaskCompleteEpoch": "7",
+            "normalFinalLogout": "NOT_ATTEMPTED_DURING_TEARDOWN",
+            "signedOutProof": "NOT_EMITTED",
+            "sessionZero": "NOT_CLAIMED",
+            "ownedTeardown": "COMPLETE",
+            "restoredSourcePairs": 41,
+            "disabledGates": 16,
+            "terminalSummarySha256": "87124ea3015d7ab0b12767469f8f8bb4155b487505d638b8f04381dacb639740",
+            "rootFilesystemAuditSha256": "d8ee00510e181f6e3cec0de296d03efcc7964a8d86243a0d535ef5a3e19bf5c6",
+            "rootBrowserIncompleteReceiptSha256": "5a1c27b588c824d1f2043e3fc19484021983329f5652343f6095a1ba8670084c",
+            "rootPostCleanupArtifactRuntimeAuditSha256": "f08ebcd5400f2a10557ea48330838b8a019a0e4e805e56f6d3191b10154f1fcb"
+        },
+        "unchanged": [
+            "production",
+            "schema",
+            "permissions",
+            "guard predicates",
+            "timeouts",
+            "trace caps",
+            "backoffs",
+            "900-second watchdog",
+            "625-second vector late budget"
+        ],
+        "replacementRun": "NOT_SELECTED",
+        "nativeActivation": "NOT_AUTHORIZED",
+        "productBuildsRepeated": false
+    },
+    "vectorProvisionComposedNativeTrial": {
+        "status": "COMPLETE",
+        "runId": "9ab83712ad3f",
+        "helperCommit": "5f71fed71c3da4d269af7c7e27d37a044042d3ab",
+        "helperTree": "d1c6ab43cb0b67ccfceb1b61fae6c7d0910bdda0",
+        "selectedProductionBuildCommit": "77ac06bd99c113b8cf32e2f48bcaec79038dd94a",
+        "preparationManifestSha256": "bc2955bd5add9632f3f5c4ba32f496a653cbf1bb16b1644fb1600522397d321d",
+        "applicationValidationReceiptSha256": "2d23c8bb1d3b96815b94a39ac1b753c910b5f22e0fde20bdc8441f44886cc4c5",
+        "applicationValidation": "25_TYPES_25_LINT_UNITS_FOUR_SERIAL_BUILDS_AT_77AC",
+        "helperOfflineValidation": "70_PYTHON_100_NODE_21_SYNTAX_6_AST_AT_DIAGNOSTIC_CHECKPOINT",
+        "completedObservations": {
+            "vector-g1-ready": {
+                "status": "OBSERVED",
+                "snapshots": 1,
+                "sha256": "fd0289cca98982be5860c9f1bbf8f01b5e683096f042ea3acb4daabaa185ecc6"
+            },
+            "vector-g2-staged": {
+                "status": "OBSERVED",
+                "snapshots": 1,
+                "sha256": "10f775bfc453efcf6180307794058bc33bfe091227885572a73b710b2abfa621"
+            },
+            "vector-outage-failed": {
+                "status": "OBSERVED",
+                "snapshots": 44,
+                "sha256": "96e37cd09e3a600a6f0396c7de62a5fd7af958025b59e4c671d55d59a7a58795"
+            },
+            "vector-restored-before-retry": {
+                "status": "OBSERVED",
+                "snapshots": 1,
+                "sha256": "53157a338b2cd102143ada8c15f316c624cdf49e4d6e6ba53161283d4d9dd2cd"
+            },
+            "vector-g2-ready": {
+                "status": "OBSERVED",
+                "snapshots": 1,
+                "sha256": "6b09a86f815e6324834dc17bf03b4a6ecf7aa624774b4bff2fc6139e6061bbd6"
+            },
+            "vector-signed-out": {
+                "status": "OBSERVED",
+                "snapshots": 1,
+                "sha256": "d4eff70a0d8dc4785e724a1890d7bc5b3c4ece38c15b3df54dd6687543e969b2"
+            }
+        },
+        "completedWorkflows": {
+            "prepare-g1": {
+                "confirmedResponses": 13,
+                "statusCounts": {
+                    "200": 13
+                },
+                "signOutConfirmed": true,
+                "finalizationSha256": "f0b9a695b0ab67cdc5caee0a90eb1da28a7dc90211b1ba5c21f64308894b3c9b"
+            },
+            "search-g1": {
+                "confirmedResponses": 13,
+                "statusCounts": {
+                    "200": 13
+                },
+                "signOutConfirmed": true,
+                "finalizationSha256": "a91588837f79223e25adef3341c2009e9cca94088a7097ff14a3b80625a31764"
+            },
+            "rebuild-g2": {
+                "confirmedResponses": 5,
+                "statusCounts": {
+                    "200": 5
+                },
+                "signOutConfirmed": true,
+                "finalizationSha256": "f5bfef137723eda393d00d33cc46477fc20f6e0f370342dcf31bd9ddd94a3770"
+            },
+            "search-outage": {
+                "confirmedResponses": 8,
+                "statusCounts": {
+                    "200": 7,
+                    "409": 1
+                },
+                "signOutConfirmed": true,
+                "finalizationSha256": "34adafa636fb037f3dc743f46013f9b3a3a62d53c179247293f0005300b70415"
+            },
+            "search-g2": {
+                "confirmedResponses": 13,
+                "statusCounts": {
+                    "200": 13
+                },
+                "signOutConfirmed": true,
+                "finalizationSha256": "4d9cd5d7d27fa056df91d2c52561d5b59ab37bd95f1b08d71c96bb6d3ff025d6"
+            }
+        },
+        "confirmedHttpResponses": 52,
+        "confirmedHttpResponseStatusCounts": {
+            "200": 51,
+            "409": 1
+        },
+        "nullAfterStatusReceipts": 0,
+        "outage": {
+            "snapshots": 44,
+            "closedTraceRows": 5,
+            "attempts": [1, 2, 3, 4, 5],
+            "leaseEpochs": ["1", "2", "3", "4", "5"],
+            "backoffMilliseconds": [10000, 20000, 40000, 80000]
+        },
+        "retry": {
+            "sameProvisionTaskId": "79657358-883d-457a-a5be-7cb7e83852ce",
+            "sameG2": "848b2d55-9e25-4ce1-b1bf-c834915f812f",
+            "failedEpoch": "5",
+            "completeEpoch": "7",
+            "postRetryAttempts": 1,
+            "oneSuccessfulBrowserActivationObserved": true,
+            "pendingScreenshotObserved": true,
+            "earlierLocatorResolutionFailure": "RETAINED_SEPARATELY_NO_DISPATCH_INFERENCE",
+            "extraAdmittedRetryReset": "NOT_INDICATED_BY_EXACT_EPOCH_CHAIN"
+        },
+        "finalUsage": {
+            "activeChunks": "1",
+            "reservedChunks": "0",
+            "retainedChunks": "1"
+        },
+        "normalRootLogoutAndFormalSessionZero": true,
+        "rootBrowser": {
+            "normalLoginCount": 1,
+            "successfulRetryActivationsObserved": 1,
+            "immediatePendingScreenshot": true,
+            "earlierLocatorResolutionInputFailure": "PRESERVED_NO_DISPATCH_INFERENCE",
+            "normalLogout": true,
+            "language": "EN_ONLY",
+            "consoleWarningsErrors": 0,
+            "browserFileTransfers": 0,
+            "securityMutations": 0,
+            "originalReceiptSha256": "d07c078c918aa2fe448f5f03f407fb6dd67df412b66ce60e21a7fe1d2c11db5b"
+        },
+        "watchdog": {
+            "intervened": false,
+            "sameWorkerResumed": true,
+            "originalWindowSeconds": 900,
+            "lateMinimumSeconds": 625
+        },
+        "syntheticEmbeddingFinal": {
+            "requests": 29,
+            "embeddings": 9,
+            "inputs": 9,
+            "rejected": 0,
+            "connections": 29
+        },
+        "terminal": {
+            "phase": "CLEANED_EVIDENCE_RETAINED",
+            "resources": 0,
+            "appProcessesTerminal": 5,
+            "observerTerminal": true,
+            "watchdogTerminal": true,
+            "containersAbsent": 4,
+            "volumesAbsent": 4,
+            "restoredPairs": 42,
+            "disabledGates": 16,
+            "protectedNextLockExact": true,
+            "gitClean": true
+        },
+        "nativeTerminalSummarySha256": "9a3e9c76f2902f3df1dd4d8b64d69e689bab8f7280a32af85c386de778dd74c7",
+        "terminalProofInventorySha256": "25b4e572833bc2c301725a5239c55e879204973547a34296eb8ba845c496c7c8",
+        "terminalProofFiles": 167,
+        "teardownReceiptSha256": "512296547e0480eec2ccf3b6830d0526b910d21324065e7299c2626f0eb38759",
+        "restoreReceiptSha256": "1a40f1cc80e71e84053ef697ba763abd86979b9a9b9e49be3bf38027a6415994",
+        "rootIndependentFinalAuditSha256": "0bfb73212beb5fe88de58fd00b8e625b674a02d6135012b1cbc8da9fd1e0c4eb",
+        "rootAuditResourceAttribution": "SAVED_ACTUAL_INDEPENDENT_DOCKER_PROC_CENSUS_NO_NEW_ROOT_NATIVE_QUERY",
+        "priorProvenanceFieldsPreserved": 25,
+        "historical5ff": "COMPLETE_ONLY_AT_9CEF_DC314",
+        "historical778": "INCOMPLETE_NESTED_CAUSE_UNKNOWN",
+        "nativeGuardFailureEnvelope": "NO_REFUSAL_OBSERVED_FAILURE_BRANCH_REMAINS_HERMETIC_COVERAGE",
+        "qualityWeightsCapacity": "NOT_ESTABLISHED",
+        "intraDdlWriteSealInterruption": "NOT_ESTABLISHED",
+        "laterMainExecution": "NOT_CLAIMED",
+        "productOrHelperBehaviorChangedForOutcomeDocs": false
     }
 }

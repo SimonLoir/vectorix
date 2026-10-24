@@ -1,5 +1,7 @@
 """Offline guard/cleanup tests. All infrastructure and process operations are mocked."""
 import contextlib
+from datetime import datetime, timedelta, timezone
+import os
 import io
 import json
 from pathlib import Path
@@ -183,6 +185,273 @@ class ProtocolTests(unittest.TestCase):
                     l.validate({'schemaVersion': 1, 'runId': RUN}, RUN, scenario)
                 with self.assertRaisesRegex(l.GuardError, 'state-identity'):
                     l.validate({**l.receipt_scope(state()), 'namespace': 'vectorix-m7c-s3-outage'}, RUN, 'CLEANUP_V1')
+
+
+class VectorLifecycleTests(unittest.TestCase):
+    def test_vector_namespace_roles_and_fault_target_are_closed(self):
+        value = {'scenario': 'VECTOR_PROVISION_V1'}
+        self.assertEqual(l.fault_store(value), 'vector')
+        self.assertEqual(l.app_roles(value), (*l.APPS, 'embedding'))
+        self.assertNotEqual(l.state_path(RUN, value['scenario']), l.state_path(RUN, 'CLEANUP_V1'))
+        self.assertEqual(l.scenario_spec(value['scenario'])['namespace'], 'vectorix-m7c-vector-provision')
+
+    def test_vector_outage_guard_refuses_any_other_store_or_worker_change(self):
+        value = state()
+        value.update(scenario='VECTOR_PROVISION_V1', namespace='vectorix-m7c-vector-provision')
+        value['processes']['embedding'] = {'pid': 999, 'service': 'embedding'}
+        calls = []
+        def owned(_value, service, running=None):
+            calls.append((service, running))
+        with contextlib.ExitStack() as stack:
+            for name, replacement in [('pins', lambda *_: None), ('schema', lambda *_: None), ('smtp_ready', lambda *_: None), ('owned', owned), ('fault_phase', lambda *_: 'OUTAGE'), ('watchdog_admission', lambda *_: None), ('process_alive', lambda *_: True), ('process_identity', lambda *_: {'state': 'S'})]:
+                stack.enter_context(mock.patch.object(l, name, replacement))
+            self.assertTrue(l.guard(value, 'outage-observe')['resourceOwnership'])
+        self.assertEqual(dict(calls), {name: name != 'vector' for name in l.SERVICES})
+
+    def test_synthetic_fixture_environment_contains_no_database_or_smtp_secrets(self):
+        value = {'scenario': 'VECTOR_PROVISION_V1', 'runId': RUN, 'environment': {'DATABASE_URL': 'must-not-forward', 'ENCRYPTION_SECRET': 'must-not-forward'}}
+        result = l.app_environment(value, 'embedding')
+        self.assertEqual(set(result), {'NODE_ENV', 'TZ', 'VECTORIX_M7C_S3_OUTAGE_RUN', 'VECTORIX_M7C_S3_OUTAGE_ROLE', 'VECTORIX_M7C_S3_SCENARIO'})
+        self.assertNotIn('must-not-forward', str(result))
+
+
+class PrimedVectorObserverTests(unittest.TestCase):
+    def bundle(self):
+        value = state()
+        value.update(scenario='VECTOR_PROVISION_V1', namespace='vectorix-m7c-vector-provision', commit='c' * 40)
+        value['resources']['vector'] = {'id': 'v' * 64}
+        value['processes']['workers'] = {'pid': 123, 'startTicks': '42'}
+        value['inputs'] = {'helpers': {'vector-observe.mjs': 'a' * 64, 'vector-snapshot.mjs': 'b' * 64}}
+        control = {'pid': 456, 'startTicks': '43', 'bootId': '0' * 8 + '-' + '0' * 4 + '-' + '0' * 4 + '-' + '0' * 4 + '-' + '0' * 12, 'cwd': str(l.ROOT), 'commandSha256': 'd' * 64}
+        scope = l.receipt_scope(value)
+        staged = {**scope, 'phase': 'vector-g2-staged', 'status': 'OBSERVED', 'faultAdmission': {'taskId': 'task'}}
+        watchdog = {**scope, 'control': {'pid': 789}, 'deadlineMonotonicNs': '1900000000000'}
+        encode = lambda item: json.dumps(item).encode()
+        intent = {**scope, 'namespace': value['namespace'], 'phase': 'vector-outage-failed', 'status': 'ONE_SHOT_READ_ONLY', 'control': control, 'sourceCommit': value['commit'], 'helperPinsSha256': l.digest(l.canonical(value['inputs']['helpers'])), 'stagedProofSha256': l.digest(encode(staged)), 'watchdogAckSha256': l.digest(encode(watchdog)), 'deadlineMonotonicNs': watchdog['deadlineMonotonicNs'], 'workerPid': 123, 'workerStartTicks': '42', 'vectorContainerId': value['resources']['vector']['id']}
+        ready = {**intent, 'status': 'ARMED', 'intentSha256': l.digest(encode(intent)), 'armedAt': (datetime.now(timezone.utc) - timedelta(seconds=1)).isoformat(), 'armedMonotonicNs': '999000000000'}
+        records = {'observe-vector-g2-staged.json': staged, 'watchdog-ack.json': watchdog, 'observe-vector-outage-failed-intent.json': intent, 'vector-observer-ready.json': ready}
+        actual = {'state': 'S', 'command': [b'node', b'tests/acceptance/s3-outage/vector-observe.mjs', b'--run', RUN.encode(), b'--scenario', b'VECTOR_PROVISION_V1', b'--phase', b'vector-outage-failed', b'']}
+        return value, records, actual
+
+    def admission(self, value, records, actual, *, live=True, fresh=True, alive=True):
+        with mock.patch.object(l, 'read_private_bytes', side_effect=lambda path, _bound: json.dumps(records[path.name]).encode()), mock.patch.object(l, 'control_alive', return_value=alive), mock.patch.object(l, 'process_identity', return_value=actual), mock.patch.object(l.time, 'monotonic_ns', return_value=1000000000000):
+            return l.vector_observer_admission(value, ready=True, fresh=fresh, live=live)
+
+    def test_ready_ack_requires_exact_scope_sources_intent_staged_and_original_watchdog(self):
+        value, records, actual = self.bundle()
+        self.assertEqual(self.admission(value, records, actual)['control']['pid'], 456)
+        for field in ['sourceCommit', 'helperPinsSha256', 'stagedProofSha256', 'watchdogAckSha256', 'deadlineMonotonicNs', 'intentSha256', 'workerStartTicks', 'vectorContainerId', 'phase']:
+            changed = json.loads(json.dumps(records))
+            changed['vector-observer-ready.json'][field] = 'changed'
+            with self.subTest(field=field), self.assertRaises(l.GuardError):
+                self.admission(value, changed, actual)
+        for name in ['watchdog-ack.json', 'observe-vector-g2-staged.json', 'observe-vector-outage-failed-intent.json']:
+            changed = json.loads(json.dumps(records)); changed[name]['unexpected'] = True
+            with self.subTest(reference=name), self.assertRaises(l.GuardError):
+                self.admission(value, changed, actual)
+
+    def test_observer_identity_and_freshness_are_checked_at_consumption_not_extended_into_trace(self):
+        value, records, actual = self.bundle()
+        for process_state in ['T', 't', 'Z', 'X', 'x']:
+            with self.subTest(state=process_state), self.assertRaisesRegex(l.GuardError, 'command-state'):
+                self.admission(value, records, {**actual, 'state': process_state})
+        with self.assertRaisesRegex(l.GuardError, 'not-live'):
+            self.admission(value, records, actual, alive=False)
+        with self.assertRaisesRegex(l.GuardError, 'command-state'):
+            self.admission(value, records, {**actual, 'command': [b'wrong']})
+        records['vector-observer-ready.json']['armedAt'] = (datetime.now(timezone.utc) - timedelta(seconds=91)).isoformat()
+        records['vector-observer-ready.json']['armedMonotonicNs'] = '909000000000'
+        with self.assertRaisesRegex(l.GuardError, 'ready-stale'):
+            self.admission(value, records, actual)
+        self.assertEqual(self.admission(value, records, actual, fresh=False)['ready']['status'], 'ARMED')
+
+    def test_exact_fault_intent_is_required_for_each_transition_pair(self):
+        value, records, _actual = self.bundle()
+        scope = l.receipt_scope(value)
+        with tempfile.TemporaryDirectory(dir=common.CACHE) as temporary:
+            directory = Path(temporary)
+            staged_raw = json.dumps(records['observe-vector-g2-staged.json']).encode()
+            reader = lambda path, _bound: staged_raw if path.name == 'observe-vector-g2-staged.json' else (directory / path.name).read_bytes()
+            admission = {'readySha256': 'a' * 64, 'ready': {'armedMonotonicNs': '999000000000'}}
+            with mock.patch.object(l, 'state_path', return_value=directory / 'state.json'), mock.patch.object(l, 'fault_phase', return_value='PAUSED'), mock.patch.object(l, 'read_private_bytes', side_effect=reader), mock.patch.object(l, 'vector_observer_admission', return_value=admission), mock.patch.object(l.time, 'monotonic_ns', return_value=1000000000000):
+                self.assertEqual(l.vector_observer_transition(value, True, True, 'PAUSED'), 'UP_PAUSED')
+                for pair in [(False, True), (False, False), (True, False)]:
+                    with self.assertRaises(l.GuardError): l.vector_observer_transition(value, *pair, 'PAUSED')
+                intent = {**scope, 'stagedProofSha256': l.digest(staged_raw), 'observerReadySha256': 'a' * 64, 'vector': value['resources']['vector'], 'staged': records['observe-vector-g2-staged.json']['faultAdmission']}
+                (directory / 'fault-storage-outage-intent.json').write_text(json.dumps(intent))
+                for pair, expected in [((True, True), 'UP_PAUSED'), ((False, True), 'DOWN_PAUSED'), ((False, False), 'DOWN_RUNNING')]: self.assertEqual(l.vector_observer_transition(value, *pair, 'PAUSED'), expected)
+                with self.assertRaisesRegex(l.GuardError, 'invalid-pair'): l.vector_observer_transition(value, True, False, 'PAUSED')
+                # The final receipt can arrive after a PAUSED phase/worker sample. It must not reinterpret that sample as OUTAGE.
+                receipt = {**scope, 'observerReadySha256': 'a' * 64, 'stagedProofSha256': l.digest(staged_raw), 'storageStopped': True, 'sameWorkerResumed': True}
+                (directory / 'fault-storage-outage-receipt.json').write_text(json.dumps(receipt))
+                self.assertEqual(l.vector_observer_transition(value, False, True, 'PAUSED'), 'DOWN_PAUSED')
+                self.assertEqual(l.vector_observer_transition(value, False, False, 'OUTAGE'), 'DOWN_RUNNING')
+                with self.assertRaisesRegex(l.GuardError, 'outage-pair'): l.vector_observer_transition(value, False, True, 'OUTAGE')
+                intent['observerReadySha256'] = 'b' * 64
+                (directory / 'fault-storage-outage-intent.json').write_text(json.dumps(intent))
+                with self.assertRaisesRegex(l.GuardError, 'transition-intent'): l.vector_observer_transition(value, False, False, 'PAUSED')
+
+    def test_cleanup_drains_exact_observer_before_touching_saved_stores(self):
+        value, _records, _actual = self.bundle()
+        value['processes'] = {}
+        value['resources'] = {'vector': {'id': 'saved', 'name': 'owned-name', 'volume': 'owned-volume'}}
+        events = []
+        with tempfile.TemporaryDirectory(dir=common.CACHE) as temporary:
+            directory = Path(temporary); (directory / 'observe-vector-outage-failed-intent.json').touch()
+            with mock.patch.object(l, 'state_path', return_value=directory / 'state.json'), mock.patch.object(l, 'save'), mock.patch.object(l, 'vector_observer_admission', return_value={'control': {'pid': 456}}), mock.patch.object(l, 'control_alive', side_effect=[True, True, False]), mock.patch.object(l, 'process_identity', return_value={'state': 'S'}), mock.patch.object(l.os, 'pidfd_open', return_value=999), mock.patch.object(l.os, 'close'), mock.patch.object(l.signal, 'pidfd_send_signal', side_effect=lambda *_args: events.append('TERM_OBSERVER')), mock.patch.object(l, 'owned', return_value={'State': {'Running': False}}), mock.patch.object(l, 'owned_volume'), mock.patch.object(l, 'run', side_effect=lambda *_args, **_kwargs: events.append('STORE') or b''):
+                l.cleanup(value)
+        self.assertEqual(events[0], 'TERM_OBSERVER')
+        self.assertIn('STORE', events)
+        self.assertEqual(value['phase'], 'CLEANED_EVIDENCE_RETAINED')
+
+
+class PrimedVectorGuardWiringTests(unittest.TestCase):
+    def test_guard_samples_worker_before_final_storage_state_and_returns_closed_transition(self):
+        value = state(); value.update(scenario='VECTOR_PROVISION_V1', namespace='vectorix-m7c-vector-provision')
+        value['processes']['embedding'] = {'pid': 999, 'service': 'embedding'}
+        vector_reads = 0
+        def owned(_state, service, running=None):
+            nonlocal vector_reads
+            if service == 'vector':
+                vector_reads += 1
+                return {'State': {'Running': vector_reads == 1}}
+            l.require(running is True, 'other-store-must-stay-online')
+            return {'State': {'Running': True}}
+        with contextlib.ExitStack() as stack:
+            for name, replacement in [('pins', lambda *_: None), ('schema', lambda *_: None), ('smtp_ready', lambda *_: None), ('owned', owned), ('fault_phase', lambda *_: 'PAUSED'), ('watchdog_admission', lambda *_: None), ('process_alive', lambda *_: True), ('process_identity', lambda *_: {'state': 'S'})]: stack.enter_context(mock.patch.object(l, name, replacement))
+            transition = stack.enter_context(mock.patch.object(l, 'vector_observer_transition', return_value='DOWN_RUNNING'))
+            proof = l.guard(value, 'vector-outage-watch')
+            transition.assert_called_once_with(value, False, False, 'PAUSED')
+            self.assertEqual(proof['vectorTransition'], 'DOWN_RUNNING')
+            self.assertEqual(vector_reads, 2)
+        value['scenario'] = 'INGESTION_V1'
+        with mock.patch.object(l, 'pins'), mock.patch.object(l, 'fault_phase', return_value='PAUSED'), mock.patch.object(l, 'owned') as inspect:
+            with self.assertRaisesRegex(l.GuardError, 'observer-scenario'): l.guard(value, 'vector-outage-watch')
+            inspect.assert_not_called()
+
+    def test_observer_cleanup_timeout_prevents_any_store_mutation(self):
+        value = {'scenario': 'VECTOR_PROVISION_V1', 'protocolVersion': 2, 'runId': RUN, 'resources': {}, 'processes': {}, 'phase': 'READY'}
+        with tempfile.TemporaryDirectory(dir=common.CACHE) as temporary:
+            directory = Path(temporary); (directory / 'observe-vector-outage-failed-intent.json').touch()
+            with mock.patch.object(l, 'state_path', return_value=directory / 'state.json'), mock.patch.object(l, 'save'), mock.patch.object(l, 'vector_observer_admission', return_value={'control': {'pid': 456}}), mock.patch.object(l, 'control_alive', return_value=True), mock.patch.object(l, 'process_identity', return_value={'state': 'S'}), mock.patch.object(l.os, 'pidfd_open', return_value=999), mock.patch.object(l.os, 'close'), mock.patch.object(l.signal, 'pidfd_send_signal'), mock.patch.object(l.time, 'monotonic', side_effect=[0, 56]), mock.patch.object(l, 'run') as mutate:
+                with self.assertRaisesRegex(l.GuardError, 'observer-graceful-stop-timeout'): l.cleanup(value)
+                mutate.assert_not_called()
+
+
+class ComposedScenarioTests(unittest.TestCase):
+    def test_four_scenarios_choose_exact_targets_receipts_and_watchdog_resources(self):
+        expected = {'INGESTION_V1': ('rustfs', {'rustfs'}), 'CLEANUP_V1': ('rustfs', {'rustfs'}),
+            'REDIS_V1': ('redis', {'rustfs', 'redis'}), 'VECTOR_PROVISION_V1': ('vector', {'vector'})}
+        paths = set()
+        for scenario, (service, keys) in expected.items():
+            value = state(); value['scenario'] = scenario
+            value['resources'] = {name: {'id': name + '-owned'} for name in l.SERVICES}
+            self.assertEqual(l.fault_store(value), service)
+            self.assertEqual(l.watchdog_resources(value), {key: value['resources'][key] for key in keys})
+            self.assertEqual(l.outage_receipt_name(value), 'fault-redis-outage-receipt.json' if scenario == 'REDIS_V1' else 'fault-storage-outage-receipt.json')
+            paths.add(l.state_path(RUN, scenario))
+        self.assertEqual(len(paths), 4)
+        for invalid in ['OTHER', None, '__proto__']:
+            with self.assertRaises(l.GuardError): l.fault_store({'scenario': invalid})
+
+    def test_real_watchdog_admission_rejects_cross_scenario_and_retargeted_envelopes(self):
+        for scenario in l.SCENARIOS:
+            value = state(); value['scenario'] = scenario
+            value['resources'] = {name: {'id': name + '-owned'} for name in l.SERVICES}
+            ack = {**l.receipt_scope(value), 'budgetSeconds': 900, 'worker': value['processes']['workers'],
+                **l.watchdog_resources(value), 'control': {'pid': 456}, 'deadlineMonotonicNs': '900000000001'}
+            candidates = [ack, {**ack, 'scenario': next(key for key in l.SCENARIOS if key != scenario)}]
+            for key in l.watchdog_resources(value): candidates.append({**ack, key: {'id': 'foreign'}})
+            for index, candidate in enumerate(candidates):
+                with self.subTest(scenario=scenario, candidate=index), mock.patch.object(l, 'read_private_bytes', return_value=json.dumps(candidate).encode()), mock.patch.object(l, 'control_alive', return_value=True), mock.patch.object(l.time, 'monotonic_ns', return_value=1):
+                    if index == 0: self.assertEqual(l.watchdog_admission(value), ack)
+                    else:
+                        with self.assertRaises(l.GuardError): l.watchdog_admission(value)
+
+    def test_pin_recheck_uses_the_saved_scenario_including_both_curl_consumers(self):
+        for scenario in l.SCENARIOS:
+            value = {'scenario': scenario, 'inputs': {'scenario': scenario}}
+            with mock.patch.object(l, 'inputs', return_value=value['inputs']) as inputs:
+                l.pins(value)
+                inputs.assert_called_once_with(scenario)
+            with mock.patch.object(l, 'inputs', return_value={'scenario': 'different'}):
+                with self.assertRaisesRegex(l.GuardError, 'migration-drift'): l.pins(value)
+
+
+class GuardDiagnosticTests(unittest.TestCase):
+    def cli(self, replacement=None, purpose='observe'):
+        """Run the actual CLI route and guard; replace only resource/identity boundaries."""
+        value = state()
+        stdout, stderr = io.StringIO(), io.StringIO()
+        with contextlib.ExitStack() as stack:
+            stack.enter_context(mock.patch.object(l, 'STATIC_DRAFT_ONLY', False))
+            stack.enter_context(mock.patch.object(sys, 'argv', ['lifecycle.py', '--run', RUN,
+                '--scenario', 'INGESTION_V1', '--mode', 'guard', '--purpose', purpose]))
+            defaults = {
+                'check_directories': lambda: None, 'load': lambda *_: value,
+                'pins': lambda *_: None, 'schema': lambda *_: None,
+                'owned': lambda *_args, **_kwargs: {'State': {'Running': True}},
+                'fault_phase': lambda *_: 'NOT_STARTED',
+                'process_alive': lambda *_: True, 'process_identity': lambda *_: {'state': 'S'},
+                'smtp_ready': lambda *_: None,
+            }
+            if replacement:
+                defaults.update(replacement)
+            for name, boundary in defaults.items():
+                stack.enter_context(mock.patch.object(l, name, boundary))
+            stack.enter_context(contextlib.redirect_stdout(stdout))
+            stack.enter_context(contextlib.redirect_stderr(stderr))
+            code = l.main()
+        self.assertEqual(stderr.getvalue(), '')
+        self.assertLess(len(stdout.getvalue().encode()), 2048)
+        self.assertNotIn('PRIVATE', stdout.getvalue())
+        return code, json.loads(stdout.getvalue())
+
+    def test_actual_guard_cli_success_keeps_original_proof_shape(self):
+        code, proof = self.cli()
+        self.assertEqual(code, 0)
+        self.assertEqual(proof, {**l.receipt_scope(state()), 'namespace': state()['namespace'],
+            'purpose': 'observe', 'resourceOwnership': True, 'exactTestDatabases': True,
+            'sourceBuildPins': True})
+
+    def test_actual_cli_failure_envelope_covers_each_real_guard_stage(self):
+        def refused(*_args, **_kwargs):
+            raise l.GuardError('PRIVATE secret/path/stack must be discarded')
+        cases = [
+            ('ADMISSION', {'check_directories': refused}), ('STATE', {'load': refused}),
+            ('SOURCE_PINS', {'pins': refused}), ('STORE_IDENTITY', {'owned': refused}),
+            ('SCHEMA', {'schema': refused}), ('PROCESS_IDENTITY', {'process_alive': lambda *_: False}),
+            ('PROCESS_RUNSTATE', {'process_identity': lambda *_: {'state': 'T'}}),
+            ('SMTP', {'smtp_ready': refused}), ('CONTROL_PHASE', {'fault_phase': refused}),
+        ]
+        for stage, replacements in cases:
+            with self.subTest(stage=stage):
+                code, proof = self.cli(replacements)
+                self.assertEqual(code, 1)
+                self.assertEqual(proof, {'schemaVersion': 1, 'protocolVersion': 2, 'guardProtocol': 1,
+                    'scenario': 'INGESTION_V1', 'namespace': state()['namespace'], 'runId': RUN,
+                    'purpose': 'observe', 'sourceSha256': l.digest(Path(l.__file__).read_bytes()),
+                    'completed': False, 'stage': stage, 'category': 'REFUSED'})
+
+    def test_actual_cli_never_reads_unknown_error_payload_and_retains_interruption_category(self):
+        class HostileError(Exception):
+            def __str__(self):
+                self.fail_payload()
+            def fail_payload(self):
+                raise AssertionError('PRIVATE payload accessed')
+        for error, category in [(HostileError(), 'ERROR'), (KeyboardInterrupt(), 'INTERRUPTED')]:
+            def broken(*_args, **_kwargs):
+                raise error
+            code, proof = self.cli({'schema': broken})
+            self.assertEqual(code, 1)
+            self.assertEqual(proof['stage'], 'SCHEMA')
+            self.assertEqual(proof['category'], category)
+
+    def test_guard_binding_rejects_foreign_run_and_purpose_before_capabilities(self):
+        with mock.patch.object(l, 'file_hash', side_effect=AssertionError('capability called')):
+            for run_id, purpose in [('foreign', 'observe'), (RUN, 'arbitrary')]:
+                with self.subTest(run=run_id, purpose=purpose), self.assertRaises(l.GuardError):
+                    l.guard_command(run_id, 'INGESTION_V1', purpose)
 
 
 if __name__ == '__main__':
