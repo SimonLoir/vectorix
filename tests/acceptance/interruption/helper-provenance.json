@@ -39,7 +39,7 @@
         "originalSha256": "9362fe4019bef7c9c744a4ba46a599523fa693b951103888e4ec1737a7227dd6",
         "relocatedPreflight": {
             "path": "fixture/prepared-v1/preflight.json",
-            "sha256": "36b67fe4dba20f726cda48b8e5fd9f1ed245c49fd26865bb18dada72598de321"
+            "sha256": "eca2ec54763f65d21eef30f3c9ae6843a7896dfc0b3af9cf0f60bcb56dff3cd3"
         }
     },
     "observerManifestSha256": "30d2ed55062adff91f2de8ae4e6ba07da13900a90036fb5d9061d827c979d51f",
@@ -61,7 +61,7 @@
         "fixture/preflight.mjs": "466dae2679623150997b691621858a065ef7a0fe2faa5bb049f10ce42b0cdc66",
         "fixture/prepared-v1/canonical.json": "aadb208c48b95d0e3312bcd70c11c2a9616027768cb8ca42ce15af2fff6217d0",
         "fixture/prepared-v1/m7c-semantic-boundary-128-v1.txt": "9362fe4019bef7c9c744a4ba46a599523fa693b951103888e4ec1737a7227dd6",
-        "fixture/prepared-v1/preflight.json": "36b67fe4dba20f726cda48b8e5fd9f1ed245c49fd26865bb18dada72598de321",
+        "fixture/prepared-v1/preflight.json": "eca2ec54763f65d21eef30f3c9ae6843a7896dfc0b3af9cf0f60bcb56dff3cd3",
         "observer/README.md": "2ba928fb676a948711cb9bc9d34daaec16a41878dfa3f7a96cb3167c88d67be7",
         "observer/observer-manifest.json": "30d2ed55062adff91f2de8ae4e6ba07da13900a90036fb5d9061d827c979d51f",
         "observer/recovery_observation.py": "dee29e0facce2a25ef4d7f9bf0996f8fbe8f641bde84003526939b965ae1fd84",
