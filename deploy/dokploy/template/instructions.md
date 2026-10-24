@@ -2,7 +2,7 @@
 
 The template starts the web dashboard on the main domain, the API on `api.<domain>` and the superadmin console on `admin.<domain>`, with PostgreSQL, vector PostgreSQL (pgvector and pgvectorscale), Redis and private RustFS storage.
 
-1. **Production domain**: before importing, set `main_domain` (for example `vectorix.app`) and `scheme = "https"` in the template variables. After the first deployment, enable HTTPS with Let's Encrypt on the three domains in the _Domains_ tab. Do not host other, less trusted services under the same parent domain: the session cookie is shared across it.
+1. **Production domain**: before importing, set `main_domain` (for example `vectorix.app`) **and** `scheme = "https"` in the template variables. Dokploy templates cannot enable HTTPS on domains, so after the first deployment open _Domains_, edit each of the three domains, turn on **HTTPS** with the **Let's Encrypt** certificate provider, and redeploy. Until then Traefik serves its self-signed `TRAEFIK DEFAULT CERT`. Browsers refuse it outright for HSTS-preloaded TLDs such as `.app` and `.dev`, which cannot be used over plain HTTP at all. Do not host other, less trusted services under the same parent domain: the session cookie is shared across it.
 2. **Registry**: the server must be able to pull `pxdv.be/vectorix/*` (`docker login pxdv.be`).
 3. **CPU**: on x86 servers, vector PostgreSQL requires AVX2 and FMA.
 4. **Mail and embeddings**: fill a Resend key or SMTP settings (password reset and email verification), and at least one embedding provider key, or let each organization configure its own in the dashboard.

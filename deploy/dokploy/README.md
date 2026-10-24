@@ -153,8 +153,9 @@ To import it into your Dokploy instance:
 
 2. In Dokploy, choose _Create Service → Compose → Advanced → Import_ and paste the string.
 3. Before deploying, edit the template variables: set `main_domain = "vectorix.app"` and `scheme = "https"`. Fill the mail settings and at least one embedding provider key in the environment. With the defaults, Dokploy generates an `sslip.io` host and the stack serves a working HTTP preview on it, because `api.` and `admin.` subdomains of that host resolve too.
-4. Deploy. Then, in _Domains_, enable HTTPS (Let's Encrypt) on the three domains.
-5. Optionally switch the service type to Stack to run it as Swarm services. Swarm ignores the `depends_on` conditions; the one-shot services retry `on-failure` until the databases accept connections.
+4. Deploy. Then, in _Domains_, edit each of the three domains, enable **HTTPS** with the **Let's Encrypt** certificate provider, and redeploy. Dokploy templates cannot enable HTTPS themselves. Until you do, Traefik serves its self-signed `TRAEFIK DEFAULT CERT`, which browsers refuse outright for HSTS-preloaded TLDs such as `.app`.
+
+If the template was imported with `scheme = "http"`, also replace `http://` with `https://` in `API_URL`, `BETTER_AUTH_URL`, `VECTORIX_WEB_URL`, `TRUSTED_ORIGINS` and `PASSKEY_ORIGINS` in _Environment_, keeping the internal `VECTORIX_DEFAULT_S3_ENDPOINT=http://rustfs:9000`, then redeploy. Otherwise the API rejects the HTTPS origins (CORS and CSRF). 5. Optionally switch the service type to Stack to run it as Swarm services. Swarm ignores the `depends_on` conditions; the one-shot services retry `on-failure` until the databases accept connections.
 
 Prerequisites are the same as for the hand-written Stack: DNS, AVX2/FMA on x86, `pxdv.be` pull access on the server, and backups of `ENCRYPTION_SECRET` with both databases and the RustFS volume. Set `VECTORIX_TRUSTED_PROXIES` to the subnet of `dokploy-network`.
 
