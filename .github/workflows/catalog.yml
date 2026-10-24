@@ -25,6 +25,10 @@ jobs:
                   npm install --global pnpm@11.25.0
                   pnpm install --frozen-lockfile
                   pnpm db:generate
+            # Visible but non-blocking until advisories are triaged automatically (issues #15 and #47).
+            - name: Audit dependencies for high-severity advisories
+              continue-on-error: true
+              run: pnpm audit --audit-level=high
             - name: Validate schema, contracts, and code
               run: |
                   pnpm --filter @repo/db exec prisma validate
