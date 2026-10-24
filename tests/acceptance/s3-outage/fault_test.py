@@ -17,6 +17,7 @@ import m7c_restore_common as common
 
 def setUpModule():
     """Create a hermetic owned cache below ROOT, retaining the real nofollow/private-path guards."""
+    (common.ROOT / 'node_modules').mkdir(exist_ok=True)
     temporary = tempfile.TemporaryDirectory(dir=common.ROOT / 'node_modules', prefix='vectorix-s3-outage-guards-')
     unittest.addModuleCleanup(temporary.cleanup)
     cache = Path(temporary.name) / '.cache/vectorix'
@@ -31,7 +32,7 @@ SHA1, SHA2 = '1' * 64, '2' * 64
 
 
 def state():
-    return {'runId': RUN, 'phase': 'READY', 'processes': {'workers': {'pid': 123, 'startTicks': '42'}},
+    return {'protocolVersion': 2, 'scenario': 'INGESTION_V1', 'namespace': 'vectorix-m7c-s3-outage', 'runId': RUN, 'phase': 'READY', 'processes': {'workers': {'pid': 123, 'startTicks': '42'}},
         'resources': {'rustfs': {'id': 'a' * 64}},
         'inputs': {'textFixtures': {'s3-outage-v1.txt': {'sha256': SHA1}, 's3-outage-v2.txt': {'sha256': SHA2}}}}
 
@@ -86,7 +87,7 @@ class FaultTests(unittest.TestCase):
             send.assert_not_called()
 
     def admission(self, value):
-        proof = {'schemaVersion': 1, 'namespace': f.l.NAMESPACE, 'runId': RUN, 'phase': 'v2-staged', 'faultAdmission': value}
+        proof = {'schemaVersion': 1, 'protocolVersion': 2, 'scenario': 'INGESTION_V1', 'namespace': 'vectorix-m7c-s3-outage', 'runId': RUN, 'phase': 'v2-staged', 'faultAdmission': value}
         with mock.patch.object(f.l, 'read_private_bytes', return_value=json.dumps(proof).encode()), \
                 mock.patch.object(f, 'read', return_value={'organization': {'id': 'org-owned'}}):
             return f.fresh_admission(state(), 'v2-staged', 'faultAdmission', 'STAGED_ORIGINAL_CONFIRMED', 2)
@@ -110,7 +111,7 @@ class FaultTests(unittest.TestCase):
         value = {key: item for key, item in staged().items() if key in {
             'schemaVersion', 'organizationId', 'documentId', 'versionId', 'version', 'originalSha256', 'observedAt'}}
         value.update(kind='EXTRACTION_FAILED', attempts=4, status='FAILED', errorCode='STORAGE_UNAVAILABLE')
-        proof = {'schemaVersion': 1, 'namespace': f.l.NAMESPACE, 'runId': RUN, 'phase': 'outage-failed', 'faultRecoveryAdmission': value}
+        proof = {'schemaVersion': 1, 'protocolVersion': 2, 'scenario': 'INGESTION_V1', 'namespace': 'vectorix-m7c-s3-outage', 'runId': RUN, 'phase': 'outage-failed', 'faultRecoveryAdmission': value}
         with mock.patch.object(f.l, 'read_private_bytes', return_value=json.dumps(proof).encode()), \
                 mock.patch.object(f, 'read', return_value={'organization': {'id': 'org-owned'}}):
             with self.assertRaisesRegex(f.l.GuardError, 'natural-terminal-required'):
@@ -149,7 +150,7 @@ class FaultTests(unittest.TestCase):
         stack.enter_context(mock.patch.object(f.signal, 'signal'))
         first_load = True
 
-        def load_current(run):
+        def load_current(run, _scenario):
             nonlocal first_load
             if first_load:
                 first_load = False
@@ -201,6 +202,65 @@ class FaultTests(unittest.TestCase):
                     mock.patch.object(sys, 'argv', ['fault.py']):
                 with self.assertRaises(f.l.GuardError):
                     f.main()
+
+
+class CleanupFaultTests(unittest.TestCase):
+    def cleanup_state(self):
+        return {**state(), 'scenario': 'CLEANUP_V1', 'namespace': 'vectorix-m7c-s3-cleanup'}
+
+    def test_scenarios_choose_different_exact_admissions(self):
+        plan = f.scenario_plan(self.cleanup_state())
+        self.assertEqual(plan['stagedPhase'], 'cleanup-staged')
+        self.assertEqual(plan['version'], 1)
+        self.assertNotEqual(plan, f.scenario_plan(state()))
+
+    def test_cleanup_requires_625_seconds_of_the_original_deadline(self):
+        value = self.cleanup_state()
+        ack = {'deadlineMonotonicNs': '900000000000'}
+        with mock.patch.object(f.time, 'monotonic_ns', return_value=275000000000):
+            f.require_remaining(value, ack)
+        with mock.patch.object(f.time, 'monotonic_ns', return_value=275000000001):
+            with self.assertRaisesRegex(f.l.GuardError, 'insufficient-original-budget'):
+                f.require_remaining(value, ack)
+        with mock.patch.object(f.time, 'monotonic_ns', return_value=780000000000):
+            f.require_remaining(state(), ack)
+
+    def test_cleanup_budget_is_checked_after_receipt_and_identity_immediately_before_stop(self):
+        value = self.cleanup_state()
+        staged = {'documentId': 'doc'}
+        with contextlib.ExitStack() as stack:
+            stack.enter_context(mock.patch.object(f.l, 'fault_phase', return_value='PAUSED'))
+            stack.enter_context(mock.patch.object(f.l, 'guard'))
+            stack.enter_context(mock.patch.object(f.l, 'watchdog_admission', return_value={
+                'deadlineMonotonicNs': '900000000000', 'baseline': {'documentId': 'doc'}}))
+            stack.enter_context(mock.patch.object(f, 'fresh_admission', return_value=(staged, 'proof')))
+            record = stack.enter_context(mock.patch.object(f, 'record'))
+            stack.enter_context(mock.patch.object(f.l, 'owned'))
+            stack.enter_context(mock.patch.object(f.time, 'monotonic_ns', return_value=275000000001))
+            command = stack.enter_context(mock.patch.object(f.l, 'run'))
+            with self.assertRaisesRegex(f.l.GuardError, 'insufficient-original-budget'):
+                f.storage_outage(value)
+            record.assert_called_once()
+            command.assert_not_called()
+
+    def test_abort_marks_incomplete_before_both_safety_restorations(self):
+        value = self.cleanup_state()
+        events = []
+        ack = {'worker': value['processes']['workers'], 'rustfs': value['resources']['rustfs']}
+        with mock.patch.object(f, 'read', return_value=ack), mock.patch.object(f.Path, 'exists', return_value=False), \
+                mock.patch.object(f, 'record', side_effect=lambda *_: events.append('INTERVENTION')), \
+                mock.patch.object(f, 'restore_owned', side_effect=lambda *_: events.append('RESTORE') or {
+                    'storageRunning': True, 'sameWorkerResumed': True}):
+            f.abort_incomplete(value)
+        self.assertEqual(events, ['INTERVENTION', 'RESTORE'])
+
+    def test_abort_rejects_other_enrolled_resources_before_any_signal(self):
+        value = self.cleanup_state()
+        with mock.patch.object(f, 'read', return_value={'worker': value['processes']['workers'], 'rustfs': {'id': 'other'}}), \
+                mock.patch.object(f, 'restore_owned') as restore:
+            with self.assertRaisesRegex(f.l.GuardError, 'abort-enrollment-binding'):
+                f.abort_incomplete(value)
+            restore.assert_not_called()
 
 
 if __name__ == '__main__':

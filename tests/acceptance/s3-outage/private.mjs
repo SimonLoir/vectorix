@@ -8,6 +8,44 @@ import { pathToFileURL } from 'node:url';
 
 export const HERE = path.dirname(fileURLToPath(import.meta.url));
 export const ROOT = path.resolve(HERE, '../../..');
+export const PROTOCOL_VERSION = 2;
+/** Exactly two scenarios; historical protocol-1 states cannot be adopted. */
+export function scenarioSpec(scenario) {
+    const specs = {
+        INGESTION_V1: {
+            namespace: 'vectorix-m7c-s3-outage',
+            databaseStem: 'vectorix_m7c_s3_outage',
+            objectPrefix: 'm7c-s3-outage',
+        },
+        CLEANUP_V1: {
+            namespace: 'vectorix-m7c-s3-cleanup',
+            databaseStem: 'vectorix_m7c_s3_cleanup',
+            objectPrefix: 'm7c-s3-cleanup',
+        },
+    };
+    need(
+        typeof scenario === 'string' && Object.hasOwn(specs, scenario),
+        'M7C_S3_OUTAGE_SCENARIO_REQUIRED'
+    );
+    return specs[scenario];
+}
+export function receiptScope(state) {
+    scenarioSpec(state.scenario);
+    return {
+        schemaVersion: 1,
+        protocolVersion: PROTOCOL_VERSION,
+        scenario: state.scenario,
+        runId: state.runId,
+    };
+}
+export function sameScope(state, receipt) {
+    return (
+        receipt &&
+        Object.entries(receiptScope(state)).every(
+            ([key, value]) => receipt[key] === value
+        )
+    );
+}
 export class RecipeError extends Error {}
 export const need = (value, label) => {
     if (!value) throw new RecipeError(label);
@@ -77,9 +115,10 @@ export function writePrivate(filename, value) {
 
 export function context(args, purpose) {
     need(
-        args.length === 2 &&
+        args.length === 4 &&
             args[0] === '--run' &&
-            /^[a-f0-9]{12}$/u.test(args[1]),
+            /^[a-f0-9]{12}$/u.test(args[1]) &&
+            args[2] === '--scenario',
         'M7C_S3_OUTAGE_ARGUMENTS'
     );
     need(
@@ -95,9 +134,11 @@ export function context(args, purpose) {
         'M7C_S3_OUTAGE_PURPOSE'
     );
     const run = args[1],
+        scenario = args[3],
+        spec = scenarioSpec(scenario),
         directory = path.join(
             ROOT,
-            'node_modules/.cache/vectorix/vectorix-m7c-s3-outage-' + run
+            'node_modules/.cache/vectorix/' + spec.namespace + '-' + run
         );
     for (const candidate of [HERE, directory]) {
         const info = fs.lstatSync(candidate);
@@ -113,12 +154,14 @@ export function context(args, purpose) {
     }
     const state = privateJson(path.join(directory, 'state.json'));
     need(
-        state.namespace === 'vectorix-m7c-s3-outage' &&
+        state.schemaVersion === 1 &&
+            state.protocolVersion === PROTOCOL_VERSION &&
+            state.scenario === scenario &&
+            state.namespace === spec.namespace &&
             state.runId === run &&
             state.applicationDatabase ===
-                `vectorix_m7c_s3_outage_app_${run}_test` &&
-            state.vectorDatabase ===
-                `vectorix_m7c_s3_outage_vectors_${run}_test`,
+                `${spec.databaseStem}_app_${run}_test` &&
+            state.vectorDatabase === `${spec.databaseStem}_vectors_${run}_test`,
         'M7C_S3_OUTAGE_STATE'
     );
     const recheck = () => {
@@ -128,6 +171,8 @@ export function context(args, purpose) {
                 path.join(HERE, 'lifecycle.py'),
                 '--run',
                 run,
+                '--scenario',
+                scenario,
                 '--mode',
                 'guard',
                 '--purpose',
@@ -159,6 +204,8 @@ export function context(args, purpose) {
                 JSON.stringify(
                     [
                         'schemaVersion',
+                        'protocolVersion',
+                        'scenario',
                         'namespace',
                         'runId',
                         'purpose',
@@ -167,7 +214,7 @@ export function context(args, purpose) {
                         'sourceBuildPins',
                     ].sort()
                 ) &&
-                proof.schemaVersion === 1 &&
+                sameScope(state, proof) &&
                 proof.namespace === state.namespace &&
                 proof.runId === run &&
                 proof.purpose === purpose &&
@@ -203,7 +250,7 @@ export async function openFixturePrisma(state, readOnly) {
             url.search === '' &&
             url.hash === '' &&
             state.applicationDatabase ===
-                `vectorix_m7c_s3_outage_app_${state.runId}_test`,
+                `${scenarioSpec(state.scenario).databaseStem}_app_${state.runId}_test`,
         'M7C_S3_OUTAGE_PRISMA_EXACT_DATABASE'
     );
     const fromApi = createRequire(path.join(ROOT, 'apps/api/package.json'));

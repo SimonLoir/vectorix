@@ -4,7 +4,14 @@ import path from 'node:path';
 import { createRequire } from 'node:module';
 import { Transform } from 'node:stream';
 import { fileURLToPath } from 'node:url';
-import { context, ROOT, need, writePrivate, entryError } from './private.mjs';
+import {
+    context,
+    receiptScope,
+    ROOT,
+    need,
+    writePrivate,
+    entryError,
+} from './private.mjs';
 
 export const STATIC_DRAFT_ONLY = true;
 async function main() {
@@ -18,7 +25,7 @@ async function main() {
         'M7C_S3_OUTAGE_BUCKET_NO_REPLAY'
     );
     writePrivate(path.join(directory, 'bucket-intent.json'), {
-        runId: run,
+        ...receiptScope(state),
         status: 'STARTED_EFFECTS_UNKNOWN_UNTIL_PROOF',
     });
     const require = createRequire(path.join(ROOT, 'apps/api/package.json'));
@@ -157,14 +164,19 @@ async function main() {
         );
         recheck();
         writePrivate(path.join(directory, 'bucket-proof.json'), {
-            runId: run,
+            ...receiptScope(state),
             bucketCount: 1,
             empty: true,
             anonymousListStatus: anonymous.status,
             scope: 'INITIAL_OWNED_BUCKET_ONLY',
         });
         console.log(
-            JSON.stringify({ completed: true, operation: 'bucket', runId: run })
+            JSON.stringify({
+                ...receiptScope(state),
+                completed: true,
+                operation: 'bucket',
+                runId: run,
+            })
         );
     } finally {
         client.destroy();

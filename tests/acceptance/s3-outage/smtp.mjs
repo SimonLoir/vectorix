@@ -5,6 +5,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import {
     context,
+    receiptScope,
     need,
     RecipeError,
     writePrivate,
@@ -22,6 +23,7 @@ async function main() {
     Object.assign(process.env, state.environment, {
         VECTORIX_M7C_S3_OUTAGE_RUN: run,
         VECTORIX_M7C_S3_OUTAGE_ROLE: 'smtp',
+        VECTORIX_M7C_S3_SCENARIO: state.scenario,
     });
     need(
         state.environment.VECTORIX_DEFAULT_SMTP_HOST === '127.0.0.1' &&
@@ -40,7 +42,7 @@ async function main() {
         'M7C_S3_OUTAGE_SMTP_NO_REPLAY'
     );
     writePrivate(path.join(directory, 'smtp-intent.json'), {
-        schemaVersion: 1,
+        ...receiptScope(state),
         runId: run,
         status: 'STARTED_CAPTURE_NOT_BROWSER_ACCEPTANCE',
     });
@@ -70,7 +72,7 @@ async function main() {
         const ordinal = messageCount + 1;
         const payload = Buffer.from(
             JSON.stringify({
-                schemaVersion: 1,
+                ...receiptScope(state),
                 runId: run,
                 ordinal,
                 to,
@@ -254,7 +256,7 @@ async function main() {
         server.close(() => {
             try {
                 writePrivate(path.join(directory, 'smtp-stop.json'), {
-                    schemaVersion: 1,
+                    ...receiptScope(state),
                     runId: run,
                     connections,
                     messages: messageCount,
@@ -277,7 +279,7 @@ async function main() {
     });
     try {
         writePrivate(path.join(directory, 'smtp-ready.json'), {
-            schemaVersion: 1,
+            ...receiptScope(state),
             runId: run,
             smtpPort: state.ports.smtp,
             scope: 'OWNED_LOOPBACK_CAPTURE_ONLY',
