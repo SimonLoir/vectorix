@@ -347,7 +347,7 @@ export async function operationsAccessTests(t: TestContext) {
                 assert.equal(response.status, 200);
                 assert.equal(
                     response.headers.get('Vectorix-API-Revision'),
-                    '20'
+                    '21'
                 );
                 const body: unknown = await response.json();
                 assert(body && typeof body === 'object');
@@ -362,7 +362,7 @@ export async function operationsAccessTests(t: TestContext) {
                 assert.equal(ordinary.status, 200);
                 assert.equal(
                     ordinary.headers.get('Vectorix-API-Revision'),
-                    '20'
+                    '21'
                 );
                 for (const input of [
                     { limit: 101 },

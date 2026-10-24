@@ -169,7 +169,7 @@ export async function telemetryAccessTests(t: TestContext) {
                     assert.equal(response.status, 200);
                     assert.equal(
                         response.headers.get('Vectorix-API-Revision'),
-                        '20'
+                        '21'
                     );
                     const encoded = await response.text();
                     assert(!encoded.includes(f.org));
