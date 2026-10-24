@@ -158,6 +158,9 @@ importers:
             bullmq:
                 specifier: ^5.81.5
                 version: 5.81.5
+            ioredis:
+                specifier: 5.11.1
+                version: 5.11.1
             hono:
                 specifier: ^4.13.8
                 version: 4.13.13
@@ -517,6 +520,9 @@ importers:
             '@repo/db':
                 specifier: workspace:*
                 version: link:../db
+            '@repo/queues':
+                specifier: workspace:*
+                version: link:../queues
             '@repo/emails':
                 specifier: workspace:*
                 version: link:../emails
@@ -825,6 +831,9 @@ importers:
             bullmq:
                 specifier: ^5.81.5
                 version: 5.81.5
+            ioredis:
+                specifier: 5.11.1
+                version: 5.11.1
         devDependencies:
             '@repo/eslint-config':
                 specifier: workspace:*
