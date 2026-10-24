@@ -15,15 +15,18 @@ flowchart LR
 ```
 
 - Root `pnpm test` is `turbo run test`, so every workspace package with a `test` script runs. The task is not cached, because the discovery runner reads files from other packages.
-- [`scripts/unit-tests.mjs`](../scripts/unit-tests.mjs), the `api` package's `test` script, runs every `*.test.ts(x)` file under `apps/` and `packages/` with `tsx --test`. It skips:
+- The API test script first runs ten hermetic discovery regressions, then [`scripts/unit-tests.mjs`](../scripts/unit-tests.mjs) runs regular `*.test.ts(x)` source files under `apps/` and `packages/` with `tsx --test`. Its focused [discovery helper](../scripts/unit-test-discovery.mjs) skips:
     - integration suites (file names containing `integration`), which `test:integration` and `pnpm test:catalog` run against disposable services;
-    - Vitest files (they import `vitest`), which their package's own script runs;
-    - packages in its `OWN_RUNNERS` list (`chunking`, `embeddings`, `vector-store`), whose own scripts run them.
+    - the explicitly registered Vitest test, after checking its package's actual test command;
+    - tests covered by the exact `OWN_RUNNERS` patterns and commands (`chunking`, `embeddings`, `vector-store`), whose own scripts run them;
+    - symlinks, generated/build directories, and fixture-data directories named `fixtures` or `__fixtures__`.
 - `node scripts/unit-tests.mjs --list` prints the discovered files.
-- `pnpm test:coverage` runs the same discovery with Node's built-in coverage report (`--experimental-test-coverage`). The report is informational; there is no threshold yet.
+- `pnpm test:coverage` runs the hermetic checks and the same API-owned discovery with Node's built-in coverage report (`--experimental-test-coverage`). It does not measure the separate chunking, embedding or Vitest runners. The report is informational; there is no threshold yet.
 - `@repo/vector-store` needs the locally built vector image, so its script is `test:native` (run by the catalog workflow after building the image), not `test`.
 
-To add a unit test, create a `*.test.ts` file next to the code or in a package `tests/` directory, using `node:test`. Nothing else needs editing.
+To add a Node unit test, create a regular `*.test.ts` or `*.test.tsx` source file outside the reserved data/build directories. Comments and string fixtures containing `from 'vitest'` remain Node tests. Classification parses TypeScript syntax without executing source: a real static import/export or literal `import()`/`require()` dependency on Vitest requires a registered owner. An unknown Vitest test fails discovery clearly instead of silently disappearing. Register its exact package test command before adding it to the ownership map.
+
+A new test inside an alternate-runner package must match that runner's actual pattern. Moving a test outside the pattern or changing the package command fails discovery until ownership is updated. File and directory symlinks are not followed, including aliases to native or integration suites. The ten [hermetic tests](../scripts/unit-test-discovery.test.mjs) exercise these boundaries using temporary trees; their synthetic source is only parsed, never executed.
 
 ## Separate suites
 
@@ -32,3 +35,7 @@ Document parsing (`pnpm test:documents`, native Poppler), Redis (`pnpm test:queu
 ## Not included
 
 Browser end-to-end journeys (for example Playwright against the `test:catalog` stack) and coverage thresholds are not implemented. They need a CI browser environment, test fixtures and agreed thresholds; dashboard acceptance remains the manual recipe described in `AGENTS.md`.
+
+## Review correction status
+
+The PR77 correction is prepared in isolated branch `codex/pr77-discovery-review` from `2cec6c0`. The original head passed catalog and six-image CI, but that evidence predates these runner corrections. Frozen installation and dummy client generation pass. The corrected helpers pass strict JavaScript type checks; all 24 workspace type and lint tasks pass. The uncached four-task root unit run passes 10 discovery regressions, 165 API/backend tests, 56 chunking tests, 146 embedding tests and 11 Vitest utility cases. Final-base integration, corrected catalog/build/image validation and exact-head CI remain pending; no native suite or application resource was started by this correction.
