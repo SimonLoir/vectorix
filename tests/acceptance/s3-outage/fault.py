@@ -12,6 +12,8 @@ import sys
 import time
 
 import lifecycle as l
+sys.path.insert(0, str(l.HERE.parent / 'redis-outage'))
+import redis_queue as queue_reader
 
 STATIC_DRAFT_ONLY = True
 BUDGET_SECONDS = 900
@@ -61,6 +63,8 @@ def fresh_admission(state, phase, field, kind, version):
     fixture = read(state, 'fixture.json', 16384)
     l.require(isinstance(proof, dict), 'm7c-s3-outage-observer-proof-scope')
     value = proof.get(field)
+    if state['scenario'] == 'REDIS_V1':
+        l.require(proof.get('status') == 'OBSERVED', 'm7c-redis-complete-observer-required')
     l.require(isinstance(proof, dict) and l.receipt_matches(state, proof)
         and proof.get('namespace') == state['namespace']
         and proof.get('phase') == phase and isinstance(value, dict), 'm7c-s3-outage-observer-proof-scope')
@@ -70,6 +74,10 @@ def fresh_admission(state, phase, field, kind, version):
         'faultAdmission': {'stored', 'ingestionStatus', 'attempts', 'extractionPresent',
             'workerPid', 'workerStartTicks', 'rustfsContainerId'},
         'faultRecoveryAdmission': {'attempts', 'status', 'errorCode'}}
+    if state['scenario'] == 'REDIS_V1':
+        extras['faultAdmission'] = extras['faultAdmission'] | {'redisContainerId', 'liveClaims'}
+        extras['faultEnrollmentAdmission'] = extras['faultEnrollmentAdmission'] | {'redisContainerId'}
+        extras['faultRecoveryAdmission'] = extras['faultRecoveryAdmission'] | {'pendingSnapshots', 'pendingWallObservedMilliseconds', 'pendingMonotonicObservedMilliseconds', 'redisContainerId'}
     if state['scenario'] == 'CLEANUP_V1':
         extras = {
             'faultEnrollmentAdmission': extras['faultEnrollmentAdmission'],
@@ -95,6 +103,8 @@ def fresh_admission(state, phase, field, kind, version):
         l.require(value['workerPid'] == state['processes']['workers']['pid']
             and value['workerStartTicks'] == state['processes']['workers']['startTicks']
             and value['rustfsContainerId'] == state['resources']['rustfs']['id'], 'm7c-s3-outage-observer-process-binding')
+    if state['scenario'] == 'REDIS_V1':
+        l.require(value.get('redisContainerId') == state['resources']['redis']['id'], 'm7c-redis-observer-store-binding')
     if field == 'faultEnrollmentAdmission':
         l.require(value['liveClaims'] == 0, 'm7c-s3-outage-baseline-idle')
     elif field == 'faultAdmission' and state['scenario'] == 'CLEANUP_V1':
@@ -102,7 +112,13 @@ def fresh_admission(state, phase, field, kind, version):
             and isinstance(value['scheduledAt'], str), 'm7c-s3-outage-cleanup-unclaimed-required')
     elif field == 'faultAdmission':
         l.require(value['stored'] is True and value['ingestionStatus'] == 'PENDING' and value['attempts'] == 0
-            and value['extractionPresent'] is False, 'm7c-s3-outage-staged-original-required')
+            and value['extractionPresent'] is False
+            and (state['scenario'] != 'REDIS_V1' or (type(value['liveClaims']) is int and value['liveClaims'] == 0)), 'm7c-s3-outage-staged-original-required')
+    elif state['scenario'] == 'REDIS_V1':
+        l.require(value['attempts'] == 0 and value['status'] == 'PENDING' and value['errorCode'] is None
+            and type(value['pendingSnapshots']) is int and 3 <= value['pendingSnapshots'] <= 12
+            and all(type(value[key]) in {int, float} and 15000 <= value[key] <= 60000
+                for key in ['pendingWallObservedMilliseconds', 'pendingMonotonicObservedMilliseconds']), 'm7c-redis-observed-pending-required')
     else:
         l.require(value['attempts'] == 5 and value['status'] == 'FAILED' and value['errorCode'] == 'STORAGE_UNAVAILABLE',
             'm7c-s3-outage-natural-terminal-required')
@@ -111,6 +127,10 @@ def fresh_admission(state, phase, field, kind, version):
 
 def scenario_plan(state):
     l.scenario_spec(state['scenario'])
+    if state['scenario'] == 'REDIS_V1':
+        return {'baselinePhase': 'redis-ready', 'baselineKind': 'V1_READY_IDLE',
+            'stagedPhase':'redis-staged','stagedKind':'STAGED_ORIGINAL_CONFIRMED',
+            'failedPhase': 'redis-pending', 'failedKind': 'REDIS_PENDING_CONFIRMED', 'version': 2}
     if state['scenario'] == 'INGESTION_V1':
         return {'baselinePhase': 'v1-ready', 'baselineKind': 'V1_READY_IDLE',
             'stagedPhase': 'v2-staged', 'stagedKind': 'STAGED_ORIGINAL_CONFIRMED',
@@ -129,7 +149,8 @@ def require_remaining(state, ack):
 def abort_incomplete(state):
     """Restore only enrolled identities; an immutable intervention permanently forbids PASS."""
     ack = read(state, 'watchdog-ack.json', 8192)
-    l.require(ack.get('worker') == state['processes']['workers'] and ack.get('rustfs') == state['resources']['rustfs'],
+    l.require(ack.get('worker') == state['processes']['workers'] and ack.get('rustfs') == state['resources']['rustfs']
+        and (state['scenario'] != 'REDIS_V1' or ack.get('redis') == state['resources']['redis']),
         'm7c-s3-outage-abort-enrollment-binding')
     try:
         if not (directory(state) / 'watchdog-intervention.json').exists():
@@ -166,11 +187,12 @@ def worker_signal(state, action):
 def restore_owned(state):
     """Safety restoration tries both independent actions; a failed store start must not strand a stopped worker."""
     storage_restored, worker_resumed = False, False
+    service = l.fault_service(state)
     try:
-        value = l.owned(state, 'rustfs')
+        value = l.owned(state, service)
         if value['State']['Running'] is False:
-            l.run(['docker', 'start', state['resources']['rustfs']['id']], timeout=30)
-        l.owned(state, 'rustfs', running=True)
+            l.run(['docker', 'start', state['resources'][service]['id']], timeout=30)
+        l.owned(state, service, running=True)
         storage_restored = True
     except BaseException:
         pass
@@ -183,7 +205,7 @@ def restore_owned(state):
         worker_resumed = True
     except BaseException:
         pass
-    return {'storageRunning': storage_restored, 'sameWorkerResumed': worker_resumed}
+    return {('redisRunning' if service == 'redis' else 'storageRunning'): storage_restored, 'sameWorkerResumed': worker_resumed}
 
 
 def watchdog_reason(now_ns, deadline_ns, stopped, cleaning):
@@ -228,6 +250,8 @@ def watchdog(state):
             'budgetSeconds': BUDGET_SECONDS, 'enrolledAt': enrolled_at.isoformat(),
             'deadlineAt': datetime.fromtimestamp(enrolled_at.timestamp() + BUDGET_SECONDS, timezone.utc).isoformat(),
             'deadlineMonotonicNs': str(deadline_ns), 'baselineSha256': baseline_sha, 'baseline': baseline}
+        if state['scenario'] == 'REDIS_V1':
+            ack['redis'] = state['resources']['redis']
         record(state, 'watchdog-ack.json', ack)
         print(json.dumps({**l.receipt_scope(state), 'completed': True, 'operation': 'watchdog-ack', 'runId': state['runId'], 'budgetSeconds': BUDGET_SECONDS}), flush=True)
     # No lifecycle lock is held: control-tool failures cannot block this independent safety path.
@@ -243,12 +267,12 @@ def watchdog(state):
             if reason is not None:
                 break
             if l.fault_phase(state) in {'RESTORED', 'COMPLETE'}:
-                l.owned(state, 'rustfs', running=True)
+                l.owned(state, l.fault_service(state), running=True)
                 l.require(l.process_alive(state, state['processes']['workers'])
                     and l.process_identity(state['processes']['workers']['pid'])['state'] not in {'T', 't'},
                     'm7c-s3-outage-operator-restoration-not-confirmed')
                 record(state, 'watchdog-final.json', {'at': stamp(), 'intervened': False, 'formalOutcome': 'NOT_DETERMINED',
-                    'storageRunning': True, 'sameWorkerResumed': True})
+                    ('redisRunning' if state['scenario'] == 'REDIS_V1' else 'storageRunning'): True, 'sameWorkerResumed': True})
                 return
             time.sleep(min(0.25, max(0.001, (deadline_ns - time.monotonic_ns()) / 1000000000)))
     except BaseException:
@@ -271,14 +295,47 @@ def pause_worker(state, confirmed):
     l.guard(state, 'observe')
     ack = l.watchdog_admission(state)
     record(state, 'fault-pause-intent.json', {'at': stamp(), 'watchdogAckSha256': l.digest(l.read_private_bytes(directory(state) / 'watchdog-ack.json', 8192)),
-        'readinessEvidence': ('OPERATOR_FILE_SELECTION_CONFIRMED_NOT_DOM_OBSERVATION' if state['scenario'] == 'INGESTION_V1' else 'INDEPENDENT_READY_FIXTURE_CONFIRMED')})
+        'readinessEvidence': ('PINNED_NATIVE_CURL_TRANSFER_FIXTURE_READY' if state['scenario'] == 'REDIS_V1' else 'OPERATOR_FILE_SELECTION_CONFIRMED_NOT_DOM_OBSERVATION' if state['scenario'] == 'INGESTION_V1' else 'INDEPENDENT_READY_FIXTURE_CONFIRMED')})
     worker_signal(state, signal.SIGSTOP)
     l.watchdog_admission(state)
     record(state, 'fault-pause-receipt.json', {'at': stamp(), 'sameWorker': ack['worker'], 'readinessConfirmedBeforePause': True})
 
 
+def queue_observation(state, purpose):
+    """Inspect only fixed queue counters, after full pins/identity and again after I/O."""
+    l.require(state['scenario'] == 'REDIS_V1', 'm7c-redis-queue-scenario')
+    return queue_reader.read_queue(state, lambda: l.guard(state, purpose), l.require)
+
+
+def redis_outage(state):
+    """Stop the enrolled queue while the worker is paused, then resume that same PID."""
+    l.require(state['scenario'] == 'REDIS_V1' and l.fault_phase(state) == 'PAUSED', 'm7c-redis-outage-phase')
+    l.guard(state, 'staged-observe')
+    ack = l.watchdog_admission(state)
+    staged, staged_sha = fresh_admission(state,'redis-staged','faultAdmission','STAGED_ORIGINAL_CONFIRMED',2)
+    l.require(staged['documentId'] == ack['baseline']['documentId'] and staged['organizationId'] == ack['baseline']['organizationId'],
+        'm7c-redis-staged-document-binding')
+    before = queue_observation(state, 'staged-observe')
+    l.require(before['activeDocumentScans'] == 0, 'm7c-redis-active-scan-incomplete')
+    record(state, 'fault-redis-outage-intent.json', {'at': stamp(), 'queueBefore': before,
+        'redis': state['resources']['redis'], 'baselineSha256': ack['baselineSha256'], 'stagedProofSha256': staged_sha, 'staged': staged})
+    l.owned(state, 'redis', running=True)
+    require_remaining(state, ack)
+    l.run(['docker', 'stop', '-t', '10', state['resources']['redis']['id']], timeout=15)
+    l.owned(state, 'redis', running=False)
+    l.watchdog_admission(state)
+    worker_signal(state, signal.SIGCONT)
+    l.watchdog_admission(state)
+    record(state, 'fault-redis-outage-receipt.json', {'at': stamp(), 'queueBefore': before,
+        'redisStopped': True, 'sameWorkerResumed': True,
+        'worker': state['processes']['workers'], 'redis': state['resources']['redis'],
+        'baselineSha256': ack['baselineSha256'], 'stagedProofSha256':staged_sha, 'staged':staged,
+        'scope': 'ACTIVE_ZERO_IS_NOT_AN_ATOMIC_IN_FLIGHT_COMMAND_BARRIER'})
+
+
 def storage_outage(state):
-    l.require(l.fault_phase(state) == 'PAUSED', 'm7c-s3-outage-storage-outage-phase')
+    l.require(state['scenario'] in {'INGESTION_V1', 'CLEANUP_V1'}
+        and l.fault_phase(state) == 'PAUSED', 'm7c-s3-outage-storage-outage-phase')
     l.guard(state, 'staged-observe')
     ack = l.watchdog_admission(state)
     plan = scenario_plan(state)
@@ -304,17 +361,23 @@ def restore(state):
     l.watchdog_admission(state)
     plan = scenario_plan(state)
     failed, failed_sha = fresh_admission(state, plan['failedPhase'], 'faultRecoveryAdmission', plan['failedKind'], plan['version'])
-    staged = read(state, 'fault-storage-outage-receipt.json', 8192)['staged']
-    l.require(all(failed[key] == staged[key] for key in ['organizationId', 'documentId', 'versionId', 'originalSha256']),
-        'm7c-s3-outage-restoration-version-binding')
+    if state['scenario'] == 'REDIS_V1':
+        staged = read(state, 'fault-redis-outage-receipt.json', 16384)['staged']
+        l.require(failed['organizationId'] == staged['organizationId'] and failed['documentId'] == staged['documentId']
+            and failed['version'] == 2 and failed['versionId'] == staged['versionId'] and failed['originalSha256'] == staged['originalSha256'], 'm7c-redis-restoration-version-binding')
+    else:
+        staged = read(state, 'fault-storage-outage-receipt.json', 8192)['staged']
+        l.require(all(failed[key] == staged[key] for key in ['organizationId', 'documentId', 'versionId', 'originalSha256']),
+            'm7c-s3-outage-restoration-version-binding')
     if state['scenario'] == 'CLEANUP_V1':
         l.require(failed['scheduledAt'] == staged['scheduledAt'], 'm7c-s3-outage-cleanup-schedule-binding')
-    record(state, 'fault-restore-intent.json', {'at': stamp(), 'failedProofSha256': failed_sha})
+    record(state, 'fault-restore-intent.json', {'at': stamp(), ('pendingProofSha256' if state['scenario'] == 'REDIS_V1' else 'failedProofSha256'): failed_sha})
     result = restore_owned(state)
     l.watchdog_admission(state)
     l.require(all(result.values()), 'm7c-s3-outage-operator-restore-incomplete')
-    record(state, 'fault-restore-receipt.json', {'at': stamp(), 'failedProofSha256': failed_sha,
-        'worker': state['processes']['workers'], 'rustfs': state['resources']['rustfs'], **result})
+    record(state, 'fault-restore-receipt.json', {'at': stamp(), ('pendingProofSha256' if state['scenario'] == 'REDIS_V1' else 'failedProofSha256'): failed_sha,
+        'worker': state['processes']['workers'], 'rustfs': state['resources']['rustfs'],
+        **({'redis': state['resources']['redis']} if state['scenario'] == 'REDIS_V1' else {}), **result})
 
 
 class Arguments(argparse.ArgumentParser):
@@ -327,17 +390,25 @@ def main():
     parser = Arguments(description=__doc__)
     parser.add_argument('--run', required=True)
     parser.add_argument('--scenario', required=True, choices=sorted(l.SCENARIOS))
-    parser.add_argument('--mode', required=True, choices=['watchdog', 'pause-worker', 'storage-outage', 'restore', 'abort-incomplete'])
+    parser.add_argument('--mode', required=True, choices=['watchdog', 'pause-worker', 'storage-outage', 'redis-outage', 'queue-observation', 'restore', 'abort-incomplete'])
     parser.add_argument('--file-selected', action='store_true')
     parser.add_argument('--fixture-ready', action='store_true')
+    parser.add_argument('--transfer-ready', action='store_true')
     args = parser.parse_args()
+    l.require(args.mode not in {'redis-outage', 'queue-observation'} or args.scenario == 'REDIS_V1', 'm7c-redis-mode-scenario')
+    l.require(args.mode != 'storage-outage' or args.scenario in {'INGESTION_V1', 'CLEANUP_V1'}, 'm7c-s3-mode-scenario')
     expected_file = args.mode == 'pause-worker' and args.scenario == 'INGESTION_V1'
     expected_fixture = args.mode == 'pause-worker' and args.scenario == 'CLEANUP_V1'
-    l.require(args.file_selected is expected_file and args.fixture_ready is expected_fixture, 'm7c-s3-outage-fault-selection-arguments')
+    expected_transfer = args.mode == 'pause-worker' and args.scenario == 'REDIS_V1'
+    l.require(args.file_selected is expected_file and args.fixture_ready is expected_fixture and args.transfer_ready is expected_transfer, 'm7c-s3-outage-fault-selection-arguments')
     state = l.load(args.run, args.scenario)
     l.require(state['phase'] == 'READY', 'm7c-s3-outage-fault-ready-required')
     if args.mode != 'abort-incomplete':
         require_clean_evidence(state)
+    if args.mode == 'queue-observation':
+        result = queue_observation(state, 'observe')
+        print(json.dumps({**l.receipt_scope(state), 'completed': True, 'queue': result}))
+        return
     if args.mode == 'watchdog':
         watchdog(state)
     else:
@@ -345,7 +416,13 @@ def main():
             if args.mode == 'abort-incomplete':
                 abort_incomplete(state)
             elif args.mode == 'pause-worker':
-                pause_worker(state, args.file_selected or args.fixture_ready)
+                pause_worker(state, args.file_selected or args.fixture_ready or args.transfer_ready)
+            elif args.mode == 'redis-outage':
+                try:
+                    redis_outage(state)
+                except BaseException:
+                    abort_incomplete(state)
+                    raise
             elif args.mode == 'storage-outage':
                 try:
                     storage_outage(state)

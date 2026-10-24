@@ -3,6 +3,9 @@ import fs from 'node:fs';
 import { test } from 'node:test';
 import {
     STATIC_DRAFT_ONLY,
+    completeReadOnlyObservation,
+    requiresPhysicalObjects,
+    REDIS_PHASE_MAP,
     validateFixtures,
     assessSnapshot,
     validateBackoffTrace,
@@ -27,6 +30,8 @@ const created = '2026-10-24T12:00:00.000Z',
     at = '2026-10-24T12:10:00.000Z';
 const fixture = {
     schemaVersion: 1,
+    protocolVersion: 2,
+    scenario: 'INGESTION_V1',
     namespace: 'vectorix-m7c-s3-outage',
     runId: '123456abcdef',
     setup: { directWrites: 'NONE_NATIVE_HTTP_ONLY' },
@@ -571,5 +576,176 @@ void test('actual query builder projects no raw lease token and requires predica
         predicates.filter((input) => input.where.leaseToken?.not === null)
             .length,
         3
+    );
+});
+
+function addReadKey(snapshot, fixture) {
+    const audit = {
+        id: 'key-audit',
+        action: 'apiKey.create',
+        organizationId: fixture.organization.id,
+        actorType: 'user',
+        actorId: fixture.users.owner.userId,
+        targetId: 'read-key',
+        details: { collectionCount: 0 },
+    };
+    snapshot.counts.keys = 1;
+    snapshot.audits.push(audit);
+    snapshot.readKey = {
+        keys: [
+            {
+                id: 'read-key',
+                name: `Redis read ${fixture.runId}`,
+                configId: 'org',
+                referenceId: fixture.organization.id,
+                enabled: true,
+                vectorixLegacyFullAccess: false,
+                expiresAt: null,
+                permissions: JSON.stringify({ ragLibrary: ['read'] }),
+            },
+        ],
+        principals: [
+            {
+                keyId: 'read-key',
+                organizationId: fixture.organization.id,
+                memberId: fixture.membershipSnapshot[0].id,
+            },
+        ],
+        scopes: 0,
+    };
+    fixture.readKey = {
+        id: 'read-key',
+        name: `Redis read ${fixture.runId}`,
+        organizationId: fixture.organization.id,
+        issuerUserId: fixture.users.owner.userId,
+        memberId: fixture.membershipSnapshot[0].id,
+        permissions: { ragLibrary: ['read'] },
+        collectionScopes: [],
+        auditId: audit.id,
+    };
+}
+
+void test('Redis recovery keeps stored v2 pending with v1 readable, then publishes without a retry audit', () => {
+    const redisFixture = {
+        ...clone(fixture),
+        scenario: 'REDIS_V1',
+        namespace: 'vectorix-m7c-redis-outage',
+    };
+    const staged = snapshot('v2-staged');
+    addReadKey(staged, redisFixture);
+    staged.organization.slug = `m7c-redis-outage-${fixture.runId}-owner`;
+    const pending = assessSnapshot(staged, 'v2-staged', redisFixture, expected);
+    assert.equal(pending.servingVersion, 1);
+    assert.equal(pending.quota.reservedBytes, expected[1].bytes);
+    assert.equal(pending.operations.liveClaim, false);
+    const ready = snapshot('v2-ready');
+    addReadKey(ready, redisFixture);
+    ready.organization.slug = staged.organization.slug;
+    ready.audits = ready.audits.filter(
+        (row) => row.action !== 'document.extraction.retried'
+    );
+    const recovered = assessSnapshot(ready, 'v2-ready', redisFixture, expected);
+    assert.equal(recovered.servingVersion, 2);
+    assert.equal(recovered.quota.reservedBytes, 0);
+    assert.equal(
+        recovered.quota.storageBytes,
+        2 * (expected[0].bytes + expected[1].bytes)
+    );
+    ready.audits.push(nativeAudit('document.extraction.retried', 'version2'));
+    assert.throws(
+        () => assessSnapshot(ready, 'v2-ready', redisFixture, expected),
+        /AUDIT/
+    );
+});
+
+void test('Redis source policy never borrows another scenario namespace or accepts an already claimed pending version', () => {
+    const redisFixture = {
+        ...clone(fixture),
+        scenario: 'REDIS_V1',
+        namespace: 'vectorix-m7c-redis-outage',
+    };
+    const pending = snapshot('v2-staged');
+    addReadKey(pending, redisFixture);
+    pending.organization.slug = `m7c-redis-outage-${fixture.runId}-owner`;
+    assert.doesNotThrow(() =>
+        assessSnapshot(pending, 'v2-staged', redisFixture, expected)
+    );
+    assert.throws(
+        () =>
+            assessSnapshot(
+                pending,
+                'v2-staged',
+                { ...redisFixture, namespace: fixture.namespace },
+                expected
+            ),
+        /FIXTURE/
+    );
+    pending.versions[1].ingestion.attempts = 1;
+    assert.throws(
+        () => assessSnapshot(pending, 'v2-staged', redisFixture, expected),
+        /STAGED_ORIGINAL/
+    );
+});
+
+test('success publication follows successful disconnect and the final guard; either failure preserves absence', async () => {
+    const order = [];
+    await completeReadOnlyObservation({
+        close: async () => {
+            order.push('closed');
+        },
+        admit: () => {
+            order.push('guarded');
+        },
+        publish: () => {
+            order.push('published');
+        },
+    });
+    assert.deepEqual(order, ['closed', 'guarded', 'published']);
+    for (const failure of ['close', 'guard']) {
+        const seen = [];
+        await assert.rejects(
+            completeReadOnlyObservation({
+                close: async () => {
+                    seen.push('close');
+                    if (failure === 'close')
+                        throw new Error('FIXED_CLOSE_REFUSAL');
+                },
+                admit: () => {
+                    seen.push('guard');
+                    throw new Error('FIXED_GUARD_REFUSAL');
+                },
+                publish: () => {
+                    seen.push('published');
+                },
+            }),
+            /FIXED_(?:CLOSE|GUARD)_REFUSAL/u
+        );
+        assert.deepEqual(
+            seen,
+            failure === 'close' ? ['close'] : ['close', 'guard']
+        );
+    }
+});
+
+test('Redis pre-cut staged proof is separate and the actual outage phase never selects physical I/O', () => {
+    assert.deepEqual(Object.keys(REDIS_PHASE_MAP), [
+        'redis-ready',
+        'redis-staged',
+        'redis-pending',
+        'redis-recovered',
+        'redis-signed-out',
+    ]);
+    assert.equal(
+        requiresPhysicalObjects(REDIS_PHASE_MAP['redis-staged'], false),
+        true
+    );
+    assert.equal(
+        requiresPhysicalObjects(REDIS_PHASE_MAP['redis-pending'], true),
+        false
+    );
+    assert.equal(requiresPhysicalObjects('outage-failed', false), false);
+    assert.equal(
+        requiresPhysicalObjects(REDIS_PHASE_MAP['redis-recovered'], false),
+        true
     );
 });

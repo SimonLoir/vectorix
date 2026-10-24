@@ -31,6 +31,8 @@ SCENARIOS = {
         'databaseStem': 'vectorix_m7c_s3_outage', 'objectPrefix': 'm7c-s3-outage'},
     'CLEANUP_V1': {'namespace': 'vectorix-m7c-s3-cleanup', 'label': 'vectorix.m7c-s3-cleanup',
         'databaseStem': 'vectorix_m7c_s3_cleanup', 'objectPrefix': 'm7c-s3-cleanup'},
+    'REDIS_V1': {'namespace': 'vectorix-m7c-redis-outage', 'label': 'vectorix.m7c-redis-outage',
+        'databaseStem': 'vectorix_m7c_redis_outage', 'objectPrefix': 'm7c-redis-outage'},
 }
 
 
@@ -61,7 +63,7 @@ BUILT_APPS = ('api', 'workers', 'web', 'admin')
 APPS = ('api', 'web', 'smtp', 'workers')
 DOTENV = {'.env', '.env.local', '.env.production', '.env.production.local', '.env.development'}
 PRODUCTION = ['apps/api', 'apps/workers', 'apps/web', 'apps/admin', 'packages', 'pnpm-lock.yaml', 'package.json']
-HELPERS = ['lifecycle.py', 'fault.py', 'private.mjs', 'seed.mjs', 'bucket.mjs', 'smtp.mjs', 'observe.mjs', 'objects.mjs', 'cleanup-fixture.mjs', 'cleanup-observe.mjs']
+HELPERS = ['lifecycle.py', 'fault.py', 'private.mjs', 'seed.mjs', 'bucket.mjs', 'smtp.mjs', 'observe.mjs', 'objects.mjs', 'cleanup-fixture.mjs', 'cleanup-observe.mjs', '../redis-outage/pending.mjs', '../redis-outage/redis_queue.py', '../redis-outage/curl.mjs', '../redis-outage/transfers.mjs', '../redis-outage/key-policy.mjs']
 PHASES = {'PREPARING', 'SCHEMA_REQUIRED', 'SCHEMA_READY', 'SEEDING', 'READY', 'CLEANING', 'CLEANED_EVIDENCE_RETAINED'}
 
 
@@ -214,15 +216,21 @@ def fixture_manifest():
         for name in ['s3-outage-v1.txt', 's3-outage-v2.txt', 'expected.json']}
 
 
-def inputs():
+def inputs(scenario=None):
     migrations = sorted((ROOT / 'packages/db/prisma/migrations').glob('*/migration.sql'))
     require(0 < len(migrations) <= 64, 'm7c-s3-outage-migration-count')
-    return {'sourceSha256': source_manifest(), 'builds': build_manifest(), 'runtime': runtime_manifest(),
+    result = {'sourceSha256': source_manifest(), 'builds': build_manifest(), 'runtime': runtime_manifest(),
         'textFixtures': fixture_manifest(),
         'migrations': {p.parent.name: file_hash(p, 8 * 1024 ** 2) for p in migrations},
         'prismaConfigSha256': file_hash(ROOT / 'packages/db/prisma.config.ts'),
         'helpers': {**{name: file_hash(HERE / name) for name in HELPERS},
             'shared-restore-common.py': file_hash(ROOT / 'tests/acceptance/restore/m7c_restore_common.py')}}
+    if scenario == 'REDIS_V1':
+        binary = Path('/usr/bin/curl')
+        require(binary.is_file() and not binary.is_symlink() and binary.resolve() == binary
+            and binary.stat().st_mode & 0o022 == 0 and binary.stat().st_size <= 16 * 1024 ** 2, 'm7c-redis-curl-binary')
+        result['curl'] = {'path': str(binary), 'sha256': digest(binary.read_bytes())}
+    return result
 
 
 def validate(state, run_id, scenario):
@@ -362,7 +370,7 @@ def owned(state, service, running=None):
 
 
 def pins(state):
-    require(inputs() == state['inputs'], 'm7c-s3-outage-source-build-helper-migration-drift')
+    require(inputs(state['scenario']) == state['inputs'], 'm7c-s3-outage-source-build-helper-migration-drift')
 
 
 def create_service(state, service):
@@ -449,7 +457,7 @@ def prepare(run_id, scenario):
     state = {'schemaVersion': 1, 'protocolVersion': PROTOCOL_VERSION, 'scenario': scenario,
         'namespace': spec['namespace'], 'runId': run_id, 'prefix': spec['namespace'] + '-' + run_id,
         'phase': 'PREPARING', 'ports': ports, 'images': IMAGES, 'resources': {}, 'processes': {},
-        'inputs': inputs(), 'commit': run(['git', 'rev-parse', 'HEAD']).decode().strip(),
+        'inputs': inputs(scenario), 'commit': run(['git', 'rev-parse', 'HEAD']).decode().strip(),
         'applicationDatabase': spec['databaseStem'] + '_app_' + run_id + '_test',
         'vectorDatabase': spec['databaseStem'] + '_vectors_' + run_id + '_test',
         'secrets': {**{k: secrets.token_urlsafe(32) for k in ['postgres', 'indexer', 'runtime', 's3', 'auth']},
@@ -564,12 +572,22 @@ def app(state, service):
     os.execvpe(arguments[0], arguments + [str(entry)] + (['--run', state['runId'], '--scenario', state['scenario']] if service in {'smtp'} else []), env)
 
 
+def fault_service(state):
+    """Only the closed REDIS_V1 scenario may stop Redis; S3 scenarios retain RustFS."""
+    scenario_spec(state['scenario'])
+    return 'redis' if state['scenario'] == 'REDIS_V1' else 'rustfs'
+
+
+def outage_receipt_name(state):
+    return 'fault-redis-outage-receipt.json' if fault_service(state) == 'redis' else 'fault-storage-outage-receipt.json'
+
+
 def fault_phase(state):
     """Immutable intervention evidence always dominates successful operator receipts."""
     directory = state_path(state['runId'], state['scenario']).parent
     ordered = [('watchdog-intervention.json', 'WATCHDOG_INTERVENED'),
         ('fault-complete-receipt.json', 'COMPLETE'), ('fault-restore-receipt.json', 'RESTORED'),
-        ('fault-storage-outage-receipt.json', 'OUTAGE'), ('fault-pause-receipt.json', 'PAUSED'),
+        (outage_receipt_name(state), 'OUTAGE'), ('fault-pause-receipt.json', 'PAUSED'),
         ('watchdog-ack.json', 'ARMED')]
     for filename, phase in ordered:
         if (directory / filename).exists():
@@ -598,7 +616,9 @@ def watchdog_admission(state):
     ack = json.loads(read_private_bytes(directory / 'watchdog-ack.json', 8192))
     require(receipt_matches(state, ack)
         and ack.get('budgetSeconds') == 900 and ack.get('worker') == state['processes']['workers']
-        and ack.get('rustfs') == state['resources']['rustfs'] and control_alive(ack['control'])
+        and ack.get('rustfs') == state['resources']['rustfs']
+        and (state['scenario'] != 'REDIS_V1' or ack.get('redis') == state['resources']['redis'])
+        and control_alive(ack['control'])
         and type(ack.get('deadlineMonotonicNs')) is str and ack['deadlineMonotonicNs'].isdigit()
         and time.monotonic_ns() < int(ack['deadlineMonotonicNs'])
         and not (directory / 'watchdog-intervention.json').exists(),
@@ -613,7 +633,7 @@ def guard(state, purpose):
     require(set(state['resources']) == set(SERVICES), 'm7c-s3-outage-four-owned-stores-required')
     phase = fault_phase(state)
     for service in SERVICES:
-        owned(state, service, running=not (service == 'rustfs' and purpose == 'outage-observe'))
+        owned(state, service, running=not (service == fault_service(state) and purpose == 'outage-observe'))
     schema(state)
     if purpose in {'bucket', 'seed'}:
         require(state['phase'] in ({'SCHEMA_REQUIRED'} if purpose == 'bucket' else {'SEEDING'}), 'm7c-s3-outage-setup-phase')
@@ -645,7 +665,8 @@ def guard(state, purpose):
             if phase in {'RESTORED', 'COMPLETE'}:
                 final = json.loads(read_private_bytes(state_path(state['runId'], state['scenario']).parent / 'watchdog-final.json', 8192))
                 require(receipt_matches(state, final)
-                    and final.get('intervened') is False and final.get('storageRunning') is True
+                    and final.get('intervened') is False
+                    and final.get('redisRunning' if state['scenario'] == 'REDIS_V1' else 'storageRunning') is True
                     and final.get('sameWorkerResumed') is True, 'm7c-s3-outage-watchdog-normal-stop-required')
     return {**receipt_scope(state), 'namespace': state['namespace'], 'purpose': purpose,
         'resourceOwnership': True, 'exactTestDatabases': True, 'sourceBuildPins': True}

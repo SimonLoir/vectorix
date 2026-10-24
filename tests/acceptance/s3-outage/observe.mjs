@@ -3,9 +3,13 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { createHash } from 'node:crypto';
 import { fileURLToPath } from 'node:url';
+import { spawnSync } from 'node:child_process';
 import {
     HERE,
+    ROOT,
+    cleanEnvironment,
     receiptScope,
+    scenarioSpec,
     sameScope,
     context,
     need,
@@ -16,6 +20,13 @@ import {
     entryError,
 } from './private.mjs';
 import { createReadOnlyObjectObserver } from './objects.mjs';
+import { assessReadKey } from '../redis-outage/key-policy.mjs';
+import {
+    REDIS_PENDING_LIMITS,
+    validateRedisPendingTrace,
+    redisRemainingMilliseconds,
+    redisSnapshotBudget,
+} from '../redis-outage/pending.mjs';
 
 export const STATIC_DRAFT_ONLY = true;
 export const PHASES = Object.freeze([
@@ -26,6 +37,13 @@ export const PHASES = Object.freeze([
     'v2-ready',
     'signed-out',
 ]);
+export const REDIS_PHASE_MAP = Object.freeze({
+    'redis-ready': 'v1-ready',
+    'redis-staged': 'v2-staged',
+    'redis-pending': 'v2-staged',
+    'redis-recovered': 'v2-ready',
+    'redis-signed-out': 'signed-out',
+});
 export const TRACE_LIMITS = Object.freeze({
     milliseconds: 720000,
     snapshots: 360,
@@ -306,13 +324,44 @@ export async function readSnapshot(tx, fixture) {
         take: 9,
         orderBy: { id: 'asc' },
         select: {
+            id: true,
+            actorId: true,
+            actorType: true,
             organizationId: true,
             action: true,
             targetId: true,
             details: true,
         },
     });
+    const readKey =
+        fixture.scenario === 'REDIS_V1'
+            ? {
+                  keys: await tx.apikey.findMany({
+                      take: 2,
+                      select: {
+                          id: true,
+                          configId: true,
+                          name: true,
+                          referenceId: true,
+                          enabled: true,
+                          expiresAt: true,
+                          permissions: true,
+                          vectorixLegacyFullAccess: true,
+                      },
+                  }),
+                  principals: await tx.apiKeyPrincipal.findMany({
+                      take: 2,
+                      select: {
+                          keyId: true,
+                          organizationId: true,
+                          memberId: true,
+                      },
+                  }),
+                  scopes: await tx.apiKeyCollectionScope.count(),
+              }
+            : null;
     return {
+        readKey,
         observedAt: new Date().toISOString(),
         counts,
         user,
@@ -364,15 +413,39 @@ export function assessSnapshot(
     need(PHASES.includes(phase) || progress, 'S3_OUTAGE_OBSERVER_PHASE');
     need(
         Number.isFinite(at) &&
-            fixture.namespace === 'vectorix-m7c-s3-outage' &&
+            ['INGESTION_V1', 'REDIS_V1'].includes(fixture.scenario) &&
+            fixture.namespace === scenarioSpec(fixture.scenario).namespace &&
             /^[a-f\d]{12}$/u.test(fixture.runId) &&
             fixture.setup?.directWrites === 'NONE_NATIVE_HTTP_ONLY' &&
             fixture.users?.owner &&
             fixture.organization,
         'S3_OUTAGE_OBSERVER_FIXTURE'
     );
+    const sourceAudits =
+        fixture.scenario === 'REDIS_V1'
+            ? snapshot.audits.filter((row) => row.action !== 'apiKey.create')
+            : snapshot.audits;
+    if (fixture.scenario === 'REDIS_V1') {
+        need(
+            snapshot.readKey?.keys.length === 1 && fixture.readKey,
+            'S3_OUTAGE_TRANSFER_KEY_BINDING'
+        );
+        const projected = assessReadKey(
+            snapshot.readKey.keys[0],
+            snapshot.readKey.principals,
+            snapshot.readKey.scopes,
+            snapshot.audits.filter((row) => row.action === 'apiKey.create'),
+            fixture,
+            fixture.readKey.id
+        );
+        need(
+            same(projected, fixture.readKey),
+            'S3_OUTAGE_TRANSFER_KEY_BINDING'
+        );
+    }
     const required = {
         users: 1,
+        keys: fixture.scenario === 'REDIS_V1' ? 1 : 0,
         organizations: 1,
         members: 1,
         sessions: phase === 'signed-out' ? 0 : 1,
@@ -396,7 +469,8 @@ export function assessSnapshot(
             ['en', 'fr', 'nl-BE'].includes(user.locale) &&
             organization?.id === fixture.organization.id &&
             organization.isActive === true &&
-            organization.slug === `m7c-s3-outage-${fixture.runId}-owner` &&
+            organization.slug ===
+                `${scenarioSpec(fixture.scenario).objectPrefix}-${fixture.runId}-owner` &&
             same(snapshot.members, fixture.membershipSnapshot) &&
             snapshot.members.length === 1 &&
             snapshot.members[0].role === 'owner' &&
@@ -562,15 +636,16 @@ export function assessSnapshot(
         'document.upload.stored': count,
         'document.extraction.ready': ready ? 2 : 1,
         'document.replacement.reserved': baseline ? 0 : 1,
-        'document.extraction.retried': ready ? 1 : 0,
+        'document.extraction.retried':
+            ready && fixture.scenario !== 'REDIS_V1' ? 1 : 0,
     };
     need(
-        snapshot.audits.length ===
+        sourceAudits.length ===
             Object.values(expectedCounts).reduce(
                 (sum, value) => sum + value,
                 0
             ) &&
-            snapshot.audits.every(
+            sourceAudits.every(
                 (row) =>
                     row.organizationId === organization.id &&
                     row.targetId === document.id &&
@@ -578,7 +653,7 @@ export function assessSnapshot(
             ) &&
             sourceActions.every(
                 (action) =>
-                    snapshot.audits.filter((row) => row.action === action)
+                    sourceAudits.filter((row) => row.action === action)
                         .length === expectedCounts[action]
             ),
         'S3_OUTAGE_OBSERVER_AUDITS'
@@ -597,7 +672,7 @@ export function assessSnapshot(
                       ? baseline
                           ? []
                           : [latest.id]
-                      : ready
+                      : ready && fixture.scenario !== 'REDIS_V1'
                         ? [latest.id]
                         : [];
         need(
@@ -612,7 +687,7 @@ export function assessSnapshot(
         );
     }
     if (!baseline) {
-        const replacement = snapshot.audits.find(
+        const replacement = sourceAudits.find(
             (row) => row.action === 'document.replacement.reserved'
         );
         need(
@@ -852,6 +927,7 @@ function project(snapshot) {
             bytes: row.byteSize.toString(),
             status: row.status,
             contentState: row.contentState,
+            createdAt: row.createdAt,
             storedAt: row.storedAt,
             tokenCount: row.tokenCount,
             ingestion: row.ingestion,
@@ -877,26 +953,185 @@ function project(snapshot) {
     };
 }
 
+/** The Redis outage phase is deliberately DB-only even though RustFS remains online. */
+export function requiresPhysicalObjects(phase, redisPending) {
+    return phase !== 'outage-failed' && !redisPending;
+}
+
+/** Fixed top-one metadata avoids BullMQ's capped completed-set cardinality. */
+export function validCompletedScan(value) {
+    return (
+        value === null ||
+        (value &&
+            typeof value === 'object' &&
+            Object.keys(value).length === 2 &&
+            hash(value.jobSha256) &&
+            Number.isSafeInteger(value.completedAtMilliseconds) &&
+            value.completedAtMilliseconds >= 0)
+    );
+}
+
+/** A different saved completion identity, not ZCARD growth, proves a later scan observation. */
+export function advancedCompletedScan(before, after) {
+    need(
+        validCompletedScan(before) && validCompletedScan(after),
+        'S3_OUTAGE_REDIS_QUEUE_OBSERVATION'
+    );
+    return (
+        after !== null &&
+        (before === null ||
+            (after.jobSha256 !== before.jobSha256 &&
+                after.completedAtMilliseconds >=
+                    before.completedAtMilliseconds))
+    );
+}
+
+/** Execute only the existing closed read-only controller mode after source/ownership admission. */
+function redisQueueAfter(state, recheck, stop) {
+    const remaining = () => {
+        return Math.min(120000, redisRemainingMilliseconds(stop));
+    };
+    recheck(remaining());
+    const result = spawnSync(
+        'python3',
+        [
+            path.join(HERE, 'fault.py'),
+            '--run',
+            state.runId,
+            '--scenario',
+            'REDIS_V1',
+            '--mode',
+            'queue-observation',
+        ],
+        {
+            cwd: ROOT,
+            env: cleanEnvironment(),
+            timeout: remaining(),
+            maxBuffer: 16384,
+            encoding: 'utf8',
+            stdio: ['ignore', 'pipe', 'ignore'],
+        }
+    );
+    remaining();
+    need(
+        !result.error &&
+            result.status === 0 &&
+            Buffer.byteLength(result.stdout ?? '') <= 16384,
+        'S3_OUTAGE_REDIS_QUEUE_OBSERVATION'
+    );
+    let value;
+    try {
+        value = JSON.parse(result.stdout);
+    } catch {
+        need(false, 'S3_OUTAGE_REDIS_QUEUE_OBSERVATION');
+    }
+    need(
+        sameScope(state, value) &&
+            value.completed === true &&
+            value.queue &&
+            Number.isSafeInteger(value.queue.activeDocumentScans) &&
+            value.queue.activeDocumentScans >= 0 &&
+            validCompletedScan(value.queue.latestCompletedDocumentScan) &&
+            value.queue.scope ===
+                'TWO_FIXED_READ_ONLY_OWNED_QUEUE_METADATA_NOT_DOCUMENT_BILLING',
+        'S3_OUTAGE_REDIS_QUEUE_OBSERVATION'
+    );
+    return value.queue;
+}
+
+/** Queue completion can follow the document commit; observe it naturally with a finite local proof budget. */
+async function waitRedisQueueAfter(state, recheck, before) {
+    const stop = performance.now() + 30_000;
+    let samples = 0;
+    while (true) {
+        need(
+            performance.now() < stop && samples < 10,
+            'S3_OUTAGE_REDIS_QUEUE_RECOVERY_INCOMPLETE'
+        );
+        const after = redisQueueAfter(state, recheck, stop);
+        samples++;
+        need(
+            performance.now() < stop,
+            'S3_OUTAGE_REDIS_QUEUE_RECOVERY_INCOMPLETE'
+        );
+        if (
+            advancedCompletedScan(
+                before.latestCompletedDocumentScan,
+                after.latestCompletedDocumentScan
+            )
+        )
+            return { after, samples };
+        await waitForNextSnapshot(performance.now() + 2000, stop);
+    }
+}
+
+/** Publish an admissible success only after cleanup and the final independent guard succeed. */
+export async function completeReadOnlyObservation({ close, admit, publish }) {
+    await close();
+    admit();
+    publish();
+}
+
 async function main() {
     need(!STATIC_DRAFT_ONLY, 'S3_OUTAGE_OBSERVER_DRAFT_REVIEW_REQUIRED');
     const args = process.argv.slice(2);
     need(
-        args.length === 6 && args[4] === '--phase' && PHASES.includes(args[5]),
+        args.length === 6 &&
+            args[4] === '--phase' &&
+            (PHASES.includes(args[5]) ||
+                Object.hasOwn(REDIS_PHASE_MAP, args[5])),
         'S3_OUTAGE_OBSERVER_ARGUMENTS'
     );
-    const phase = args[5],
-        purpose =
-            phase === 'v2-staged'
-                ? 'staged-observe'
-                : phase === 'outage-failed'
-                  ? 'outage-observe'
-                  : 'observe';
-    const { state, run, directory, recheck } = context(
-        args.slice(0, 4),
-        purpose
+    const reportPhase = args[5],
+        redis = Object.hasOwn(REDIS_PHASE_MAP, reportPhase),
+        phase = redis ? REDIS_PHASE_MAP[reportPhase] : reportPhase,
+        redisPending = reportPhase === 'redis-pending',
+        purpose = redisPending
+            ? 'outage-observe'
+            : phase === 'v2-staged'
+              ? 'staged-observe'
+              : phase === 'outage-failed'
+                ? 'outage-observe'
+                : 'observe';
+    const {
+        state,
+        run,
+        directory,
+        recheck: rawRecheck,
+    } = context(args.slice(0, 4), purpose);
+    need(
+        state.scenario === (redis ? 'REDIS_V1' : 'INGESTION_V1'),
+        'S3_OUTAGE_INGESTION_SCENARIO'
     );
-    need(state.scenario === 'INGESTION_V1', 'S3_OUTAGE_INGESTION_SCENARIO');
     const fixture = privateJson(path.join(directory, 'fixture.json'), 16384);
+    let readKeyProofSha256 = null;
+    if (redis) {
+        const bytes = privateBytes(
+                path.join(directory, 'redis-read-key-proof.json'),
+                16384
+            ),
+            proof = JSON.parse(bytes);
+        need(
+            sameScope(state, proof) &&
+                proof.organizationId === fixture.organization.id &&
+                proof.sessionSignedOut === true &&
+                proof.status === 'NATIVE_ISSUER_BOUND_READ_ONLY_KEY',
+            'S3_OUTAGE_TRANSFER_KEY_BINDING'
+        );
+        const {
+            schemaVersion,
+            protocolVersion,
+            scenario,
+            runId,
+            keyFileSha256,
+            status,
+            sessionSignedOut,
+            ...metadata
+        } = proof;
+        need(hash(keyFileSha256), 'S3_OUTAGE_TRANSFER_KEY_BINDING');
+        fixture.readKey = metadata;
+        readKeyProofSha256 = sha(bytes);
+    }
     need(sameScope(state, fixture), 'S3_OUTAGE_FIXTURE_PROTOCOL');
     need(
         fixture.namespace === state.namespace &&
@@ -913,7 +1148,8 @@ async function main() {
             publicBytes('s3-outage-v2.txt', state),
         ],
         expected = validateFixtures(expectedMetadata, originals);
-    const previousPhase = PHASES[PHASES.indexOf(phase) - 1],
+    const phaseOrder = redis ? Object.keys(REDIS_PHASE_MAP) : PHASES,
+        previousPhase = phaseOrder[phaseOrder.indexOf(reportPhase) - 1],
         previous = previousPhase
             ? privateJson(
                   path.join(directory, `observe-${previousPhase}.json`),
@@ -933,29 +1169,181 @@ async function main() {
         !previous || previous.fixtureSha256 === fixtureSha256,
         'S3_OUTAGE_OBSERVER_FIXTURE_CHAIN'
     );
-    writePrivate(path.join(directory, `observe-${phase}-intent.json`), {
+    writePrivate(path.join(directory, `observe-${reportPhase}-intent.json`), {
         ...receiptScope(state),
         namespace: state.namespace,
         runId: run,
-        phase,
+        phase: reportPhase,
         fixtureSha256,
         status: 'ONE_SHOT_READ_ONLY_STARTED',
     });
-    let client, objects;
+    let client,
+        objects,
+        redisTrace = null,
+        redisPendingBinding = null,
+        redisStop = Infinity;
+    const redisPoints = [];
+    const checkRedisDeadline = () =>
+        need(
+            !redisPending || performance.now() < redisStop,
+            'S3_OUTAGE_REDIS_PENDING_WINDOW_INCOMPLETE'
+        );
+    const redisRemaining = () => {
+        checkRedisDeadline();
+        return redisRemainingMilliseconds(redisStop);
+    };
+    const recheck = (maximumMilliseconds = 120000) => {
+        rawRecheck(
+            redisPending
+                ? Math.min(maximumMilliseconds, redisRemaining())
+                : maximumMilliseconds
+        );
+        checkRedisDeadline();
+    };
     const changes = [];
     let snapshots = 0,
         lastSnapshot,
         watchdogProof = null;
     try {
         client = await openFixturePrisma(state, true);
-        const capture = () =>
-            client.$transaction((tx) => readSnapshot(tx, fixture), {
+        const capture = () => {
+            const { maxWait, timeout } = redisPending
+                ? redisSnapshotBudget(redisRemaining())
+                : { maxWait: 1000, timeout: 15000 };
+            return client.$transaction((tx) => readSnapshot(tx, fixture), {
                 isolationLevel: 'RepeatableRead',
-                maxWait: 1000,
-                timeout: 15000,
+                maxWait,
+                timeout,
             });
+        };
         let snapshot;
-        if (phase === 'outage-failed') {
+        if (redisPending) {
+            const ackBytes = privateBytes(
+                    path.join(directory, 'watchdog-ack.json'),
+                    16384
+                ),
+                ack = JSON.parse(ackBytes.toString('utf8')),
+                outage = privateJson(
+                    path.join(directory, 'fault-redis-outage-receipt.json'),
+                    16384
+                );
+            need(
+                sameScope(state, ack) &&
+                    sameScope(state, outage) &&
+                    outage.redisStopped === true &&
+                    outage.sameWorkerResumed === true &&
+                    same(outage.redis, state.resources.redis) &&
+                    same(outage.worker, state.processes.workers) &&
+                    outage.queueBefore?.activeDocumentScans === 0 &&
+                    previous?.phase === 'redis-staged' &&
+                    outage.stagedProofSha256 ===
+                        sha(
+                            privateBytes(
+                                path.join(
+                                    directory,
+                                    'observe-redis-staged.json'
+                                ),
+                                32768
+                            )
+                        ),
+                'S3_OUTAGE_REDIS_OUTAGE_RECEIPT'
+            );
+            redisStop = Math.min(
+                watchdogTraceDeadline(ack, run),
+                performance.now() + REDIS_PENDING_LIMITS.maximumMilliseconds
+            );
+            watchdogProof = {
+                ackSha256: sha(ackBytes),
+                deadlineAt: ack.deadlineAt,
+                deadlineMonotonicNs: ack.deadlineMonotonicNs,
+                budgetSeconds: 900,
+            };
+            let firstSampleAt = null;
+            while (true) {
+                checkRedisDeadline();
+                need(
+                    snapshots < REDIS_PENDING_LIMITS.maximumSnapshots &&
+                        !fs.existsSync(
+                            path.join(directory, 'watchdog-intervention.json')
+                        ),
+                    'S3_OUTAGE_REDIS_PENDING_INCOMPLETE'
+                );
+                recheck();
+                checkRedisDeadline();
+                snapshot = await capture();
+                snapshots++;
+                lastSnapshot = snapshot;
+                checkRedisDeadline();
+                const assessedPending = assessSnapshot(
+                        snapshot,
+                        phase,
+                        fixture,
+                        expected,
+                        previous
+                    ),
+                    latest = snapshot.versions[1],
+                    task = latest.ingestion;
+                redisPendingBinding ??= {
+                    versionId: latest.id,
+                    originalSha256: latest.sha256,
+                    originalBindingSha256:
+                        assessedPending.v2OriginalBindingSha256,
+                    reservedBytes: String(task.reservedBytes),
+                    workerPid: state.processes.workers.pid,
+                    workerStartTicks: state.processes.workers.startTicks,
+                    redisContainerId: state.resources.redis.id,
+                    stoppedAt: outage.at,
+                    createdAt: previous.snapshot.versions[1].createdAt,
+                    storedAt: previous.snapshot.versions[1].storedAt,
+                    stagedObservedAt: previous.snapshot.observedAt,
+                };
+                const sampleAt = performance.now();
+                firstSampleAt ??= sampleAt;
+                redisPoints.push(
+                    stringifySafe({
+                        ...redisPendingBinding,
+                        versionId: latest.id,
+                        originalSha256: latest.sha256,
+                        originalBindingSha256:
+                            assessedPending.v2OriginalBindingSha256,
+                        reservedBytes: String(task.reservedBytes),
+                        observedAt: snapshot.observedAt,
+                        elapsedMilliseconds: sampleAt - firstSampleAt,
+                        createdAt: latest.createdAt,
+                        storedAt: latest.storedAt,
+                        redisRunning: false,
+                        workerRunning: true,
+                        status: latest.status,
+                        ingestionStatus: task.status,
+                        attempts: task.attempts,
+                        tokenCount: latest.tokenCount,
+                        leasedUntil: task.leasedUntil,
+                        extractionPresent: latest.extraction !== null,
+                    })
+                );
+                const elapsed =
+                    instant(snapshot.observedAt) -
+                    instant(redisPoints[0].observedAt);
+                if (
+                    redisPoints.length >=
+                        REDIS_PENDING_LIMITS.minimumSnapshots &&
+                    elapsed >= REDIS_PENDING_LIMITS.minimumMilliseconds &&
+                    sampleAt - firstSampleAt >=
+                        REDIS_PENDING_LIMITS.minimumMilliseconds
+                ) {
+                    redisTrace = validateRedisPendingTrace(
+                        redisPoints,
+                        redisPendingBinding
+                    );
+                    break;
+                }
+                await waitForNextSnapshot(
+                    performance.now() +
+                        REDIS_PENDING_LIMITS.intervalMilliseconds,
+                    redisStop
+                );
+            }
+        } else if (phase === 'outage-failed') {
             const ackBytes = privateBytes(
                     path.join(directory, 'watchdog-ack.json'),
                     16384
@@ -1051,7 +1439,7 @@ async function main() {
                 Buffer.from(canonical(snapshot.versions))
             ),
             objectProof = [];
-        if (phase !== 'outage-failed') {
+        if (requiresPhysicalObjects(phase, redisPending)) {
             const bindings = snapshot.versions.map((row, index) => ({
                 documentId: row.documentId,
                 versionId: row.id,
@@ -1060,12 +1448,14 @@ async function main() {
                 byteSize: expected[index].bytes,
                 extractionPresent: row.extraction !== null,
             }));
+            checkRedisDeadline();
             objects = createReadOnlyObjectObserver({
                 state,
                 fixture,
                 bindings,
                 phase,
                 admit: recheck,
+                outerDeadline: redisPending ? redisStop : Infinity,
             });
             for (const [index, version] of snapshot.versions.entries()) {
                 const input = {
@@ -1076,15 +1466,18 @@ async function main() {
                     byteSize: expected[index].bytes,
                     expectedSha256: expected[index].sha256,
                 };
+                checkRedisDeadline();
                 const original = await objects.read({
                     ...input,
                     key: version.objectKey,
                     kind: 'original',
                 });
+                checkRedisDeadline();
                 need(
                     original.bytes.equals(originals[index]),
                     'S3_OUTAGE_OBSERVER_ORIGINAL_BYTES'
                 );
+                checkRedisDeadline();
                 const artifactKey = `${fixture.organization.id}/${version.documentId}/${version.id}/text.txt`;
                 if (version.extraction) {
                     const artifact = await objects.read({
@@ -1092,6 +1485,7 @@ async function main() {
                         key: artifactKey,
                         kind: 'artifact',
                     });
+                    checkRedisDeadline();
                     need(
                         artifact.bytes.equals(originals[index]),
                         'S3_OUTAGE_OBSERVER_CANONICAL_BYTES'
@@ -1109,6 +1503,7 @@ async function main() {
                         key: artifactKey,
                         kind: 'artifact',
                     });
+                    checkRedisDeadline();
                     objectProof.push({
                         version: version.version,
                         originalSha256: original.sha256,
@@ -1117,8 +1512,11 @@ async function main() {
                     });
                 }
             }
+            checkRedisDeadline();
             recheck();
+            checkRedisDeadline();
             const after = await capture();
+            checkRedisDeadline();
             assessSnapshot(after, phase, fixture, expected, previous);
             need(
                 sha(Buffer.from(canonical(after.versions))) ===
@@ -1131,7 +1529,9 @@ async function main() {
                 'S3_OUTAGE_OBSERVER_METADATA_CHANGED_DURING_IO'
             );
         }
+        checkRedisDeadline();
         recheck();
+        checkRedisDeadline();
         need(
             !fs.existsSync(path.join(directory, 'watchdog-intervention.json')),
             'S3_OUTAGE_OBSERVER_WATCHDOG_INTERVENED'
@@ -1150,11 +1550,12 @@ async function main() {
             ...receiptScope(state),
             namespace: state.namespace,
             runId: run,
-            phase,
+            phase: reportPhase,
             status: 'OBSERVED',
             fixtureSha256,
+            ...(redis ? { readKeyProofSha256 } : {}),
             scope:
-                phase === 'outage-failed'
+                phase === 'outage-failed' || redisPending
                     ? 'READ_ONLY_APPLICATION_DATABASE_NO_S3_SDK'
                     : 'READ_ONLY_DATABASE_AND_EXACT_PLATFORM_S3',
             browserAcceptance: 'NOT_DETERMINED',
@@ -1170,22 +1571,30 @@ async function main() {
                 objectBytes: 0,
                 scope: 'NO_S3_SDK_CREATED',
             },
-            trace:
-                phase === 'outage-failed'
-                    ? {
-                          snapshots,
-                          changes,
-                          watchdog: watchdogProof,
-                          ...validateBackoffTrace(changes),
-                      }
-                    : null,
+            trace: redisPending
+                ? {
+                      ...redisTrace,
+                      points: redisPoints,
+                      watchdog: watchdogProof,
+                  }
+                : phase === 'outage-failed'
+                  ? {
+                        snapshots,
+                        changes,
+                        watchdog: watchdogProof,
+                        ...validateBackoffTrace(changes),
+                    }
+                  : null,
             crossStoreConsistency:
-                phase === 'outage-failed'
+                phase === 'outage-failed' || redisPending
                     ? 'DATABASE_SNAPSHOT_ONLY_SOURCE_READABILITY_NOT_ASSERTED'
                     : 'METADATA_RECHECKED_NOT_CROSS_STORE_ATOMIC',
             cleanup:
                 'SEVEN_DAY_RETENTION_PRESERVED_NOT_A_CLEANUP_COMPLETION_TEST',
         });
+        if (redisPending)
+            result.redisSourceReadability =
+                'NOT_MEASURED_OFFLINE_PRECUT_AND_POSTRESTORE_PHYSICAL_PROOFS_SEPARATE';
         const first = snapshot.versions[0],
             latest = snapshot.versions.at(-1),
             common = {
@@ -1197,6 +1606,25 @@ async function main() {
                 originalSha256: latest.sha256,
                 observedAt: snapshot.observedAt,
             };
+        if (redis && ['v2-ready', 'signed-out'].includes(phase)) {
+            const before = privateJson(
+                path.join(directory, 'fault-redis-outage-receipt.json'),
+                16384
+            );
+            const { after, samples } = await waitRedisQueueAfter(
+                state,
+                recheck,
+                before.queueBefore
+            );
+            result.queueReconnectEvidence = {
+                before: before.queueBefore,
+                after,
+                samples,
+                sameRedisContainerId: state.resources.redis.id,
+                sameWorkerPid: state.processes.workers.pid,
+                scope: 'COMPLETED_QUEUE_SCAN_AND_SAME_VERSION_READY_NOT_A_BILLING_OR_ATOMIC_CAUSALITY_PROOF',
+            };
+        }
         if (phase === 'v1-ready')
             result.faultEnrollmentAdmission = {
                 ...common,
@@ -1205,8 +1633,25 @@ async function main() {
                 workerPid: state.processes.workers.pid,
                 workerStartTicks: state.processes.workers.startTicks,
                 rustfsContainerId: state.resources.rustfs.id,
+                ...(redis
+                    ? { redisContainerId: state.resources.redis.id }
+                    : {}),
             };
-        if (phase === 'v2-staged')
+        if (redisPending)
+            result.faultRecoveryAdmission = {
+                ...common,
+                kind: 'REDIS_PENDING_CONFIRMED',
+                attempts: 0,
+                status: 'PENDING',
+                errorCode: null,
+                pendingSnapshots: redisTrace.snapshots,
+                pendingWallObservedMilliseconds:
+                    redisTrace.wallObservedMilliseconds,
+                pendingMonotonicObservedMilliseconds:
+                    redisTrace.monotonicObservedMilliseconds,
+                redisContainerId: state.resources.redis.id,
+            };
+        if (phase === 'v2-staged' && !redisPending)
             result.faultAdmission = {
                 ...common,
                 kind: 'STAGED_ORIGINAL_CONFIRMED',
@@ -1217,6 +1662,12 @@ async function main() {
                 workerPid: state.processes.workers.pid,
                 workerStartTicks: state.processes.workers.startTicks,
                 rustfsContainerId: state.resources.rustfs.id,
+                ...(redis
+                    ? {
+                          redisContainerId: state.resources.redis.id,
+                          liveClaims: 0,
+                      }
+                    : {}),
             };
         if (phase === 'outage-failed')
             result.faultRecoveryAdmission = {
@@ -1230,31 +1681,56 @@ async function main() {
             first.version === 1 && hash(result.v1BindingSha256),
             'S3_OUTAGE_OBSERVER_FINAL_SCOPE'
         );
-        writePrivate(path.join(directory, `observe-${phase}.json`), result);
-        console.log(
-            JSON.stringify({
-                completed: true,
-                runId: run,
-                phase,
-                servingVersion: assessed.servingVersion,
-                latestVersion: assessed.latestVersion,
-                latestStatus: assessed.latestStatus,
-                storageBytes: assessed.quota.storageBytes,
-                reservedBytes: assessed.quota.reservedBytes,
-                snapshots,
-                status: 'OBSERVED',
-                browserAcceptance: 'NOT_DETERMINED',
-            })
-        );
+        await completeReadOnlyObservation({
+            close: async () => {
+                objects?.close();
+                objects = null;
+                const activeClient = client;
+                client = null;
+                await activeClient.$disconnect();
+            },
+            admit: () => {
+                checkRedisDeadline();
+                recheck();
+                checkRedisDeadline();
+                need(
+                    !fs.existsSync(
+                        path.join(directory, 'watchdog-intervention.json')
+                    ),
+                    'S3_OUTAGE_OBSERVER_WATCHDOG_INTERVENED'
+                );
+            },
+            publish: () => {
+                writePrivate(
+                    path.join(directory, `observe-${reportPhase}.json`),
+                    result
+                );
+                console.log(
+                    JSON.stringify({
+                        completed: true,
+                        runId: run,
+                        phase: reportPhase,
+                        servingVersion: assessed.servingVersion,
+                        latestVersion: assessed.latestVersion,
+                        latestStatus: assessed.latestStatus,
+                        storageBytes: assessed.quota.storageBytes,
+                        reservedBytes: assessed.quota.reservedBytes,
+                        snapshots,
+                        status: 'OBSERVED',
+                        browserAcceptance: 'NOT_DETERMINED',
+                    })
+                );
+            },
+        });
     } catch (error) {
         try {
             writePrivate(
-                path.join(directory, `observe-${phase}-incomplete.json`),
+                path.join(directory, `observe-${reportPhase}-incomplete.json`),
                 {
                     ...receiptScope(state),
                     namespace: state.namespace,
                     runId: run,
-                    phase,
+                    phase: reportPhase,
                     status: 'INCOMPLETE',
                     scope: 'PARTIAL_READ_ONLY_EVIDENCE_NOT_PASS',
                     snapshots,

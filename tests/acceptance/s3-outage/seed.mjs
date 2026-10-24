@@ -271,6 +271,10 @@ async function main() {
             performance.now() - started < 120000,
             'M7C_S3_OUTAGE_SEED_DEADLINE'
         );
+        const activeClient = client;
+        client = null;
+        await activeClient.$disconnect();
+        context(['--run', run, '--scenario', state.scenario], 'check');
         writePrivate(path.join(directory, 'fixture.json'), {
             ...receiptScope(state),
             namespace: state.namespace,

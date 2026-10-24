@@ -9,7 +9,7 @@ import { pathToFileURL } from 'node:url';
 export const HERE = path.dirname(fileURLToPath(import.meta.url));
 export const ROOT = path.resolve(HERE, '../../..');
 export const PROTOCOL_VERSION = 2;
-/** Exactly two scenarios; historical protocol-1 states cannot be adopted. */
+/** Exactly three closed scenarios; historical protocol-1 states cannot be adopted. */
 export function scenarioSpec(scenario) {
     const specs = {
         INGESTION_V1: {
@@ -21,6 +21,11 @@ export function scenarioSpec(scenario) {
             namespace: 'vectorix-m7c-s3-cleanup',
             databaseStem: 'vectorix_m7c_s3_cleanup',
             objectPrefix: 'm7c-s3-cleanup',
+        },
+        REDIS_V1: {
+            namespace: 'vectorix-m7c-redis-outage',
+            databaseStem: 'vectorix_m7c_redis_outage',
+            objectPrefix: 'm7c-redis-outage',
         },
     };
     need(
@@ -164,7 +169,13 @@ export function context(args, purpose) {
             state.vectorDatabase === `${spec.databaseStem}_vectors_${run}_test`,
         'M7C_S3_OUTAGE_STATE'
     );
-    const recheck = () => {
+    const recheck = (maximumMilliseconds = 120000) => {
+        need(
+            Number.isSafeInteger(maximumMilliseconds) &&
+                maximumMilliseconds >= 1 &&
+                maximumMilliseconds <= 120000,
+            'M7C_S3_OUTAGE_GUARD_TIMEOUT'
+        );
         const result = spawnSync(
             'python3',
             [
@@ -181,7 +192,7 @@ export function context(args, purpose) {
             {
                 cwd: ROOT,
                 env: cleanEnvironment(),
-                timeout: 120000,
+                timeout: maximumMilliseconds,
                 maxBuffer: 16384,
                 encoding: 'utf8',
                 stdio: ['ignore', 'pipe', 'ignore'],
