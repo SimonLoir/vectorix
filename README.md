@@ -16,7 +16,7 @@ pnpm db:migrate
 pnpm dev
 ```
 
-`setup:env` generates random secrets and never overwrites an existing file. The `.env` file remains local and is not committed. Development services use these ports:
+`setup:env` generates random secrets and never overwrites an existing file. In production, the API and workers refuse to start while secrets are missing, malformed or still the `.env.example` placeholders, or while required origins are unset; see [startup configuration validation](docs/runtime-configuration.md). The `.env` file remains local and is not committed. Development services use these ports:
 
 | Service                           | Address               |
 | --------------------------------- | --------------------- |
@@ -259,6 +259,7 @@ Implement changes on a dedicated `codex/*` branch and open a pull request agains
 - [Repository conventions](AGENTS.md): architecture, authorization, API compatibility, development, and validation rules.
 - [Dashboard timezones](docs/dashboard-timezones.md): shared server validation, public provider configuration and locale-independent runtime dates.
 - [Superadmin transactions](docs/superadmin-transactions.md): atomic mutations/audits, current actor checks, audit address provenance and remaining native owner-guard work.
+- [Startup configuration validation](docs/runtime-configuration.md): production fail-fast checks for secrets, placeholders and origins in API and workers.
 - [Bounded member and API-key lists](docs/member-key-list-windows.md): optional `offset`/`limit`/`query` windows with `total`, and paged dashboard tables.
 - [Versioned API rate limiting](docs/api-rate-limiting.md): Redis-shared personal and authorized provider-operation request budgets, 429 responses with `Retry-After`, and configuration.
 - [Authentication rate limiting](docs/auth-rate-limiting.md): Redis-shared opaque Better Auth counters, preserved native second-factor rules, reset budgets and `VECTORIX_TRUSTED_PROXIES` client-address resolution.

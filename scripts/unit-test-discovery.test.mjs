@@ -147,6 +147,7 @@ void test('unowned Vitest tests fail clearly, including inside packages with ano
     for (const path of [
         'apps/web/new.test.ts',
         'packages/chunking/tests/new.test.ts',
+        'packages/config/tests/new.test.ts',
         'packages/routers/utils/src/new.test.ts',
     ])
         fixture(({ root, write }) => {
@@ -177,6 +178,7 @@ void test('changed Vitest script or converted framework cannot become an invisib
 void test('alternate runner patterns and script names match the actual isolated commands', () =>
     fixture(({ root, write, owner }) => {
         owner('packages/chunking', 'test', 'tsx --test tests/*.test.ts');
+        owner('packages/config', 'test', 'tsx --test tests/*.test.ts');
         owner(
             'packages/embeddings',
             'test',
@@ -185,6 +187,7 @@ void test('alternate runner patterns and script names match the actual isolated 
         owner('packages/vector-store', 'test:native', 'bash tests/run.sh');
         for (const path of [
             'packages/chunking/tests/new.test.ts',
+            'packages/config/tests/runtime-config.test.ts',
             'packages/embeddings/tests/new.test.ts',
             'packages/vector-store/tests/adapter.test.ts',
         ])
@@ -195,13 +198,27 @@ void test('alternate runner patterns and script names match the actual isolated 
         assert.deepEqual(discoverUnitTests(root), []);
     }));
 
-void test('a test outside an alternate runner glob is rejected instead of silently lost', () =>
+void test('a test outside an alternate runner glob is rejected instead of silently lost', () => {
+    for (const directory of ['packages/chunking', 'packages/config'])
+        fixture(({ root, write, owner }) => {
+            owner(directory, 'test', 'tsx --test tests/*.test.ts');
+            const path = `${directory}/src/new.test.ts`;
+            write(path, 'import { test } from "node:test";');
+            assert.throws(() => discoverUnitTests(root), {
+                message: `Test is outside its registered runner pattern: ${path}`,
+            });
+        });
+});
+
+void test('configuration runner script drift fails rather than hiding its tests', () =>
     fixture(({ root, write, owner }) => {
-        owner('packages/chunking', 'test', 'tsx --test tests/*.test.ts');
-        const path = 'packages/chunking/src/new.test.ts';
-        write(path, 'import { test } from "node:test";');
+        owner('packages/config', 'test', 'tsx --test tests/another.test.ts');
+        write(
+            'packages/config/tests/runtime-config.test.ts',
+            'import { test } from "node:test";'
+        );
         assert.throws(() => discoverUnitTests(root), {
-            message: `Test is outside its registered runner pattern: ${path}`,
+            message: 'Test runner ownership changed: packages/config:test',
         });
     }));
 
@@ -219,6 +236,10 @@ void test('the real checkout still includes security and parser units and exclud
         )
     );
     assert.equal(files.includes(VITEST_FILE), false);
+    assert.equal(
+        files.some((path) => path.startsWith('packages/config/')),
+        false
+    );
     assert.equal(
         files.some(
             (path) =>

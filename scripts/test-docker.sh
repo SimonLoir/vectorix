@@ -54,6 +54,14 @@ for app in api workers; do
     '
 done
 
+# Prove configuration rejection happens before sockets in the actual bundled entries.
+# The helper is streamed into the runtime; no test/build dependency enters an image.
+for app in api workers; do
+    docker run --rm -i --network none --memory 512m --cpus 1 --pids-limit 64 \
+        --entrypoint node "$prefix-$app:test" --input-type=module - "$app" /app/dist/index.mjs \
+        < tests/config/startup-order.mjs
+done
+
 # Verify the bundled native PDF and isolated DOCX parser as the runtime user,
 # with no development loader and no API/frontend parser dependencies.
 docker run --rm --entrypoint node -v "$PWD/tests/documents/fixtures:/fixtures:ro" "$prefix-workers:test" --input-type=module -e '
@@ -122,6 +130,7 @@ runtime_env=(
     -e BETTER_AUTH_URL=http://api:3001
     -e API_URL=http://api:3001
     -e TRUSTED_ORIGINS=http://localhost:3000,http://localhost:3006
+    -e VECTORIX_WEB_URL=http://localhost:3000
     -e ALLOW_ACCOUNT_CREATION=true
     -e ALLOW_ORGANIZATION_CREATION=true
     -e VECTORIX_WEB_PUSH_ENABLED=false

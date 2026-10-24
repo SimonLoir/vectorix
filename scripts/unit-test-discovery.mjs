@@ -20,6 +20,12 @@ const TEST_FILE = /\.test\.tsx?$/u;
 // the actual script and the paths it covers instead of skipping whole packages.
 const OWN_RUNNERS = [
     {
+        directory: 'packages/config',
+        name: 'test',
+        command: 'tsx --test tests/*.test.ts',
+        files: /^packages\/config\/tests\/[^/]+\.test\.ts$/u,
+    },
+    {
         directory: 'packages/chunking',
         name: 'test',
         command: 'tsx --test tests/*.test.ts',

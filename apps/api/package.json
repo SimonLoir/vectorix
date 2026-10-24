@@ -25,6 +25,7 @@
         "@repo/api": "workspace:*",
         "@repo/api-contracts": "workspace:*",
         "@repo/auth": "workspace:*",
+        "@repo/config": "workspace:*",
         "@repo/db": "workspace:*",
         "@repo/queues": "workspace:*",
         "@routers/utils": "workspace:*",
