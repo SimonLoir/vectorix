@@ -845,6 +845,7 @@
             "playground": "Tester la recherche",
             "collectionJourney": "Indexer et rechercher",
             "failed": "L’opération n’a pas pu aboutir. Vérifiez vos droits et la configuration, puis réessayez.",
+            "rateLimited": "Trop de recherches ou de requêtes au fournisseur ont été envoyées. Patientez une minute, puis réessayez.",
             "loadFailed": "Ces informations n’ont pas pu être chargées. Vos droits ont peut-être changé.",
             "working": "Traitement…",
             "readDenied": "La lecture de cette collection n’est pas autorisée. L’administration du catalogue ne donne pas accès au contenu.",

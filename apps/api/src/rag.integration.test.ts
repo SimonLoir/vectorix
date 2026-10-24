@@ -50,6 +50,7 @@ import { telemetrySummaryTests } from './rag-tests/telemetry-summary';
 import { telemetryAccessTests } from './rag-tests/telemetry-access';
 import { telemetryRuntimeTests } from './rag-tests/telemetry-runtime';
 import { telemetryLimitTests } from './rag-tests/telemetry-limits';
+import { apiRateLimitTests } from './rag-tests/api-rate-limit';
 
 after(cleanup);
 void test('RAG catalog with real PostgreSQL and HTTP transports', async (t) => {
@@ -103,4 +104,5 @@ void test('RAG catalog with real PostgreSQL and HTTP transports', async (t) => {
     await telemetryAccessTests(t);
     await telemetryRuntimeTests(t);
     await telemetryLimitTests(t);
+    await apiRateLimitTests(t);
 });

@@ -259,6 +259,7 @@ Implement changes on a dedicated `codex/*` branch and open a pull request agains
 - [Repository conventions](AGENTS.md): architecture, authorization, API compatibility, development, and validation rules.
 - [Dashboard timezones](docs/dashboard-timezones.md): shared server validation, public provider configuration and locale-independent runtime dates.
 - [Superadmin transactions](docs/superadmin-transactions.md): atomic mutations/audits, current actor checks, audit address provenance and remaining native owner-guard work.
+- [Versioned API rate limiting](docs/api-rate-limiting.md): Redis-shared personal and authorized provider-operation request budgets, 429 responses with `Retry-After`, and configuration.
 - [Authentication rate limiting](docs/auth-rate-limiting.md): Redis-shared opaque Better Auth counters, preserved native second-factor rules, reset budgets and `VECTORIX_TRUSTED_PROXIES` client-address resolution.
 - [Redis connections](docs/redis-connections.md): encoded URL credentials, raw fallback precedence and isolated queue/worker acceptance.
 - [Canonical password-reset links](docs/password-reset-links.md): server-only destinations, strict configuration precedence and reset-request acceptance.

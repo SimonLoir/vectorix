@@ -13,6 +13,14 @@ import {
 } from './expected-organization';
 import { resolveCurrentApiKeyAccess } from './api-key-access';
 import { normalizeAuthorizationError } from './authorization-error';
+import {
+    createProviderRateLimitAdmission,
+    enforceApiRateLimit,
+    parseApiRateLimits,
+    PROVIDER_OPERATIONS,
+} from './api-rate-limit';
+
+const apiRateLimits = parseApiRateLimits(process.env);
 
 const authorize = async (
     headers: Headers,
@@ -118,6 +126,8 @@ export type AuthorizedContext = ApiContext & {
     organizationId: string;
     permissions: PermissionSet;
     legacyApiKey: boolean;
+    /** HTTP request admission after real resource/binding authorization, before provider work. */
+    admitProviderRequest?: () => Promise<void>;
 };
 
 export const authMiddleware = base.middleware(
@@ -135,10 +145,26 @@ export const authMiddleware = base.middleware(
             throw new ORPCError('FORBIDDEN', {
                 message: 'Organization is inactive.',
             });
+        // Count authenticated callers before permission checks so denied loops are throttled too.
+        const principal = {
+            organizationId: access.organizationId,
+            keyId: access.key?.id ?? null,
+            userId: access.user?.id ?? null,
+        };
+        await enforceApiRateLimit(principal, apiRateLimits, context.resHeaders);
         requireOperationPermissions(access, path);
         requirePermissions(access, compoundPermissions(path.join('.'), input));
         return next({
-            context: access,
+            context: {
+                ...access,
+                admitProviderRequest: PROVIDER_OPERATIONS.has(path.join('.'))
+                    ? createProviderRateLimitAdmission(
+                          principal,
+                          apiRateLimits,
+                          context.resHeaders
+                      )
+                    : undefined,
+            },
         });
     }
 );
