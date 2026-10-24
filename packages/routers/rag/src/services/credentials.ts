@@ -1,3 +1,4 @@
+import { randomUUID } from 'node:crypto';
 import { ORPCError } from '@orpc/server';
 import type { AuthorizedContext } from '@routers/utils/authorized';
 import { updateProviderData } from './credential-update';
@@ -32,9 +33,16 @@ export function createCredential(
                 throw new ORPCError('CONFLICT', {
                     message: 'The organization credential limit is reached.',
                 });
+            // Generate the ID first so ciphertexts can be bound to this row.
+            const credentialId = randomUUID();
             const credential = await db.credentials.create({
                 data: {
-                    ...(await encryptedProviderData(input.data)),
+                    id: credentialId,
+                    ...(await encryptedProviderData(
+                        input.data,
+                        actor.organizationId,
+                        credentialId
+                    )),
                     name: input.name,
                     provider: input.data.provider,
                     organization: { connect: { id: actor.organizationId } },

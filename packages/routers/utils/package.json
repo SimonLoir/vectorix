@@ -15,7 +15,8 @@
         "./transactions": "./src/utils/transactions.ts",
         "./audit-log": "./src/utils/audit-log.ts",
         "./authorization-error": "./src/authorization-error.ts",
-        "./push-endpoint-policy": "./src/utils/notifications/push-endpoint-policy.ts"
+        "./push-endpoint-policy": "./src/utils/notifications/push-endpoint-policy.ts",
+        "./secret-reencryption": "./src/utils/secret-reencryption.ts"
     },
     "scripts": {
         "check-types": "tsc6 -p tsconfig.json --noEmit",

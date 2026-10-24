@@ -1,5 +1,5 @@
 import type { PrismaClient } from '@repo/db';
-import { decrypt } from '@routers/utils/encryption';
+import { decrypt, pushSubscriptionContext } from '@routers/utils/encryption';
 import {
     admitPushEndpoint,
     createPushEndpointPolicy,
@@ -53,11 +53,14 @@ function vapidDetails() {
     return { subject, publicKey, privateKey };
 }
 
-/** Decrypt only bounded subscription shapes; retain opaque endpoint bytes. */
-function parseSubscription(value: string): StoredPushSubscription | null {
+/** Decrypt only bounded subscription shapes bound to this row; retain opaque endpoint bytes. */
+function parseSubscription(
+    value: string,
+    context: string
+): StoredPushSubscription | null {
     try {
         if (value.length > 16_384) return null;
-        const parsed = JSON.parse(decrypt(value)) as unknown;
+        const parsed = JSON.parse(decrypt(value, context)) as unknown;
         if (
             typeof parsed !== 'object' ||
             parsed === null ||
@@ -210,7 +213,11 @@ export async function sendNotificationPush(
             throw error;
         }
         const parsed = parseSubscription(
-            current.subscription.subscriptionEncrypted
+            current.subscription.subscriptionEncrypted,
+            pushSubscriptionContext(
+                current.subscription.organizationId,
+                current.subscription.endpointHash
+            )
         );
         if (!parsed) {
             await revokeSubscription(db, input, candidate, new Date());

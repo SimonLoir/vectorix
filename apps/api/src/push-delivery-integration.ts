@@ -3,7 +3,7 @@ import { createHash, randomUUID } from 'node:crypto';
 import type { TestContext } from 'node:test';
 import { isDeepStrictEqual } from 'node:util';
 import { prisma } from '@repo/db';
-import { encrypt } from '@routers/utils/encryption';
+import { encrypt, pushSubscriptionContext } from '@routers/utils/encryption';
 import { PushEndpointPolicyConfigurationError } from '@routers/utils/push-endpoint-policy';
 import { sendNotificationPush } from '../../workers/src/notifications/push';
 import {
@@ -120,14 +120,24 @@ export async function pushDeliveryIntegrationTests(
                 );
                 const first = fixture.devices[0]!;
                 const endpoint = `https://127.0.0.1/legacy-${randomUUID()}`;
+                const endpointHash = createHash('sha256')
+                    .update(endpoint)
+                    .digest('hex');
+                const row =
+                    await prisma.vectorixPushSubscription.findUniqueOrThrow({
+                        where: { id: first.id },
+                        select: { organizationId: true },
+                    });
                 await prisma.vectorixPushSubscription.update({
                     where: { id: first.id },
                     data: {
-                        endpointHash: createHash('sha256')
-                            .update(endpoint)
-                            .digest('hex'),
+                        endpointHash,
                         subscriptionEncrypted: await encrypt(
-                            JSON.stringify({ ...first.registration, endpoint })
+                            JSON.stringify({ ...first.registration, endpoint }),
+                            pushSubscriptionContext(
+                                row.organizationId,
+                                endpointHash
+                            )
                         ),
                     },
                 });
