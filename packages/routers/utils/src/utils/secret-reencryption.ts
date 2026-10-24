@@ -1,5 +1,6 @@
 import type { PrismaClient } from '@repo/db';
 import {
+    assertEncryptionConfiguration,
     credentialSecretContext,
     decrypt,
     encrypt,
@@ -8,19 +9,35 @@ import {
 } from './encryption';
 
 type CredentialField = 'accessKeyId' | 'secretAccessKey' | 'apiKey';
-type Counts = { scanned: number; reencrypted: number; failed: number };
-export type ReencryptionReport = Record<string, Counts>;
+export type ReencryptionCounts = {
+    scanned: number;
+    authenticated: number;
+    reencrypted: number;
+    wouldReencrypt: number;
+    conflicts: number;
+    failed: number;
+    remaining: number;
+    verificationFailed: number;
+};
+export type ReencryptionReport = Readonly<{
+    status: 'COMPLETE' | 'INCOMPLETE' | 'DRY_RUN';
+    dryRun: boolean;
+    columns: Readonly<Record<string, ReencryptionCounts>>;
+}>;
 
-type Row = Readonly<{
+export type ReencryptionRow = Readonly<{
     id: string;
     values: Readonly<Record<string, string | null>>;
     context: (field: string) => string;
 }>;
 
-type Column = Readonly<{
+export type ReencryptionColumn = Readonly<{
     name: string;
     fields: readonly string[];
-    load: (cursor: string | undefined, take: number) => Promise<Row[]>;
+    load: (
+        cursor: string | undefined,
+        take: number
+    ) => Promise<ReencryptionRow[]>;
     /** Compare-and-set on the old ciphertext so concurrent edits win. */
     update: (
         id: string,
@@ -40,7 +57,7 @@ function credentialColumn(
         | 'openAICredentials'
         | 'mistralCredentials',
     fields: readonly CredentialField[]
-): Column {
+): ReencryptionColumn {
     // Each delegate has the same id/base/secret-field shape; Prisma cannot express that generically.
     const delegate = db[name] as unknown as {
         findMany: (
@@ -58,8 +75,7 @@ function credentialColumn(
         fields,
         async load(cursor, take) {
             const rows = await delegate.findMany({
-                take,
-                ...(cursor ? { skip: 1, cursor: { id: cursor } } : {}),
+                ...reencryptionWindow(cursor, take),
                 orderBy: { id: 'asc' },
                 select: {
                     id: true,
@@ -90,14 +106,13 @@ function credentialColumn(
     };
 }
 
-function pushColumn(db: PrismaClient): Column {
+function pushColumn(db: PrismaClient): ReencryptionColumn {
     return {
         name: 'vectorixPushSubscription',
         fields: ['subscriptionEncrypted'],
         async load(cursor, take) {
             const rows = await db.vectorixPushSubscription.findMany({
-                take,
-                ...(cursor ? { skip: 1, cursor: { id: cursor } } : {}),
+                ...reencryptionWindow(cursor, take),
                 orderBy: { id: 'asc' },
                 select: {
                     id: true,
@@ -127,7 +142,7 @@ function pushColumn(db: PrismaClient): Column {
 }
 
 /** Every column that stores `encrypt()` output, with its row binding. */
-export function encryptedColumns(db: PrismaClient): Column[] {
+export function encryptedColumns(db: PrismaClient): ReencryptionColumn[] {
     return [
         credentialColumn(db, 's3Credentials', [
             'accessKeyId',
@@ -142,52 +157,125 @@ export function encryptedColumns(db: PrismaClient): Column[] {
     ];
 }
 
+/** Keyset reads still advance if the last observed row is deleted concurrently. */
+export function reencryptionWindow(after: string | undefined, take: number) {
+    return {
+        take,
+        where: after === undefined ? {} : { id: { gt: after } },
+    };
+}
+
 async function processRow(
-    column: Column,
-    row: Row,
-    counts: Counts,
+    column: ReencryptionColumn,
+    row: ReencryptionRow,
+    counts: ReencryptionCounts,
     dryRun: boolean
 ) {
     for (const field of column.fields) {
         const value = row.values[field];
-        if (!value) continue;
+        if (value === null || value === undefined) continue;
         counts.scanned++;
-        if (!needsReencryption(value)) continue;
         try {
             const context = row.context(field);
-            const sealed = await encrypt(decrypt(value, context), context);
-            if (dryRun || (await column.update(row.id, field, value, sealed)))
-                counts.reencrypted++;
+            // Current-key envelopes must authenticate too; their prefix is not proof.
+            const plaintext = decrypt(value, context);
+            counts.authenticated++;
+            if (!needsReencryption(value)) continue;
+            if (dryRun) {
+                counts.wouldReencrypt++;
+                continue;
+            }
+            const sealed = await encrypt(plaintext, context);
+            const updated = await column.update(row.id, field, value, sealed);
+            if (updated === 1) counts.reencrypted++;
+            else counts.conflicts++;
         } catch {
-            // Undecryptable values stay untouched; they already fail closed on read.
+            // Only counters escape; an unreadable value is left byte-identical.
             counts.failed++;
         }
     }
 }
 
+async function walkColumn(
+    column: ReencryptionColumn,
+    batchSize: number,
+    visit: (row: ReencryptionRow) => Promise<void> | void
+) {
+    let cursor: string | undefined;
+    for (;;) {
+        const rows = await column.load(cursor, batchSize);
+        if (rows.length > batchSize)
+            throw new Error('Invalid re-encryption page.');
+        for (const row of rows) await visit(row);
+        if (rows.length < batchSize) return;
+        const last = rows.at(-1)?.id;
+        if (last === undefined || (cursor !== undefined && last <= cursor))
+            throw new Error('Invalid re-encryption page.');
+        cursor = last;
+    }
+}
+
 /**
- * Re-encrypt legacy and retired-key ciphertexts with the current key and
- * their row binding. Idempotent and resumable: values already sealed with the
- * current key are skipped, and each write compares against the old ciphertext
- * so a concurrent credential update is never overwritten. External I/O is
- * none; each update is a single-row statement outside long transactions.
+ * Authenticate every value, CAS eligible rewrites, then inspect all values again.
+ * No report can establish a future write barrier: retirement additionally requires
+ * every writer to use the current key and quiescence throughout verification.
  */
-export async function reencryptStoredSecrets(
-    db: PrismaClient,
+export async function reencryptSecretColumns(
+    columns: readonly ReencryptionColumn[],
     { batchSize = 100, dryRun = false } = {}
 ): Promise<ReencryptionReport> {
-    const report: ReencryptionReport = {};
-    for (const column of encryptedColumns(db)) {
-        const counts = { scanned: 0, reencrypted: 0, failed: 0 };
+    if (!Number.isSafeInteger(batchSize) || batchSize < 1 || batchSize > 1000)
+        throw new Error(
+            'Re-encryption batch size must be an integer from 1 to 1000.'
+        );
+    assertEncryptionConfiguration();
+    const report: Record<string, ReencryptionCounts> = {};
+    for (const column of columns) {
+        const counts: ReencryptionCounts = {
+            scanned: 0,
+            authenticated: 0,
+            reencrypted: 0,
+            wouldReencrypt: 0,
+            conflicts: 0,
+            failed: 0,
+            remaining: 0,
+            verificationFailed: 0,
+        };
         report[column.name] = counts;
-        let cursor: string | undefined;
-        for (;;) {
-            const rows = await column.load(cursor, batchSize);
-            for (const row of rows)
-                await processRow(column, row, counts, dryRun);
-            if (rows.length < batchSize) break;
-            cursor = rows.at(-1)?.id;
-        }
+        await walkColumn(column, batchSize, (row) =>
+            processRow(column, row, counts, dryRun)
+        );
+        await walkColumn(column, batchSize, (row) => {
+            for (const field of column.fields) {
+                const value = row.values[field];
+                if (value === null || value === undefined) continue;
+                try {
+                    decrypt(value, row.context(field));
+                    if (needsReencryption(value)) counts.remaining++;
+                } catch {
+                    counts.verificationFailed++;
+                }
+            }
+        });
     }
-    return report;
+    const incomplete = Object.values(report).some(
+        (counts) =>
+            counts.failed > 0 ||
+            counts.conflicts > 0 ||
+            counts.verificationFailed > 0 ||
+            (!dryRun && counts.remaining > 0)
+    );
+    return {
+        status: incomplete ? 'INCOMPLETE' : dryRun ? 'DRY_RUN' : 'COMPLETE',
+        dryRun,
+        columns: report,
+    };
+}
+
+/** Fixed encrypted columns only; no provider I/O, business revision, audit or lifecycle write. */
+export function reencryptStoredSecrets(
+    db: PrismaClient,
+    options: { batchSize?: number; dryRun?: boolean } = {}
+): Promise<ReencryptionReport> {
+    return reencryptSecretColumns(encryptedColumns(db), options);
 }

@@ -3,6 +3,9 @@ import crypto from 'node:crypto';
 import { afterEach, test } from 'node:test';
 import {
     credentialSecretContext,
+    EncryptedDataError,
+    EncryptionConfigurationError,
+    EncryptionKeyUnavailableError,
     decrypt,
     encrypt,
     needsReencryption,
@@ -68,12 +71,11 @@ void test('tampered fields and unknown keys fail closed', async () => {
     flipped[4] = (parts[4]!.startsWith('0') ? '1' : '0') + parts[4]!.slice(1);
     assert.throws(() => decrypt(flipped.join(':'), context));
     useKeys(second);
-    assert.throws(() => decrypt(sealed, context), {
-        message: 'Unknown encryption key',
-    });
-    assert.throws(() => decrypt('not:encrypted', context), {
-        message: 'Invalid encrypted data format',
-    });
+    assert.throws(
+        () => decrypt(sealed, context),
+        EncryptionKeyUnavailableError
+    );
+    assert.throws(() => decrypt('not:encrypted', context), EncryptedDataError);
 });
 
 void test('legacy values still decrypt and are flagged for re-encryption', () => {
@@ -95,10 +97,69 @@ void test('rotation keeps retired keys readable until values are re-sealed', asy
     assert.equal(needsReencryption(resealed), false);
     useKeys(second);
     assert.equal(decrypt(resealed, context), 'rotating-secret');
-    assert.throws(() => decrypt(old, context));
+    assert.throws(() => decrypt(old, context), EncryptionKeyUnavailableError);
     process.env.ENCRYPTION_PREVIOUS_SECRETS = 'not-hex';
     assert.throws(() => decrypt(resealed, context), {
         message:
             'ENCRYPTION_PREVIOUS_SECRETS entry 1 must be 64 hex characters (32 bytes)',
     });
+});
+
+void test('noncanonical hex, truncated tags, wrong IV sizes and malformed IDs are refused before decoding', async () => {
+    useKeys(first);
+    const sealed = await encrypt('strict-value', context);
+    const original = sealed.split(':');
+    for (const [index, replacement] of [
+        [1, original[1] + '0'],
+        [2, original[2] + 'zz'],
+        [2, original[2]!.slice(2)],
+        [3, original[3]!.slice(0, 8)],
+        [3, original[3] + 'zz'],
+        [4, original[4] + 'g0'],
+        [4, original[4] + '0'],
+    ] as const) {
+        const malformed = [...original];
+        malformed[index] = replacement;
+        assert.throws(
+            () => decrypt(malformed.join(':'), context),
+            EncryptedDataError
+        );
+        assert.throws(
+            () => needsReencryption(malformed.join(':')),
+            EncryptedDataError
+        );
+    }
+    const legacy = legacyEncrypt('strict-legacy', first).split(':');
+    legacy[1] = legacy[1]!.slice(0, 8);
+    assert.throws(() => decrypt(legacy.join(':'), context), EncryptedDataError);
+    assert.equal(decrypt(await encrypt('', context), context), '');
+});
+
+void test('keyring configuration and ambiguous legacy key absence have distinct non-corruption errors', async () => {
+    useKeys(first);
+    const sealed = await encrypt('available-value', context);
+    const legacy = legacyEncrypt('legacy-value', first);
+    useKeys(second);
+    assert.throws(
+        () => decrypt(sealed, context),
+        EncryptionKeyUnavailableError
+    );
+    assert.throws(
+        () => decrypt(legacy, context),
+        EncryptionKeyUnavailableError
+    );
+    useKeys(first, 'invalid-private-key-sentinel');
+    assert.throws(
+        () => decrypt(sealed, context),
+        (error: unknown) =>
+            error instanceof EncryptionConfigurationError &&
+            !error.message.includes('invalid-private-key-sentinel')
+    );
+    useKeys(
+        first,
+        Array.from({ length: 17 }, (_, index) =>
+            (index + 1).toString(16).padStart(64, '0')
+        ).join(',')
+    );
+    assert.throws(() => decrypt(sealed, context), EncryptionConfigurationError);
 });

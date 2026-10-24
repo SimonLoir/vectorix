@@ -1,5 +1,10 @@
 import type { PrismaClient } from '@repo/db';
-import { decrypt, pushSubscriptionContext } from '@routers/utils/encryption';
+import {
+    decrypt,
+    EncryptionConfigurationError,
+    EncryptionKeyUnavailableError,
+    pushSubscriptionContext,
+} from '@routers/utils/encryption';
 import {
     admitPushEndpoint,
     createPushEndpointPolicy,
@@ -81,7 +86,14 @@ function parseSubscription(
             endpoint: parsed.endpoint,
             keys: { p256dh: parsed.keys.p256dh, auth: parsed.keys.auth },
         };
-    } catch {
+    } catch (error) {
+        // A deployment/key-retirement error cannot prove a device is corrupt.
+        // Propagate it to the durable delivery retry path without revocation.
+        if (
+            error instanceof EncryptionConfigurationError ||
+            error instanceof EncryptionKeyUnavailableError
+        )
+            throw error;
         return null;
     }
 }
@@ -212,13 +224,26 @@ export async function sendNotificationPush(
             if (sent > 0) break;
             throw error;
         }
-        const parsed = parseSubscription(
-            current.subscription.subscriptionEncrypted,
-            pushSubscriptionContext(
-                current.subscription.organizationId,
-                current.subscription.endpointHash
+        let parsed: StoredPushSubscription | null;
+        try {
+            parsed = parseSubscription(
+                current.subscription.subscriptionEncrypted,
+                pushSubscriptionContext(
+                    current.subscription.organizationId,
+                    current.subscription.endpointHash
+                )
+            );
+        } catch (error) {
+            // A later unreadable key cannot undo an already accepted device.
+            // With no success, preserve the durable delivery failure/retry path.
+            if (
+                sent > 0 &&
+                (error instanceof EncryptionConfigurationError ||
+                    error instanceof EncryptionKeyUnavailableError)
             )
-        );
+                break;
+            throw error;
+        }
         if (!parsed) {
             await revokeSubscription(db, input, candidate, new Date());
             continue;

@@ -3,7 +3,12 @@ import { createHash, randomUUID } from 'node:crypto';
 import type { TestContext } from 'node:test';
 import { isDeepStrictEqual } from 'node:util';
 import { prisma } from '@repo/db';
-import { encrypt, pushSubscriptionContext } from '@routers/utils/encryption';
+import {
+    encrypt,
+    EncryptionConfigurationError,
+    EncryptionKeyUnavailableError,
+    pushSubscriptionContext,
+} from '@routers/utils/encryption';
 import { PushEndpointPolicyConfigurationError } from '@routers/utils/push-endpoint-policy';
 import { sendNotificationPush } from '../../workers/src/notifications/push';
 import {
@@ -317,6 +322,177 @@ export async function pushDeliveryIntegrationTests(
                 assert.equal(first.revokedAt, null);
                 assert.equal(first.version, 1);
                 assert.ok(first.lastUsedAt);
+            }
+        );
+
+        await t.test(
+            'an unavailable retired key after a confirmed device stops the batch without replay or revocation',
+            async () => {
+                const fixture = await createPushDeliveryFixture(
+                    cleanup,
+                    'encryption-partial-success'
+                );
+                const first = fixture.devices[0]!;
+                const second = fixture.devices[1]!;
+                const secondBefore =
+                    await prisma.vectorixPushSubscription.findUniqueOrThrow({
+                        where: { id: second.id },
+                    });
+                const current = process.env.ENCRYPTION_SECRET;
+                const previous = process.env.ENCRYPTION_PREVIOUS_SECRETS;
+                const next =
+                    current === '82'.repeat(32)
+                        ? '83'.repeat(32)
+                        : '82'.repeat(32);
+                let calls = 0;
+                try {
+                    process.env.ENCRYPTION_SECRET = next;
+                    delete process.env.ENCRYPTION_PREVIOUS_SECRETS;
+                    // A real registration renews only the first native device under the new key.
+                    const renewed =
+                        await fixture.recipient.client.admin.notifications.pushSubscriptions.register(
+                            first.registration
+                        );
+                    assert.equal(renewed.id, first.id);
+                    const firstBefore =
+                        await prisma.vectorixPushSubscription.findUniqueOrThrow(
+                            { where: { id: first.id } }
+                        );
+                    const firstEnvelope =
+                        firstBefore.subscriptionEncrypted.split(':');
+                    const secondEnvelope =
+                        secondBefore.subscriptionEncrypted.split(':');
+                    assert.ok(
+                        firstEnvelope[0] === 'v2' &&
+                            secondEnvelope[0] === 'v2' &&
+                            firstEnvelope[1] !== secondEnvelope[1],
+                        'The two actual devices must be sealed under different v2 key IDs.'
+                    );
+                    const result = await sendNotificationPush(
+                        prisma,
+                        fixture.input,
+                        new Date(),
+                        {
+                            sendNotification: (subscription) => {
+                                calls++;
+                                assert.ok(
+                                    subscription.endpoint ===
+                                        first.registration.endpoint,
+                                    'Only the current-key first device may reach the controlled sender.'
+                                );
+                                return Promise.resolve(acceptedPushResponse);
+                            },
+                        }
+                    );
+                    assert.equal(result.sent, true);
+                    assert.equal(calls, 1);
+                    assert.ok(
+                        isDeepStrictEqual(
+                            await prisma.vectorixPushSubscription.findUniqueOrThrow(
+                                { where: { id: second.id } }
+                            ),
+                            secondBefore
+                        ),
+                        'The unreadable second device must preserve its ciphertext, version, revocation and usage.'
+                    );
+                    const sent =
+                        await prisma.vectorixPushSubscription.findUniqueOrThrow(
+                            { where: { id: first.id } }
+                        );
+                    assert.equal(sent.revokedAt, null);
+                    assert.equal(sent.version, renewed.version);
+                    assert.ok(sent.lastUsedAt);
+                } finally {
+                    if (current === undefined)
+                        delete process.env.ENCRYPTION_SECRET;
+                    else process.env.ENCRYPTION_SECRET = current;
+                    if (previous === undefined)
+                        delete process.env.ENCRYPTION_PREVIOUS_SECRETS;
+                    else process.env.ENCRYPTION_PREVIOUS_SECRETS = previous;
+                    // Restore the fixture's key through the normal native registration API.
+                    await fixture.recipient.client.admin.notifications.pushSubscriptions.register(
+                        first.registration
+                    );
+                }
+            }
+        );
+
+        await t.test(
+            'malformed keyrings and unavailable retired keys do not revoke or mutate native devices',
+            async () => {
+                const fixture = await createPushDeliveryFixture(
+                    cleanup,
+                    'encryption-configuration'
+                );
+                const ids = fixture.devices.map(({ id }) => id);
+                const before = await prisma.vectorixPushSubscription.findMany({
+                    where: { id: { in: ids } },
+                    orderBy: { id: 'asc' },
+                });
+                const current = process.env.ENCRYPTION_SECRET;
+                const previous = process.env.ENCRYPTION_PREVIOUS_SECRETS;
+                let calls = 0;
+                const sender = () => {
+                    calls++;
+                    return Promise.resolve(acceptedPushResponse);
+                };
+                try {
+                    process.env.ENCRYPTION_PREVIOUS_SECRETS =
+                        'malformed-private-key-sentinel';
+                    await assert.rejects(
+                        sendNotificationPush(
+                            prisma,
+                            fixture.input,
+                            new Date(),
+                            { sendNotification: sender }
+                        ),
+                        EncryptionConfigurationError
+                    );
+                    delete process.env.ENCRYPTION_PREVIOUS_SECRETS;
+                    process.env.ENCRYPTION_SECRET =
+                        current === '82'.repeat(32)
+                            ? '83'.repeat(32)
+                            : '82'.repeat(32);
+                    await assert.rejects(
+                        sendNotificationPush(
+                            prisma,
+                            fixture.input,
+                            new Date(),
+                            { sendNotification: sender }
+                        ),
+                        EncryptionKeyUnavailableError
+                    );
+                    assert.equal(calls, 0);
+                    assert.ok(
+                        isDeepStrictEqual(
+                            await prisma.vectorixPushSubscription.findMany({
+                                where: { id: { in: ids } },
+                                orderBy: { id: 'asc' },
+                            }),
+                            before
+                        ),
+                        'Key configuration failures must preserve ciphertext, versions, revocation and usage.'
+                    );
+                } finally {
+                    if (current === undefined)
+                        delete process.env.ENCRYPTION_SECRET;
+                    else process.env.ENCRYPTION_SECRET = current;
+                    if (previous === undefined)
+                        delete process.env.ENCRYPTION_PREVIOUS_SECRETS;
+                    else process.env.ENCRYPTION_PREVIOUS_SECRETS = previous;
+                }
+                assert.equal(
+                    (
+                        await sendNotificationPush(
+                            prisma,
+                            fixture.input,
+                            new Date(),
+                            { sendNotification: sender }
+                        )
+                    ).sent,
+                    true
+                );
+                assert.equal(calls, 2);
             }
         );
 

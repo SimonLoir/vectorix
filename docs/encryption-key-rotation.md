@@ -1,43 +1,50 @@
 # Encryption key rotation and row binding
 
-This page covers issue #60. [`encrypt()` and `decrypt()`](../packages/routers/utils/src/utils/encryption.ts) protect recoverable provider secrets (organization S3 and embedding-provider credentials) and Web Push subscriptions with AES-256-GCM. The original `iv:tag:data` format had no key identifier, so `ENCRYPTION_SECRET` could not be rotated, and no associated data, so a ciphertext copied to another row or organization still decrypted.
+Recoverable provider secrets and Web Push subscriptions use AES-256-GCM. New ciphertexts include a key fingerprint and associated data; legacy `iv:tag:data` rows remain readable until they are converted. This is an operator security foundation, with no schema, permission, public DTO or dashboard credential action.
 
-## Format and binding
+## Format and read behavior
 
-New values use `v2:<keyId>:<iv>:<tag>:<data>`:
+New values use `v2:<keyId>:<iv>:<tag>:<data>`. The key ID is sixteen lowercase hex characters from the key's SHA-256 fingerprint. IVs and authentication tags must each contain exactly sixteen bytes; ciphertext must be whole hex bytes. Trailing junk, odd hex and truncated tags are refused before decoding. Authenticated empty plaintext remains supported.
 
-- `keyId` is the first 16 hex characters of the key's SHA-256 fingerprint. It identifies the key without revealing it, so rotation needs no extra key-ID configuration.
-- Every call passes a context that becomes GCM associated data. A ciphertext then only decrypts for the same binding:
-    - organization credentials: `vectorix:credential:<organizationId>:<credentialId>:<field>` (`accessKeyId`, `secretAccessKey` or `apiKey`);
-    - Web Push subscriptions: `vectorix:push-subscription:<organizationId>:<endpointHash>`.
-- Credential IDs are now generated before insertion, so a new credential's secrets are bound to their own row.
-- Legacy values still decrypt (current key first, then previous keys) and are re-sealed by the command below or by the next update of that field.
+Associated data binds organization credentials to organization ID, credential ID and field name (`accessKeyId`, `secretAccessKey`, `apiKey`); push data is bound to its organization and endpoint hash. IDs are generated before sealing new credentials. Legacy rows have no associated data and cannot gain row protection until re-encrypted. They are never described as already bound.
 
-## Rotating `ENCRYPTION_SECRET`
+`ENCRYPTION_SECRET` is the exact current 64-hex key. `ENCRYPTION_PREVIOUS_SECRETS` accepts at most sixteen comma-separated retired keys, with a 4,096-character configuration bound. Surrounding whitespace on retired entries is ignored; current-key bytes are never trimmed. Only the latest raw configuration is cached. Invalid configuration and a missing identified key have distinct fixed errors. A legacy authentication failure is conservatively treated as possibly missing an old key, because that format carries no key ID.
+
+Configured RAG credentials retain their sanitized conflict behavior and never fall back to another credential. Push key-configuration or unavailable-key failures enter normal bounded delivery failure handling without changing subscription ciphertext, version or revocation. If an earlier device has already accepted the push, a later key failure stops that batch and preserves its success instead of retrying the accepted device; with zero successes, the normal durable retry remains. A malformed or invalidly authenticated v2 row with its selected key available still follows the existing corrupt-subscription handling.
+
+## Initial deployment of the v2 format
+
+Legacy read compatibility is one-way: the new code can read old ciphertext, but a pre-v2 binary cannot read new writes. An old worker can interpret a valid v2 subscription as corrupt and revoke it. Do not use an uninterrupted rolling deployment across this format boundary.
+
+1. Plan a maintenance window and stop/drain **all old readers and writers**, including APIs, workers and operator tools, before allowing any v2 write. Keep durable tasks and notification deliveries in PostgreSQL; do not fabricate completion or cleanup.
+2. Deploy v2-capable readers everywhere with the existing correct keyring. Keep new requests/writes paused until every old process has stopped and every reader can handle both formats.
+3. Resume APIs/workers and normal writes only after that coordinated deployment. New writes use v2; old rows can then be converted with the procedure below.
+
+Rollback to a pre-v2 binary is not automatic or safe once any v2 ciphertext exists. A separate compatible data/key restore plan is required; this tool does not convert data back into the old format. Subsequent key rotation between already-v2-capable processes is a different operation.
+
+## Rotation procedure
 
 ```mermaid
 flowchart LR
-    A[Generate a new 64-hex key] --> B[Set ENCRYPTION_SECRET to the new key and ENCRYPTION_PREVIOUS_SECRETS to the old key]
-    B --> C[Restart API and workers]
-    C --> D[pnpm secrets:reencrypt]
-    D --> E{Failed count is 0}
-    E -->|Yes| F[Remove ENCRYPTION_PREVIOUS_SECRETS and restart]
-    E -->|No| G[Investigate the undecryptable rows; keep the old key]
+    A[Configure new current and retired read keys] --> B[Update and drain every writer]
+    B --> C[Run dry inspection]
+    C --> D[Run bounded batches and conditional writes]
+    D --> E[Authenticate a second read-only pass]
+    E --> F{Complete with no concurrent writes}
+    F -->|No| G[Keep retired keys and investigate]
+    F -->|Yes| H[Operator reviews retirement and backup needs]
 ```
 
-1. Set the new key as `ENCRYPTION_SECRET` and the old key in the comma-separated `ENCRYPTION_PREVIOUS_SECRETS` on both API and workers, then restart them. New writes use the new key; values sealed with either key remain readable.
-2. Run `pnpm secrets:reencrypt` (`--dry-run` reports without writing). [`reencryptStoredSecrets`](../packages/routers/utils/src/utils/secret-reencryption.ts) walks every registered encrypted column in batches. It re-seals legacy and retired-key values with the current key and their binding, and prints per-column counts, never values. Each write compares against the old ciphertext, so a concurrent credential update is never overwritten. Rerunning the command is safe and resumes where it stopped.
-3. When the command reports `failed 0`, remove the old key from `ENCRYPTION_PREVIOUS_SECRETS` and restart.
+1. Preserve the old key securely. Configure the new current key and required retired keys on **every** API, worker and operator process; restart/drain old writers. Do not run mixed old-current writers during retirement verification.
+2. Run `pnpm secrets:reencrypt --dry-run`. This authenticates current-key rows too and reports candidates without writing. `DRY_RUN` is not completion. `--help` performs no operation; unknown or repeated arguments refuse before importing a database client.
+3. Run `pnpm secrets:reencrypt`. It walks the seven fixed encrypted tables in validated batches of 1–1,000 (default 100), using `id > lastId` keysets. Deleting the last row of an earlier page does not end the scan. Each field rewrite compares its exact old ciphertext; concurrent edits are preserved and counted as conflicts.
+4. The command authenticates all observed values again in a separate read-only pass. It reports failed authentication, failed verification, CAS conflicts and remaining old-key values explicitly. Any such blocker produces `INCOMPLETE` and a nonzero exit. Current-key prefixes are never trusted without authentication. Rerun after resolving blockers; do not remove keys based on `failed 0` alone.
+5. `COMPLETE` describes the observed passes, **not an atomic database snapshot or future write barrier**. Keep writers quiescent during final verification and independently confirm every writer uses the new current key. Inserts/updates occurring after a verification cursor has passed cannot be ruled out by this scan. Only then review removal of retired keys from active configuration and restart the services.
 
-Source receipts are HMAC-signed with a key derived from `ENCRYPTION_SECRET` and expire after 15 minutes. Rotating the secret invalidates outstanding receipts; clients search again to get new ones.
+Never destroy keys still required by retained backups. An older database bundle can contain legacy or retired-key ciphertext even after the live database is converted. Keep those keys through the backup retention/restore policy, or verify a separately converted backup before retiring its keys. Source receipts use an HMAC key derived from `ENCRYPTION_SECRET`; rotation invalidates their outstanding fifteen-minute signatures, so clients must search again.
 
-Values that cannot be decrypted with any configured key are left untouched and counted as failed. They already fail closed when read.
+## Evidence and limitations
 
-## Not included
+The CLI prints fixed column names, numeric counters and finite diagnostics. It never prints ciphertext, plaintext, caught error messages, causes, stacks or connection URLs. It does not write an audit actor, alter credential revisions, grant permissions, change provider destinations or call a provider. It does update encrypted database fields, so operator execution remains an explicit production action.
 
-The command reports to standard output rather than writing an audit row, because the CLI runs without a signed-in actor. Key material stays in environment variables; no external key-management integration is added.
-
-## Verification
-
-- `packages/routers/utils/src/utils/encryption.test.ts`: row-binding mismatches, tampering, unknown keys, legacy reads, rotation with previous keys, and invalid previous-key configuration.
-- `apps/api/src/rag-tests/credentials.ts`: a v2 ciphertext copied to another credential does not decrypt there. A legacy row stays readable. Rotation with a previous key, a dry run, a batched re-encryption, an idempotent second run (0 re-encrypted) and removal of the previous key all leave the real stored credentials readable.
+Focused pure tests cover strict envelopes, unavailable/configuration errors, deletion of a page boundary, current-key corruption, lost CAS, insertion behind a write cursor, dry runs, invalid batches and closed/sanitized command behavior. The corrected isolated catalog passes all 319 tests, including real stored legacy/current credentials, idempotent rotation, zero-success device preservation and a two-device/different-key partial-success case. The push sender remains explicitly controlled; these cases do not establish external push delivery. All four production builds pass after 24 type checks, 24 lint tasks and 174 API/backend plus 11 utility tests; targeted API/workers checks also pass after the final partial-success correction. No operator command has been run on application data, and no live provider, browser rotation or backup restore result is claimed by these tests.

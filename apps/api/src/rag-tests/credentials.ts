@@ -426,7 +426,7 @@ export async function credentialTests(t: TestContext) {
                 const dry = await reencryptStoredSecrets(prisma, {
                     dryRun: true,
                 });
-                assert.ok(dry.cohereCredentials!.reencrypted >= 2);
+                assert.ok(dry.columns.cohereCredentials!.wouldReencrypt >= 2);
                 assert.match(
                     (
                         await prisma.cohereCredentials.findUniqueOrThrow({
@@ -438,9 +438,11 @@ export async function credentialTests(t: TestContext) {
                 const report = await reencryptStoredSecrets(prisma, {
                     batchSize: 2,
                 });
-                assert.ok(report.cohereCredentials!.reencrypted >= 2);
+                assert.ok(report.columns.cohereCredentials!.reencrypted >= 2);
+                assert.equal(report.status, 'COMPLETE');
                 const again = await reencryptStoredSecrets(prisma);
-                for (const counts of Object.values(again))
+                assert.equal(again.status, 'COMPLETE');
+                for (const counts of Object.values(again.columns))
                     assert.equal(counts.reencrypted, 0);
                 delete process.env.ENCRYPTION_PREVIOUS_SECRETS;
                 assert.equal(await resolve(a.id), 'rotation-a-secret');
