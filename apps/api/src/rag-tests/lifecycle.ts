@@ -9,6 +9,7 @@ import {
 } from '@repo/api-contracts/v1/rag/indexing-types';
 import { app } from '../app';
 import { fixture as f, profile } from './fixtures';
+import { raceLastCollectionSlot } from './transaction-conflict-fixture';
 
 export async function lifecycleTests(t: TestContext) {
     await t.test(
@@ -256,13 +257,11 @@ export async function lifecycleTests(t: TestContext) {
             const before = await prisma.ragAuditLog.count({
                 where: { organizationId: f.org, action: 'collection.create' },
             });
-            const results = await Promise.allSettled(
-                [0, 1].map((i) =>
-                    f.owner.rag.collections.create({
-                        name: `Last quota slot ${i}`,
-                        profile,
-                    })
-                )
+            const results = await raceLastCollectionSlot((i) =>
+                f.owner.rag.collections.create({
+                    name: `Last quota slot ${i}`,
+                    profile,
+                })
             );
             assert.equal(
                 results.filter((r) => r.status === 'fulfilled').length,
@@ -270,7 +269,6 @@ export async function lifecycleTests(t: TestContext) {
             );
             const failure = results.find((r) => r.status === 'rejected');
             assert.ok(failure?.status === 'rejected');
-            assert.equal(failure.reason.code, 'CONFLICT');
             assert.equal(
                 (await f.owner.rag.quota({})).usage.collections,
                 limits.collections
@@ -284,6 +282,8 @@ export async function lifecycleTests(t: TestContext) {
                 }),
                 before + 1
             );
+            // Inspect the quota and audit invariants even if transport classification regresses.
+            assert.equal(failure.reason.code, 'CONFLICT');
             const records = await f.owner.rag.audit({ query: 'quota.update' });
             assert.equal(records.total, 1);
             assert.equal(records.items[0]?.actorId, f.users[0]);
