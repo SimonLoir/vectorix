@@ -17,6 +17,98 @@ def command(*args):
     return subprocess.run(args, capture_output=True, check=False)
 
 
+def classic_fixture_objects(data, first_offset_shift=0):
+    """Independently read fixture objects through the serialized classic xref."""
+    marker = re.search(rb"startxref\n(\d+)\n%%EOF\n$", data)
+    assert marker is not None
+    xref = int(marker.group(1))
+    lines = data[xref:].splitlines()
+    assert lines[0] == b"xref"
+    start, count = map(int, lines[1].split())
+    assert start == 0 and lines[2] == b"0000000000 65535 f "
+    entries = lines[3:count + 2]
+    assert len(entries) == count - 1
+    assert all(re.fullmatch(rb"\d{10} 00000 n ", entry) for entry in entries)
+    offsets = [int(entry[:10]) for entry in entries]
+    offsets[0] -= first_offset_shift
+    objects = []
+    for index, offset in enumerate(offsets):
+        end = offsets[index + 1] if index + 1 < len(offsets) else xref
+        body = data[offset:end]
+        prefix = f"{index + 1} 0 obj\n".encode()
+        assert body.startswith(prefix) and body.endswith(b"\nendobj\n")
+        objects.append(body[len(prefix):-len(b"\nendobj\n")])
+    return objects
+
+
+def verify_linearization_fixtures():
+    warning = b"Syntax Warning: Length in linearization table is invalid"
+    reconstruction = b"Internal Error: xref num 1 not found but needed, try to reconstruct"
+    corruption = {
+        b"Syntax Error: Unterminated string",
+        b"Syntax Error: Leftover args in content stream",
+    }
+    for source_name, warning_name, xref_name in [
+        ("text-fr-en.pdf", "linearization-warning.pdf", "linearization-xref-reconstructed.pdf"),
+        ("partial-corrupt.pdf", "linearization-partial-corrupt.pdf", "linearization-xref-partial-corrupt.pdf"),
+    ]:
+        original = (ROOT / source_name).read_bytes()
+        original_objects = classic_fixture_objects(original)
+        baseline = command("/usr/bin/pdftotext", "-enc", "UTF-8", "-eol", "unix", str(ROOT / source_name), "-")
+        assert baseline.returncode == 0
+        for name, first_offset_shift in [(warning_name, 0), (xref_name, 7)]:
+            changed = (ROOT / name).read_bytes()
+            objects = classic_fixture_objects(changed, first_offset_shift)
+            assert len(objects) == len(original_objects)
+            assert objects[0] == original_objects[0][:-2] + b" /Linearized 1 /L 0 >>"
+            assert objects[1:] == original_objects[1:]
+            info = command("/usr/bin/pdfinfo", "-enc", "UTF-8", str(ROOT / name))
+            result = command("/usr/bin/pdftotext", "-enc", "UTF-8", "-eol", "unix", str(ROOT / name), "-")
+            assert info.returncode == result.returncode == 0, name
+            assert re.findall(rb"(?m)^Pages:\s+(\d+)\s*$", info.stdout)[-1] == b"2"
+            assert re.findall(rb"(?m)^Encrypted:\s+(\S+)", info.stdout)[-1] == b"no"
+            allowed = {warning, reconstruction} if first_offset_shift else {warning}
+            assert set(info.stderr.splitlines()) == allowed, (name, info.stderr)
+            assert result.stdout == baseline.stdout, name
+            if source_name == "partial-corrupt.pdf":
+                assert set(result.stderr.splitlines()) == allowed | corruption, (name, result.stderr)
+                assert b"Visible prefix page two." in result.stdout
+                assert EXPECTED[name] == {"expectedError": "FILE_INVALID"}
+                print(f"PASS {name}: warning never hides exit-zero partial-corruption errors")
+                continue
+            assert set(result.stderr.splitlines()) == allowed, (name, result.stderr)
+            pages = result.stdout.decode("utf8").split("\f")
+            assert pages.pop() == ""
+            pages = [page.replace("\r\n", "\n").strip() for page in pages]
+            assert pages == EXPECTED["text-fr-en.pdf"]["pages"]
+            assert EXPECTED[name] == EXPECTED["xref-reconstructed.pdf"]
+            text = "\n\n".join(pages)
+            ranges = []
+            position = 0
+            for index, page in enumerate(pages):
+                if index:
+                    position += 2
+                end = position + len(page.encode("utf-16-le")) // 2
+                ranges.append({"index": index, "page": index + 1, "start": position, "end": end})
+                position = end
+            assert ranges == EXPECTED[name]["sourceRanges"]
+            assert hashlib.sha256(text.encode("utf8")).hexdigest() == EXPECTED[name]["canonicalSha256"]
+            artifact = {
+                "schemaVersion": 1,
+                "format": "PDF",
+                "text": text,
+                "sources": [
+                    {"kind": "pdf-page", "index": item["index"], "start": item["start"], "end": item["end"], "page": item["page"]}
+                    for item in ranges
+                ],
+                "warnings": [],
+            }
+            encoded = json.dumps(artifact, ensure_ascii=False, separators=(",", ":")).encode("utf8")
+            assert len(encoded) == EXPECTED[name]["artifactBytes"]
+            assert hashlib.sha256(encoded).hexdigest() == EXPECTED[name]["artifactSha256"]
+            print(f"PASS {name}: exact warning, immutable content objects, complete text and artifact geometry")
+
+
 def main():
     version = command("/usr/bin/pdftotext", "-v")
     print(version.stderr.decode().splitlines()[0])
@@ -51,6 +143,7 @@ def main():
         assert b"Syntax Error: Leftover args in content stream\n" in result.stderr
         assert (b"Internal Error: xref num 1 not found but needed, try to reconstruct\n" in result.stderr) == (name == "xref-partial-corrupt.pdf")
     print("PASS xref boundaries: only the intended offset changed; mixed/partial corruption still emits native syntax errors despite exit zero")
+    verify_linearization_fixtures()
     encrypted = command("/usr/bin/pdfinfo", str(ROOT / "encrypted.pdf"))
     assert encrypted.returncode != 0
     assert b"Incorrect password" in encrypted.stderr

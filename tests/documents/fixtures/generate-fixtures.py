@@ -271,6 +271,10 @@ def main() -> None:
     if xref_recovery.exists():
         import runpy
         runpy.run_path(str(xref_recovery), run_name="__main__")
+    linearization_warning = ROOT / "generate-linearization-warning.py"
+    if linearization_warning.exists():
+        import runpy
+        runpy.run_path(str(linearization_warning), run_name="__main__")
 
 
 if __name__ == "__main__":

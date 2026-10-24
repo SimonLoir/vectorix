@@ -19,6 +19,57 @@ void test('clean output and exact bounded xref reconstruction lines permit succe
         assert.equal(success(stderr), null);
 });
 
+const linearization =
+    'Syntax Warning: Length in linearization table is invalid';
+
+void test('only the proven optional linearization-length warning is accepted, alone or with xref recovery', () => {
+    for (const stderr of [
+        linearization,
+        `${linearization}\n${linearization}\n`,
+        `${linearization}\r\n${reconstruction}\r\n`,
+        `${reconstruction}\n${linearization}`,
+    ])
+        assert.equal(success(stderr), null);
+    for (const stderr of [
+        ` ${linearization}`,
+        `${linearization} `,
+        `${linearization}: ignored content`,
+        `Metadata: ${linearization}`,
+        linearization.replace('Syntax Warning:', 'Syntax Error:'),
+        'Syntax Warning: Hints table length in linearization table is invalid',
+        `${linearization}\nSyntax Warning: damaged font`,
+        `${linearization}\nSyntax Error: Unterminated string`,
+        `Syntax Error: Leftover args in content stream\n${linearization}`,
+        `${reconstruction}\n${linearization}\nUnknown diagnostic`,
+    ])
+        assert.equal(success(stderr), 'FILE_INVALID');
+    for (const code of [1, 2, 3, 99, null])
+        assert.equal(
+            classifyPopplerResult({
+                code,
+                signal: null,
+                stderr: linearization,
+            }),
+            'FILE_INVALID'
+        );
+    assert.equal(
+        classifyPopplerResult({
+            code: 0,
+            signal: 'SIGKILL',
+            stderr: linearization,
+        }),
+        'PARSER_LIMIT'
+    );
+    assert.equal(
+        classifyPopplerResult({
+            code: 127,
+            signal: null,
+            stderr: linearization,
+        }),
+        'PARSER_UNAVAILABLE'
+    );
+});
+
 void test('xref object identifiers are positive bounded decimal values with no aliases', () => {
     for (const identifier of [
         '0',

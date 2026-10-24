@@ -214,6 +214,85 @@ test('xref-only repair emits the actual known native diagnostic and preserves th
     );
 });
 
+test('native optional linearization-length warnings preserve the complete baseline artifact, including with xref recovery', async () => {
+    const baselineBytes = await readFile(new URL('text-fr-en.pdf', fixtures));
+    const baselineText = await nativePdf(
+        '/usr/bin/pdftotext',
+        'text-fr-en.pdf'
+    );
+    const baseline = encodeStructuredExtraction(
+        await parseRichDocument(baselineBytes, PDF_MEDIA_TYPE)
+    );
+    const warning = 'Syntax Warning: Length in linearization table is invalid';
+    const repair =
+        'Internal Error: xref num 1 not found but needed, try to reconstruct';
+    for (const fileName of [
+        'linearization-warning.pdf',
+        'linearization-xref-reconstructed.pdf',
+    ]) {
+        const bytes = await readFile(new URL(fileName, fixtures));
+        for (const executable of [
+            '/usr/bin/pdfinfo',
+            '/usr/bin/pdftotext',
+        ] as const) {
+            const result = await nativePdf(executable, fileName);
+            const lines = result.stderr.trim().split(/\r?\n/u);
+            assert.ok(
+                lines.includes(warning),
+                'The native tool must actually emit the accepted warning'
+            );
+            assert.ok(
+                lines.every((line) => line === warning || line === repair)
+            );
+            assert.equal(
+                lines.includes(repair),
+                fileName === 'linearization-xref-reconstructed.pdf'
+            );
+            if (executable === '/usr/bin/pdftotext')
+                assert.equal(
+                    result.stdout,
+                    baselineText.stdout,
+                    'Every native text byte remains intact'
+                );
+        }
+        assert.deepEqual(
+            encodeStructuredExtraction(
+                await parseRichDocument(bytes, PDF_MEDIA_TYPE)
+            ),
+            baseline,
+            'The warning must not change canonical text, physical pages, source ranges or warnings'
+        );
+    }
+});
+
+test('a recoverable linearization warning cannot hide zero-exit partial-content corruption', async () => {
+    for (const fileName of [
+        'linearization-partial-corrupt.pdf',
+        'linearization-xref-partial-corrupt.pdf',
+    ]) {
+        const native = await nativePdf('/usr/bin/pdftotext', fileName);
+        assert.ok(
+            native.stderr.includes(
+                'Syntax Warning: Length in linearization table is invalid'
+            )
+        );
+        assert.ok(native.stderr.includes('Syntax Error: Unterminated string'));
+        assert.ok(
+            native.stderr.includes(
+                'Syntax Error: Leftover args in content stream'
+            )
+        );
+        assert.ok(native.stdout.includes('Visible prefix page two.'));
+        await assert.rejects(
+            parseRichDocument(
+                await readFile(new URL(fileName, fixtures)),
+                PDF_MEDIA_TYPE
+            ),
+            { code: 'FILE_INVALID' }
+        );
+    }
+});
+
 test('exit-zero text-bearing partial corruption stays invalid even alongside the permitted xref repair', async () => {
     for (const fileName of [
         'partial-corrupt.pdf',

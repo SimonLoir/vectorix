@@ -330,5 +330,57 @@
     },
     "xref-partial-corrupt.pdf": {
         "expectedError": "FILE_INVALID"
+    },
+    "linearization-warning.pdf": {
+        "pages": [
+            "English source - page one.\nVectorix preserves PDF page references.",
+            "Bonjour équipe - page deux.\nTexte français : été, élève et façade."
+        ],
+        "canonicalSha256": "1070ac3250f8b8649f5f2ee82c6a42accad291cc67005ac2c93583789285d0a1",
+        "sourceRanges": [
+            {
+                "index": 0,
+                "page": 1,
+                "start": 0,
+                "end": 66
+            },
+            {
+                "index": 1,
+                "page": 2,
+                "start": 68,
+                "end": 134
+            }
+        ],
+        "artifactBytes": 333,
+        "artifactSha256": "5886445ec1fbf7d0ba940d25fe9f6708861e055a0a6119e08dbe26e48256d1ef"
+    },
+    "linearization-xref-reconstructed.pdf": {
+        "pages": [
+            "English source - page one.\nVectorix preserves PDF page references.",
+            "Bonjour équipe - page deux.\nTexte français : été, élève et façade."
+        ],
+        "canonicalSha256": "1070ac3250f8b8649f5f2ee82c6a42accad291cc67005ac2c93583789285d0a1",
+        "sourceRanges": [
+            {
+                "index": 0,
+                "page": 1,
+                "start": 0,
+                "end": 66
+            },
+            {
+                "index": 1,
+                "page": 2,
+                "start": 68,
+                "end": 134
+            }
+        ],
+        "artifactBytes": 333,
+        "artifactSha256": "5886445ec1fbf7d0ba940d25fe9f6708861e055a0a6119e08dbe26e48256d1ef"
+    },
+    "linearization-partial-corrupt.pdf": {
+        "expectedError": "FILE_INVALID"
+    },
+    "linearization-xref-partial-corrupt.pdf": {
+        "expectedError": "FILE_INVALID"
     }
 }

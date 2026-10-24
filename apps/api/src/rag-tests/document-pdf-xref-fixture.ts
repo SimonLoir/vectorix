@@ -38,7 +38,11 @@ export function pdfXrefHash(bytes: Uint8Array | string) {
 /** Read only the fixed synthetic parser fixtures; client MIME remains deliberately untrusted. */
 export async function pdfXrefFile(
     name:
-        'xref-reconstructed.pdf' | 'xref-partial-corrupt.pdf' | 'text-fr-en.pdf'
+        | 'xref-reconstructed.pdf'
+        | 'xref-partial-corrupt.pdf'
+        | 'text-fr-en.pdf'
+        | 'linearization-warning.pdf'
+        | 'linearization-partial-corrupt.pdf'
 ) {
     const bytes = await readFile(
         new URL(`../../../../tests/documents/fixtures/${name}`, import.meta.url)
