@@ -34,7 +34,9 @@ export REDIS_URL="redis://$userinfo@127.0.0.1:$redis_port/15"
 # A configured URL password must win over this deliberately incorrect fallback.
 export REDIS_PASSWORD=not-the-configured-redis-password
 timeout --signal=TERM --kill-after=5s 60s pnpm --filter api exec tsx --test ../../packages/queues/src/redis-auth.integration.ts
+timeout --signal=TERM --kill-after=5s 60s pnpm --filter api exec tsx --test ../../packages/queues/src/rate-limit.integration.ts
+timeout --signal=TERM --kill-after=5s 60s pnpm --filter api exec tsx --test src/http/auth-rate-limit.integration.ts
 export VECTORIX_REDIS_TEST_MODE=fallback
 export REDIS_URL="redis://127.0.0.1:$redis_port/15" REDIS_PASSWORD="$redis_default_password"
 timeout --signal=TERM --kill-after=5s 60s pnpm --filter api exec tsx --test ../../packages/queues/src/redis-auth.integration.ts
-printf 'Encoded ACL credentials and raw standalone-password queue/worker journeys passed on disposable Redis.\n'
+printf 'Encoded ACL credentials, raw standalone-password queue/worker journeys and the shared rate-limit window passed on disposable Redis.\n'

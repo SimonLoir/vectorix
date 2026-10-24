@@ -1,14 +1,67 @@
 import type { Prisma } from '@repo/db';
-import { encrypt } from '@routers/utils/encryption';
+import { credentialSecretContext, encrypt } from '@routers/utils/encryption';
 import { credentialUpdateData } from '@repo/api-contracts/v1/rag/credentials';
-import type { StoredCredential } from './credential-data';
+import type { credentialDto, StoredCredential } from './credential-data';
+
+type CredentialUpdateData = typeof credentialUpdateData._output;
+
+/**
+ * True when an endpoint, S3 bucket, or S3 addressing mode changes.
+ * Path style can change the SDK's final request authority. Region alone does
+ * not change the explicitly configured endpoint.
+ */
+export function changesSecretDestination(
+    current: ReturnType<typeof credentialDto>['data'],
+    next: CredentialUpdateData
+): boolean {
+    return (
+        current.endpoint !== next.endpoint ||
+        (current.provider === 'S3' &&
+            next.provider === 'S3' &&
+            (current.bucket !== next.bucket ||
+                current.forcePathStyle !== next.forcePathStyle))
+    );
+}
+
+/**
+ * A changed destination must not reuse stored credentials its editor did not
+ * supply: every secret field is required in the same request. An Ollama
+ * credential without a key, or an explicit key removal, has no stored key to reuse.
+ */
+export function suppliesSecretsForDestination(
+    current: ReturnType<typeof credentialDto>['data'],
+    next: CredentialUpdateData
+): boolean {
+    switch (next.provider) {
+        case 'S3':
+            return (
+                next.accessKeyId !== undefined &&
+                next.secretAccessKey !== undefined
+            );
+        case 'OLLAMA':
+            return (
+                next.apiKey !== undefined ||
+                (current.provider === 'OLLAMA' && current.apiKey === null)
+            );
+        default:
+            return next.apiKey !== undefined;
+    }
+}
 
 /** Preserve omitted secrets byte-for-byte; full replacement can repair corrupt ciphertext. */
 export async function updateProviderData(
     db: Prisma.TransactionClient,
     current: StoredCredential,
-    inputData: typeof credentialUpdateData._output
+    inputData: CredentialUpdateData
 ) {
+    const seal = (
+        plaintext: string,
+        field: 'accessKeyId' | 'secretAccessKey' | 'apiKey'
+    ) =>
+        encrypt(
+            plaintext,
+            credentialSecretContext(current.organizationId, current.id, field)
+        );
     switch (inputData.provider) {
         case 'S3':
             await db.s3Credentials.update({
@@ -21,13 +74,17 @@ export async function updateProviderData(
                     ...(inputData.accessKeyId === undefined
                         ? {}
                         : {
-                              accessKeyId: await encrypt(inputData.accessKeyId),
+                              accessKeyId: await seal(
+                                  inputData.accessKeyId,
+                                  'accessKeyId'
+                              ),
                           }),
                     ...(inputData.secretAccessKey === undefined
                         ? {}
                         : {
-                              secretAccessKey: await encrypt(
-                                  inputData.secretAccessKey
+                              secretAccessKey: await seal(
+                                  inputData.secretAccessKey,
+                                  'secretAccessKey'
                               ),
                           }),
                 },
@@ -44,7 +101,7 @@ export async function updateProviderData(
                               apiKey:
                                   inputData.apiKey === null
                                       ? null
-                                      : await encrypt(inputData.apiKey),
+                                      : await seal(inputData.apiKey, 'apiKey'),
                           }),
                 },
             });
@@ -56,7 +113,7 @@ export async function updateProviderData(
                     endpoint: inputData.endpoint,
                     ...(inputData.apiKey === undefined
                         ? {}
-                        : { apiKey: await encrypt(inputData.apiKey) }),
+                        : { apiKey: await seal(inputData.apiKey, 'apiKey') }),
                 },
             });
             break;
@@ -67,7 +124,7 @@ export async function updateProviderData(
                     endpoint: inputData.endpoint,
                     ...(inputData.apiKey === undefined
                         ? {}
-                        : { apiKey: await encrypt(inputData.apiKey) }),
+                        : { apiKey: await seal(inputData.apiKey, 'apiKey') }),
                 },
             });
             break;
@@ -78,7 +135,7 @@ export async function updateProviderData(
                     endpoint: inputData.endpoint,
                     ...(inputData.apiKey === undefined
                         ? {}
-                        : { apiKey: await encrypt(inputData.apiKey) }),
+                        : { apiKey: await seal(inputData.apiKey, 'apiKey') }),
                 },
             });
             break;
@@ -89,7 +146,7 @@ export async function updateProviderData(
                     endpoint: inputData.endpoint,
                     ...(inputData.apiKey === undefined
                         ? {}
-                        : { apiKey: await encrypt(inputData.apiKey) }),
+                        : { apiKey: await seal(inputData.apiKey, 'apiKey') }),
                 },
             });
             break;

@@ -151,7 +151,12 @@
         "created": "Créée le",
         "expires": "Expire le",
         "actions": "Actions",
-        "noApiKeys": "Aucune clé API"
+        "noApiKeys": "Aucune clé API",
+        "search": "Rechercher une clé API par nom",
+        "permissions": "Autorisations",
+        "loading": "Chargement des clés API",
+        "noMatches": "Aucune clé API ne correspond à cette recherche.",
+        "emptyPage": "Cette page ne contient aucune clé API. Utilisez Précédent pour revenir aux résultats précédents."
     },
     "permissions": {
         "title": "Rôles et permissions",
@@ -436,7 +441,10 @@
             "limit": "L’organisation a atteint sa limite de membres ou d’invitations.",
             "role": "Ce rôle est indisponible ou vous ne pouvez pas l’attribuer.",
             "generic": "L’action n’a pas pu aboutir. Rechargez la page pour vérifier l’état actuel avant de réessayer."
-        }
+        },
+        "search": "Rechercher un membre par nom ou e-mail",
+        "noMatches": "Aucun membre ne correspond à cette recherche.",
+        "emptyPage": "Cette page ne contient aucun membre. Utilisez Précédent pour revenir aux résultats précédents."
     },
     "requestErrors": {
         "permission": "Vous n’avez pas l’autorisation d’effectuer cette action.",
@@ -660,6 +668,8 @@
             "accessKey": "Identifiant d’accès S3",
             "secretKey": "Secret S3",
             "keepSecret": "Laisser vide pour conserver",
+            "reenterSecret": "Requis, car la destination a changé",
+            "destinationSecretHint": "Modifier l’URL du service, le bucket ou le mode d’adressage S3 peut changer la destination des requêtes authentifiées. Saisissez à nouveau tous les secrets requis pour enregistrer cette modification.",
             "apiKey": "Clé API",
             "optionalKey": "Clé API (facultative)",
             "removeKey": "Supprimer la clé API actuelle",
@@ -843,6 +853,7 @@
             "playground": "Tester la recherche",
             "collectionJourney": "Indexer et rechercher",
             "failed": "L’opération n’a pas pu aboutir. Vérifiez vos droits et la configuration, puis réessayez.",
+            "rateLimited": "Trop de recherches ou de requêtes au fournisseur ont été envoyées. Patientez une minute, puis réessayez.",
             "loadFailed": "Ces informations n’ont pas pu être chargées. Vos droits ont peut-être changé.",
             "working": "Traitement…",
             "readDenied": "La lecture de cette collection n’est pas autorisée. L’administration du catalogue ne donne pas accès au contenu.",

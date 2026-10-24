@@ -25,6 +25,10 @@ jobs:
                   npm install --global pnpm@11.25.0
                   pnpm install --frozen-lockfile
                   pnpm db:generate
+            # Visible but non-blocking until advisories are triaged automatically (issues #15 and #47).
+            - name: Audit dependencies for high-severity advisories
+              continue-on-error: true
+              run: pnpm audit --audit-level=high
             - name: Validate schema, contracts, and code
               run: |
                   pnpm --filter @repo/db exec prisma validate
@@ -32,16 +36,16 @@ jobs:
                   pnpm lint
                   pnpm test
                   pnpm test:documents
-                  pnpm test:rag-primitives
                   pnpm test:restore:guards
                   pnpm test:quality:guards
                   pnpm test:capacity:guards
                   pnpm test:interruption:guards
+                  pnpm test:s3-outage:guards
             - name: Test Redis authentication with real queues and workers
               run: pnpm test:queues
             - name: Build isolated vector-test image
               run: docker build -f infra/postgres-vector/Dockerfile -t pxdv.be/vectorix/postgres-vector:local .
             - name: Test native vector adapter
-              run: pnpm --filter @repo/vector-store test
+              run: pnpm --filter @repo/vector-store test:native
             - name: Test migrations and authorization on isolated databases
               run: pnpm test:catalog

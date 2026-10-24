@@ -25,3 +25,23 @@ export function credentialFormData(
               (provider === 'OLLAMA' && !updating ? null : undefined)),
     };
 }
+
+/**
+ * Mirror the server rule for endpoint, S3 bucket, and addressing-mode changes.
+ * A new request destination must not reuse a stored secret. An Ollama credential
+ * with no stored key, or whose key is being removed, has no secret to resend.
+ */
+export function requiresSecretReentry(
+    current: Credential['data'],
+    form: FormData
+): boolean {
+    const moved =
+        String(form.get('endpoint') ?? '') !== current.endpoint ||
+        (current.provider === 'S3' &&
+            (String(form.get('bucket') ?? '') !== current.bucket ||
+                form.has('forcePathStyle') !== current.forcePathStyle));
+    if (!moved) return false;
+    if (current.provider === 'OLLAMA')
+        return current.apiKey !== null && !form.has('removeKey');
+    return true;
+}

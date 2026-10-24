@@ -3,16 +3,27 @@ import { useTranslations } from 'next-intl';
 import { TextField, CheckField } from '../form-fields';
 import type { Credential } from '../types';
 
-/** Provider-specific inputs never prefill secrets returned by the masked catalog DTO. */
+/**
+ * Provider-specific inputs never prefill secrets returned by the masked catalog
+ * DTO. `secretRequired` marks an edit that moves the secret to a new destination.
+ */
 export function CredentialProviderFields({
     provider,
     existing,
+    secretRequired = false,
 }: Readonly<{
     provider: Credential['provider'];
     existing?: Credential;
+    secretRequired?: boolean;
 }>) {
     const tr = useTranslations('rag');
     const current = existing?.data;
+    const required = !existing || secretRequired;
+    let placeholder = '';
+    if (existing)
+        placeholder = secretRequired
+            ? tr('credentials.reenterSecret')
+            : tr('credentials.keepSecret');
     return provider === 'S3' ? (
         <div className='space-y-4'>
             <div className='grid gap-4 sm:grid-cols-2'>
@@ -50,18 +61,18 @@ export function CredentialProviderFields({
                 name='accessKeyId'
                 type='password'
                 autoComplete='new-password'
-                required={!existing}
+                required={required}
                 maxLength={8192}
-                placeholder={existing ? tr('credentials.keepSecret') : ''}
+                placeholder={placeholder}
             />
             <TextField
                 label={tr('credentials.secretKey')}
                 name='secretAccessKey'
                 type='password'
                 autoComplete='new-password'
-                required={!existing}
+                required={required}
                 maxLength={8192}
-                placeholder={existing ? tr('credentials.keepSecret') : ''}
+                placeholder={placeholder}
             />
         </div>
     ) : (
@@ -75,9 +86,9 @@ export function CredentialProviderFields({
                 name='apiKey'
                 type='password'
                 autoComplete='new-password'
-                required={!existing && provider !== 'OLLAMA'}
+                required={existing ? secretRequired : provider !== 'OLLAMA'}
                 maxLength={8192}
-                placeholder={existing ? tr('credentials.keepSecret') : ''}
+                placeholder={placeholder}
             />
             {provider === 'OLLAMA' && existing && (
                 <CheckField

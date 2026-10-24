@@ -11,11 +11,13 @@
         "build": "turbo run build",
         "check-types": "turbo run check-types",
         "lint": "turbo run lint",
-        "test": "pnpm --filter api test && pnpm --filter @routers/utils test",
+        "test": "turbo run test",
+        "test:coverage": "pnpm --filter api test:coverage",
         "db:generate": "pnpm --filter @repo/db generate",
         "db:push": "dotenvx run -f .env -- pnpm --filter @repo/db db:push",
         "db:migrate": "dotenvx run -f .env -- pnpm --filter @repo/db migrate:deploy",
         "admin:grant": "dotenvx run -f .env -- pnpm --filter api exec tsx src/scripts/grant-admin.ts",
+        "secrets:reencrypt": "dotenvx run -f .env -- pnpm --filter api exec tsx src/scripts/reencrypt-secrets.ts",
         "format": "prettier --write .",
         "setup:env": "node scripts/setup-env.mjs",
         "test:docker": "bash scripts/test-docker.sh",
@@ -27,6 +29,7 @@
         "test:quality:guards": "bash scripts/test-quality-guards.sh",
         "test:capacity:guards": "bash scripts/test-capacity-guards.sh",
         "test:interruption:guards": "bash scripts/test-interruption-guards.sh",
+        "test:s3-outage:guards": "bash scripts/test-s3-outage-guards.sh",
         "test:queues": "bash scripts/test-redis.sh"
     },
     "devDependencies": {

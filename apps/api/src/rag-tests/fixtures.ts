@@ -4,6 +4,7 @@ import { createORPCClient } from '@orpc/client';
 import { RPCLink } from '@orpc/client/fetch';
 import type { VectorixApiV1Client } from '@repo/api';
 import { prisma } from '@repo/db';
+import { closeRateLimitStore } from '@repo/queues/rate-limit';
 import { initializeVectorixPermissions } from '@repo/auth/permissions/rollout';
 import { app } from '../app';
 
@@ -147,5 +148,5 @@ export async function setup() {
  * Clean-organization cascades are covered by the dedicated source-hold journey.
  */
 export async function cleanup() {
-    await prisma.$disconnect();
+    await Promise.all([prisma.$disconnect(), closeRateLimitStore()]);
 }

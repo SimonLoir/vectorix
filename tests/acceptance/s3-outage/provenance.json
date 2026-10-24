@@ -1,0 +1,203 @@
+{
+    "schemaVersion": 1,
+    "namespace": "vectorix-m7c-s3-outage",
+    "status": "NATIVE_INGESTION_TRIAL_VERIFIED_DISABLED_DELIVERY",
+    "derivation": {
+        "kind": "SOURCE_ADAPTATION_NOT_REPLAYED_NATIVE_EVIDENCE",
+        "archive": "node_modules/.cache/vectorix/issue16-browser-reviewed-disabled-20261023",
+        "archivedSourceSha256": {
+            "issue16-browser.py": "b0cc91f9c91a18332d68adc1672c2c34f1e275bcf7d11bb74fa0688fe903af6e",
+            "issue16-bucket.mjs": "939c1dc3e23c1b50fd88a51e1b0201044583789e024bcb74bf37fb5ad88d5653",
+            "issue16-objects.mjs": "02eb82373d7c25d46b4f4f21dc761842e24161b2494a00659a763924dfc46b8a",
+            "issue16-observe.mjs": "61cd6404061f99b1395b6f5fca2738fdb70e121bbd4d4f93523381ab130bacc5",
+            "issue16-private.mjs": "aef5966bd9916abe8eb509d4b7095212bd059b59dea2c8cef38aec7bf50f4ab8",
+            "issue16-seed.mjs": "2a2da982bcad412d35c42d812fed437f3647fb7f1ca4237afab404bce30f810e",
+            "issue16-smtp.mjs": "0b83cbc762f049088ce901cf07b93fb68ff6cf75bf6a7cc34140a65de15724f3"
+        }
+    },
+    "relocatedSources": {
+        "README.md": {
+            "bytes": 13877,
+            "sha256": "ca6b31572c68a2de6c7d6ca1474970140449d8b1cd3b8fd91b59ec9a31536d6d"
+        },
+        "bucket.mjs": {
+            "bytes": 6515,
+            "sha256": "b282c0549fc6a3fe75517f66c4f47dbc952a964c1f4a5e81fb83a3f63e5b4585"
+        },
+        "fault.py": {
+            "bytes": 15889,
+            "sha256": "e88f9ac4640bd72714500f11a8ef75411d10a989086b9481a99ef11bf4468d35"
+        },
+        "fault_test.py": {
+            "bytes": 11963,
+            "sha256": "50c8ed8f5c9a41cd11a904d9f6662d72da4db3d03913e4b0a74d861be33d5ed5"
+        },
+        "fixtures/expected.json": {
+            "bytes": 926,
+            "sha256": "67c562dfb951d9751d76468f4cf29b89d6fae3432ed9debb5c7f0790cb4fac7d"
+        },
+        "fixtures/s3-outage-v1.txt": {
+            "bytes": 522,
+            "sha256": "110bf3def2634f5a3c6addd02b8b61d35fddd3e3ea776077144041e6c2599719"
+        },
+        "fixtures/s3-outage-v2.txt": {
+            "bytes": 620,
+            "sha256": "ef488f9ba8481a42e7f79aceafde979d9f09ddc0072f2edc0577e6b064cc3d2f"
+        },
+        "lifecycle.py": {
+            "bytes": 41534,
+            "sha256": "b3de18c6adf8e1bd9d74de754f9a83f1ff493912162fe55027c136f670c32c34"
+        },
+        "lifecycle_test.py": {
+            "bytes": 8473,
+            "sha256": "cb09354335b18db05be082c10c0f197f5c155d2026bb1ffcd7b11af54e491ee7"
+        },
+        "objects.mjs": {
+            "bytes": 14219,
+            "sha256": "88024d7ad4fa348765e4b24a4fee71c765e7bac9f0ce2f7303728fc175e8f915"
+        },
+        "objects.test.mjs": {
+            "bytes": 7304,
+            "sha256": "1a5a90b04a6502b14337ac843d7c20f88df87f4d0c18758cb1b94031fcab0d36"
+        },
+        "observe.mjs": {
+            "bytes": 46278,
+            "sha256": "a02ec2c01b47b27d5f0c8e639816553b9afe87b6d52be6659f757dafd21d85ea"
+        },
+        "observe.test.mjs": {
+            "bytes": 19167,
+            "sha256": "00f9dfc507b9b856cb199f4e740eaa6c8e202d3f95d177438c6021171a2d2dd6"
+        },
+        "private.mjs": {
+            "bytes": 9087,
+            "sha256": "41c0e8c073a17df358df11c8c40ff5c895e132939da41c55c4589ddadc517847"
+        },
+        "seed.mjs": {
+            "bytes": 11200,
+            "sha256": "4edddb022c8d5af45927da93c28ec13555a4800d146401c229704b0ba2c9c745"
+        },
+        "smtp.mjs": {
+            "bytes": 10636,
+            "sha256": "747a947cee668c04ba8aeebdc0d912830140019a587a28c3c4a35511c357326d"
+        }
+    },
+    "sharedRestoreCommonSha256": "a2c2471e02841cc26f56ebe85dd58bd3440a0db575e1e962ffdf643fc960d597",
+    "scope": {
+        "ingestionOutage": true,
+        "cleanupOutage": false,
+        "nativeProviders": false,
+        "fixedWatchdogSeconds": 900,
+        "faultControls": [
+            "SAVED_WORKER_PIDFD_STOP_CONT",
+            "SAVED_RUSTFS_CONTAINER_STOP_START"
+        ],
+        "directBusinessWrites": false,
+        "browserSensitiveActions": false
+    },
+    "validation": {
+        "pythonAst": "4_FILES_PASS_NO_IMPORT",
+        "ownedNodeSyntax": "6_FILES_PASS_NO_IMPORT",
+        "pythonTests": "23_PASS_OFFLINE",
+        "nodeTests": "15_PASS_OFFLINE",
+        "resources": "OWNED_PROCESSES_STORES_VOLUMES_AND_TAB_CLEANED",
+        "browser": "FRENCH_PRODUCTION_DASHBOARD_REPLACEMENT_RETRY_VERIFIED",
+        "types": "24_PASS",
+        "lint": "24_PASS",
+        "productionBuilds": "4_PASS"
+    },
+    "preparedSourceInventory": {
+        "README.md": {
+            "bytes": 12993,
+            "sha256": "520f320d38b94048480d748bbdd67b5413c9dcf2daf29ef5c9271b231de80873"
+        },
+        "bucket.mjs": {
+            "bytes": 6515,
+            "sha256": "b282c0549fc6a3fe75517f66c4f47dbc952a964c1f4a5e81fb83a3f63e5b4585"
+        },
+        "fault.py": {
+            "bytes": 15889,
+            "sha256": "e88f9ac4640bd72714500f11a8ef75411d10a989086b9481a99ef11bf4468d35"
+        },
+        "fault_test.py": {
+            "bytes": 11963,
+            "sha256": "50c8ed8f5c9a41cd11a904d9f6662d72da4db3d03913e4b0a74d861be33d5ed5"
+        },
+        "fixtures/expected.json": {
+            "bytes": 926,
+            "sha256": "67c562dfb951d9751d76468f4cf29b89d6fae3432ed9debb5c7f0790cb4fac7d"
+        },
+        "fixtures/s3-outage-v1.txt": {
+            "bytes": 522,
+            "sha256": "110bf3def2634f5a3c6addd02b8b61d35fddd3e3ea776077144041e6c2599719"
+        },
+        "fixtures/s3-outage-v2.txt": {
+            "bytes": 620,
+            "sha256": "ef488f9ba8481a42e7f79aceafde979d9f09ddc0072f2edc0577e6b064cc3d2f"
+        },
+        "lifecycle.py": {
+            "bytes": 41534,
+            "sha256": "b3de18c6adf8e1bd9d74de754f9a83f1ff493912162fe55027c136f670c32c34"
+        },
+        "lifecycle_test.py": {
+            "bytes": 8473,
+            "sha256": "cb09354335b18db05be082c10c0f197f5c155d2026bb1ffcd7b11af54e491ee7"
+        },
+        "objects.mjs": {
+            "bytes": 14219,
+            "sha256": "88024d7ad4fa348765e4b24a4fee71c765e7bac9f0ce2f7303728fc175e8f915"
+        },
+        "objects.test.mjs": {
+            "bytes": 7304,
+            "sha256": "1a5a90b04a6502b14337ac843d7c20f88df87f4d0c18758cb1b94031fcab0d36"
+        },
+        "observe.mjs": {
+            "bytes": 46278,
+            "sha256": "a02ec2c01b47b27d5f0c8e639816553b9afe87b6d52be6659f757dafd21d85ea"
+        },
+        "observe.test.mjs": {
+            "bytes": 19167,
+            "sha256": "00f9dfc507b9b856cb199f4e740eaa6c8e202d3f95d177438c6021171a2d2dd6"
+        },
+        "private.mjs": {
+            "bytes": 9087,
+            "sha256": "41c0e8c073a17df358df11c8c40ff5c895e132939da41c55c4589ddadc517847"
+        },
+        "seed.mjs": {
+            "bytes": 11200,
+            "sha256": "4edddb022c8d5af45927da93c28ec13555a4800d146401c229704b0ba2c9c745"
+        },
+        "smtp.mjs": {
+            "bytes": 10636,
+            "sha256": "747a947cee668c04ba8aeebdc0d912830140019a587a28c3c4a35511c357326d"
+        }
+    },
+    "nativeTrial": {
+        "runId": "1f27f31a0d52",
+        "date": "2026-10-24",
+        "productCommit": "b59a14b07870e22601bcdd29f926abd70737ae3a",
+        "preparedProvenanceSha256": "eb0712318fb70cee2541c0416cd0fe6b77ae13f0615c4dab15dbe0fcafc3c772",
+        "preparedDisabledInventorySha256": "308e0e60d80bed377a153f485bc835baa6f6ead834f42046b915880415d1adb2",
+        "executedEnabledInventorySha256": "48fb695cb1dbe41aa28e03ec4012a2d1daf14622270c47ac5c60411f3df65df9",
+        "activationReceiptSha256": "1d95a17ff7357bdfb4a8016da79856dddfcdff5b69de789f24a007808403bbd4",
+        "exactDisabledRestorationReceiptSha256": "f122913b113f1e1ae41cb3938055240437c2341f9d038399fb455e3dead0713e",
+        "observations": {
+            "v1-ready": "fedc77b4577296db520cb93d81470e16366ad9b66b8c67fab35f09e6a0b9b3e8",
+            "v2-staged": "c7675b50059ba9f42ba5c64379c5f10d6adfd0e9d5e23f3362348eafe8da3957",
+            "outage-failed": "ea3b32ca53934eb44a8d5d419a0e477705534df9d8a290811f04d11245d2bf05",
+            "restored-before-retry": "794a699f70e7891dca77f34d61a5c6045c13bf311690452b9fabc40e64ebaae6",
+            "v2-ready": "8f2b2d489fe39bd3e6070797eaddad077933a7a330d175ee10a0ec263fc73506",
+            "signed-out": "453153297a8f7b13bd503b7668e4fa54f80071222355ae1491cb013e6ac6cc6b"
+        },
+        "independentEvidenceReviewSha256": "c69580ef000db3bb9620454378e2470717fb7b7781c07335bf0c91d83581cde9",
+        "cleanupReceiptSha256": "2bc65b50c81fce52cf046196e435017bd6c6abd06ec9d3416a5ee6b053204e5b",
+        "runtimeTestAndFixtureBytes": "IDENTICAL_TO_PREPARED_DISABLED_ARCHIVE_AFTER_GATE_RESTORATION",
+        "deliveryDocumentation": "README_AND_PROVENANCE_UPDATED_AFTER_CLEANUP",
+        "limitations": [
+            "INGESTION_ONLY_NOT_PHYSICAL_DELETE_RECOVERY",
+            "FRENCH_UI_ONLY",
+            "PROJECTED_METADATA_HASHES_COMPARED_NOT_FULLY_RECOMPUTABLE",
+            "SAVED_PROOFS_ARE_NOT_ATTESTATIONS_OR_CROSS_STORE_ATOMIC_SNAPSHOTS",
+            "NO_HOSTED_PROVIDER_OR_CAPACITY_MEASUREMENT"
+        ]
+    }
+}
