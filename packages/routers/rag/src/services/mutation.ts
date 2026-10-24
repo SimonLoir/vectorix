@@ -1,7 +1,10 @@
 import { ORPCError } from '@orpc/server';
 import { Prisma } from '@repo/db';
 import type { AuthorizedContext } from '@routers/utils/authorized';
-import { runSerializableTransaction } from '@routers/utils/transactions';
+import {
+    isSerializationConflict,
+    runSerializableTransaction,
+} from '@routers/utils/transactions';
 import type { PermissionSet } from '@repo/auth/permissions';
 import { ragActor, type RagActor } from './access';
 
@@ -16,16 +19,25 @@ export async function mutate<T>(
             operation(db, await ragActor(context, db, required, true))
         );
     } catch (error) {
-        if (
-            error instanceof Prisma.PrismaClientKnownRequestError &&
-            ['P2002', 'P2003', 'P2014', 'P2025'].includes(error.code)
-        )
-            throw new ORPCError('CONFLICT', {
-                message:
-                    'The resource changed, already exists, or is still referenced.',
-            });
-        throw error;
+        throw normalizeCatalogMutationError(error);
     }
+}
+
+/** Map exhausted known database conflicts without exposing driver diagnostics or changing unrelated errors. */
+export function normalizeCatalogMutationError(error: unknown): unknown {
+    if (isSerializationConflict(error))
+        return new ORPCError('CONFLICT', {
+            message: 'The resource changed. Reload before retrying.',
+        });
+    if (
+        error instanceof Prisma.PrismaClientKnownRequestError &&
+        ['P2002', 'P2003', 'P2014', 'P2025'].includes(error.code)
+    )
+        return new ORPCError('CONFLICT', {
+            message:
+                'The resource changed, already exists, or is still referenced.',
+        });
+    return error;
 }
 
 /** Audit details are an explicit whitelist of identifiers and scalar state, never provider input. */
