@@ -11,6 +11,8 @@ This page covers issue #47 and the image-hardening items listed in issue #19.
 
 All actions stay pinned by commit SHA.
 
+Docker updates for `node` exclude major-version changes. A Node major upgrade must coordinate the root `package.json` engine range, the catalog workflow's selected Node version and all five service Dockerfiles in one reviewed change, with the applicable validation repeated. Minor, patch and digest updates remain eligible for review; this restriction does not change the other base-image policies.
+
 ## Images
 
 - Every `node:24-alpine` stage, and the Compose `postgres:18-alpine` and `redis:8-alpine` services, are pinned by multi-architecture index digest, alongside the tag for readability, as RustFS, aws-cli and postgres-vector already were. Dependabot proposes digest updates.
