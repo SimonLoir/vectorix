@@ -14,11 +14,11 @@
     },
     "dependencies": {
         "@routers/rag": "workspace:*",
-        "@orpc/server": "^1.15.3",
+        "@orpc/server": "^1.16.0",
         "@repo/api-contracts": "workspace:*",
         "@repo/db": "workspace:*",
         "@routers/utils": "workspace:*",
-        "better-auth": "1.6.33"
+        "better-auth": "1.7.12"
     },
     "devDependencies": {
         "@repo/eslint-config": "workspace:*",

@@ -14,7 +14,7 @@
         "lint": "eslint"
     },
     "dependencies": {
-        "@orpc/contract": "^1.15.3",
+        "@orpc/contract": "^1.16.0",
         "zod": "^4.6.5"
     },
     "devDependencies": {

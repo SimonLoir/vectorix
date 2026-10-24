@@ -33,7 +33,7 @@
         "test:queues": "bash scripts/test-redis.sh"
     },
     "devDependencies": {
-        "@dotenvx/dotenvx": "^2.30.0",
+        "@dotenvx/dotenvx": "^2.38.2",
         "turbo": "^2.11.10",
         "prettier": "^3.9.8",
         "typescript": "npm:@typescript/typescript6@6.0.2"
