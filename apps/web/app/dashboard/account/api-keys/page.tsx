@@ -17,12 +17,13 @@ import {
 import {
     Table,
     TableBody,
+    TableCell,
     TableHead,
     TableHeader,
     TableRow,
 } from '@repo/ui/table';
 import { CopyToClipboardButton } from '@repo/dashboard-core/components/copy-to-clipboard-button';
-import PaddedSpinner from '@repo/dashboard-core/components/padded-spinner';
+import { Spinner } from '@repo/ui/spinner';
 import { CopyIcon } from 'lucide-react';
 import { useORPC } from '@/hooks/use-orpc';
 import { useVectorixPermissions } from '@/contexts/vectorix-permissions';
@@ -30,6 +31,11 @@ import { ApiKeyPermissionsDialog } from './components/api-key-permissions-dialog
 import ApiKeyLine from './components/api-key-line';
 import { requestErrorKey } from '@repo/dashboard-core/lib/request-errors';
 import { RequestErrorState } from '@/components/request-error-state';
+import {
+    CatalogPagination,
+    CatalogSearch,
+    useCatalogPagination,
+} from '@/components/rag/catalog-controls';
 
 /** Lists legacy/scoped keys without rotating or changing existing production secrets. */
 export default function APIKeysPage() {
@@ -38,10 +44,16 @@ export default function APIKeysPage() {
     const t = useTranslations('apiKeys');
     const [creating, setCreating] = useState(false);
     const [newKey, setNewKey] = useState<string | null>(null);
+    const page = useCatalogPagination();
     const query = useQuery(
-        orpc.admin.organization.apiKeys.list.queryOptions({})
+        orpc.admin.organization.apiKeys.list.queryOptions({
+            input: {
+                offset: page.offset,
+                limit: page.limit,
+                query: page.query,
+            },
+        })
     );
-    if (query.isPending) return <PaddedSpinner />;
     if (query.isError)
         return (
             <DashboardPage className='space-y-6'>
@@ -62,22 +74,58 @@ export default function APIKeysPage() {
                     </Button>
                 )}
             </div>
+            <CatalogSearch
+                value={page.query}
+                onChange={page.search}
+                label={t('search')}
+            />
             <Table>
                 <TableHeader>
                     <TableRow>
                         <TableHead>{t('name')}</TableHead>
                         <TableHead>{t('created')}</TableHead>
                         <TableHead>{t('expires')}</TableHead>
-                        <TableHead>Permissions</TableHead>
+                        <TableHead>{t('permissions')}</TableHead>
                         <TableHead>{t('actions')}</TableHead>
                     </TableRow>
                 </TableHeader>
                 <TableBody>
-                    {query.data?.keys.map((key) => (
-                        <ApiKeyLine key={key.id} apiKey={key} />
-                    ))}
+                    {query.isPending ? (
+                        <TableRow>
+                            <TableCell colSpan={5}>
+                                <Spinner aria-label={t('loading')} />
+                            </TableCell>
+                        </TableRow>
+                    ) : query.data.keys.length === 0 ? (
+                        <TableRow>
+                            <TableCell
+                                colSpan={5}
+                                className='text-center text-muted-foreground'
+                            >
+                                {t(
+                                    page.query
+                                        ? 'noMatches'
+                                        : page.offset > 0
+                                          ? 'emptyPage'
+                                          : 'noApiKeys'
+                                )}
+                            </TableCell>
+                        </TableRow>
+                    ) : (
+                        query.data.keys.map((key) => (
+                            <ApiKeyLine key={key.id} apiKey={key} />
+                        ))
+                    )}
                 </TableBody>
             </Table>
+            {query.data && (
+                <CatalogPagination
+                    offset={page.offset}
+                    total={query.data.total}
+                    limit={page.limit}
+                    onChange={page.setOffset}
+                />
+            )}
             {creating && (
                 <ApiKeyPermissionsDialog
                     onClose={() => setCreating(false)}
