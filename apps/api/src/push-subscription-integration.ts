@@ -6,7 +6,7 @@ import { RPCLink } from '@orpc/client/fetch';
 import type { VectorixApiV1Client } from '@repo/api';
 import { VECTORIX_API_V1 } from '@repo/api/versioning';
 import { prisma } from '@repo/db';
-import { decrypt } from '@routers/utils/encryption';
+import { decrypt, pushSubscriptionContext } from '@routers/utils/encryption';
 import { app } from './app';
 import { object, stringField } from './user-locale-tests/http';
 import {
@@ -183,7 +183,13 @@ export async function pushSubscriptionIntegrationTests(
                         );
                         assert.equal(saved.version, result.version);
                         const decrypted: unknown = JSON.parse(
-                            decrypt(saved.subscriptionEncrypted)
+                            decrypt(
+                                saved.subscriptionEncrypted,
+                                pushSubscriptionContext(
+                                    saved.organizationId,
+                                    saved.endpointHash
+                                )
+                            )
                         );
                         const record = object(decrypted);
                         assert.ok(

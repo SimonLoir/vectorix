@@ -77,6 +77,40 @@ void test('only owned numeric Redis result shapes are accepted', () => {
         });
 });
 
+void test('fixed windows expire from the first hit without refreshing on allowed or denied requests', () => {
+    let now = 0;
+    const store = createLocalRateLimitStore({ now: () => now });
+    assert.equal(store.consume('same', 10_000, 3, 'FIXED').allowed, true);
+    now = 9000;
+    assert.equal(store.consume('same', 10_000, 3, 'FIXED').allowed, true);
+    now = 9500;
+    assert.equal(store.consume('same', 10_000, 3, 'FIXED').allowed, true);
+    now = 9999;
+    assert.deepEqual(store.consume('same', 10_000, 3, 'FIXED'), {
+        allowed: false,
+        retryAfterSeconds: 1,
+    });
+    now = 10_000;
+    assert.equal(store.consume('same', 10_000, 3, 'FIXED').allowed, true);
+});
+
+void test('window policies remain isolated for the same logical key and share one bounded fallback capacity', () => {
+    let now = 0;
+    const store = createLocalRateLimitStore({ now: () => now, maxEntries: 2 });
+    assert.equal(store.consume('same', 10_000, 2).allowed, true);
+    assert.equal(store.consume('same', 10_000, 2, 'FIXED').allowed, true);
+    now = 9000;
+    assert.equal(store.consume('same', 10_000, 2).allowed, true);
+    assert.equal(store.consume('same', 10_000, 2, 'FIXED').allowed, true);
+    assert.equal(store.consume('overflow', 10_000, 2).allowed, false);
+    now = 10_000;
+    assert.equal(store.consume('same', 10_000, 2).allowed, false);
+    assert.equal(store.consume('same', 10_000, 2, 'FIXED').allowed, true);
+    now = 19_000;
+    assert.equal(store.consume('same', 10_000, 2).allowed, true);
+    assert.equal(store.consume('same', 10_000, 2, 'FIXED').allowed, true);
+});
+
 void test('unavailable Redis emits one fixed warning and no library error or stack', async () => {
     const warn = console.warn;
     const error = console.error;
@@ -98,6 +132,14 @@ void test('unavailable Redis emits one fixed warning and no library error or sta
             denied.retryAfterSeconds >= 59 && denied.retryAfterSeconds <= 60
         );
         assert.equal((await consumeRateLimit('separate', 60, 2)).allowed, true);
+        assert.equal(
+            (await consumeRateLimit(key, 60, 1, 'FIXED')).allowed,
+            true
+        );
+        assert.equal(
+            (await consumeRateLimit(key, 60, 1, 'FIXED')).allowed,
+            false
+        );
         await closeRateLimitStore();
         await new Promise<void>((resolve) => setImmediate(resolve));
         assert.deepEqual(errors, []);

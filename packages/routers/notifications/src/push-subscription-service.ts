@@ -6,7 +6,7 @@ import {
 } from '@repo/api-contracts/v1/notifications';
 import type { z } from 'zod';
 import type { AuthorizedContext } from '@routers/utils/authorized';
-import { encrypt } from '@routers/utils/encryption';
+import { encrypt, pushSubscriptionContext } from '@routers/utils/encryption';
 import { runSerializableTransaction } from '@routers/utils/transactions';
 import {
     admitPushEndpoint,
@@ -89,14 +89,15 @@ export async function registerPushSubscription(
     }
     const session = await getNotificationSession(context);
     requirePushDestination(input.endpoint);
+    const hash = endpointHash(input.endpoint);
     const encrypted = await encrypt(
         JSON.stringify({
             endpoint: input.endpoint,
             expirationTime: input.expirationTime?.toISOString() ?? null,
             keys: input.keys,
-        })
+        }),
+        pushSubscriptionContext(context.organizationId, hash)
     );
-    const hash = endpointHash(input.endpoint);
 
     const subscription = await runSerializableTransaction(
         context.db,

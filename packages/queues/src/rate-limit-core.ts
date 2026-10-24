@@ -4,6 +4,8 @@ export type RateLimitDecision = Readonly<{
     retryAfterSeconds: number;
 }>;
 
+export type RateLimitPolicy = 'LAST_ALLOWED' | 'FIXED';
+
 const DEFAULT_MAX_ENTRIES = 10_000;
 const PRUNE_STEPS = 64;
 type Entry = { count: number; resetAt: number };
@@ -30,6 +32,25 @@ if count >= maximum then return {0, ttl} end
 redis.call('INCR', KEYS[1])
 redis.call('PEXPIRE', KEYS[1], window)
 return {1, window}
+`;
+
+/** A separate fixed-window script never refreshes an allowed or rejected hit. */
+export const RATE_LIMIT_FIXED_CONSUME_SCRIPT = `
+local raw = redis.call('GET', KEYS[1])
+local ttl = redis.call('PTTL', KEYS[1])
+local window = tonumber(ARGV[1])
+local maximum = tonumber(ARGV[2])
+if not raw then
+    redis.call('SET', KEYS[1], '1', 'PX', window)
+    return {1, window}
+end
+local count = tonumber(raw)
+if not count or count < 1 or ttl < 0 then
+    return redis.error_reply('INVALID_RATE_LIMIT_COUNTER')
+end
+if count >= maximum then return {0, ttl} end
+redis.call('INCR', KEYS[1])
+return {1, ttl}
 `;
 
 function denied(ttlMs: number): RateLimitDecision {
@@ -63,19 +84,28 @@ export function createLocalRateLimitStore({
         }
     }
     return {
-        consume(key: string, windowMs: number, max: number): RateLimitDecision {
+        consume(
+            key: string,
+            windowMs: number,
+            max: number,
+            policy: RateLimitPolicy = 'LAST_ALLOWED'
+        ): RateLimitDecision {
+            if (policy !== 'LAST_ALLOWED' && policy !== 'FIXED')
+                throw new Error('Rate-limit policy is invalid.');
+            const storageKey = policy + ':' + key;
             const time = now();
-            const current = entries.get(key);
+            const current = entries.get(storageKey);
             if (current && current.resetAt > time) {
                 if (current.count >= max) return denied(current.resetAt - time);
                 current.count++;
-                current.resetAt = time + windowMs;
+                if (policy === 'LAST_ALLOWED')
+                    current.resetAt = time + windowMs;
                 return { allowed: true, retryAfterSeconds: 0 };
             }
-            if (current) entries.delete(key);
+            if (current) entries.delete(storageKey);
             prune(time);
             if (entries.size >= maxEntries) return denied(windowMs);
-            entries.set(key, { count: 1, resetAt: time + windowMs });
+            entries.set(storageKey, { count: 1, resetAt: time + windowMs });
             return { allowed: true, retryAfterSeconds: 0 };
         },
     };

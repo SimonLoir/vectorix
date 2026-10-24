@@ -26,6 +26,26 @@ jobs:
               env:
                   KEEP_IMAGES: 'true'
               run: bash scripts/test-docker.sh
+            - name: Install pinned Trivy
+              if: steps.images.outputs.image_prefix != ''
+              uses: aquasecurity/setup-trivy@81e514348e19b6112ce2a7e3ecbafe19c1e1f567 # v0.3.1
+              with:
+                  version: v0.76.1
+            # Report fixed critical/high vulnerabilities in every tested image; non-blocking until triaged.
+            - name: Scan tested images
+              if: steps.images.outputs.image_prefix != ''
+              continue-on-error: true
+              env:
+                  IMAGE_PREFIX: ${{ steps.images.outputs.image_prefix }}
+              run: |
+                  status=0
+                  for app in web admin api workers migrator postgres-vector; do
+                      echo "::group::Trivy $app"
+                      trivy image --quiet --severity CRITICAL,HIGH --ignore-unfixed \
+                          --exit-code 1 "$IMAGE_PREFIX-$app:test" || status=1
+                      echo "::endgroup::"
+                  done
+                  exit "$status"
             - name: Check registry credentials
               id: registry
               if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'

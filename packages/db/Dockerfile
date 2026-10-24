@@ -7,7 +7,7 @@
 # -----------------------
 # 1) Base image with pnpm
 # -----------------------
-FROM node:24-alpine AS base
+FROM node:24-alpine@sha256:06d7adf3e0ef61a13f1d28682726366f97a15aa1888c934d3ecec86c33918b53 AS base
 
 RUN apk add --no-cache libc6-compat openssl
 
@@ -35,13 +35,13 @@ RUN pnpm --filter @repo/db exec prisma --version
 # -----------------------
 # 3) Runner layer
 # -----------------------
-FROM node:24-alpine AS runner
+FROM node:24-alpine@sha256:06d7adf3e0ef61a13f1d28682726366f97a15aa1888c934d3ecec86c33918b53 AS runner
 RUN apk add --no-cache libc6-compat openssl
 WORKDIR /app
 
 # Copy installed node_modules from deps stage
-COPY --from=deps --chown=node:node /app/node_modules ./node_modules
-COPY --from=deps --chown=node:node /app/packages/db/node_modules ./packages/db/node_modules
+COPY --from=deps /app/node_modules ./node_modules
+COPY --from=deps /app/packages/db/node_modules ./packages/db/node_modules
 
 # Copy the prisma schema and migrations
 COPY packages/db/prisma ./packages/db/prisma

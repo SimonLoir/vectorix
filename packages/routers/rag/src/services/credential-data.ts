@@ -1,6 +1,10 @@
 import { type Prisma } from '@repo/db';
 import { CredentialsModelSchema } from '@repo/db/schemas';
-import { encrypt, decrypt } from '@routers/utils/encryption';
+import {
+    credentialSecretContext,
+    decrypt,
+    encrypt,
+} from '@routers/utils/encryption';
 import {
     credentialData,
     credentialView,
@@ -115,6 +119,8 @@ export function credentialDto(value: StoredCredential) {
 
 /** Decryption is server-only. Corrupt configured data is an error, never a reason to use environment defaults. */
 export function decryptCredential(value: StoredCredential) {
+    const context = (field: 'accessKeyId' | 'secretAccessKey' | 'apiKey') =>
+        credentialSecretContext(value.organizationId, value.id, field);
     try {
         switch (value.provider) {
             case 'S3':
@@ -125,8 +131,14 @@ export function decryptCredential(value: StoredCredential) {
                         region: value.s3.region,
                         bucket: value.s3.bucket,
                         forcePathStyle: value.s3.forcePathStyle,
-                        accessKeyId: decrypt(value.s3.accessKeyId),
-                        secretAccessKey: decrypt(value.s3.secretAccessKey),
+                        accessKeyId: decrypt(
+                            value.s3.accessKeyId,
+                            context('accessKeyId')
+                        ),
+                        secretAccessKey: decrypt(
+                            value.s3.secretAccessKey,
+                            context('secretAccessKey')
+                        ),
                     });
                 break;
             case 'OLLAMA':
@@ -135,7 +147,7 @@ export function decryptCredential(value: StoredCredential) {
                         provider: 'OLLAMA',
                         endpoint: value.ollama.endpoint,
                         apiKey: value.ollama.apiKey
-                            ? decrypt(value.ollama.apiKey)
+                            ? decrypt(value.ollama.apiKey, context('apiKey'))
                             : null,
                     });
                 break;
@@ -144,7 +156,7 @@ export function decryptCredential(value: StoredCredential) {
                     return credentialData.parse({
                         provider: 'COHERE',
                         endpoint: value.cohere.endpoint,
-                        apiKey: decrypt(value.cohere.apiKey),
+                        apiKey: decrypt(value.cohere.apiKey, context('apiKey')),
                     });
                 break;
             case 'VOYAGE':
@@ -152,7 +164,7 @@ export function decryptCredential(value: StoredCredential) {
                     return credentialData.parse({
                         provider: 'VOYAGE',
                         endpoint: value.voyage.endpoint,
-                        apiKey: decrypt(value.voyage.apiKey),
+                        apiKey: decrypt(value.voyage.apiKey, context('apiKey')),
                     });
                 break;
             case 'OPENAI':
@@ -160,7 +172,7 @@ export function decryptCredential(value: StoredCredential) {
                     return credentialData.parse({
                         provider: 'OPENAI',
                         endpoint: value.openai.endpoint,
-                        apiKey: decrypt(value.openai.apiKey),
+                        apiKey: decrypt(value.openai.apiKey, context('apiKey')),
                     });
                 break;
             case 'MISTRAL':
@@ -168,7 +180,10 @@ export function decryptCredential(value: StoredCredential) {
                     return credentialData.parse({
                         provider: 'MISTRAL',
                         endpoint: value.mistral.endpoint,
-                        apiKey: decrypt(value.mistral.apiKey),
+                        apiKey: decrypt(
+                            value.mistral.apiKey,
+                            context('apiKey')
+                        ),
                     });
                 break;
         }
@@ -181,14 +196,28 @@ export function decryptCredential(value: StoredCredential) {
     });
 }
 
+/**
+ * Seal provider secrets for a credential row created with `credentialId`;
+ * the ciphertexts only decrypt for that organization, row and field.
+ */
 export async function encryptedProviderData(
-    input: typeof credentialData._output
+    input: typeof credentialData._output,
+    organizationId: string,
+    credentialId: string
 ): Promise<
     Pick<
         Prisma.CredentialsCreateInput,
         's3' | 'ollama' | 'cohere' | 'voyage' | 'openai' | 'mistral'
     >
 > {
+    const seal = (
+        plaintext: string,
+        field: 'accessKeyId' | 'secretAccessKey' | 'apiKey'
+    ) =>
+        encrypt(
+            plaintext,
+            credentialSecretContext(organizationId, credentialId, field)
+        );
     switch (input.provider) {
         case 'S3':
             return {
@@ -198,8 +227,14 @@ export async function encryptedProviderData(
                         region: input.region,
                         bucket: input.bucket,
                         forcePathStyle: input.forcePathStyle,
-                        accessKeyId: await encrypt(input.accessKeyId),
-                        secretAccessKey: await encrypt(input.secretAccessKey),
+                        accessKeyId: await seal(
+                            input.accessKeyId,
+                            'accessKeyId'
+                        ),
+                        secretAccessKey: await seal(
+                            input.secretAccessKey,
+                            'secretAccessKey'
+                        ),
                     },
                 },
             };
@@ -209,7 +244,7 @@ export async function encryptedProviderData(
                     create: {
                         endpoint: input.endpoint,
                         apiKey: input.apiKey
-                            ? await encrypt(input.apiKey)
+                            ? await seal(input.apiKey, 'apiKey')
                             : null,
                     },
                 },
@@ -219,7 +254,7 @@ export async function encryptedProviderData(
                 cohere: {
                     create: {
                         endpoint: input.endpoint,
-                        apiKey: await encrypt(input.apiKey),
+                        apiKey: await seal(input.apiKey, 'apiKey'),
                     },
                 },
             };
@@ -228,7 +263,7 @@ export async function encryptedProviderData(
                 voyage: {
                     create: {
                         endpoint: input.endpoint,
-                        apiKey: await encrypt(input.apiKey),
+                        apiKey: await seal(input.apiKey, 'apiKey'),
                     },
                 },
             };
@@ -237,7 +272,7 @@ export async function encryptedProviderData(
                 openai: {
                     create: {
                         endpoint: input.endpoint,
-                        apiKey: await encrypt(input.apiKey),
+                        apiKey: await seal(input.apiKey, 'apiKey'),
                     },
                 },
             };
@@ -246,7 +281,7 @@ export async function encryptedProviderData(
                 mistral: {
                     create: {
                         endpoint: input.endpoint,
-                        apiKey: await encrypt(input.apiKey),
+                        apiKey: await seal(input.apiKey, 'apiKey'),
                     },
                 },
             };

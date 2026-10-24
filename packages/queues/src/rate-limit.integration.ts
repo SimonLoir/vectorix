@@ -87,3 +87,27 @@ void test('Redis refreshes allowed hits but rejected requests do not prolong nat
     await waitAtLeast(afterDenied + 25);
     assert.equal((await consumeRateLimit(key, 1, 2)).allowed, true);
 });
+
+void test('fixed Redis windows keep first-hit TTL and never share the native auth counter', async () => {
+    if (inspector.status === 'wait') await inspector.connect();
+    const key = 'policies:' + process.pid + ':' + Date.now();
+    const fixedKey = 'vectorix:rate-limit:fixed:v1:' + key;
+    const nativeKey = 'vectorix:rate-limit:v2:' + key;
+    assert.equal((await consumeRateLimit(key, 1, 2, 'FIXED')).allowed, true);
+    assert.equal((await consumeRateLimit(key, 1, 2)).allowed, true);
+    await waitAtLeast(650);
+    const before = await inspector.pttl(fixedKey);
+    assert.ok(before > 0 && before < 600);
+    assert.equal((await consumeRateLimit(key, 1, 2, 'FIXED')).allowed, true);
+    const fixedAfter = await inspector.pttl(fixedKey);
+    assert.ok(fixedAfter > 0 && fixedAfter <= before);
+    assert.equal((await consumeRateLimit(key, 1, 2)).allowed, true);
+    const nativeAfter = await inspector.pttl(nativeKey);
+    assert.ok(nativeAfter > fixedAfter + 300);
+    assert.equal((await consumeRateLimit(key, 1, 2, 'FIXED')).allowed, false);
+    const afterDenied = await inspector.pttl(fixedKey);
+    assert.ok(afterDenied > 0 && afterDenied <= fixedAfter);
+    await waitAtLeast(afterDenied + 25);
+    assert.equal((await consumeRateLimit(key, 1, 2, 'FIXED')).allowed, true);
+    assert.equal((await consumeRateLimit(key, 1, 2)).allowed, false);
+});

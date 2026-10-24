@@ -11,7 +11,7 @@
     "scripts": {
         "check-types": "tsc6 -p tsconfig.json --noEmit",
         "lint": "eslint",
-        "test": "bash tests/run.sh"
+        "test:native": "bash tests/run.sh"
     },
     "dependencies": {
         "pg": "^8.23.0"

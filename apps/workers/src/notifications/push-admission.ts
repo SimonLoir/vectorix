@@ -122,6 +122,8 @@ export function loadPushDispatch(
                 select: {
                     id: true,
                     version: true,
+                    organizationId: true,
+                    endpointHash: true,
                     subscriptionEncrypted: true,
                     expirationTime: true,
                 },
