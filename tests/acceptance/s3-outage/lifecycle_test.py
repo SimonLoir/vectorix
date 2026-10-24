@@ -15,6 +15,7 @@ import m7c_restore_common as common
 
 def setUpModule():
     """Create a hermetic owned cache below ROOT, retaining the real nofollow/private-path guards."""
+    (common.ROOT / 'node_modules').mkdir(exist_ok=True)
     temporary = tempfile.TemporaryDirectory(dir=common.ROOT / 'node_modules', prefix='vectorix-s3-outage-guards-')
     unittest.addModuleCleanup(temporary.cleanup)
     cache = Path(temporary.name) / '.cache/vectorix'
@@ -28,7 +29,7 @@ RUN = '012345abcdef'
 
 
 def state():
-    return {'runId': RUN, 'phase': 'READY', 'resources': {name: {} for name in l.SERVICES},
+    return {'protocolVersion': 2, 'scenario': 'INGESTION_V1', 'namespace': 'vectorix-m7c-s3-outage', 'runId': RUN, 'phase': 'READY', 'resources': {name: {} for name in l.SERVICES},
         'processes': {name: {'service': name, 'pid': index + 100} for index, name in enumerate(l.APPS)}}
 
 
@@ -79,7 +80,7 @@ class LifecycleTests(unittest.TestCase):
             self.guarded('outage-observe', 'WATCHDOG_INTERVENED', rustfs=False)
 
     def test_successful_online_phase_requires_nonintervening_watchdog_final(self):
-        final = {'schemaVersion': 1, 'runId': RUN, 'intervened': False,
+        final = {'schemaVersion': 1, 'protocolVersion': 2, 'scenario': 'INGESTION_V1', 'runId': RUN, 'intervened': False,
             'storageRunning': True, 'sameWorkerResumed': True}
         self.guarded('observe', 'RESTORED', final=final)
         with self.assertRaisesRegex(l.GuardError, 'normal-stop-required'):
@@ -89,12 +90,12 @@ class LifecycleTests(unittest.TestCase):
         with tempfile.TemporaryDirectory(dir=common.CACHE) as temporary:
             directory = Path(temporary)
             for filename in ['fault-restore-receipt.json', 'watchdog-intervention.json']:
-                l.save_json(directory / filename, {'schemaVersion': 1, 'runId': RUN}, exclusive=True)
+                l.save_json(directory / filename, {'schemaVersion': 1, 'protocolVersion': 2, 'scenario': 'INGESTION_V1', 'runId': RUN}, exclusive=True)
             with mock.patch.object(l, 'state_path', return_value=directory / 'state.json'):
-                self.assertEqual(l.fault_phase({'runId': RUN}), 'WATCHDOG_INTERVENED')
+                self.assertEqual(l.fault_phase(state()), 'WATCHDOG_INTERVENED')
 
     def test_cleanup_resumes_owned_stopped_worker_before_graceful_termination(self):
-        value = {'runId': RUN, 'phase': 'READY', 'resources': {},
+        value = {'protocolVersion': 2, 'scenario': 'INGESTION_V1', 'namespace': 'vectorix-m7c-s3-outage', 'runId': RUN, 'phase': 'READY', 'resources': {},
             'processes': {'workers': {'service': 'workers', 'pid': 123}}}
         signals = []
         alive = True
@@ -130,7 +131,7 @@ class LifecycleTests(unittest.TestCase):
 
     def test_watchdog_admission_never_refreshes_an_expired_original_deadline(self):
         value = state()
-        ack = {'schemaVersion': 1, 'runId': RUN, 'budgetSeconds': 900,
+        ack = {'schemaVersion': 1, 'protocolVersion': 2, 'scenario': 'INGESTION_V1', 'runId': RUN, 'budgetSeconds': 900,
             'worker': value['processes']['workers'], 'rustfs': value['resources']['rustfs'],
             'control': {}, 'deadlineMonotonicNs': '1000'}
         with mock.patch.object(l, 'read_private_bytes', return_value=json.dumps(ack).encode()), \
@@ -153,6 +154,35 @@ class LifecycleTests(unittest.TestCase):
                     mock.patch.object(sys, 'argv', ['lifecycle.py']), contextlib.redirect_stderr(io.StringIO()):
                 with self.assertRaises((l.GuardError, SystemExit)):
                     l.main()
+
+
+class ProtocolTests(unittest.TestCase):
+    def test_closed_scenario_paths_and_labels_do_not_overlap(self):
+        first = l.state_path(RUN, 'INGESTION_V1')
+        other = l.state_path(RUN, 'CLEANUP_V1')
+        self.assertNotEqual(first, other)
+        self.assertIn('vectorix-m7c-s3-cleanup-', str(other))
+        self.assertEqual(l.labels({'runId': RUN, 'scenario': 'CLEANUP_V1'}, 'rustfs'),
+            {'vectorix.m7c-s3-cleanup.run': RUN, 'vectorix.m7c-s3-cleanup.service': 'rustfs'})
+        for scenario in [None, '', 'CLEANUP', '__proto__']:
+            with self.assertRaises(l.GuardError):
+                l.state_path(RUN, scenario)
+
+    def test_old_and_cross_scenario_receipts_cannot_be_adopted(self):
+        value = state()
+        current = l.receipt_scope(value)
+        self.assertTrue(l.receipt_matches(value, current))
+        for invalid in [{'schemaVersion': 1, 'runId': RUN}, {**current, 'scenario': 'CLEANUP_V1'},
+                {**current, 'protocolVersion': 1}, {**current, 'runId': '000000000000'}]:
+            self.assertFalse(l.receipt_matches(value, invalid))
+
+    def test_old_and_cross_scenario_states_fail_before_environment_or_resource_checks(self):
+        with mock.patch.object(l, 'environment', side_effect=AssertionError('no environment resolution')):
+            for scenario in ['INGESTION_V1', 'CLEANUP_V1']:
+                with self.assertRaisesRegex(l.GuardError, 'state-identity'):
+                    l.validate({'schemaVersion': 1, 'runId': RUN}, RUN, scenario)
+                with self.assertRaisesRegex(l.GuardError, 'state-identity'):
+                    l.validate({**l.receipt_scope(state()), 'namespace': 'vectorix-m7c-s3-outage'}, RUN, 'CLEANUP_V1')
 
 
 if __name__ == '__main__':
