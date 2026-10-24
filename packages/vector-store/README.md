@@ -80,7 +80,7 @@ Refresh planner statistics after bulk load: without `ANALYZE`, PostgreSQL estima
 ## Tests and remaining integration work
 
 ```sh
-pnpm --filter @repo/vector-store test
+pnpm --filter @repo/vector-store test:native
 pnpm --filter @repo/vector-store check-types
 ```
 

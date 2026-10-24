@@ -3,12 +3,15 @@ import { connection } from './index';
 import {
     createLocalRateLimitStore,
     RATE_LIMIT_CONSUME_SCRIPT,
+    RATE_LIMIT_FIXED_CONSUME_SCRIPT,
+    type RateLimitPolicy,
     readRateLimitDecision,
     type RateLimitDecision,
 } from './rate-limit-core';
-export type { RateLimitDecision } from './rate-limit-core';
+export type { RateLimitDecision, RateLimitPolicy } from './rate-limit-core';
 
 const KEY_PREFIX = 'vectorix:rate-limit:v2:';
+const FIXED_KEY_PREFIX = 'vectorix:rate-limit:fixed:v1:';
 const RECONNECT_DELAY_MS = 5000;
 const fallback = createLocalRateLimitStore();
 let client: Redis | undefined;
@@ -65,7 +68,9 @@ function redis(): Promise<Redis> {
 }
 
 /**
- * Count against the native last-allowed-request window using one Redis script.
+ * Count against an explicit policy using one Redis script. The default preserves
+ * native auth's last-allowed window and its existing v2 Redis namespace. FIXED
+ * uses another namespace and never refreshes its first-hit deadline.
  * On failure, retain bounded per-process budgets. Redis reconnects are attempted
  * by requests at most once per five seconds; only one fixed warning is emitted.
  * Callers must hash keys that might contain credentials or identifying paths.
@@ -73,29 +78,33 @@ function redis(): Promise<Redis> {
 export async function consumeRateLimit(
     key: string,
     windowSeconds: number,
-    max: number
+    max: number,
+    policy: RateLimitPolicy = 'LAST_ALLOWED'
 ): Promise<RateLimitDecision> {
     const windowMs = Math.round(windowSeconds * 1000);
     if (
         !Number.isSafeInteger(windowMs) ||
         windowMs < 1 ||
         !Number.isSafeInteger(max) ||
-        max < 1
+        max < 1 ||
+        (policy !== 'LAST_ALLOWED' && policy !== 'FIXED')
     )
         throw new Error('Rate-limit rule is invalid.');
     try {
         const shared = await redis();
         const result: unknown = await shared.eval(
-            RATE_LIMIT_CONSUME_SCRIPT,
+            policy === 'FIXED'
+                ? RATE_LIMIT_FIXED_CONSUME_SCRIPT
+                : RATE_LIMIT_CONSUME_SCRIPT,
             1,
-            `${KEY_PREFIX}${key}`,
+            `${policy === 'FIXED' ? FIXED_KEY_PREFIX : KEY_PREFIX}${key}`,
             windowMs,
             max
         );
         return readRateLimitDecision(result);
     } catch {
         warnUnavailable();
-        return fallback.consume(key, windowMs, max);
+        return fallback.consume(key, windowMs, max, policy);
     }
 }
 

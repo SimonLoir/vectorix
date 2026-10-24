@@ -95,6 +95,9 @@ importers:
 
     apps/api:
         dependencies:
+            '@repo/config':
+                specifier: workspace:*
+                version: link:../../packages/config
             '@aws-sdk/client-s3':
                 specifier: 3.1148.0
                 version: 3.1148.0
@@ -319,6 +322,9 @@ importers:
 
     apps/workers:
         dependencies:
+            '@repo/config':
+                specifier: workspace:*
+                version: link:../../packages/config
             '@aws-sdk/client-s3':
                 specifier: 3.1148.0
                 version: 3.1148.0
@@ -554,6 +560,27 @@ importers:
             '@repo/documents':
                 specifier: workspace:*
                 version: link:../documents
+        devDependencies:
+            '@repo/eslint-config':
+                specifier: workspace:*
+                version: link:../eslint-config
+            '@repo/typescript-config':
+                specifier: workspace:*
+                version: link:../typescript-config
+            '@types/node':
+                specifier: ^26.6.2
+                version: 26.6.5
+            eslint:
+                specifier: ^10.11.0
+                version: 10.13.0(jiti@2.7.0)
+            tsx:
+                specifier: ^4.23.15
+                version: 4.23.15
+            typescript:
+                specifier: npm:@typescript/typescript6@6.0.2
+                version: '@typescript/typescript6@6.0.2'
+
+    packages/config:
         devDependencies:
             '@repo/eslint-config':
                 specifier: workspace:*
