@@ -1,6 +1,10 @@
 import { ORPCError } from '@orpc/server';
 import type { AuthorizedContext } from '@routers/utils/authorized';
-import { updateProviderData } from './credential-update';
+import {
+    changesSecretDestination,
+    suppliesSecretsForDestination,
+    updateProviderData,
+} from './credential-update';
 import {
     credentialData,
     credentialUpdateData,
@@ -121,6 +125,12 @@ export function updateCredential(
                     message:
                         'This destination is referenced. Create and activate new credentials for new writes or a new collection revision.',
                 });
+            const movedSecret = changesSecretDestination(old, input.data);
+            if (movedSecret && !suppliesSecretsForDestination(old, input.data))
+                throw new ORPCError('BAD_REQUEST', {
+                    message:
+                        'Re-enter the secret when changing the endpoint, bucket, or S3 addressing mode.',
+                });
             await updateProviderData(db, current, input.data);
             const result = await db.credentials.update({
                 where: { id: current.id },
@@ -129,6 +139,8 @@ export function updateCredential(
             });
             await audit(db, actor, 'credential.update', current.id, {
                 revision: result.revision,
+                // Audit readers may lack credential access, so record the fact, not the URLs.
+                ...(movedSecret ? { destinationChanged: true } : {}),
             });
             return credentialDto(result);
         }
