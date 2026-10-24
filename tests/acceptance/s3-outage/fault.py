@@ -1,0 +1,304 @@
+"""Disabled, one-run S3 fault controls and independent 900-second safety watchdog."""
+from __future__ import annotations
+
+import argparse
+from datetime import datetime, timezone
+import json
+import os
+from pathlib import Path
+import re
+import signal
+import sys
+import time
+
+import lifecycle as l
+
+STATIC_DRAFT_ONLY = True
+BUDGET_SECONDS = 900
+MAX_PROOF_AGE_SECONDS = 90
+
+
+def stamp():
+    return datetime.now(timezone.utc).isoformat()
+
+
+def directory(state):
+    return l.state_path(state['runId']).parent
+
+
+def record(state, filename, value):
+    """Publish a complete private receipt atomically using a no-overwrite hard link."""
+    target = directory(state) / filename
+    temporary = target.with_name('.pending-' + filename)
+    l.private_directory(target.parent)
+    l.save_json(temporary, {'schemaVersion': 1, 'runId': state['runId'], **value}, exclusive=True)
+    descriptor = os.open(target.parent, os.O_RDONLY | os.O_DIRECTORY | os.O_NOFOLLOW | os.O_CLOEXEC)
+    try:
+        os.link(temporary.name, target.name, src_dir_fd=descriptor, dst_dir_fd=descriptor, follow_symlinks=False)
+        os.fsync(descriptor)
+        os.unlink(temporary.name, dir_fd=descriptor)
+        os.fsync(descriptor)
+    finally:
+        os.close(descriptor)
+
+
+def read(state, filename, maximum=32768):
+    value = json.loads(l.read_private_bytes(directory(state) / filename, maximum))
+    l.require(isinstance(value, dict) and value.get('schemaVersion') == 1
+        and value.get('runId') == state['runId'], 'm7c-s3-outage-fault-file-scope')
+    return value
+
+
+def require_clean_evidence(state):
+    l.require(not (directory(state) / 'watchdog-intervention.json').exists(),
+        'm7c-s3-outage-watchdog-intervened-incomplete')
+
+
+def fresh_admission(state, phase, field, kind, version):
+    """Consume the independent observer's exact source evidence, never an operator-invented ID."""
+    filename = directory(state) / ('observe-' + phase + '.json')
+    raw = l.read_private_bytes(filename, 32768)
+    proof = json.loads(raw)
+    fixture = read(state, 'fixture.json', 16384)
+    l.require(isinstance(proof, dict), 'm7c-s3-outage-observer-proof-scope')
+    value = proof.get(field)
+    l.require(isinstance(proof, dict) and proof.get('schemaVersion') == 1
+        and proof.get('namespace') == l.NAMESPACE and proof.get('runId') == state['runId']
+        and proof.get('phase') == phase and isinstance(value, dict), 'm7c-s3-outage-observer-proof-scope')
+    common = {'schemaVersion', 'kind', 'organizationId', 'documentId', 'versionId',
+        'version', 'originalSha256', 'observedAt'}
+    extras = {'faultEnrollmentAdmission': {'liveClaims', 'workerPid', 'workerStartTicks', 'rustfsContainerId'},
+        'faultAdmission': {'stored', 'ingestionStatus', 'attempts', 'extractionPresent',
+            'workerPid', 'workerStartTicks', 'rustfsContainerId'},
+        'faultRecoveryAdmission': {'attempts', 'status', 'errorCode'}}
+    l.require(field in extras and set(value) == common | extras[field]
+        and value.get('schemaVersion') == 1 and value.get('kind') == kind and value.get('version') == version
+        and value.get('organizationId') == fixture.get('organization', {}).get('id')
+        and all(isinstance(value.get(key), str) and re.fullmatch('[A-Za-z0-9_-]{1,128}', value[key])
+            for key in ['organizationId', 'documentId', 'versionId'])
+        and value.get('originalSha256') == state['inputs']['textFixtures']['s3-outage-v' + str(version) + '.txt']['sha256'],
+        'm7c-s3-outage-observer-source-binding')
+    observed = value.get('observedAt')
+    l.require(isinstance(observed, str) and len(observed) <= 64
+        and (observed.endswith('Z') or observed.endswith('+00:00')), 'm7c-s3-outage-observer-aware-time')
+    try:
+        elapsed = (datetime.now(timezone.utc) - datetime.fromisoformat(observed.replace('Z', '+00:00'))).total_seconds()
+    except (ValueError, TypeError):
+        raise l.GuardError('m7c-s3-outage-observer-aware-time') from None
+    l.require(0 <= elapsed <= MAX_PROOF_AGE_SECONDS, 'm7c-s3-outage-observer-proof-stale')
+    if field in {'faultEnrollmentAdmission', 'faultAdmission'}:
+        l.require(value['workerPid'] == state['processes']['workers']['pid']
+            and value['workerStartTicks'] == state['processes']['workers']['startTicks']
+            and value['rustfsContainerId'] == state['resources']['rustfs']['id'], 'm7c-s3-outage-observer-process-binding')
+    if field == 'faultEnrollmentAdmission':
+        l.require(value['liveClaims'] == 0, 'm7c-s3-outage-baseline-idle')
+    elif field == 'faultAdmission':
+        l.require(value['stored'] is True and value['ingestionStatus'] == 'PENDING' and value['attempts'] == 0
+            and value['extractionPresent'] is False, 'm7c-s3-outage-staged-original-required')
+    else:
+        l.require(value['attempts'] == 5 and value['status'] == 'FAILED' and value['errorCode'] == 'STORAGE_UNAVAILABLE',
+            'm7c-s3-outage-natural-terminal-required')
+    return value, l.digest(raw)
+
+
+def worker_signal(state, action):
+    """Signal only the enrolled worker after identity checks on both sides of pidfd acquisition."""
+    l.require(action in {signal.SIGSTOP, signal.SIGCONT}, 'm7c-s3-outage-worker-signal')
+    saved = state['processes']['workers']
+    l.require(l.process_alive(state, saved), 'm7c-s3-outage-worker-identity-required')
+    descriptor = os.pidfd_open(saved['pid'])
+    try:
+        l.require(l.process_alive(state, saved), 'm7c-s3-outage-worker-identity-required')
+        signal.pidfd_send_signal(descriptor, action)
+    finally:
+        os.close(descriptor)
+    until = time.monotonic() + 3
+    while True:
+        l.require(l.process_alive(state, saved), 'm7c-s3-outage-worker-identity-required')
+        actual = l.process_identity(saved['pid'])
+        if (actual['state'] == 'T') if action == signal.SIGSTOP else actual['state'] not in {'T', 't'}:
+            return
+        l.require(time.monotonic() < until, 'm7c-s3-outage-worker-signal-timeout')
+        time.sleep(0.02)
+
+
+def restore_owned(state):
+    """Safety restoration tries both independent actions; a failed store start must not strand a stopped worker."""
+    storage_restored, worker_resumed = False, False
+    try:
+        value = l.owned(state, 'rustfs')
+        if value['State']['Running'] is False:
+            l.run(['docker', 'start', state['resources']['rustfs']['id']], timeout=30)
+        l.owned(state, 'rustfs', running=True)
+        storage_restored = True
+    except BaseException:
+        pass
+    try:
+        saved = state['processes']['workers']
+        l.require(l.process_alive(state, saved), 'm7c-s3-outage-worker-identity-required')
+        if l.process_identity(saved['pid'])['state'] == 'T':
+            worker_signal(state, signal.SIGCONT)
+        l.require(l.process_identity(saved['pid'])['state'] not in {'T', 't'}, 'm7c-s3-outage-worker-still-stopped')
+        worker_resumed = True
+    except BaseException:
+        pass
+    return {'storageRunning': storage_restored, 'sameWorkerResumed': worker_resumed}
+
+
+def watchdog_reason(now_ns, deadline_ns, stopped, cleaning):
+    if stopped:
+        return 'CONTROL_TERMINATED'
+    if cleaning:
+        return 'CLEANUP_REQUESTED'
+    if now_ns >= deadline_ns:
+        return 'ORIGINAL_DEADLINE_EXPIRED'
+    return None
+
+
+def watchdog(state):
+    """An independent foreground process owns the only 900-second monotonic deadline; it is never refreshed."""
+    enrolled_ns = time.monotonic_ns()
+    enrolled_at = datetime.now(timezone.utc)
+    deadline_ns = enrolled_ns + BUDGET_SECONDS * 1000000000
+    with l.lifecycle_lock():
+        current = l.load(state['runId'])
+        l.require(current['phase'] == 'READY' and current['processes'] == state['processes']
+            and current['resources'] == state['resources'], 'm7c-s3-outage-enrollment-current-state')
+        l.require(l.fault_phase(state) == 'NOT_STARTED', 'm7c-s3-outage-watchdog-no-replay')
+        l.guard(state, 'observe')
+        baseline, baseline_sha = fresh_admission(state, 'v1-ready', 'faultEnrollmentAdmission', 'V1_READY_IDLE', 1)
+        l.require(time.monotonic_ns() < deadline_ns, 'm7c-s3-outage-enrollment-budget')
+        record(state, 'watchdog-intent.json', {'at': stamp(), 'status': 'ENROLLING_NO_REPLAY'})
+        identity = l.process_identity(os.getpid())
+        l.require(identity is not None and identity['uid'] == os.getuid(), 'm7c-s3-outage-control-identity')
+        control = {'pid': os.getpid(), 'startTicks': identity['startTicks'], 'cwd': identity['cwd'],
+            'bootId': Path('/proc/sys/kernel/random/boot_id').read_text().strip(),
+            'commandSha256': l.digest(b'\0'.join(identity['command']))}
+        stop = False
+
+        def terminate(_signal, _frame):
+            nonlocal stop
+            stop = True
+
+        for code in [signal.SIGTERM, signal.SIGINT]:
+            signal.signal(code, terminate)
+        ack = {'control': control, 'worker': state['processes']['workers'], 'rustfs': state['resources']['rustfs'],
+            'budgetSeconds': BUDGET_SECONDS, 'enrolledAt': enrolled_at.isoformat(),
+            'deadlineAt': datetime.fromtimestamp(enrolled_at.timestamp() + BUDGET_SECONDS, timezone.utc).isoformat(),
+            'deadlineMonotonicNs': str(deadline_ns), 'baselineSha256': baseline_sha, 'baseline': baseline}
+        record(state, 'watchdog-ack.json', ack)
+        print(json.dumps({'completed': True, 'operation': 'watchdog-ack', 'runId': state['runId'], 'budgetSeconds': BUDGET_SECONDS}), flush=True)
+    # No lifecycle lock is held: control-tool failures cannot block this independent safety path.
+    reason = None
+    try:
+        while True:
+            current = l.load(state['runId'])
+            reason = watchdog_reason(time.monotonic_ns(), deadline_ns, stop, current['phase'] == 'CLEANING')
+            if reason is not None:
+                break
+            if l.fault_phase(state) in {'RESTORED', 'COMPLETE'}:
+                l.owned(state, 'rustfs', running=True)
+                l.require(l.process_alive(state, state['processes']['workers'])
+                    and l.process_identity(state['processes']['workers']['pid'])['state'] not in {'T', 't'},
+                    'm7c-s3-outage-operator-restoration-not-confirmed')
+                record(state, 'watchdog-final.json', {'at': stamp(), 'intervened': False, 'formalOutcome': 'NOT_DETERMINED',
+                    'storageRunning': True, 'sameWorkerResumed': True})
+                return
+            time.sleep(min(0.25, max(0.001, (deadline_ns - time.monotonic_ns()) / 1000000000)))
+    except BaseException:
+        reason = 'WATCHDOG_CONTROL_FAILURE'
+    # Persist intervention before touching resources; even later successful recovery cannot turn it into PASS.
+    # Restoration still runs if evidence persistence itself fails.
+    try:
+        record(state, 'watchdog-intervention.json', {'at': stamp(), 'reason': reason, 'formalOutcome': 'INCOMPLETE'})
+    finally:
+        result = restore_owned(state)
+    record(state, 'watchdog-final.json', {'at': stamp(), 'intervened': True, 'formalOutcome': 'INCOMPLETE', **result})
+    l.require(all(result.values()), 'm7c-s3-outage-watchdog-restore-incomplete')
+
+
+def pause_worker(state, file_selected):
+    l.require(file_selected is True and l.fault_phase(state) == 'ARMED', 'm7c-s3-outage-file-selected-before-pause')
+    l.guard(state, 'observe')
+    ack = l.watchdog_admission(state)
+    record(state, 'fault-pause-intent.json', {'at': stamp(), 'watchdogAckSha256': l.digest(l.read_private_bytes(directory(state) / 'watchdog-ack.json', 8192)),
+        'selectionEvidence': 'OPERATOR_CONFIRMED_BEFORE_PAUSE_NOT_DOM_OBSERVATION'})
+    worker_signal(state, signal.SIGSTOP)
+    l.watchdog_admission(state)
+    record(state, 'fault-pause-receipt.json', {'at': stamp(), 'sameWorker': ack['worker'], 'selectionConfirmedBeforePause': True})
+
+
+def storage_outage(state):
+    l.require(l.fault_phase(state) == 'PAUSED', 'm7c-s3-outage-storage-outage-phase')
+    l.guard(state, 'staged-observe')
+    ack = l.watchdog_admission(state)
+    # Reserve time for a bounded docker stop plus restoration; the original deadline remains unchanged.
+    l.require(int(ack['deadlineMonotonicNs']) - time.monotonic_ns() > 120 * 1000000000,
+        'm7c-s3-outage-insufficient-original-budget')
+    staged, staged_sha = fresh_admission(state, 'v2-staged', 'faultAdmission', 'STAGED_ORIGINAL_CONFIRMED', 2)
+    l.require(staged['documentId'] == ack['baseline']['documentId'], 'm7c-s3-outage-replacement-document-binding')
+    record(state, 'fault-storage-outage-intent.json', {'at': stamp(), 'stagedProofSha256': staged_sha,
+        'rustfs': state['resources']['rustfs'], 'staged': staged})
+    l.owned(state, 'rustfs', running=True)
+    l.run(['docker', 'stop', '-t', '55', state['resources']['rustfs']['id']], timeout=60)
+    l.owned(state, 'rustfs', running=False)
+    l.watchdog_admission(state)
+    worker_signal(state, signal.SIGCONT)
+    l.watchdog_admission(state)
+    record(state, 'fault-storage-outage-receipt.json', {'at': stamp(), 'stagedProofSha256': staged_sha,
+        'staged': staged, 'storageStopped': True, 'sameWorkerResumed': True,
+        'worker': state['processes']['workers'], 'rustfs': state['resources']['rustfs']})
+
+
+def restore(state):
+    l.require(l.fault_phase(state) == 'OUTAGE', 'm7c-s3-outage-restoration-phase')
+    l.guard(state, 'outage-observe')
+    l.watchdog_admission(state)
+    failed, failed_sha = fresh_admission(state, 'outage-failed', 'faultRecoveryAdmission', 'EXTRACTION_FAILED', 2)
+    staged = read(state, 'fault-storage-outage-receipt.json', 8192)['staged']
+    l.require(all(failed[key] == staged[key] for key in ['organizationId', 'documentId', 'versionId', 'originalSha256']),
+        'm7c-s3-outage-restoration-version-binding')
+    record(state, 'fault-restore-intent.json', {'at': stamp(), 'failedProofSha256': failed_sha})
+    result = restore_owned(state)
+    l.watchdog_admission(state)
+    l.require(all(result.values()), 'm7c-s3-outage-operator-restore-incomplete')
+    record(state, 'fault-restore-receipt.json', {'at': stamp(), 'failedProofSha256': failed_sha,
+        'worker': state['processes']['workers'], 'rustfs': state['resources']['rustfs'], **result})
+
+
+class Arguments(argparse.ArgumentParser):
+    def error(self, _message):
+        raise l.GuardError('m7c-s3-outage-fault-arguments')
+
+
+def main():
+    l.require(not STATIC_DRAFT_ONLY and not l.STATIC_DRAFT_ONLY, 'm7c-s3-outage-fault-draft-review-required')
+    parser = Arguments(description=__doc__)
+    parser.add_argument('--run', required=True)
+    parser.add_argument('--mode', required=True, choices=['watchdog', 'pause-worker', 'storage-outage', 'restore'])
+    parser.add_argument('--file-selected', action='store_true')
+    args = parser.parse_args()
+    l.require(args.file_selected is (args.mode == 'pause-worker'), 'm7c-s3-outage-fault-selection-arguments')
+    state = l.load(args.run)
+    l.require(state['phase'] == 'READY', 'm7c-s3-outage-fault-ready-required')
+    require_clean_evidence(state)
+    if args.mode == 'watchdog':
+        watchdog(state)
+    else:
+        with l.lifecycle_lock():
+            if args.mode == 'pause-worker':
+                pause_worker(state, args.file_selected)
+            elif args.mode == 'storage-outage':
+                storage_outage(state)
+            else:
+                restore(state)
+    print(json.dumps({'completed': True, 'operation': args.mode, 'runId': state['runId'], 'formalOutcome': 'NOT_DETERMINED'}))
+
+
+if __name__ == '__main__':
+    try:
+        main()
+    except BaseException as error:
+        code = str(error) if isinstance(error, l.GuardError) and re.fullmatch('[a-z0-9-]{1,100}', str(error)) else 'm7c-s3-outage-fault-sanitized-failure'
+        print(json.dumps({'completed': False, 'diagnostic': code, 'formalOutcome': 'INCOMPLETE'}), file=sys.stderr)
+        sys.exit(1)

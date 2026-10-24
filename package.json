@@ -28,6 +28,7 @@
         "test:quality:guards": "bash scripts/test-quality-guards.sh",
         "test:capacity:guards": "bash scripts/test-capacity-guards.sh",
         "test:interruption:guards": "bash scripts/test-interruption-guards.sh",
+        "test:s3-outage:guards": "bash scripts/test-s3-outage-guards.sh",
         "test:queues": "bash scripts/test-redis.sh"
     },
     "devDependencies": {

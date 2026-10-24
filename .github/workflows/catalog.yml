@@ -25,6 +25,10 @@ jobs:
                   npm install --global pnpm@11.25.0
                   pnpm install --frozen-lockfile
                   pnpm db:generate
+            # Visible but non-blocking until advisories are triaged automatically (issues #15 and #47).
+            - name: Audit dependencies for high-severity advisories
+              continue-on-error: true
+              run: pnpm audit --audit-level=high
             - name: Validate schema, contracts, and code
               run: |
                   pnpm --filter @repo/db exec prisma validate
@@ -36,6 +40,7 @@ jobs:
                   pnpm test:quality:guards
                   pnpm test:capacity:guards
                   pnpm test:interruption:guards
+                  pnpm test:s3-outage:guards
             - name: Test Redis authentication with real queues and workers
               run: pnpm test:queues
             - name: Build isolated vector-test image
