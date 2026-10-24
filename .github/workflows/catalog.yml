@@ -37,6 +37,7 @@ jobs:
                   pnpm test:quality:guards
                   pnpm test:capacity:guards
                   pnpm test:interruption:guards
+                  pnpm test:s3-outage:guards
             - name: Test Redis authentication with real queues and workers
               run: pnpm test:queues
             - name: Build isolated vector-test image
