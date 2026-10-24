@@ -209,7 +209,7 @@
     "lightFilesSha256": {
         "full-preflight.json": "fcf339d7dc2427100ab4a458c7803f67fbd957f5e207d1336544de7b16a6f0fb",
         "pilot-preflight.json": "a57ccbc7c1f63f0483df335922bed21f76374c4bfb027ff0299e7ffa1cbea34d",
-        "preparation-proof.json": "558a5aa0bd454b2f8837d4b0f43e9e769050946916b86e5ee09dee1bf85eb3b7"
+        "preparation-proof.json": "f827f2cdf2235e37fd95ef20e27b2f893f38df3aa73b5fa2689c7555e29c8bbc"
     },
     "lightPreparation": {
         "initialPrivatePreparationProofSha256": "6e6144c25dbe0a6573209510752fea666ba13fff225197f472e90168009cdc3d",
