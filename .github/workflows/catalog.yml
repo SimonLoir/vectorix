@@ -32,7 +32,6 @@ jobs:
                   pnpm lint
                   pnpm test
                   pnpm test:documents
-                  pnpm test:rag-primitives
                   pnpm test:restore:guards
                   pnpm test:quality:guards
                   pnpm test:capacity:guards
@@ -42,6 +41,6 @@ jobs:
             - name: Build isolated vector-test image
               run: docker build -f infra/postgres-vector/Dockerfile -t pxdv.be/vectorix/postgres-vector:local .
             - name: Test native vector adapter
-              run: pnpm --filter @repo/vector-store test
+              run: pnpm --filter @repo/vector-store test:native
             - name: Test migrations and authorization on isolated databases
               run: pnpm test:catalog

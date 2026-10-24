@@ -989,3 +989,15 @@ The host pass completes frozen installation, 24 type checks, 24 lint tasks, 159 
 All six image/runtime/infrastructure checks subsequently pass. Actual production browser run `f3a033c5ced8` verifies native sign-in, a 327-byte FR/EN TXT upload to READY, all 318 canonical characters, an exact-byte original download, EN/FR/nl-BE reloads, account/return and French logout. API and workers have no platform S3 endpoint; their malformed-first CSV must admit the saved organization binding for both real object writes and worker reads. Six read-only checkpoints and a separately reviewed projected-proof aggregate corroborate unchanged owner/organization/credential, 0→1 document/version, two exact private objects (654 bytes), zero reserved ingestion bytes and session 1→0. They are not atomic cross-store snapshots or UI proof alone. Embedding vectors remain controlled test responses, with no live provider or capacity result.
 
 The file chooser tool waits 40,370 seconds, then the same four live handles and source/build/resource guard are revalidated before upload, without restart. The download tool waits 115 seconds; neither wait is a benchmark. An exact-text language locator finds no segmented label, then refreshed AX actions complete the normal selection. The last document-page console capture has zero warnings/errors; there is no post-logout console capture after turn interruption automatically closes the temporary tab. French logout and its zero-session proof already pass. Owned cleanup confirms all four processes terminal, four containers and four volumes absent, and tab 51 absent. The one 530-byte local sign-in email and login fixture are removed after hash verification; safe screenshots/proofs remain private. Final PR delivery and exact-head catalog/six-image CI remain pending. Work now follows the implementation plan and other agents' PRs; no further issue consultation is part of the task.
+
+## Issue #49 — Discover unit tests and run them through Turborepo
+
+- [x] Replace the hand-written `apps/api` test list with [`scripts/unit-tests.mjs`](../scripts/unit-tests.mjs) discovery.
+- [x] Make root `pnpm test` run `turbo run test` (uncached) so every package `test` script runs; move the Docker-dependent vector-store test to `test:native`.
+- [x] Add `pnpm test:coverage` using Node's built-in coverage report.
+- [ ] Browser end-to-end journeys, coverage thresholds and new security-module unit tests: not included (see [unit test discovery](testing.md)).
+- [ ] Review and merge through a separate PR.
+
+Branch `codex/test-discovery`. Discovery finds the same 27 files as the former list, plus `apps/workers/src/extraction/poppler-diagnostics.test.ts`, whose pure classifier cases previously ran only inside `pnpm test:documents`. The catalog workflow drops its now-duplicated `pnpm test:rag-primitives` step (the root script remains) and calls `test:native` for the vector adapter. No runtime code change.
+
+Validation is recorded in the PR.
