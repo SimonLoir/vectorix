@@ -122,6 +122,7 @@ runtime_env=(
     -e BETTER_AUTH_URL=http://api:3001
     -e API_URL=http://api:3001
     -e TRUSTED_ORIGINS=http://localhost:3000,http://localhost:3006
+    -e VECTORIX_WEB_URL=http://localhost:3000
     -e ALLOW_ACCOUNT_CREATION=true
     -e ALLOW_ORGANIZATION_CREATION=true
     -e VECTORIX_WEB_PUSH_ENABLED=false

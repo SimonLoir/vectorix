@@ -16,7 +16,7 @@ pnpm db:migrate
 pnpm dev
 ```
 
-`setup:env` generates random secrets and never overwrites an existing file. The `.env` file remains local and is not committed. Development services use these ports:
+`setup:env` generates random secrets and never overwrites an existing file. In production, the API and workers refuse to start while secrets are missing, malformed or still the `.env.example` placeholders, or while required origins are unset; see [startup configuration validation](docs/runtime-configuration.md). The `.env` file remains local and is not committed. Development services use these ports:
 
 | Service                           | Address               |
 | --------------------------------- | --------------------- |
@@ -253,6 +253,7 @@ Implement changes on a dedicated `codex/*` branch and open a pull request agains
 - [Repository conventions](AGENTS.md): architecture, authorization, API compatibility, development, and validation rules.
 - [Dashboard timezones](docs/dashboard-timezones.md): shared server validation, public provider configuration and locale-independent runtime dates.
 - [Superadmin transactions](docs/superadmin-transactions.md): atomic mutations/audits, current actor checks, audit address provenance and remaining native owner-guard work.
+- [Startup configuration validation](docs/runtime-configuration.md): production fail-fast checks for secrets, placeholders and origins in API and workers.
 - [Redis connections](docs/redis-connections.md): encoded URL credentials, raw fallback precedence and isolated queue/worker acceptance.
 - [Canonical password-reset links](docs/password-reset-links.md): server-only destinations, strict configuration precedence and reset-request acceptance.
 - [HTTP request limits](docs/http-request-limits.md): pre-parser body budgets, upload exceptions, actual-byte counting and acceptance.
