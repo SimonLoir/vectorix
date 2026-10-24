@@ -9,6 +9,7 @@ import { documentLifecycleTests } from './rag-tests/document-lifecycle';
 import { documentRetentionTests } from './rag-tests/document-retention';
 import { documentRichTests } from './rag-tests/document-rich';
 import { documentPdfXrefTests } from './rag-tests/document-pdf-xref';
+import { endpointAllowlistTests } from './rag-tests/endpoint-allowlists';
 import { lifecycleTests } from './rag-tests/lifecycle';
 import { sourceHoldTests } from './rag-tests/source-holds';
 import { indexSearchTests } from './rag-tests/index-search';
@@ -63,6 +64,7 @@ void test('RAG catalog with real PostgreSQL and HTTP transports', async (t) => {
     await documentRetentionTests(t);
     await documentRichTests(t);
     await documentPdfXrefTests(t);
+    await endpointAllowlistTests(t);
     await sourceHoldTests(t);
     await indexWorkerTests(t);
     await indexSearchTests(t);

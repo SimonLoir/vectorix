@@ -4,6 +4,8 @@
 
 `VECTORIX_DEFAULT_S3_ENDPOINT` is allowed automatically. Add organization destinations to the comma-separated `VECTORIX_S3_ALLOWED_ENDPOINTS` on both API and workers. Entries must exactly match the configured URL after trailing-slash normalization. Operators should allow only trusted endpoints; this is an endpoint allowlist, not a network sandbox or DNS-rebinding defense.
 
+Malformed entries authorize nothing and do not block later valid entries. The shared parser checks each entry separately, caches only the latest configuration for each fixed policy, and emits a warning containing only the variable name and one-based entry index. Empty segments are ignored; their positions still count when reporting later malformed entries. Configuration is reread at each admission and replaces the cached snapshot when changed. See [endpoint allowlists](../../docs/rag-endpoint-allowlists.md) for the distinct storage and embedding URL rules and the validation boundary.
+
 Calls have a 30-second timeout and at most two SDK attempts. Reads enforce the caller's byte limit against the response size and each streamed chunk. All SDK errors become a sanitized `StorageError`; provider responses and credentials are never logged. Originals use `application/octet-stream` and authenticated API downloads, with no browser-visible S3 URL or key.
 
 The caller owns immutable keys, SHA-256 metadata, catalog transactions, reservations and fencing. See [document ingestion](../../docs/rag-document-library.md). Failed or interrupted writes can exist without a published extraction, so callers retain their reservation until successful publication or confirmed cleanup.

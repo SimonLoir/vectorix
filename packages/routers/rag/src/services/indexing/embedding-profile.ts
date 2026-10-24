@@ -1,4 +1,5 @@
 import type { Prisma } from '@repo/db';
+import { createEndpointAllowlist } from '@repo/storage/endpoint-allowlist';
 import {
     canonicalEmbeddingModel,
     type EmbeddingConfiguration,
@@ -22,28 +23,40 @@ function normalizeEndpoint(value: string) {
         throw new Error('Invalid embedding destination.');
     return url.href.replace(/\/$/, '');
 }
+
+type EmbeddingProvider = 'OLLAMA' | 'COHERE' | 'VOYAGE' | 'OPENAI' | 'MISTRAL';
+
+function providerEndpoints(provider: EmbeddingProvider) {
+    return createEndpointAllowlist({
+        defaultVariable: `VECTORIX_DEFAULT_${provider}_ENDPOINT`,
+        allowedVariable: 'VECTORIX_EMBEDDING_ALLOWED_ENDPOINTS',
+        normalize: normalizeEndpoint,
+    });
+}
+
+// One last-snapshot cache per closed provider, never a cache keyed by user input.
+const embeddingEndpoints = {
+    OLLAMA: providerEndpoints('OLLAMA'),
+    COHERE: providerEndpoints('COHERE'),
+    VOYAGE: providerEndpoints('VOYAGE'),
+    OPENAI: providerEndpoints('OPENAI'),
+    MISTRAL: providerEndpoints('MISTRAL'),
+};
+
 /** Network destinations require an exact operator-approved URL; organization credentials alone never authorize SSRF. */
 export function assertEmbeddingEndpoint(
     endpoint: string,
-    provider: 'OLLAMA' | 'COHERE' | 'VOYAGE' | 'OPENAI' | 'MISTRAL' = 'OLLAMA'
+    provider: EmbeddingProvider = 'OLLAMA'
 ) {
-    const allowed = [
-        process.env[`VECTORIX_DEFAULT_${provider}_ENDPOINT`],
-        ...(process.env.VECTORIX_EMBEDDING_ALLOWED_ENDPOINTS ?? '').split(','),
-    ].filter((value): value is string => Boolean(value?.trim()));
-    try {
-        const normalized = normalizeEndpoint(endpoint);
-        if (
-            allowed.some(
-                (candidate) =>
-                    normalizeEndpoint(candidate.trim()) === normalized
-            )
-        )
-            return;
-    } catch {
-        // Invalid operator configuration fails closed without echoing credentials or private destinations.
-    }
-    throw indexError('CREDENTIALS_INVALID');
+    if (
+        !Object.hasOwn(embeddingEndpoints, provider) ||
+        !embeddingEndpoints[provider].allows(endpoint, {
+            defaultEndpoint:
+                process.env[`VECTORIX_DEFAULT_${provider}_ENDPOINT`],
+            allowedEndpoints: process.env.VECTORIX_EMBEDDING_ALLOWED_ENDPOINTS,
+        })
+    )
+        throw indexError('CREDENTIALS_INVALID');
 }
 /** Saved collection bindings take precedence over current organization selections; invalid bindings never fall back. */
 export async function boundEmbeddingConfiguration(
