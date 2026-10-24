@@ -1,0 +1,12 @@
+# Vectorix
+
+This template declares a fresh **Docker Compose** deployment: web on the main domain, API on `api.<domain>` and admin on `admin.<domain>`, plus private PostgreSQL, vector PostgreSQL, Redis and RustFS. Use the separately reviewed [Stack definition](../vectorix-stack.yml) for Swarm; directly changing this Compose service to Stack does not preserve startup ordering, data-node placement or proxy routing.
+
+1. **Image release**: set the initially empty `image_tag` to one tested `sha-<commit>` tag available for all six images. Verify each target host architecture and private-registry pull authorization. Template metadata does not select an image release.
+2. **Domain and HTTPS**: set `main_domain` and keep `scheme = "https"`. Configure DNS and enable HTTPS for all three Dokploy domains before deployment or entering credentials. Every sibling under the shared cookie domain must be trusted.
+3. **Secrets**: generate values only for a fresh instance. Preserve the existing database, authentication and encryption values during updates. Optional `encryption_previous_secrets` supplies retired read keys for versioned-key releases (at most sixteen comma-separated 64-hex keys; 4,096 configuration characters). All four app runtimes receive it.
+4. **Mail and embeddings**: fill a Resend key or SMTP settings for password reset/email verification, and an embedding provider key unless each organization configures its own provider. On x86, vector PostgreSQL requires AVX2 and FMA.
+5. **First superadmin**: follow the [first-account procedure](../README.md#5-first-superadmin) after the initial readiness checks. No role change is performed by the template.
+6. **Updates and backups**: follow the [release-specific maintenance and rollout procedure](../README.md#6-updates). Stop/drain all incompatible old readers/writers before changing the tag; prevent rollback to pre-v2 binaries after v2 writes. Back up both databases, RustFS and every current or retired key needed by live data or retained backups. Per-service startup/update settings do not establish an atomic rollout.
+
+Set `VECTORIX_TRUSTED_PROXIES` to the reviewed proxy subnet. Compose startup dependencies gate the migrator and private-bucket initializer before API/workers; verify their actual completion and readiness before opening traffic. This corrected template has static parser checks only, with no Dokploy server or application journey claimed.

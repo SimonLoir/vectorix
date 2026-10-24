@@ -1,13 +1,13 @@
-# Deploy Vectorix to vectorix.app with Dokploy (Swarm services)
+# Deploy Vectorix with Dokploy
 
-This directory holds a production stack for a Dokploy **Docker Compose** service of type **Stack** (`docker stack deploy`):
+This directory offers two ways to deploy Vectorix with Dokploy:
 
-- [`vectorix-stack.yml`](vectorix-stack.yml): ten Swarm services.
-- [`production.env.example`](production.env.example): every variable the stack expects in Dokploy's _Environment_ tab.
+- **Template** ([`template/`](template/)): a Dokploy template that generates every secret and creates the three domains for you. Import it in one step; see [Dokploy template](#dokploy-template). It is a Compose-only topology; use the separate reviewed Stack definition for Swarm.
+- **Hand-written Stack** ([`vectorix-stack.yml`](vectorix-stack.yml) and [`production.env.example`](production.env.example)): ten Swarm services with explicit Traefik labels and data-node placement, for a Dokploy **Docker Compose** service of type **Stack** (`docker stack deploy`). The rest of this guide describes this option.
 
 Images come from `pxdv.be/vectorix/{web,admin,api,workers,migrator,postgres-vector}`. Set the initially empty `VECTORIX_TAG` to one tested `sha-<commit>` tag available for all six services. Verify that every image manifest supports each Swarm node architecture before deployment: the current workflow tests and publishes its runner architecture; a separate multi-architecture publication is not established by that workflow. The older manual publication recorded in the build log predates authentication proxy support and later security changes; it is not the default for a new deployment.
 
-This stack was validated with `docker stack config`. It has not yet been deployed to a server; record the first production acceptance in [the build log](../../docs/build-task-log.md).
+The Stack has static `docker stack config` validation. The author reports a local Compose run of the original template on an older image tag; that is separate from this corrected template and has not been independently reproduced. Neither option has verified Dokploy-server acceptance. Record actual deployment results in [the build log](../../docs/build-task-log.md).
 
 ## Topology
 
@@ -136,3 +136,28 @@ Schedule `pg_dump` runs (Dokploy _Schedules_ or a cron job on the data node) and
 - **Uploads**: originals can reach 25 MiB, and the API accepts a 26 MiB envelope. Traefik does not limit request bodies by default; do not add a more restrictive buffering middleware.
 - **Embeddings**: Ollama is not part of the stack. Use a hosted provider (OpenAI, Mistral, Cohere, Voyage) or a separate Ollama server set as `VECTORIX_DEFAULT_OLLAMA_ENDPOINT`. Extra organization destinations go in `VECTORIX_EMBEDDING_ALLOWED_ENDPOINTS`.
 - **PDF and DOCX**: the workers image includes Poppler and `prlimit`; nothing else is required.
+
+## Dokploy template
+
+[`template/`](template/) follows the [Dokploy templates format](https://github.com/Dokploy/templates/blob/canary/CONTRIBUTING.md):
+
+- `docker-compose.yml`: ten Compose services. Startup ordering uses `depends_on` conditions: the migrator and bucket initializer must complete before API and workers start. Required image/secret interpolation fails before deployment; S3 initialization distinguishes an absent bucket from a failed listing.
+- `template.toml`: Dokploy-generated hex secrets, the complete declared environment (including optional retired read keys), and three domains. Generation is for a fresh instance; preserve existing values on updates. The image tag is deliberately empty until the operator selects a tested common release.
+- `meta.json`, `logo.svg` and `instructions.md`: catalog metadata and post-install steps.
+
+To import it into your Dokploy instance:
+
+1. Generate the import string:
+
+    ```bash
+    node deploy/dokploy/template/build-import.mjs
+    ```
+
+2. In Dokploy, choose _Create Service → Compose → Advanced → Import_ and paste the string.
+3. Set `main_domain` (for example `vectorix.app`), keep `scheme = "https"` and set `image_tag` to one tested tag present for all six images. Review architecture support and private-registry pull access. Fill mail/provider settings and retained read keys where needed; inspect the generated configuration privately.
+4. Configure DNS and HTTPS (Let's Encrypt) for all three domains **before deployment or entering credentials**. Then deploy as Compose and verify migrator/bucket completion, readiness and the dashboard smoke test.
+5. For Swarm, use the hand-written Stack and its explicit data-node/network/registry procedure. Direct conversion loses the Compose dependency gates and does not add that Stack's placement or routing labels.
+
+Prerequisites include DNS, AVX2/FMA on x86, private pull authorization, and backups of both databases, RustFS and all current/retired encryption keys required by live data or retained backups. Set `VECTORIX_TRUSTED_PROXIES` to the reviewed proxy subnet. Existing installations must preserve generated secrets and follow [Updates](#6-updates), including the incompatible-format maintenance procedure; importing a template does not enforce an atomic rollout. Corrected-template static validation passes TOML parsing, exact import serialization and closed-environment Docker Compose/Stack configuration parsing for ten services each. Forty missing/empty required-variable cases refuse rendering, and empty/populated retired-key bindings reach all four runtimes in both topologies. These parser checks do not run a Docker daemon or establish a new Compose startup, Dokploy deployment, browser journey or authenticated registry result.
+
+The template could also be contributed to the public Dokploy catalog. That would require public images or a public registry.
