@@ -46,6 +46,8 @@ jobs:
             - name: Build isolated vector-test image
               run: docker build -f infra/postgres-vector/Dockerfile -t pxdv.be/vectorix/postgres-vector:local .
             - name: Test native vector adapter
-              run: pnpm --filter @repo/vector-store test:native
+              run: |
+                  node tests/vector-store/runner.test.mjs
+                  pnpm --filter @repo/vector-store test:native
             - name: Test migrations and authorization on isolated databases
               run: pnpm test:catalog

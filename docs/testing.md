@@ -33,6 +33,8 @@ A new test inside an alternate-runner package must match that runner's actual pa
 
 Document parsing (`pnpm test:documents`, native Poppler), Redis (`pnpm test:queues`), the catalog (`pnpm test:catalog`), Docker images (`pnpm test:docker`) and the acceptance guard scripts keep their own commands, because they need native tools, containers or explicit isolation.
 
+The [catalog workflow](../.github/workflows/catalog.yml) runs `node tests/vector-store/runner.test.mjs` immediately before the native vector adapter. These three [runner regressions](../tests/vector-store/runner.test.mjs) execute the real shell entry point with controlled fake Docker, Node and sleep commands; they start no services and do not wait 60 seconds. They verify that Unix-only initialization readiness cannot start the native test, the final TCP listener admits it once, and 60 unsuccessful TCP probes fail before native execution while retaining cleanup/log collection. This root `.mjs` tooling test has an explicit CI invocation rather than source-unit discovery. The actual `@repo/vector-store test:native` runner still requires an existing vector image and uses its separate disposable `_test` database.
+
 ## Not included
 
 Browser end-to-end journeys (for example Playwright against the `test:catalog` stack) and coverage thresholds are not implemented. They need a CI browser environment, test fixtures and agreed thresholds; dashboard acceptance remains the manual recipe described in `AGENTS.md`.
