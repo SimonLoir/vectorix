@@ -1077,3 +1077,14 @@ Final-base PR76 validation on main `1aebd954f0295fb2f64bb353137381cf06993ecc` pa
 The _Docker images_ workflow skipped publication because the registry secrets are not configured, so the images were published manually from a clean worktree. BuildKit's direct multi-platform push failed against `pxdv.be` (`blob upload unknown`, then HTTP 499 after about 60 seconds of upload). Each platform was therefore built into the local engine, pushed with chunked `docker push`, and joined with `docker buildx imagetools create`. This leaves intermediate `sha-…-amd64` and `sha-…-arm64` tags in the registry. `docker buildx imagetools inspect` confirms both platforms for all six images under both tags. The images are the same commit that passed catalog and six-image CI; they were not separately run after publication.
 
 The stack renders with `docker stack config` using placeholder values. It has not been deployed to a server.
+
+A Dokploy template (`deploy/dokploy/template/`) generates the secrets and the three domains, and `build-import.mjs` produces Dokploy's Base64 import string (the same encoding as the Dokploy templates app). Validation:
+
+- the TOML parses;
+- a simulated Dokploy import resolves all variables, with `ENCRYPTION_SECRET` checked as 64 hex characters;
+- `docker compose config` passes;
+- a real local `docker compose up` with images pulled from `pxdv.be`: databases healthy, the migrator applies all migrations and exits 0, `s3-init` creates the bucket and exits 0, the workers report ready;
+- behind a temporary Caddy edge emulating Traefik on the generated `sslip.io` host, `api./ready`, web `/sign-in` and admin `/sign-in` return 200;
+- CORS allows the web and admin origins with credentials and rejects a foreign origin.
+
+No account was created and no browser journey was run against that host. The test stack and its volumes were removed.

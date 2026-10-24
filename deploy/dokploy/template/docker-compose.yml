@@ -1,0 +1,173 @@
+services:
+    postgres:
+        image: postgres:18-alpine@sha256:898c60cb390d1085bc97bdd6a1ae968757421df394b071848b52b1c09c89d6a5
+        restart: unless-stopped
+        environment:
+            POSTGRES_USER: vectorix
+            POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+            POSTGRES_DB: vectorix
+        volumes:
+            - postgres-data:/var/lib/postgresql
+        healthcheck:
+            test:
+                ['CMD-SHELL', 'pg_isready -h 127.0.0.1 -U vectorix -d vectorix']
+            interval: 10s
+            timeout: 5s
+            retries: 10
+
+    redis:
+        image: redis:8-alpine@sha256:0bf6577d7774e592b29d093e3ac9390eb91e13d72c21e506afce736de5e0eeb0
+        restart: unless-stopped
+        command:
+            [
+                'redis-server',
+                '--requirepass',
+                '${REDIS_PASSWORD}',
+                '--appendonly',
+                'yes',
+            ]
+        volumes:
+            - redis-data:/data
+        healthcheck:
+            test:
+                [
+                    'CMD-SHELL',
+                    'redis-cli -a "$$REDIS_PASSWORD" --no-auth-warning ping | grep -q PONG',
+                ]
+            interval: 10s
+            timeout: 5s
+            retries: 10
+        environment:
+            REDIS_PASSWORD: ${REDIS_PASSWORD}
+
+    postgres-vector:
+        image: pxdv.be/vectorix/postgres-vector:${VECTORIX_TAG}
+        restart: unless-stopped
+        environment:
+            POSTGRES_USER: postgres
+            POSTGRES_PASSWORD: ${VECTOR_POSTGRES_PASSWORD}
+            POSTGRES_DB: vectorix_vectors
+            VECTOR_PROVISIONER_PASSWORD: ${VECTOR_PROVISIONER_PASSWORD}
+            VECTOR_RUNTIME_PASSWORD: ${VECTOR_RUNTIME_PASSWORD}
+        volumes:
+            - vector-data:/var/lib/postgresql
+        healthcheck:
+            test:
+                [
+                    'CMD-SHELL',
+                    'pg_isready -h 127.0.0.1 -U postgres -d vectorix_vectors',
+                ]
+            interval: 10s
+            timeout: 5s
+            retries: 20
+
+    rustfs:
+        image: rustfs/rustfs:1.0.3@sha256:9ca9559533b537d10482fe923288b676ad08f92a7069d9a17327fbae3cab688b
+        restart: unless-stopped
+        environment:
+            RUSTFS_VOLUMES: /data
+            RUSTFS_ADDRESS: 0.0.0.0:9000
+            RUSTFS_CONSOLE_ENABLE: 'false'
+            RUSTFS_ACCESS_KEY: ${S3_ACCESS_KEY_ID}
+            RUSTFS_SECRET_KEY: ${S3_SECRET_ACCESS_KEY}
+            RUSTFS_REGION: us-east-1
+            RUSTFS_OBS_LOG_DIRECTORY: /logs
+        volumes:
+            - rustfs-data:/data
+            - rustfs-logs:/logs
+        healthcheck:
+            test: ['CMD', 'curl', '-fsS', 'http://127.0.0.1:9000/health']
+            interval: 10s
+            timeout: 5s
+            retries: 30
+            start_period: 20s
+
+    # One-off: creates the private document bucket when missing, then exits.
+    s3-init:
+        image: amazon/aws-cli:2.31.22@sha256:bf253be91e12d49ba1bd6dc939a76ea9777901772032692b14639e643118e1c1
+        depends_on:
+            rustfs:
+                condition: service_healthy
+        environment:
+            AWS_ACCESS_KEY_ID: ${S3_ACCESS_KEY_ID}
+            AWS_SECRET_ACCESS_KEY: ${S3_SECRET_ACCESS_KEY}
+            AWS_DEFAULT_REGION: us-east-1
+            AWS_ENDPOINT_URL: http://rustfs:9000
+            AWS_EC2_METADATA_DISABLED: 'true'
+        entrypoint:
+            - /bin/sh
+            - -c
+            - >-
+                aws configure set default.s3.addressing_style path &&
+                (aws s3api head-bucket --bucket vectorix-documents ||
+                aws s3api create-bucket --bucket vectorix-documents)
+        deploy:
+            restart_policy:
+                condition: on-failure
+                max_attempts: 10
+
+    # One-off: applies Prisma migrations, then exits.
+    migrator:
+        image: pxdv.be/vectorix/migrator:${VECTORIX_TAG}
+        depends_on:
+            postgres:
+                condition: service_healthy
+        environment:
+            DATABASE_URL: postgresql://vectorix:${POSTGRES_PASSWORD}@postgres:5432/vectorix
+        deploy:
+            restart_policy:
+                condition: on-failure
+                max_attempts: 10
+
+    api:
+        image: pxdv.be/vectorix/api:${VECTORIX_TAG}
+        restart: unless-stopped
+        depends_on: &app-depends
+            migrator:
+                condition: service_completed_successfully
+            s3-init:
+                condition: service_completed_successfully
+            redis:
+                condition: service_healthy
+            postgres-vector:
+                condition: service_healthy
+        env_file: .env
+        environment:
+            PORT: '3001'
+        expose:
+            - 3001
+
+    workers:
+        image: pxdv.be/vectorix/workers:${VECTORIX_TAG}
+        restart: unless-stopped
+        depends_on: *app-depends
+        env_file: .env
+
+    web:
+        image: pxdv.be/vectorix/web:${VECTORIX_TAG}
+        restart: unless-stopped
+        depends_on:
+            - api
+        env_file: .env
+        environment:
+            PORT: '3000'
+        expose:
+            - 3000
+
+    admin:
+        image: pxdv.be/vectorix/admin:${VECTORIX_TAG}
+        restart: unless-stopped
+        depends_on:
+            - api
+        env_file: .env
+        environment:
+            PORT: '3006'
+        expose:
+            - 3006
+
+volumes:
+    postgres-data: {}
+    redis-data: {}
+    vector-data: {}
+    rustfs-data: {}
+    rustfs-logs: {}

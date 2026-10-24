@@ -1,13 +1,13 @@
 # Deploy Vectorix to vectorix.app with Dokploy (Swarm services)
 
-This directory holds a production stack for a Dokploy **Docker Compose** service of type **Stack** (`docker stack deploy`):
+This directory offers two ways to deploy Vectorix with Dokploy:
 
-- [`vectorix-stack.yml`](vectorix-stack.yml): ten Swarm services.
-- [`production.env.example`](production.env.example): every variable the stack expects in Dokploy's _Environment_ tab.
+- **Template** ([`template/`](template/)): a Dokploy template that generates every secret and creates the three domains for you. Import it in one step; see [Dokploy template](#dokploy-template). It deploys as a Compose service, and you can switch the service to Stack afterwards.
+- **Hand-written Stack** ([`vectorix-stack.yml`](vectorix-stack.yml) and [`production.env.example`](production.env.example)): ten Swarm services with explicit Traefik labels and data-node placement, for a Dokploy **Docker Compose** service of type **Stack** (`docker stack deploy`). The rest of this guide describes this option.
 
 Images come from `pxdv.be/vectorix/{web,admin,api,workers,migrator,postgres-vector}` and are published for `linux/amd64` and `linux/arm64`. Set `VECTORIX_TAG` to an immutable `sha-<commit>` tag. The first manual publication is `sha-1aebd954f0295fb2f64bb353137381cf06993ecc` (`main` at `1aebd95`); it predates `VECTORIX_TRUSTED_PROXIES` support, which images from `76ca3ed` onwards honor.
 
-This stack was validated with `docker stack config`. It has not yet been deployed to a server; record the first production acceptance in [the build log](../../docs/build-task-log.md).
+The Stack was validated with `docker stack config`, and the template was started locally with Docker Compose (see below). Neither has been deployed to a Dokploy server yet; record the first production acceptance in [the build log](../../docs/build-task-log.md).
 
 ## Topology
 
@@ -134,3 +134,28 @@ Schedule `pg_dump` runs (Dokploy _Schedules_ or a cron job on the data node) and
 - **Uploads**: originals can reach 25 MiB, and the API accepts a 26 MiB envelope. Traefik does not limit request bodies by default; do not add a more restrictive buffering middleware.
 - **Embeddings**: Ollama is not part of the stack. Use a hosted provider (OpenAI, Mistral, Cohere, Voyage) or a separate Ollama server set as `VECTORIX_DEFAULT_OLLAMA_ENDPOINT`. Extra organization destinations go in `VECTORIX_EMBEDDING_ALLOWED_ENDPOINTS`.
 - **PDF and DOCX**: the workers image includes Poppler and `prlimit`; nothing else is required.
+
+## Dokploy template
+
+[`template/`](template/) follows the [Dokploy templates format](https://github.com/Dokploy/templates/blob/canary/CONTRIBUTING.md):
+
+- `docker-compose.yml`: the same ten services. Startup ordering uses `depends_on` conditions: the migrator and bucket initializer must complete before API and workers start.
+- `template.toml`: generated secrets (`${hash:N}` produces hex, so connection strings need no encoding and `ENCRYPTION_SECRET` is valid), the full environment, and the `web`, `api.` and `admin.` domains.
+- `meta.json`, `logo.svg` and `instructions.md`: catalog metadata and post-install steps.
+
+To import it into your Dokploy instance:
+
+1. Generate the import string:
+
+    ```bash
+    node deploy/dokploy/template/build-import.mjs
+    ```
+
+2. In Dokploy, choose _Create Service → Compose → Advanced → Import_ and paste the string.
+3. Before deploying, edit the template variables: set `main_domain = "vectorix.app"` and `scheme = "https"`. Fill the mail settings and at least one embedding provider key in the environment. With the defaults, Dokploy generates an `sslip.io` host and the stack serves a working HTTP preview on it, because `api.` and `admin.` subdomains of that host resolve too.
+4. Deploy. Then, in _Domains_, enable HTTPS (Let's Encrypt) on the three domains.
+5. Optionally switch the service type to Stack to run it as Swarm services. Swarm ignores the `depends_on` conditions; the one-shot services retry `on-failure` until the databases accept connections.
+
+Prerequisites are the same as for the hand-written Stack: DNS, AVX2/FMA on x86, `pxdv.be` pull access on the server, and backups of `ENCRYPTION_SECRET` with both databases and the RustFS volume. Set `VECTORIX_TRUSTED_PROXIES` to the subnet of `dokploy-network`.
+
+The template could also be contributed to the public Dokploy catalog. That would require public images or a public registry.

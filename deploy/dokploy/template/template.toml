@@ -1,0 +1,89 @@
+[variables]
+# Before importing for production, set main_domain to your apex domain (for example
+# vectorix.app) and scheme to https. The defaults give a working HTTP preview on a
+# generated sslip.io host; api. and admin. subdomains resolve automatically.
+main_domain = "${domain}"
+scheme = "http"
+image_tag = "sha-1aebd954f0295fb2f64bb353137381cf06993ecc"
+postgres_password = "${hash:48}"
+redis_password = "${hash:48}"
+vector_postgres_password = "${hash:48}"
+vector_provisioner_password = "${hash:48}"
+vector_runtime_password = "${hash:48}"
+s3_access_key = "${hash:32}"
+s3_secret_key = "${hash:48}"
+better_auth_secret = "${hash:64}"
+encryption_secret = "${hash:64}"
+
+[config]
+env = [
+  "VECTORIX_TAG=${image_tag}",
+  "NODE_ENV=production",
+  "POSTGRES_PASSWORD=${postgres_password}",
+  "REDIS_PASSWORD=${redis_password}",
+  "VECTOR_POSTGRES_PASSWORD=${vector_postgres_password}",
+  "VECTOR_PROVISIONER_PASSWORD=${vector_provisioner_password}",
+  "VECTOR_RUNTIME_PASSWORD=${vector_runtime_password}",
+  "S3_ACCESS_KEY_ID=${s3_access_key}",
+  "S3_SECRET_ACCESS_KEY=${s3_secret_key}",
+  "DATABASE_URL=postgresql://vectorix:${postgres_password}@postgres:5432/vectorix",
+  "REDIS_URL=redis://:${redis_password}@redis:6379",
+  "VECTOR_DATABASE_URL=postgresql://vectorix_runtime:${vector_runtime_password}@postgres-vector:5432/vectorix_vectors",
+  "VECTOR_DATABASE_PROVISIONING_URL=postgresql://vectorix_indexer:${vector_provisioner_password}@postgres-vector:5432/vectorix_vectors",
+  "VECTOR_DATABASE_SCHEMA=vector_collections",
+  "API_URL=${scheme}://api.${main_domain}",
+  "BETTER_AUTH_URL=${scheme}://api.${main_domain}",
+  "VECTORIX_WEB_URL=${scheme}://${main_domain}",
+  "TRUSTED_ORIGINS=${scheme}://${main_domain},${scheme}://admin.${main_domain},${scheme}://api.${main_domain}",
+  "ROOT_DOMAIN=${main_domain}",
+  "VECTORIX_TRUSTED_PROXIES=",
+  "BETTER_AUTH_SECRET=${better_auth_secret}",
+  "ENCRYPTION_SECRET=${encryption_secret}",
+  "ALLOW_ACCOUNT_CREATION=true",
+  "ALLOW_ORGANIZATION_CREATION=true",
+  "PASSKEY_RP_ID=${main_domain}",
+  "PASSKEY_RP_NAME=Vectorix",
+  "PASSKEY_ORIGINS=${scheme}://${main_domain},${scheme}://admin.${main_domain}",
+  "VECTORIX_TIME_ZONE=Europe/Brussels",
+  "VECTORIX_DEFAULT_S3_ENDPOINT=http://rustfs:9000",
+  "VECTORIX_DEFAULT_S3_REGION=us-east-1",
+  "VECTORIX_DEFAULT_S3_BUCKET=vectorix-documents",
+  "VECTORIX_DEFAULT_S3_ACCESS_KEY_ID=${s3_access_key}",
+  "VECTORIX_DEFAULT_S3_SECRET_ACCESS_KEY=${s3_secret_key}",
+  "VECTORIX_DEFAULT_S3_FORCE_PATH_STYLE=true",
+  "VECTORIX_S3_ALLOWED_ENDPOINTS=",
+  "VECTORIX_EMBEDDING_ALLOWED_ENDPOINTS=",
+  "VECTORIX_DEFAULT_OLLAMA_ENDPOINT=",
+  "VECTORIX_DEFAULT_OLLAMA_API_KEY=",
+  "VECTORIX_DEFAULT_OPENAI_ENDPOINT=https://api.openai.com/v1",
+  "VECTORIX_DEFAULT_OPENAI_API_KEY=",
+  "VECTORIX_DEFAULT_MISTRAL_ENDPOINT=https://api.mistral.ai/v1",
+  "VECTORIX_DEFAULT_MISTRAL_API_KEY=",
+  "VECTORIX_DEFAULT_COHERE_ENDPOINT=https://api.cohere.com",
+  "VECTORIX_DEFAULT_COHERE_API_KEY=",
+  "VECTORIX_DEFAULT_VOYAGE_ENDPOINT=https://api.voyageai.com",
+  "VECTORIX_DEFAULT_VOYAGE_API_KEY=",
+  "VECTORIX_DEFAULT_RESEND_API_KEY=",
+  "VECTORIX_DEFAULT_RESEND_SENDER_EMAIL=noreply@${main_domain}",
+  "VECTORIX_DEFAULT_SMTP_HOST=",
+  "VECTORIX_DEFAULT_SMTP_PORT=587",
+  "VECTORIX_DEFAULT_SMTP_USER=",
+  "VECTORIX_DEFAULT_SMTP_PASSWORD=",
+  "VECTORIX_DEFAULT_SMTP_SENDER_EMAIL=noreply@${main_domain}",
+  "VECTORIX_WEB_PUSH_ENABLED=false",
+]
+
+[[config.domains]]
+serviceName = "web"
+port = 3000
+host = "${main_domain}"
+
+[[config.domains]]
+serviceName = "api"
+port = 3001
+host = "api.${main_domain}"
+
+[[config.domains]]
+serviceName = "admin"
+port = 3006
+host = "admin.${main_domain}"
