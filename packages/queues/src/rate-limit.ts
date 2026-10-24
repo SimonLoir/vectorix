@@ -1,104 +1,117 @@
 import { Redis } from 'ioredis';
 import { connection } from './index';
+import {
+    createLocalRateLimitStore,
+    RATE_LIMIT_CONSUME_SCRIPT,
+    RATE_LIMIT_FIXED_CONSUME_SCRIPT,
+    type RateLimitPolicy,
+    readRateLimitDecision,
+    type RateLimitDecision,
+} from './rate-limit-core';
+export type { RateLimitDecision, RateLimitPolicy } from './rate-limit-core';
 
-/** Outcome of counting one request against a fixed window. */
-export type RateLimitDecision = Readonly<{
-    allowed: boolean;
-    /** Seconds until the current window ends; 0 when allowed. */
-    retryAfterSeconds: number;
-}>;
-
-const KEY_PREFIX = 'vectorix:rate-limit:';
-const FALLBACK_MAX_ENTRIES = 10_000;
-// INCR and PEXPIRE run atomically, so every replica shares one counter per window.
-const CONSUME_SCRIPT = `
-local count = redis.call('INCR', KEYS[1])
-if count == 1 then redis.call('PEXPIRE', KEYS[1], ARGV[1]) end
-local ttl = redis.call('PTTL', KEYS[1])
-if ttl < 0 then
-    redis.call('PEXPIRE', KEYS[1], ARGV[1])
-    ttl = tonumber(ARGV[1])
-end
-return {count, ttl}
-`;
-
+const KEY_PREFIX = 'vectorix:rate-limit:v2:';
+const FIXED_KEY_PREFIX = 'vectorix:rate-limit:fixed:v1:';
+const RECONNECT_DELAY_MS = 5000;
+const fallback = createLocalRateLimitStore();
 let client: Redis | undefined;
-let fallbackWarned = false;
-const fallback = new Map<string, { count: number; resetAt: number }>();
+let connecting: Promise<Redis> | undefined;
+let nextConnectAt = 0;
+let warned = false;
+let closed = false;
 
-function redis(): Redis {
-    client ??= new Redis({
+function warnUnavailable() {
+    if (warned) return;
+    warned = true;
+    // Never pass an ioredis error, key, URL or stack to the logger.
+    try {
+        console.warn(
+            '[rate-limit] Redis is unavailable; using bounded per-process limits until it recovers.'
+        );
+    } catch {
+        // A diagnostic failure must not bypass the fallback decision.
+    }
+}
+
+/** One bounded connection attempt at a time, with no background retry loop. */
+function redis(): Promise<Redis> {
+    if (closed) return Promise.reject(new Error('Rate-limit store is closed.'));
+    if (client?.status === 'ready') return Promise.resolve(client);
+    if (connecting) return connecting;
+    if (Date.now() < nextConnectAt)
+        return Promise.reject(new Error('Rate-limit store is unavailable.'));
+    nextConnectAt = Date.now() + RECONNECT_DELAY_MS;
+    client?.disconnect();
+    const current = new Redis({
         ...connection,
-        // Rate limiting must answer quickly; a slow or absent Redis uses the local fallback.
+        lazyConnect: true,
+        enableOfflineQueue: false,
         maxRetriesPerRequest: 1,
         commandTimeout: 500,
         connectTimeout: 2000,
+        retryStrategy: () => null,
     });
-    return client;
-}
-
-function decide(count: number, ttlMs: number, max: number): RateLimitDecision {
-    return count <= max
-        ? { allowed: true, retryAfterSeconds: 0 }
-        : {
-              allowed: false,
-              retryAfterSeconds: Math.max(1, Math.ceil(ttlMs / 1000)),
-          };
-}
-
-function consumeLocally(
-    key: string,
-    windowMs: number,
-    max: number
-): RateLimitDecision {
-    const now = Date.now();
-    if (fallback.size >= FALLBACK_MAX_ENTRIES)
-        for (const [entryKey, entry] of fallback)
-            if (entry.resetAt <= now) fallback.delete(entryKey);
-    if (fallback.size >= FALLBACK_MAX_ENTRIES) fallback.clear();
-    const current = fallback.get(key);
-    const entry =
-        current && current.resetAt > now
-            ? { ...current, count: current.count + 1 }
-            : { count: 1, resetAt: now + windowMs };
-    fallback.set(key, entry);
-    return decide(entry.count, entry.resetAt - now, max);
+    // Attach before connect: ioredis otherwise prints raw error.stack itself.
+    current.on('error', warnUnavailable);
+    client = current;
+    connecting = current
+        .connect()
+        .then(() => current)
+        .catch(() => {
+            current.disconnect();
+            throw new Error('Rate-limit store is unavailable.');
+        })
+        .finally(() => {
+            connecting = undefined;
+        });
+    return connecting;
 }
 
 /**
- * Count one request for `key` in a fixed window shared by every process
- * through Redis. If Redis is unavailable the decision falls back to a bounded
- * per-process window, so limits degrade to per-replica rather than disappear;
- * one sanitized warning is logged. Keys must not contain secrets.
+ * Count against an explicit policy using one Redis script. The default preserves
+ * native auth's last-allowed window and its existing v2 Redis namespace. FIXED
+ * uses another namespace and never refreshes its first-hit deadline.
+ * On failure, retain bounded per-process budgets. Redis reconnects are attempted
+ * by requests at most once per five seconds; only one fixed warning is emitted.
+ * Callers must hash keys that might contain credentials or identifying paths.
  */
 export async function consumeRateLimit(
     key: string,
     windowSeconds: number,
-    max: number
+    max: number,
+    policy: RateLimitPolicy = 'LAST_ALLOWED'
 ): Promise<RateLimitDecision> {
-    const windowMs = Math.max(1, Math.round(windowSeconds * 1000));
+    const windowMs = Math.round(windowSeconds * 1000);
+    if (
+        !Number.isSafeInteger(windowMs) ||
+        windowMs < 1 ||
+        !Number.isSafeInteger(max) ||
+        max < 1 ||
+        (policy !== 'LAST_ALLOWED' && policy !== 'FIXED')
+    )
+        throw new Error('Rate-limit rule is invalid.');
     try {
-        const [count, ttl] = (await redis().eval(
-            CONSUME_SCRIPT,
+        const shared = await redis();
+        const result: unknown = await shared.eval(
+            policy === 'FIXED'
+                ? RATE_LIMIT_FIXED_CONSUME_SCRIPT
+                : RATE_LIMIT_CONSUME_SCRIPT,
             1,
-            `${KEY_PREFIX}${key}`,
-            windowMs
-        )) as [number, number];
-        return decide(Number(count), Number(ttl), max);
+            `${policy === 'FIXED' ? FIXED_KEY_PREFIX : KEY_PREFIX}${key}`,
+            windowMs,
+            max
+        );
+        return readRateLimitDecision(result);
     } catch {
-        if (!fallbackWarned) {
-            fallbackWarned = true;
-            console.warn(
-                '[rate-limit] Redis is unavailable; using per-process limits until it recovers.'
-            );
-        }
-        return consumeLocally(key, windowMs, max);
+        warnUnavailable();
+        return fallback.consume(key, windowMs, max, policy);
     }
 }
 
-/** Close the shared rate-limit connection during graceful shutdown. */
-export async function closeRateLimitStore(): Promise<void> {
-    const current = client;
+/** Disconnect immediately and stop all future connection attempts on shutdown. */
+export function closeRateLimitStore(): Promise<void> {
+    closed = true;
+    client?.disconnect();
     client = undefined;
-    await current?.quit().catch(() => current.disconnect());
+    return Promise.resolve();
 }

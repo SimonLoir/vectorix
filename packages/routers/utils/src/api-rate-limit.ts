@@ -1,19 +1,20 @@
 import { ORPCError } from '@orpc/server';
 import { consumeRateLimit } from '@repo/queues/rate-limit';
 
-/** Operations that call a paid or shared embedding provider per request. */
+/** Request budgets for provider-related operations, never native usage or billing. */
 export const PROVIDER_OPERATIONS: ReadonlySet<string> = new Set([
     'admin.rag.indexing.search',
     'admin.rag.indexing.probe',
     'admin.rag.indexing.models',
 ]);
+export const MAX_API_RATE_LIMIT_PER_MINUTE = 1_000_000;
 
 export type ApiRateLimits = Readonly<{
-    /** Requests per minute per organization principal; 0 disables. */
+    /** Requests per minute per organization principal; 0 disables this bucket. */
     principal: number;
-    /** Provider-backed requests per minute per organization principal. */
+    /** Admitted provider-operation requests per minute per principal; 0 disables. */
     principalProvider: number;
-    /** Provider-backed requests per minute shared by the whole organization. */
+    /** Admitted provider-operation requests per minute per organization; 0 disables. */
     organizationProvider: number;
 }>;
 
@@ -29,15 +30,19 @@ function limit(
     fallback: number
 ): number {
     if (value === undefined || value.trim() === '') return fallback;
-    if (!/^\d+$/u.test(value.trim()))
-        throw new Error(`${name} must be a non-negative integer.`);
-    return Number(value.trim());
+    const text = value.trim();
+    const parsed = Number(text);
+    if (
+        !/^\d+$/u.test(text) ||
+        !Number.isSafeInteger(parsed) ||
+        parsed < 0 ||
+        parsed > MAX_API_RATE_LIMIT_PER_MINUTE
+    )
+        throw new Error(name + ' must be an integer from 0 to 1000000.');
+    return parsed;
 }
 
-/**
- * Read the per-minute budgets once. Invalid values fail at startup; 0 turns a
- * bucket off. Defaults are generous for dashboards and strict for provider calls.
- */
+/** Validate all startup budgets without echoing raw configuration; only zero disables. */
 export function parseApiRateLimits(
     environment: Readonly<Record<string, string | undefined>>
 ): ApiRateLimits {
@@ -65,47 +70,74 @@ type Principal = Readonly<{
     keyId: string | null;
     userId: string | null;
 }>;
-
 type Consume = typeof consumeRateLimit;
 
-/**
- * Count one authenticated v1 request against its budgets and throw
- * TOO_MANY_REQUESTS (429) with `Retry-After` when any is exhausted. Every
- * applicable bucket is counted, so retries during a denial still spend the
- * principal budget. Keys hold only opaque identifiers.
- */
-export async function enforceApiRateLimit(
+function principalScope(principal: Principal) {
+    const actor = principal.keyId
+        ? 'key:' + principal.keyId
+        : 'user:' + (principal.userId ?? 'unknown');
+    return principal.organizationId + ':' + actor;
+}
+
+/** Stop at the first refusal, before touching any later shared bucket. */
+async function consumeBudgets(
+    checks: readonly (readonly [string, number])[],
+    resHeaders: Headers | undefined,
+    consume: Consume
+) {
+    for (const [key, maximum] of checks) {
+        if (maximum === 0) continue;
+        const decision = await consume(key, 60, maximum, 'FIXED');
+        if (decision.allowed) continue;
+        resHeaders?.set('Retry-After', String(decision.retryAfterSeconds));
+        throw new ORPCError('TOO_MANY_REQUESTS', {
+            status: 429,
+            message: 'Too many requests. Retry after the indicated delay.',
+            data: { retryAfterSeconds: decision.retryAfterSeconds },
+        });
+    }
+}
+
+/** Personal anti-loop budget, charged before operation/resource permission checks. */
+export function enforceApiRateLimit(
     principal: Principal,
-    operation: string,
     limits: ApiRateLimits,
     resHeaders: Headers | undefined,
     consume: Consume = consumeRateLimit
 ): Promise<void> {
-    const actor = principal.keyId
-        ? `key:${principal.keyId}`
-        : `user:${principal.userId ?? 'unknown'}`;
-    const scope = `${principal.organizationId}:${actor}`;
-    const checks: [string, number][] = [[`api:${scope}`, limits.principal]];
-    if (PROVIDER_OPERATIONS.has(operation))
-        checks.push(
-            [`api-provider:${scope}`, limits.principalProvider],
+    return consumeBudgets(
+        [['api:' + principalScope(principal), limits.principal]],
+        resHeaders,
+        consume
+    );
+}
+
+/**
+ * Memoize one admission per HTTP request. Services call this only after their
+ * resource/binding guards. These counters count admitted operations, not native
+ * calls, vectors, successful responses or billing. Later revocation checks stay
+ * authoritative and do not refund the request budget.
+ */
+export function createProviderRateLimitAdmission(
+    principal: Principal,
+    limits: ApiRateLimits,
+    resHeaders: Headers | undefined,
+    consume: Consume = consumeRateLimit
+): () => Promise<void> {
+    let admission: Promise<void> | undefined;
+    return () =>
+        (admission ??= consumeBudgets(
             [
-                `api-provider-org:${principal.organizationId}`,
-                limits.organizationProvider,
-            ]
-        );
-    let retryAfter = 0;
-    for (const [key, max] of checks) {
-        if (max <= 0) continue;
-        const decision = await consume(key, 60, max);
-        if (!decision.allowed)
-            retryAfter = Math.max(retryAfter, decision.retryAfterSeconds);
-    }
-    if (retryAfter === 0) return;
-    resHeaders?.set('Retry-After', String(retryAfter));
-    throw new ORPCError('TOO_MANY_REQUESTS', {
-        status: 429,
-        message: 'Too many requests. Retry after the indicated delay.',
-        data: { retryAfterSeconds: retryAfter },
-    });
+                [
+                    'api-provider:' + principalScope(principal),
+                    limits.principalProvider,
+                ],
+                [
+                    'api-provider-org:' + principal.organizationId,
+                    limits.organizationProvider,
+                ],
+            ],
+            resHeaders,
+            consume
+        ));
 }

@@ -1,34 +1,57 @@
-# Versioned API rate limiting
+# Versioned API request budgets
 
-This page covers issue #56. Every authenticated `/rpc/v1/*` and `/api/v1/*` operation built on `@routers/utils/authorized` passes through [`enforceApiRateLimit`](../packages/routers/utils/src/api-rate-limit.ts). The check runs after authentication and the organization-suspension check, and before permission checks, so a looping client is throttled even when it is denied. Counters are atomic Redis fixed windows from [`consumeRateLimit`](../packages/queues/src/rate-limit.ts), shared by every API replica.
+Every authenticated organization operation on `/rpc/v1/*` and `/api/v1/*` built on [`authorized`](../packages/routers/utils/src/authorized.ts) receives a personal anti-loop budget after authentication and active-organization validation. It runs before operation permissions, so denied loops are throttled. Shared provider-operation admission waits until the service has checked current resource access and its saved embedding binding. An unauthenticated request or inactive organization never reaches these budgets.
 
-## Budgets
+## Admission order and scope
 
-| Bucket                                       | Key                                  | Default per minute | Variable                                                   |
-| -------------------------------------------- | ------------------------------------ | ------------------ | ---------------------------------------------------------- |
-| Every operation, per principal               | organization + API key ID or user ID | 600                | `VECTORIX_API_RATE_LIMIT_PER_MINUTE`                       |
-| Provider-backed operations, per principal    | organization + API key ID or user ID | 60                 | `VECTORIX_API_PROVIDER_RATE_LIMIT_PER_MINUTE`              |
-| Provider-backed operations, per organization | organization                         | 300                | `VECTORIX_API_ORGANIZATION_PROVIDER_RATE_LIMIT_PER_MINUTE` |
+```mermaid
+flowchart TD
+    A[Authentication and active organization] --> B[Personal request budget]
+    B --> C[Operation and compound permissions]
+    C --> D[Current collection and saved profile binding]
+    D --> E{Provider admission needed?}
+    E -->|Nonempty VECTOR or HYBRID; models or probe| F[Personal provider-operation budget]
+    F --> G[Organization provider-operation budget]
+    G --> H[Admitted operation]
+    H --> I[Existing post-I/O authority and revision checks]
+    E -->|LEXICAL or no eligible publications| J[Search without embedding I/O]
+```
 
-Provider-backed operations call an embedding provider on each request: `rag.indexing.search`, `rag.indexing.probe` and `rag.indexing.models`. A value of `0` disables that bucket. A value that is not a non-negative integer fails API startup. Dashboard sessions count against their user's budget, so the defaults leave headroom for normal browsing.
+[`enforceApiRateLimit`](../packages/routers/utils/src/api-rate-limit.ts) consumes only the personal budget. The middleware attaches an optional `AuthorizedContext.admitProviderRequest` callback after operation permissions. [`models.ts`](../packages/routers/rag/src/services/indexing/models.ts) and [`search.ts`](../packages/routers/rag/src/services/indexing/search.ts) call it after their collection/profile and binding checks. The callback memoizes both success and refusal for that HTTP request. Each stage stops at its first refusal: a personal refusal cannot spend a shared organization budget, and a permission/resource denial cannot spend either provider-operation budget.
 
-Every applicable bucket is counted on each request, including requests that end up denied, so retries during a denial still spend the budget.
+These are **request admission budgets**, not usage accounting or billing. Listing models and probing are admitted operations: a Voyage catalog listing performs no provider I/O, while a probe may make several native calls. Nonempty VECTOR/HYBRID searches are admitted immediately before query embedding; LEXICAL and searches with no eligible publications skip provider admission. A later native failure or authority revocation does not refund an admitted request. Existing post-I/O checks, durable quotas and native telemetry remain authoritative for their separate purposes.
 
-## Response
+## Configuration and windows
 
-An exhausted bucket returns HTTP 429 with code `TOO_MANY_REQUESTS`, `data.retryAfterSeconds`, and a `Retry-After` header on both RPC and REST. The header is set through oRPC's `ResponseHeadersPlugin` in [the runtime factory](../apps/api/src/api-versioning/runtime-factory.ts). The OpenAPI document (revision `1.20.0`) declares the 429 response and its header for every operation except the public health check. Dashboards show the existing localized `rateLimited` request error.
+| Bucket                          | Scope                                | Default per minute | Server variable                                            |
+| ------------------------------- | ------------------------------------ | ------------------ | ---------------------------------------------------------- |
+| Personal anti-loop              | Organization + API-key ID or user ID | 600                | `VECTORIX_API_RATE_LIMIT_PER_MINUTE`                       |
+| Personal provider operation     | Organization + API-key ID or user ID | 60                 | `VECTORIX_API_PROVIDER_RATE_LIMIT_PER_MINUTE`              |
+| Organization provider operation | Organization                         | 300                | `VECTORIX_API_ORGANIZATION_PROVIDER_RATE_LIMIT_PER_MINUTE` |
 
-If Redis is unavailable, limits fall back to per-process windows and one sanitized warning is logged.
+Each configured value must contain decimal digits representing a safe integer from **0 through 1,000,000**. Only `0` disables its bucket. Missing or blank settings use defaults; malformed, negative, fractional or oversized values fail startup without printing their raw values. Session requests share the user's organization budget, while each organization API key has its own personal budget. Restart API replicas after changing these server settings.
 
-## Test and acceptance environments
+API counters use [`consumeRateLimit(..., 'FIXED')`](../packages/queues/src/rate-limit.ts): a 60-second window begins with its first allowed hit. Later allowed or refused hits do not refresh that deadline, and refused hits do not increment the counter. Atomic Redis scripts share counters among API replicas. API counters use the `vectorix:rate-limit:fixed:v1:` namespace; the native authentication default remains `LAST_ALLOWED` with its unchanged `vectorix:rate-limit:v2:` namespace and Lua behavior. Native allowed hits renew their window; rejected hits do not. The policies never reuse a counter.
 
-`pnpm test:catalog` sets all three variables to `0`, because its functional journeys issue many calls per minute from one owner. The separately invoked capacity and quality acceptance workflows under `tests/acceptance/` run many concurrent searches and were not changed. Set the provider variables high enough, or to `0`, for those runs.
+If Redis is unavailable, a bounded local store preserves the selected window policy separately for each process. It holds at most 10,000 live entries across both policies, scans at most 64 entries per admission and denies new keys when saturated rather than evicting live security budgets. This is not a distributed limit during an outage. Requests attempt reconnection at most once per five seconds; only one fixed sanitized warning is emitted. Redis and fallback counts are not reconciled on recovery, so limits must not be presented as exact cumulative usage. Shutdown must call `closeRateLimitStore()`.
 
-## Not included
+## Responses and dashboard recipe
 
-Monthly per-organization query or embedding budgets, and their dashboard and superadmin views, are not implemented. They need a usage model and product decisions on limits. The existing document and chunk quotas are unchanged.
+An exhausted bucket returns HTTP 429 with code `TOO_MANY_REQUESTS`, `data.retryAfterSeconds` and a `Retry-After` header on RPC and REST. [`ResponseHeadersPlugin`](../apps/api/src/api-versioning/runtime-factory.ts) preserves the response header. OpenAPI revision `1.20.0` declares 429 and its header for every operation except public health. The dashboards use their existing localized `rateLimited` feedback without exposing server details.
 
-## Verification
+For a dashboard acceptance run, configure a finite personal limit with enough headroom for normal sign-in and account navigation, then repeat an authorized catalog request until the server returns 429. Confirm the localized error and Retry action, wait for the indicated delay, and retry successfully. An authorized nonempty vector search can separately exercise provider-operation admission with an already configured controlled provider and saved active collection. Do not infer native billing from a request count. Browser API-key creation, role or credential changes are not required; API-key isolation and denied resource access are covered by disposable automated tests. Actual browser verification for this correction is pending.
 
-- `apps/api/src/http/api-rate-limit.test.ts`: configuration parsing, per-principal and per-organization isolation, the organization provider bucket, and real RPC/REST runtime responses with status 429 and `Retry-After`.
-- `packages/queues/src/rate-limit.test.ts` and `rate-limit.integration.ts`: the Redis window and its fallback.
+## Disposable tests and frozen acceptance workflows
+
+[`pnpm test:catalog`](../scripts/test-catalog.sh) supplies **1,000,000** for each bucket. This is a finite test configuration, allowing bulk functional journeys while retaining observable counters. The focused native fixture first proves an owner search increments the organization counter and controlled embedding call count, then proves settings-only keys, missing collection grants and personal exhaustion do not spend the shared budget. To produce 429, the fixture seeds only one freshly issued synthetic key's exact personal Redis counter to its configured maximum, with a bounded TTL. This trigger does not alter database rights, clocks or task state. Its business rows and objects belong to disposable stores; uploads, indexing and searches use the normal application paths. The shared controlled-provider fixture temporarily sets generous organization quotas and restores their previous values; this is not production or capacity evidence.
+
+The quality and capacity launchers under `tests/acceptance/` use closed environment construction and pinned state. They **do not inherit shell exports** of these variables. This change does not alter their frozen sources, policies, archived outcomes or environments. A future run needing different limits must explicitly add them through a separately reviewed preparation/configuration change and fresh source/state pins. Existing states must not be adopted or guards relaxed to make a load pass. Historical or future capacity outcomes are not established by these functional tests.
+
+## Verification and exclusions
+
+- [`api-rate-limit.test.ts`](../apps/api/src/http/api-rate-limit.test.ts): each setting's safe bound, sequential and memoized admission, isolation and real oRPC RPC/REST header serialization with controlled counters.
+- [`rate-limit.test.ts`](../packages/queues/src/rate-limit.test.ts): both policies' clocks, isolation, bounded saturation and sanitized unavailable-Redis fallback.
+- [`rate-limit.integration.ts`](../packages/queues/src/rate-limit.integration.ts): real isolated Redis concurrency, last-allowed renewal, fixed-window expiry and separate namespaces.
+- [`rag-tests/api-rate-limit.ts`](../apps/api/src/rag-tests/api-rate-limit.ts): native authenticated middleware/service admission and controlled embedding fixture, operation/resource denial and RPC/REST 429 responses.
+
+Monthly organization usage budgets and their dashboard/superadmin views remain unimplemented. No database schema, migration, public DTO or endpoint path changes. Local validation passes frozen installation, dummy Prisma generation, four scoped type/lint tasks, 171 API/backend tests, 11 utility tests, five real Redis tests, all 320 disposable catalog tests and four production builds. The initial catalog stops at 315/316 before the four new admission cases because eight worker scans do not establish activation among retained generations. Only the fixture wait changes to bounded real scans; the fresh complete pass proves all four cases without changing guards, task dates or completion state. Production code has an independent CLEAR review; final delivery review and CI remain pending. The protected admin declaration is restored byte-for-byte with its original mode. No actual browser credential/key action, hosted-provider measurement or full-capacity result is claimed.

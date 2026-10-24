@@ -5,6 +5,7 @@ import { createORPCClient } from '@orpc/client';
 import { RPCLink } from '@orpc/client/fetch';
 import type { VectorixApiV1Client } from '@repo/api';
 import { prisma } from '@repo/db';
+import { closeRateLimitStore } from '@repo/queues/rate-limit';
 import { initializeVectorixPermissions } from '@repo/auth/permissions/rollout';
 import { enqueueAccountSignInNotifications } from '@routers/utils/notifications';
 import { processNotifications } from '../../workers/src/notifications/process';
@@ -85,6 +86,9 @@ function browser() {
 }
 const a = browser();
 const b = browser();
+
+// Independent hook also runs if owned-row cleanup fails.
+after(() => closeRateLimitStore());
 
 // Only rows created by this run are removed; an existing development database is never accepted.
 after(async () => {
