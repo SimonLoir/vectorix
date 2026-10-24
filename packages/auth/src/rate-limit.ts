@@ -34,8 +34,6 @@ export function createAuthRateLimitStorage(
     consume: typeof consumeRateLimit = consumeRateLimit
 ): RateLimitStorage {
     return {
-        get: () => Promise.resolve(null),
-        set: () => Promise.resolve(),
         async consume(key, rule) {
             const decision = await consume(
                 hashAuthRateLimitKey(key),

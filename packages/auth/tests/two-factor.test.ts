@@ -126,8 +126,12 @@ void test('enabled 2FA challenges the password and notifies only the verified se
 
     const enabled = await request('/two-factor/enable', {
         password: credentials.password,
+        method: 'totp',
     });
     assert.equal(enabled.status, 200);
+    assert.equal(enabled.body.method, 'totp');
+    assert.notEqual(database.user[0]!.twoFactorEnabled, true);
+    assert.equal(database.twoFactor[0]!.verified, false);
     assert.equal((enabled.body.backupCodes as string[]).length, 10);
     const secret = new URL(enabled.body.totpURI as string).searchParams.get(
         'secret'
@@ -168,7 +172,9 @@ void test('backup codes are single use and never stored in plain text', async ()
     await request('/sign-up/email', { ...credentials, name: 'Member' });
     const enabled = await request('/two-factor/enable', {
         password: credentials.password,
+        method: 'totp',
     });
+    assert.equal(enabled.body.method, 'totp');
     const secret = new URL(enabled.body.totpURI as string).searchParams.get(
         'secret'
     )!;
