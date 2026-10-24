@@ -6,7 +6,7 @@
 # -----------------------
 # 1) Base image with pnpm
 # -----------------------
-FROM node:24-alpine@sha256:06d7adf3e0ef61a13f1d28682726366f97a15aa1888c934d3ecec86c33918b53 AS base
+FROM node:25-alpine@sha256:bdf2cca6fe3dabd014ea60163eca3f0f7015fbd5c7ee1b0e9ccb4ced6eb02ef4 AS base
 # Install runtime dependencies for Node.js and Prisma
 # - libc6-compat: provides glibc compatibility for Alpine's musl libc (required for some Node.js native modules)
 # - openssl: required by Prisma
@@ -62,7 +62,7 @@ RUN pnpm --filter web build
 # 4) Runtime layer
 #    - copy Next.js standalone output only
 # -----------------------
-FROM node:24-alpine@sha256:06d7adf3e0ef61a13f1d28682726366f97a15aa1888c934d3ecec86c33918b53 AS runner
+FROM node:25-alpine@sha256:bdf2cca6fe3dabd014ea60163eca3f0f7015fbd5c7ee1b0e9ccb4ced6eb02ef4 AS runner
 RUN apk add --no-cache libc6-compat openssl
 WORKDIR /app
 ENV NODE_ENV=production
