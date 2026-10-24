@@ -30,6 +30,9 @@ updates:
           - /infra/postgres-vector
       schedule:
           interval: weekly
+      ignore:
+          - dependency-name: node
+            update-types: [version-update:semver-major]
       groups:
           base-images:
               patterns: ['*']
