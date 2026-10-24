@@ -1574,6 +1574,6 @@
         "empty": "Er is geen gelicentieerde functie geconfigureerd.",
         "enabled": "Ingeschakeld",
         "disabled": "Uitgeschakeld",
-        "informational": "Deze rechten zijn voorlopig informatief. Vectorix beperkt nog geen enkele module op basis ervan."
+        "informational": "Deze rechten zijn voorlopig informatief. Vectorix beperkt nog geen enkele module op basis ervan. De bestaande rechten en collectietoegang blijven gelden."
     }
 }

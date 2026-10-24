@@ -366,7 +366,7 @@
                 "featuresDescription": "Gérez les clés et la disponibilité globale des modules. Les plans et leurs droits sont définis chez le fournisseur externe.",
                 "usersTitle": "Utilisateurs",
                 "usersDescription": "Consultez les comptes Vectorix, leurs organisations et leur accès à la console superadmin.",
-                "entitlementsInformational": "Les droits sont pour l’instant informatifs : aucune route Vectorix ne les vérifie encore. Chaque organisation active peut donc utiliser tous les modules, quels que soient ses droits, leur expiration ou l’état du fournisseur. Leur application sera activée module par module."
+                "entitlementsInformational": "Les droits de licence sont pour l’instant informatifs. Les modules ne les appliquent pas, y compris leur expiration ou l’état du fournisseur. Les permissions des organisations et des membres, les portées des clés API et les droits sur les collections continuent de s’appliquer."
             }
         },
         "semanticQuota": {

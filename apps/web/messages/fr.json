@@ -1574,6 +1574,6 @@
         "empty": "Aucune fonctionnalité sous licence n’est configurée.",
         "enabled": "Activée",
         "disabled": "Désactivée",
-        "informational": "Ces droits sont pour l’instant informatifs. Vectorix ne restreint encore aucun module en fonction de ceux-ci."
+        "informational": "Ces droits sont pour l’instant informatifs. Vectorix ne restreint encore aucun module en fonction de ceux-ci. Les permissions existantes et les droits sur les collections continuent de s’appliquer."
     }
 }

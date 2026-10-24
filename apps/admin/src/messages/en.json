@@ -366,7 +366,7 @@
                 "featuresDescription": "Manage module keys and global availability. Plans and their entitlements are defined by the external provider.",
                 "usersTitle": "Users",
                 "usersDescription": "View Vectorix accounts, their organizations and their access to the superadmin console.",
-                "entitlementsInformational": "Entitlements are informational for now: no Vectorix route checks them yet, so every active organization can use every module whatever its grants, expiry or provider status. Enforcement will be enabled per module."
+                "entitlementsInformational": "License entitlements are informational for now. Modules do not enforce them, including expiry or provider status. Organization and member permissions, API-key scopes and collection grants still apply."
             }
         },
         "semanticQuota": {

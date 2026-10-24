@@ -1574,6 +1574,6 @@
         "empty": "No licensed feature is configured.",
         "enabled": "Enabled",
         "disabled": "Disabled",
-        "informational": "These entitlements are informational for now. Vectorix does not restrict any module based on them yet."
+        "informational": "These entitlements are informational for now. Vectorix does not restrict any module based on them yet. Existing permissions and collection access still apply."
     }
 }
