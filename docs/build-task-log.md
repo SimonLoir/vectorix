@@ -459,6 +459,13 @@ Final issue #17 documentation checks passed: four changed documents, one parsed 
 
 Password-reset links were delivered in [PR #34](https://github.com/SimonLoir/vectorix/pull/34) as `571ca22`. Its exact-head catalog and six-image CI checks passed, and it was squash-merged as `571deab`, closing issue #17.
 
+## Redis client dependency — PR94
+
+- [x] Reviewed exact head `c51412f17145c50dd32a87da5c206d6724feabcb` on base `7382aed3`. The [official ioredis v6 options](https://github.com/redis/ioredis/blob/v6.0.0/lib/redis/RedisOptions.ts) default to RESP3 with RESP2-compatible `replyMapping: "legacy"`; Node 24 satisfies the new Node >=20 requirement. The [API manifest](../apps/api/package.json) and [queues manifest](../packages/queues/package.json) pin direct ioredis 6.0.0, while BullMQ 5.81.5 retains its own ioredis 5.11.1. Shared queue connections remain plain options, never a cross-major client instance.
+- [x] Original-head CI passed catalog `40120774370`, including real disposable Redis authentication, atomic Lua/TTL policies and two native HTTP replicas; six images `40120774426` and CodeQL `40120774404` also passed, with security check `120951954509` successful and zero annotations. These results belong to `c51412f`, not the later stacked tree.
+- [x] Prepared a no-commit merge of reviewed PR93 head `43c149632e2f3c7ecc3a350c817319a714332156`. Static graph comparison requires exactly the reviewed resolver and Redis dependency changes, preserving every unrelated package, product source and historical log entry. Formatting, local links and diff whitespace are checked without installing dependencies.
+- [ ] The stacked candidate has no local installation, service, test, application build, native acceptance or dashboard run. Fresh exact-head CI remains pending publication; no PR merge is claimed.
+
 ## Infrastructure follow-up — encoded Redis credentials (issue #23)
 
 - [x] Confirm encoded WHATWG userinfo bypasses the native client URL decoder when passed as connection options.
