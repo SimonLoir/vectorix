@@ -15,6 +15,7 @@ import QRCode from 'qrcode';
 import { useState } from 'react';
 import { BackupCodesList } from './backup-codes-list';
 import { PasswordConfirmForm } from './password-confirm-form';
+import { getTotpEnrollment } from './totp-enrollment';
 
 type SetupState =
     | { step: 'password' }
@@ -42,6 +43,7 @@ export function TwoFactorSetupDialog({
 }) {
     const authClient = useAuth();
     const t = useTranslations('account.twoFactor');
+    const securityErrors = useTranslations('accountSecurity.errors');
     const [state, setState] = useState<SetupState>({ step: 'password' });
     const [code, setCode] = useState('');
     const [pending, setPending] = useState(false);
@@ -60,17 +62,21 @@ export function TwoFactorSetupDialog({
         const { data, error: enableError } = await authClient.twoFactor.enable({
             password,
             issuer: 'Vectorix',
+            method: 'totp',
         });
         if (enableError || !data) return t('invalidPassword');
-        const secret = new URL(data.totpURI).searchParams.get('secret') ?? '';
+        const enrollment = getTotpEnrollment(data);
+        if (!enrollment) return securityErrors('generic');
+        const secret =
+            new URL(enrollment.totpURI).searchParams.get('secret') ?? '';
         setState({
             step: 'scan',
             secret,
-            qrCodeDataUrl: await QRCode.toDataURL(data.totpURI, {
+            qrCodeDataUrl: await QRCode.toDataURL(enrollment.totpURI, {
                 margin: 1,
                 width: 200,
             }),
-            backupCodes: data.backupCodes,
+            backupCodes: enrollment.backupCodes,
         });
         return null;
     };

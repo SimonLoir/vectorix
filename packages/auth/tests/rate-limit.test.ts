@@ -32,6 +32,42 @@ void test('canonical native rate keys become bounded opaque digests before stora
     assert.deepEqual(captured, [[key, 60, 6]]);
 });
 
+void test('native atomic consume maps allowed requests to null retry without changing the selected window', async () => {
+    let calls = 0;
+    const storage = createAuthRateLimitStorage((key, window, max) => {
+        calls++;
+        assert.equal(key, hashAuthRateLimitKey('native-ip|/sign-in/email'));
+        assert.equal(window, 10);
+        assert.equal(max, 3);
+        return Promise.resolve({ allowed: true, retryAfterSeconds: 0 });
+    });
+    assert.deepEqual(
+        await storage.consume('native-ip|/sign-in/email', {
+            window: 10,
+            max: 3,
+        }),
+        { allowed: true, retryAfter: null }
+    );
+    assert.equal(calls, 1);
+});
+
+void test('native atomic storage failure propagates without a permissive fallback or repeated consume', async () => {
+    const failure = new Error('Controlled atomic storage refusal.');
+    let calls = 0;
+    const storage = createAuthRateLimitStorage(() => {
+        calls++;
+        return Promise.reject(failure);
+    });
+    await assert.rejects(
+        storage.consume('native-ip|/two-factor/verify-totp', {
+            window: 10,
+            max: 3,
+        }),
+        (error: unknown) => error === failure
+    );
+    assert.equal(calls, 1);
+});
+
 void test('native second-factor rules are selected without custom verification overrides', () => {
     const plugin = createTwoFactorPlugin();
     const rules = plugin.rateLimit;
