@@ -677,5 +677,75 @@
             "resourceTeardown": "NOT_RUN"
         },
         "history": "Every previous provenance field is retained as a separate historical checkpoint; none is current Redis-native proof."
+    },
+    "redisNativeAcceptance": {
+        "schemaVersion": 1,
+        "status": "NATIVE_AND_READ_ONLY_EN_DASHBOARD_PASS_CLEANED",
+        "runId": "25404079bb4e",
+        "scenario": "REDIS_V1",
+        "date": "2026-10-24",
+        "productCommit": "f916e57c4ce57c12c54427cb1d55e317e7b4ac72",
+        "helperCheckpointCommit": "80e61f0adf4aa92013e0a020fd346e7b87e34cf1",
+        "sourceFreezeSha256": "dd9d7c5d1c92597f04f7e3d6c6948473a16826cc3b1b5b6fbb48bdfa648a9791",
+        "preparationManifestSha256": "9a39d2e596e2dcd44cf93032336714713e6c81b2b49d1c0b8ae4512136496cc1",
+        "completedSummarySha256": "311b829f6ac85e805ced33b73acb0b138434342cd67788fc1abada16f0d427d8",
+        "independentRootAuditSha256": "15d12fb139cccbad102573e96931b81f0fc3368f59241b02f4c8b4b867fe6e4e",
+        "cleanupSha256": "dbef454622a8a80d8b342ae48395d8a0e982b24e2a70cc68e68eba2a587b3d94",
+        "secretCleanupSha256": "6c0a5338f52569adbe720ded0c5f1481183b4cbba55dce9df72b4697cbb22723",
+        "milestones": 14,
+        "formalObservations": 5,
+        "sessionCounts": [1, 1, 1, 1, 0],
+        "pending": {
+            "snapshots": 6,
+            "utcMilliseconds": 15110,
+            "monotonicMilliseconds": 15109.442719,
+            "attempts": 0,
+            "claimTokenCount": 0,
+            "noExtraction": true,
+            "dbOnly": true
+        },
+        "automaticSameV2Ready": true,
+        "sameRedisContainerAndVolume": true,
+        "sameWorkerPidAndStartTicks": true,
+        "watchdog": {
+            "budgetSeconds": 900,
+            "refreshed": false,
+            "intervened": false,
+            "exitCode": 0
+        },
+        "allPositiveFileTransfers": "UNATTENDED_NATIVE_SESSION_CURL",
+        "nativeMinimumKey": "RAG_LIBRARY_READ_ZERO_COLLECTION_SCOPES_EXPECTED_404_ONLY",
+        "browser": {
+            "locale": "en",
+            "scope": "ROOT_READ_ONLY_STATUS_HISTORY_USAGE_OPERATIONS_LOGIN_LOGOUT",
+            "fileTransfers": 0,
+            "warnings": 0,
+            "errors": 0,
+            "screenshots": 3,
+            "usageZeroMiBIsRounded": true
+        },
+        "quotaBytes": {
+            "v1": 1044,
+            "v2Staged": 2284,
+            "v2Reserved": 620,
+            "recovered": 2284,
+            "recoveredReserved": 0
+        },
+        "retention": "G1_V1_SEVEN_DAYS_NATURALLY_SCHEDULED_NOT_EXPIRED",
+        "cleanup": {
+            "containers": 0,
+            "volumes": 0,
+            "recordedProcesses": 0,
+            "sourcePairsRestored": 32,
+            "gatesRestoredDisabled": 12,
+            "lifecycleRestoredFirst": true,
+            "nextAndLockExact": true,
+            "secretFilesRemoved": 9,
+            "capturedMailRemoved": 6,
+            "curlTransientFilesRemaining": 0
+        },
+        "scope": "ONE_ACCEPTED_DOCUMENT_REPLACEMENT_REDIS_INTERRUPTION_NOT_CAPACITY_PROVIDER_OR_FULL_RECOVERY_MATRIX",
+        "laterDocumentationOrIntegrationHeadNativeValidation": "NOT_RUN",
+        "historicalFields": "All prior fields including NOT_RUN preparation records remain unchanged; this appended record is the actual Redis execution."
     }
 }
