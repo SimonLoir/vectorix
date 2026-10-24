@@ -50,7 +50,7 @@
         "@repo/api": "workspace:*",
         "@better-auth/api-key": "1.6.33",
         "@better-auth/passkey": "1.6.33",
-        "@hookform/resolvers": "^5.9.1",
+        "@hookform/resolvers": "^6.0.0",
         "@repo/auth": "workspace:*",
         "@repo/ui": "workspace:*",
         "@tanstack/react-query": "^5.103.2",

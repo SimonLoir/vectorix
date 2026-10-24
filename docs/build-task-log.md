@@ -459,6 +459,13 @@ Final issue #17 documentation checks passed: four changed documents, one parsed 
 
 Password-reset links were delivered in [PR #34](https://github.com/SimonLoir/vectorix/pull/34) as `571ca22`. Its exact-head catalog and six-image CI checks passed, and it was squash-merged as `571deab`, closing issue #17.
 
+## Redis client dependency — PR94
+
+- [x] Reviewed exact head `c51412f17145c50dd32a87da5c206d6724feabcb` on base `7382aed3`. The [official ioredis v6 options](https://github.com/redis/ioredis/blob/v6.0.0/lib/redis/RedisOptions.ts) default to RESP3 with RESP2-compatible `replyMapping: "legacy"`; Node 24 satisfies the new Node >=20 requirement. The [API manifest](../apps/api/package.json) and [queues manifest](../packages/queues/package.json) pin direct ioredis 6.0.0, while BullMQ 5.81.5 retains its own ioredis 5.11.1. Shared queue connections remain plain options, never a cross-major client instance.
+- [x] Original-head CI passed catalog `40120774370`, including real disposable Redis authentication, atomic Lua/TTL policies and two native HTTP replicas; six images `40120774426` and CodeQL `40120774404` also passed, with security check `120951954509` successful and zero annotations. These results belong to `c51412f`, not the later stacked tree.
+- [x] Prepared a no-commit merge of reviewed PR93 head `43c149632e2f3c7ecc3a350c817319a714332156`. Static graph comparison requires exactly the reviewed resolver and Redis dependency changes, preserving every unrelated package, product source and historical log entry. Formatting, local links and diff whitespace are checked without installing dependencies.
+- [ ] The stacked candidate has no local installation, service, test, application build, native acceptance or dashboard run. Fresh exact-head CI remains pending publication; no PR merge is claimed.
+
 ## Infrastructure follow-up — encoded Redis credentials (issue #23)
 
 - [x] Confirm encoded WHATWG userinfo bypasses the native client URL decoder when passed as connection options.
@@ -1136,6 +1143,13 @@ Delivered in [PR #74](https://github.com/SimonLoir/vectorix/pull/74), squash `1a
 The two bundle checks transform 452 API modules and 244 worker modules. The installed tools are compatible with the repository's Node 24 engine declaration. Workers has no separate unit-test task. This is build-tool maintenance, not a new dashboard milestone: no Next build, catalog, Docker, provider or native acceptance is claimed for the combined update. Later integration changes only reorganize the build log and add this checklist; the tested dependency/runtime bytes remain unchanged.
 
 Touched files: [root manifest](../package.json), [API manifest](../apps/api/package.json), [workers manifest](../apps/workers/package.json) and [lockfile](../pnpm-lock.yaml).
+
+## Form resolver dependency — PR93
+
+- [x] Reviewed exact dependency head `d8223587ae598e907fe14b4bd2825d49ff63f259` on main `7382aed3`. The [official v6 release](https://github.com/react-hook-form/resolvers/releases/tag/v6.0.0) changes the unused Effect resolver to Effect v4. Our [invitation form](../apps/web/app/dashboard/settings/members/components/invite-member-form.tsx) and [create/join organization form](../packages/dashboard-core/src/components/team-switcher/new-organization-form.tsx) use only the unchanged Zod resolver. The published integrity matches the lock; React Hook Form 7.90.0 and Zod 4.6.7 are unchanged. No product migration is required.
+- [x] Isolated `codex/pr93-resolver-review` validation passed frozen installation, dummy-only client generation, ten offline checks executing the three actual AST-extracted schema initializers with 24 resolver calls across EN/FR/nl-BE, and serial uncached types/lint for dashboard-core, web and admin. Valid values, required/invalid fields, opaque-ID refinement and localized messages passed. The first relative private `--test` path was refused before module execution; the unchanged checker passed by absolute Node entry. Both Next declarations retain their original bytes, modes and presence/absence; product sources and lock remain exact to `d8223587`.
+- [x] At that source head, catalog `40120778388`, six-image workflow `40120778362`, CodeQL workflow `40120778453` and security check `120951906526` all report SUCCESS. These are exact-head CI results, not local native or dashboard acceptance. No local service, application database, browser journey, Docker run or production build was performed.
+- [ ] The validation-log addition awaits review/publication and fresh exact-head CI. No merge is claimed here.
 
 ## Issue #15 — Clear the reported transitive advisories
 
