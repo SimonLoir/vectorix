@@ -151,7 +151,12 @@
         "created": "Aangemaakt op",
         "expires": "Vervalt op",
         "actions": "Acties",
-        "noApiKeys": "Nog geen API-sleutels"
+        "noApiKeys": "Nog geen API-sleutels",
+        "search": "API-sleutels zoeken op naam",
+        "permissions": "Rechten",
+        "loading": "API-sleutels laden",
+        "noMatches": "Geen API-sleutels komen overeen met deze zoekopdracht.",
+        "emptyPage": "Er staan geen API-sleutels op deze pagina. Gebruik Vorige om terug te gaan naar eerdere resultaten."
     },
     "permissions": {
         "title": "Rollen en rechten",
@@ -436,7 +441,10 @@
             "limit": "De organisatie heeft de limiet voor leden of uitnodigingen bereikt.",
             "role": "Deze rol is niet beschikbaar of je mag hem niet toewijzen.",
             "generic": "De actie kon niet worden voltooid. Laad de pagina opnieuw om de huidige toestand te controleren voordat je opnieuw probeert."
-        }
+        },
+        "search": "Leden zoeken op naam of e-mailadres",
+        "noMatches": "Geen leden komen overeen met deze zoekopdracht.",
+        "emptyPage": "Er staan geen leden op deze pagina. Gebruik Vorige om terug te gaan naar eerdere resultaten."
     },
     "requestErrors": {
         "permission": "Je hebt geen toestemming om deze actie uit te voeren.",
@@ -660,6 +668,8 @@
             "accessKey": "S3-toegangssleutel-ID",
             "secretKey": "Geheime S3-toegangssleutel",
             "keepSecret": "Laat leeg om ongewijzigd te behouden",
+            "reenterSecret": "Verplicht omdat de bestemming is gewijzigd",
+            "destinationSecretHint": "Als je de service-URL, bucket of S3-adresseringsmodus wijzigt, kan de bestemming van geauthenticeerde verzoeken veranderen. Voer alle vereiste geheimen opnieuw in om deze wijziging op te slaan.",
             "apiKey": "API-sleutel",
             "optionalKey": "API-sleutel (optioneel)",
             "removeKey": "Huidige API-sleutel verwijderen",
@@ -843,6 +853,7 @@
             "playground": "Zoeken testen",
             "collectionJourney": "Indexeren en zoeken",
             "failed": "De bewerking kon niet worden voltooid. Controleer je rechten en configuratie en probeer opnieuw.",
+            "rateLimited": "Er zijn te veel zoekopdrachten of providerverzoeken verstuurd. Wacht een minuut en probeer het daarna opnieuw.",
             "loadFailed": "Deze informatie kon niet worden geladen. Je rechten zijn mogelijk gewijzigd.",
             "working": "Bezig…",
             "readDenied": "Je hebt geen leesrecht voor deze collectie. Catalogusbeheer geeft geen toegang tot de inhoud.",

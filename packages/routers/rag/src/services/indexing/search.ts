@@ -216,6 +216,7 @@ export async function searchCollection(
                     return { identity, configuration };
                 }
             );
+            await context.admitProviderRequest?.();
             const query = await measureTelemetry(execution, 'QUERY_EMBED', () =>
                 embedQuery(
                     prepared.configuration,

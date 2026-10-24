@@ -169,7 +169,7 @@ export async function telemetryAccessTests(t: TestContext) {
                     assert.equal(response.status, 200);
                     assert.equal(
                         response.headers.get('Vectorix-API-Revision'),
-                        '19'
+                        '21'
                     );
                     const encoded = await response.text();
                     assert(!encoded.includes(f.org));
@@ -186,7 +186,7 @@ export async function telemetryAccessTests(t: TestContext) {
                         typeof spec.info === 'object' &&
                         'version' in spec.info
                 );
-                assert.equal(spec.info.version, '1.19.0');
+                assert.equal(spec.info.version, '1.21.0');
                 assert(
                     'paths' in spec &&
                         spec.paths &&

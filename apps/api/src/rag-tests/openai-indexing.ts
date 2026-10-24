@@ -494,7 +494,7 @@ export async function openaiIndexingTests(t: TestContext) {
                     }
                 );
                 assert.equal(rest.status, 200);
-                assert.equal(rest.headers.get('Vectorix-API-Revision'), '19');
+                assert.equal(rest.headers.get('Vectorix-API-Revision'), '21');
                 assert.equal(
                     (await rest.json()).results[0].id,
                     result.results[0]!.id

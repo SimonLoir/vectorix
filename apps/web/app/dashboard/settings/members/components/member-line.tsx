@@ -102,6 +102,8 @@ export default function MemberLine({
             } else {
                 toast.success(t('memberRemoved'));
                 setShowDeleteModal(false);
+                // Native auth refreshes its own store; refresh every RPC page/search too.
+                await refresh();
             }
         } catch {
             toast.error(t('errors.generic'));
