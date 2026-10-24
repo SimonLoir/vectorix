@@ -1827,5 +1827,443 @@
         "selectedProductionMain": "dc314fcfe02bbc30877bb1a4a1720d1bb3abccde",
         "laterMainIntegration": "DEFERRED_UNTIL_COHERENT_NATIVE_RESULT",
         "historicalRecord": "All eighteen preceding fields remain unchanged. Trial 8aa is INCOMPLETE with an ambiguous historical TRACE_BOUND, no retained failed rows and no reconstructed backoff completion. Separate native G1 READY executes the ba755 reader SQL successfully. Revised ACK/transition/inventory helpers have hermetic coverage only."
+    },
+    "vectorProvisionNativeTrial": {
+        "schemaVersion": 1,
+        "scenario": "VECTOR_PROVISION_V1",
+        "status": "NATIVE_PROVISION_OUTAGE_RECOVERY_AND_DASHBOARD_RETRY_PASS_CLEANED",
+        "runId": "5ffbaa5ed44c",
+        "sourceCommit": "9cef0fdf86dda0b03dee545f284d5894479d7d74",
+        "selectedProductionMain": "dc314fcfe02bbc30877bb1a4a1720d1bb3abccde",
+        "selectedApplicationBuildReceiptSha256": "ddd1adf7654c7f9fa35dfcecfebaca730e6dd96209ce71bc6f8abccce7320158",
+        "reviewedSourceFreezeSha256": "357d3ed61af8707919bf0cd2ce04b001b4e5767a3684677249f17f297245edda",
+        "reviewedSourceFileMapSha256": "fe2f9b9d3b1db782c4516747554d096cf60c86833d6de99ee76b1e458c536a03",
+        "preparationManifestSha256": "24f1898208474ed7b478e93fbab11c90ea156ea1900db928051a7a85723c258a",
+        "rootPreflightSha256": "027c7b0ff7763006d2b8889e0e574a63aa9119e82f599d8e7c223824ebc74910",
+        "executedPairedSourceInventory": {
+            "tests/acceptance/s3-outage/README.md": {
+                "bytes": 23857,
+                "mode": 436,
+                "disabledSha256": "926a4efda3adc0cab6bebc13d385ea4d15bf5face14cf772d2998f2ee8529bf1",
+                "executedEnabledSha256": "926a4efda3adc0cab6bebc13d385ea4d15bf5face14cf772d2998f2ee8529bf1",
+                "gateOnlyChange": false
+            },
+            "tests/acceptance/s3-outage/bucket.mjs": {
+                "bytes": 6680,
+                "mode": 436,
+                "disabledSha256": "84ec4e6f176d63a1b1122f13de65f71d876a5391bfb0eecfc75f6004eebf4f24",
+                "executedEnabledSha256": "2df06545b4ac75bdbf7c7777ae174d9cecb58a717a60de01483455becc1ad362",
+                "gateOnlyChange": true
+            },
+            "tests/acceptance/s3-outage/cleanup-fixture.mjs": {
+                "bytes": 13025,
+                "mode": 436,
+                "disabledSha256": "fc54ad3f0045dbef1c720dd902dd920c3a409547668798a3d48c0c05df552bbb",
+                "executedEnabledSha256": "fc54ad3f0045dbef1c720dd902dd920c3a409547668798a3d48c0c05df552bbb",
+                "gateOnlyChange": false
+            },
+            "tests/acceptance/s3-outage/cleanup-observe.mjs": {
+                "bytes": 33495,
+                "mode": 436,
+                "disabledSha256": "0152a23220bc4827e434710ca3bf5ec7995ce08c6dddd34f42a52831205f869c",
+                "executedEnabledSha256": "0152a23220bc4827e434710ca3bf5ec7995ce08c6dddd34f42a52831205f869c",
+                "gateOnlyChange": false
+            },
+            "tests/acceptance/s3-outage/cleanup.test.mjs": {
+                "bytes": 22103,
+                "mode": 436,
+                "disabledSha256": "581aeb09a39315db748f883f3636d9c4623fa5ef5db51dfcd6d6a07ded121da8",
+                "executedEnabledSha256": "581aeb09a39315db748f883f3636d9c4623fa5ef5db51dfcd6d6a07ded121da8",
+                "gateOnlyChange": false
+            },
+            "tests/acceptance/s3-outage/fault.py": {
+                "bytes": 24571,
+                "mode": 436,
+                "disabledSha256": "ebffd21c7a2698b5bfb44a04053519d1269b4874ead51933f267391c767969da",
+                "executedEnabledSha256": "eacd7151b68367473c72a7f6b63f557aea94bf1c6e71bd95fa42544c1931c65e",
+                "gateOnlyChange": true
+            },
+            "tests/acceptance/s3-outage/fault_test.py": {
+                "bytes": 22627,
+                "mode": 436,
+                "disabledSha256": "aca64500d1b58c657b5576e0bb4855b5ef1d6a2e58b118cab83770ad90301d81",
+                "executedEnabledSha256": "aca64500d1b58c657b5576e0bb4855b5ef1d6a2e58b118cab83770ad90301d81",
+                "gateOnlyChange": false
+            },
+            "tests/acceptance/s3-outage/fixtures/expected.json": {
+                "bytes": 926,
+                "mode": 436,
+                "disabledSha256": "67c562dfb951d9751d76468f4cf29b89d6fae3432ed9debb5c7f0790cb4fac7d",
+                "executedEnabledSha256": "67c562dfb951d9751d76468f4cf29b89d6fae3432ed9debb5c7f0790cb4fac7d",
+                "gateOnlyChange": false
+            },
+            "tests/acceptance/s3-outage/fixtures/s3-outage-v1.txt": {
+                "bytes": 522,
+                "mode": 436,
+                "disabledSha256": "110bf3def2634f5a3c6addd02b8b61d35fddd3e3ea776077144041e6c2599719",
+                "executedEnabledSha256": "110bf3def2634f5a3c6addd02b8b61d35fddd3e3ea776077144041e6c2599719",
+                "gateOnlyChange": false
+            },
+            "tests/acceptance/s3-outage/fixtures/s3-outage-v2.txt": {
+                "bytes": 620,
+                "mode": 436,
+                "disabledSha256": "ef488f9ba8481a42e7f79aceafde979d9f09ddc0072f2edc0577e6b064cc3d2f",
+                "executedEnabledSha256": "ef488f9ba8481a42e7f79aceafde979d9f09ddc0072f2edc0577e6b064cc3d2f",
+                "gateOnlyChange": false
+            },
+            "tests/acceptance/s3-outage/lifecycle.py": {
+                "bytes": 55644,
+                "mode": 436,
+                "disabledSha256": "5acd933639910a6961871ecf7b8a02cc83519586b0dc145a4cfa177c22bfb85b",
+                "executedEnabledSha256": "2fb0dd3949b45cb4be317d1bd183342cacae4cc3470787daf2ce886c013eb6ea",
+                "gateOnlyChange": true
+            },
+            "tests/acceptance/s3-outage/lifecycle_test.py": {
+                "bytes": 24684,
+                "mode": 436,
+                "disabledSha256": "3fe9899a2d19c4fd06a67ac473cb26ac09ca3f4af50e7de63b30d0cc74d1a32a",
+                "executedEnabledSha256": "3fe9899a2d19c4fd06a67ac473cb26ac09ca3f4af50e7de63b30d0cc74d1a32a",
+                "gateOnlyChange": false
+            },
+            "tests/acceptance/s3-outage/objects.mjs": {
+                "bytes": 16033,
+                "mode": 436,
+                "disabledSha256": "a0ca8db7a7b46ddcdba416da74f1c13d26e931a5effa9df4de1fc2232623faaf",
+                "executedEnabledSha256": "a0ca8db7a7b46ddcdba416da74f1c13d26e931a5effa9df4de1fc2232623faaf",
+                "gateOnlyChange": false
+            },
+            "tests/acceptance/s3-outage/objects.test.mjs": {
+                "bytes": 7304,
+                "mode": 436,
+                "disabledSha256": "1a5a90b04a6502b14337ac843d7c20f88df87f4d0c18758cb1b94031fcab0d36",
+                "executedEnabledSha256": "1a5a90b04a6502b14337ac843d7c20f88df87f4d0c18758cb1b94031fcab0d36",
+                "gateOnlyChange": false
+            },
+            "tests/acceptance/s3-outage/observe.mjs": {
+                "bytes": 46519,
+                "mode": 436,
+                "disabledSha256": "4772ce32a66e3a37a7a6a9d9ebb92cad1c1d3d67199a8506162e2be1ac347161",
+                "executedEnabledSha256": "4772ce32a66e3a37a7a6a9d9ebb92cad1c1d3d67199a8506162e2be1ac347161",
+                "gateOnlyChange": false
+            },
+            "tests/acceptance/s3-outage/observe.test.mjs": {
+                "bytes": 19167,
+                "mode": 436,
+                "disabledSha256": "00f9dfc507b9b856cb199f4e740eaa6c8e202d3f95d177438c6021171a2d2dd6",
+                "executedEnabledSha256": "00f9dfc507b9b856cb199f4e740eaa6c8e202d3f95d177438c6021171a2d2dd6",
+                "gateOnlyChange": false
+            },
+            "tests/acceptance/s3-outage/private.mjs": {
+                "bytes": 12293,
+                "mode": 436,
+                "disabledSha256": "da9c2d4f5e425556a9669f91273f9096b37fc2e46fe5f17f9412a1d59ceadaba",
+                "executedEnabledSha256": "da9c2d4f5e425556a9669f91273f9096b37fc2e46fe5f17f9412a1d59ceadaba",
+                "gateOnlyChange": false
+            },
+            "tests/acceptance/s3-outage/provenance.json": {
+                "bytes": 82754,
+                "mode": 436,
+                "disabledSha256": "4d11581fdbc5e36d7042042275e499a7e9e0fc7d31e36d787a7d7452b7e86444",
+                "executedEnabledSha256": "4d11581fdbc5e36d7042042275e499a7e9e0fc7d31e36d787a7d7452b7e86444",
+                "gateOnlyChange": false
+            },
+            "tests/acceptance/s3-outage/seed.mjs": {
+                "bytes": 11622,
+                "mode": 436,
+                "disabledSha256": "f9e10a8fbde5c655b8fb09f26644ec994a554331d284ada182b0f0a8eca40d69",
+                "executedEnabledSha256": "1b2be741a066319b8b98a5f505e074c42e649eebe9c63f5b8b21dea2b65bd228",
+                "gateOnlyChange": true
+            },
+            "tests/acceptance/s3-outage/smtp.mjs": {
+                "bytes": 10729,
+                "mode": 436,
+                "disabledSha256": "82523128c0ad7a77d7b8d8d3743f278482d079fb7b1a26e9ee31e625b50b86f5",
+                "executedEnabledSha256": "8761356a39c9cd3338768dbbf163b51a18fd863d2ebaccee701cbe72c879da0a",
+                "gateOnlyChange": true
+            },
+            "tests/acceptance/s3-outage/vector-curl.mjs": {
+                "bytes": 8658,
+                "mode": 436,
+                "disabledSha256": "d71fab7fc8e41462af1fa7b780221c9ce36347df8983440ae11234c7547016e8",
+                "executedEnabledSha256": "4a50e14cebce27ec30581bb95398fb439af8d0bb4122599fd5fe4e068d2d53d5",
+                "gateOnlyChange": true
+            },
+            "tests/acceptance/s3-outage/vector-embedding.mjs": {
+                "bytes": 7999,
+                "mode": 436,
+                "disabledSha256": "3812d99f3ed80021791f707201ac9494b6240b530b2c5ab63ac4a95c501efac4",
+                "executedEnabledSha256": "1b583f97ffc2ab3e9357fd19f92cd3c20fcd666119ee8d0c22bacfcf76d9f1b4",
+                "gateOnlyChange": true
+            },
+            "tests/acceptance/s3-outage/vector-observation.mjs": {
+                "bytes": 23251,
+                "mode": 436,
+                "disabledSha256": "a972aa1a5c47bde4ccc2766a43d7608029cd7122408438abc3d15677c68e6113",
+                "executedEnabledSha256": "a972aa1a5c47bde4ccc2766a43d7608029cd7122408438abc3d15677c68e6113",
+                "gateOnlyChange": false
+            },
+            "tests/acceptance/s3-outage/vector-observe.mjs": {
+                "bytes": 26393,
+                "mode": 436,
+                "disabledSha256": "d11970b8d415e56893c43480791c6eab455ce73b87dbee61cc4a4ab50bf72ce0",
+                "executedEnabledSha256": "6f90e9a97ff602fa98fa76a117cbdc02790b10296ba72599fa962fde08afff62",
+                "gateOnlyChange": true
+            },
+            "tests/acceptance/s3-outage/vector-snapshot.mjs": {
+                "bytes": 16279,
+                "mode": 436,
+                "disabledSha256": "da6b70f54e675ea69b9326ba35f2544d7ecddd6a6db5e9a231d1eb45c6ab3190",
+                "executedEnabledSha256": "da6b70f54e675ea69b9326ba35f2544d7ecddd6a6db5e9a231d1eb45c6ab3190",
+                "gateOnlyChange": false
+            },
+            "tests/acceptance/s3-outage/vector-workflow.mjs": {
+                "bytes": 23901,
+                "mode": 436,
+                "disabledSha256": "9cf06c6da67d2d1bbc7ffa08462b1576a0049e49eb41e57e603f40716d77d4f5",
+                "executedEnabledSha256": "75d0c1780f9b354dc164562acdddb8f44fac3a99e5f0cf835da0eea8fc401ffa",
+                "gateOnlyChange": true
+            },
+            "tests/acceptance/s3-outage/vector.test.mjs": {
+                "bytes": 68848,
+                "mode": 436,
+                "disabledSha256": "dbec3b90b106000c0971c674427772e32de5688b8eb25ff74a1a9f5045110b80",
+                "executedEnabledSha256": "dbec3b90b106000c0971c674427772e32de5688b8eb25ff74a1a9f5045110b80",
+                "gateOnlyChange": false
+            },
+            "docs/build-task-log.md": {
+                "bytes": 295959,
+                "mode": 436,
+                "disabledSha256": "22eac660d10621405ef0f9029062037bea579d430bfa5e34dc75e77e7eb7ad0f",
+                "executedEnabledSha256": "22eac660d10621405ef0f9029062037bea579d430bfa5e34dc75e77e7eb7ad0f",
+                "gateOnlyChange": false
+            },
+            "docs/rag-vector-outage-acceptance.md": {
+                "bytes": 30797,
+                "mode": 436,
+                "disabledSha256": "0e95c80de17d6af04eb6ada0a08e9735728b1eddfb717882c038edec405f002e",
+                "executedEnabledSha256": "0e95c80de17d6af04eb6ada0a08e9735728b1eddfb717882c038edec405f002e",
+                "gateOnlyChange": false
+            },
+            "scripts/test-s3-outage-guards.sh": {
+                "bytes": 828,
+                "mode": 436,
+                "disabledSha256": "25d8f26062b74c3eab2ab517cc5765b552dd11c61fe7b198aa6d6c9dc5841ab8",
+                "executedEnabledSha256": "25d8f26062b74c3eab2ab517cc5765b552dd11c61fe7b198aa6d6c9dc5841ab8",
+                "gateOnlyChange": false
+            },
+            "tests/acceptance/restore/m7c_restore_common.py": {
+                "bytes": 25874,
+                "mode": 436,
+                "disabledSha256": "a2c2471e02841cc26f56ebe85dd58bd3440a0db575e1e962ffdf643fc960d597",
+                "executedEnabledSha256": "a2c2471e02841cc26f56ebe85dd58bd3440a0db575e1e962ffdf643fc960d597",
+                "gateOnlyChange": false
+            }
+        },
+        "activation": {
+            "pairs": 31,
+            "gateOnlyChanges": 9,
+            "lifecycleLast": true,
+            "unrelatedDisabledGates": 4
+        },
+        "observations": {
+            "vector-g1-ready": {
+                "status": "OBSERVED",
+                "snapshots": 1,
+                "sha256": "84df988c3deb06214757f1b466a53fa5c15ee070e0cd17ce3bd4ecc4f7c38390"
+            },
+            "vector-g2-staged": {
+                "status": "OBSERVED",
+                "snapshots": 1,
+                "sha256": "d45c54802d66ad93ddf547939148937cad87129cd2016adc3a1d1c89c93d1c0c"
+            },
+            "vector-outage-failed": {
+                "status": "OBSERVED",
+                "snapshots": 44,
+                "sha256": "4daa479448445678d66cbf1e87c95975d0b9f0b573a553928b33f967e0381a4e"
+            },
+            "vector-restored-before-retry": {
+                "status": "OBSERVED",
+                "snapshots": 1,
+                "sha256": "fd28fb135ee9d2f78896ef7142de91972c0711e96110b520709706b86806e8f7"
+            },
+            "vector-g2-ready": {
+                "status": "OBSERVED",
+                "snapshots": 1,
+                "sha256": "573151a20c675b2a18e12fe72ff9ef54a410b8f5e04ae674d77b7b6dec567d8c"
+            },
+            "vector-signed-out": {
+                "status": "OBSERVED",
+                "snapshots": 1,
+                "sha256": "201396dff025db04d3cee62870cbf29e25b2748460fbcfb39a35863282036ac8"
+            }
+        },
+        "workflows": {
+            "prepare-g1": {
+                "requests": 12,
+                "statusCounts": {
+                    "200": 12
+                },
+                "signOutConfirmed": true,
+                "finalizationSha256": "0006fefd1a82d66ac849ee67b53b5ea32c4500a8f0450790ffb56847f00ab8c1"
+            },
+            "search-g1": {
+                "requests": 13,
+                "statusCounts": {
+                    "200": 13
+                },
+                "signOutConfirmed": true,
+                "finalizationSha256": "7fd6e12d238e6119fafe13da8741cf58e61dc70f89368f7bc97b4a93eeb4da9d"
+            },
+            "rebuild-g2": {
+                "requests": 5,
+                "statusCounts": {
+                    "200": 5
+                },
+                "signOutConfirmed": true,
+                "finalizationSha256": "4561d6bf7058b435f1a7260a8d45a80d1e3410eec2f495fc3041d375b06c4636"
+            },
+            "search-outage": {
+                "requests": 8,
+                "statusCounts": {
+                    "200": 7,
+                    "409": 1
+                },
+                "signOutConfirmed": true,
+                "finalizationSha256": "e2848099fdf624d329829f4863b9f0f9eb76de30f4da36e4a523bfe3204fd73d"
+            },
+            "search-g2": {
+                "requests": 13,
+                "statusCounts": {
+                    "200": 13
+                },
+                "signOutConfirmed": true,
+                "finalizationSha256": "4be042526c880f05104a4c36b8604b782764fc800f621e1a2c83b4111c915810"
+            }
+        },
+        "httpResponses": {
+            "total": 51,
+            "status200": 50,
+            "expectedTypedVectorUnavailable409": 1
+        },
+        "outage": {
+            "primedObserverAckSha256": "1bc60d4285f754e250b135a65448b624a4a460690f4941b4cf91815c5c65e6b8",
+            "originalWatchdogSeconds": 900,
+            "minimumRemainingBeforeFaultSeconds": 625,
+            "snapshots": 44,
+            "closedTraceRows": 5,
+            "claimAttempts": [1, 2, 3, 4, 5],
+            "claimLeaseEpochs": ["1", "2", "3", "4", "5"],
+            "naturalBackoffMilliseconds": [10000, 20000, 40000, 80000],
+            "sameProvisionTaskId": "f5de1542-2902-4d98-9a75-b3eb176fcc19",
+            "terminalStatus": "FAILED",
+            "terminalErrorCode": "VECTOR_UNAVAILABLE",
+            "terminalUnleased": true,
+            "g1ActiveThroughout": true,
+            "claimSemantics": "DURABLE_PROVISION_CLAIMS_NOT_WIRE_COUNT"
+        },
+        "recovery": {
+            "sameContainerAndVolume": true,
+            "watchdogIntervened": false,
+            "watchdogFinalSha256": "23ccbc569f2d62242410ee01cc489de5345feefd92d05374bffd8e6d29b5a0b7",
+            "sameWorkerResumed": true,
+            "sameTaskId": "f5de1542-2902-4d98-9a75-b3eb176fcc19",
+            "failedEpoch": "5",
+            "completeEpoch": "7",
+            "completeAttempts": 1,
+            "status": "COMPLETE",
+            "g2Active": true,
+            "g1Retired": true,
+            "usage": {
+                "activeChunks": "1",
+                "reservedChunks": "0",
+                "retainedChunks": "1"
+            },
+            "exactNativeG1CleanupTask": "PENDING_ACCEPTED_UNCLAIMED_AT_SAVED_PRODUCTION_RETENTION",
+            "stableThroughSignedOut": true
+        },
+        "rootBrowser": {
+            "receiptSha256": "6786d4a2c6356f7e6d7404a1ecf3968840674b009acde6d1da1b52be6ce861e0",
+            "language": "en",
+            "normalLoginCount": 1,
+            "retryTaskClicks": 1,
+            "normalLogoutCount": 1,
+            "consoleWarningOrErrorCount": 0,
+            "browserFileUploads": 0,
+            "browserFileDownloads": 0,
+            "keyRoleCredentialMutations": 0,
+            "ownedTabClosed": true,
+            "fixtureMemoryCleared": true,
+            "screenshots": {
+                "g1-active-en.png": {
+                    "bytes": 298807,
+                    "sha256": "7f44b5861cdebcaae0223bbed4d797b3a90e54b00a7932e50bca2432a69c55d5"
+                },
+                "failed-five-before-retry-en.png": {
+                    "bytes": 408189,
+                    "sha256": "e34ae0d2f9572c1d2f82d15c19a27dfac7027bb99633dbc966e0b75dc0eb5a6b"
+                },
+                "g2-active-after-retry-en.png": {
+                    "bytes": 386725,
+                    "sha256": "1dd543f33a16714e8694bad95aa21c364051ad1ec6867010b30e37ae6d140a26"
+                },
+                "signed-out-en.png": {
+                    "bytes": 6647,
+                    "sha256": "51782ad6456509cace9cabd1da28d621be6661e3bc5a2c88f9d3e0f16ccb04a7"
+                }
+            },
+            "navigationAfterLogin": "Normal navigation to / after success toast; no claim that a client redirect eventually failed.",
+            "backendPhysicalEvidence": "SEPARATE_NATIVE_OBSERVATIONS_NOT_INFERRED_FROM_BROWSER"
+        },
+        "signedOut": {
+            "formalObservationSha256": "201396dff025db04d3cee62870cbf29e25b2748460fbcfb39a35863282036ac8",
+            "zeroSessions": true,
+            "allWorkflowSignOutConfirmed": true
+        },
+        "syntheticEmbeddingFinal": {
+            "sha256": "f6b7cf2d2b6284d38a443f619053036d865b174dedc957b6abd20627adc95f11",
+            "synthetic": true,
+            "counters": {
+                "requests": 29,
+                "embeddings": 9,
+                "inputs": 9,
+                "rejected": 0,
+                "connections": 29
+            }
+        },
+        "cleanup": {
+            "phase": "CLEANED_EVIDENCE_RETAINED",
+            "exitCode": 0,
+            "resources": 0,
+            "appProcessesTerminal": 5,
+            "observerTerminal": true,
+            "watchdogTerminal": true,
+            "containersAbsent": 4,
+            "volumesAbsent": 4,
+            "receiptSha256": "0ebdc15fea65079e472055b59f068e42d0f87908d609f7a57dc41ad5466e3a69",
+            "teardownVerifiedSha256": "3e13d331ee5b9244a59471e1c1f30d1aaf97eeb53435085b0a047bddb893a367"
+        },
+        "disabledRestoration": {
+            "pairs": 31,
+            "gatesTrue": 13,
+            "lifecycleFirst": true,
+            "allSourceBytesAndModesExact": true,
+            "protectedNextLockExact": true,
+            "gitCleanAtSourceCommit": true,
+            "receiptSha256": "891b8e4622d16b13c4d564d3c8115b868f62c673014ee0408fef7f4788428701"
+        },
+        "nativeTerminalSummarySha256": "46f3bb6b8f1d75611e0f14f417895bbd11b145b85e9e42de3aed3928627c6654",
+        "independentRootFilesystemAuditSha256": "d4ef5ace75acee394e115a54b08a21b7607e293cda8954988dd578203192e34e",
+        "historicalPreservation": {
+            "existingFields": 19,
+            "beforeProvenanceSha256": "4d11581fdbc5e36d7042042275e499a7e9e0fc7d31e36d787a7d7452b7e86444",
+            "trials2aed24d8aa": "UNCHANGED_INCOMPLETE_NO_REPLAY"
+        },
+        "limitations": [
+            "SYNTHETIC_PROTOCOL_FIXTURE_NO_MODEL_WEIGHT_OR_QUALITY_ATTESTATION",
+            "NO_PAID_PROVIDER_BILLING_LATENCY_FAIRNESS_OR_CAPACITY_RESULT",
+            "PROVISION_DESTINATION_OUTAGE_NOT_INTRA_DDL_PARTIAL_WRITE_OR_SEAL",
+            "LATER_MAIN_AND_DEPENDENCY_UPDATES_NOT_EXECUTED",
+            "FINAL_MAIN_ALIGNMENT_AND_EXACT_HEAD_CI_PENDING"
+        ]
     }
 }
