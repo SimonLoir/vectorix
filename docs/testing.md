@@ -6,12 +6,12 @@ This page covers issue #49. Before this change, root `pnpm test` ran only `api` 
 
 ```mermaid
 flowchart LR
-    A[pnpm test] --> B[turbo run test]
-    B --> C[api: scripts/unit-tests.mjs]
-    B --> D[@routers/utils: Vitest]
-    B --> E[@repo/chunking: tsx --test]
-    B --> F[@repo/embeddings: node --test]
-    C --> G[Discover *.test.ts and *.test.tsx under apps/ and packages/]
+    A["pnpm test"] --> B["turbo run test"]
+    B --> C["api: scripts/unit-tests.mjs"]
+    B --> D["@routers/utils: Vitest"]
+    B --> E["@repo/chunking: tsx --test"]
+    B --> F["@repo/embeddings: node --test"]
+    C --> G["Discover *.test.ts and *.test.tsx under apps/ and packages/"]
 ```
 
 - Root `pnpm test` is `turbo run test`, so every workspace package with a `test` script runs. The task is not cached, because the discovery runner reads files from other packages.
