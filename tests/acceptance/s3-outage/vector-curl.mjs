@@ -85,6 +85,37 @@ export function parseCurlResponse(bytes) {
     need(body.length <= 65536, 'S3_OUTAGE_CURL_BODY_BOUND');
     return { status: Number(status[1]), headers, body };
 }
+/** Validate metadata and pinned bytes on one no-follow descriptor; injected filesystem calls are test-only. */
+export function assertPinnedCurl(curl, io = fs) {
+    need(
+        curl?.path === '/usr/bin/curl' &&
+            io.realpathSync(curl.path) === curl.path &&
+            /^[a-f\d]{64}$/u.test(curl.sha256),
+        'S3_OUTAGE_CURL_PIN'
+    );
+    const fd = io.openSync(
+        curl.path,
+        fs.constants.O_RDONLY | fs.constants.O_NOFOLLOW
+    );
+    try {
+        const bin = io.fstatSync(fd);
+        need(
+            bin.isFile() &&
+                bin.uid === 0 &&
+                (bin.mode & 0o022) === 0 &&
+                bin.size > 0 &&
+                bin.size <= 16 * 1024 * 1024,
+            'S3_OUTAGE_CURL_PIN'
+        );
+        const bytes = io.readFileSync(fd);
+        need(
+            bytes.length === bin.size && sha(bytes) === curl.sha256,
+            'S3_OUTAGE_CURL_PIN'
+        );
+    } finally {
+        io.closeSync(fd);
+    }
+}
 /** One child, no retries/redirect/proxy/.curlrc; all secret headers/bodies live only in exclusive 0600 files. */
 export function runPrivateCurl(input, execute = spawnSync) {
     need(!STATIC_DRAFT_ONLY, 'S3_OUTAGE_CURL_DRAFT_REVIEW_REQUIRED');
@@ -114,20 +145,7 @@ export function runPrivateCurl(input, execute = spawnSync) {
             fs.realpathSync(directory) === directory,
         'S3_OUTAGE_CURL_DIRECTORY'
     );
-    need(
-        curl?.path === '/usr/bin/curl' &&
-            fs.realpathSync(curl.path) === curl.path &&
-            /^[a-f\d]{64}$/u.test(curl.sha256),
-        'S3_OUTAGE_CURL_PIN'
-    );
-    const bin = fs.lstatSync(curl.path);
-    need(
-        bin.isFile() &&
-            (bin.mode & 0o022) === 0 &&
-            bin.size <= 16 * 1024 * 1024 &&
-            sha(fs.readFileSync(curl.path)) === curl.sha256,
-        'S3_OUTAGE_CURL_PIN'
-    );
+    assertPinnedCurl(curl);
     need(
         Array.isArray(headers) &&
             headers.length <= 6 &&

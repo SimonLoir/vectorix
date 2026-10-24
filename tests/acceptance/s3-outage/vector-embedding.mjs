@@ -88,8 +88,11 @@ export function syntheticResponse(method, route, body) {
             },
         };
     }
+    const embedShape = Object.keys(body).sort().join(',');
     need(
-        Object.keys(body).sort().join(',') === 'input,model,truncate' &&
+        (embedShape === 'input,model,truncate' ||
+            (embedShape === 'dimensions,input,model,truncate' &&
+                body.dimensions === 3)) &&
             body.truncate === false &&
             Array.isArray(body.input) &&
             body.input.length >= 1 &&

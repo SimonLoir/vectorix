@@ -985,5 +985,166 @@
         "currentBuildValidation": "PENDING_SEPARATE_PRIVATE_RECEIPT",
         "nativeValidation": "NOT_RUN",
         "historicalRecord": "Every prior field is preserved, including the initial disabled vector inventory and review correction; source alignment does not replay a historical trial or replace its source commit."
+    },
+    "vectorProvisionReviewRevision2": {
+        "schemaVersion": 1,
+        "scenario": "VECTOR_PROVISION_V1",
+        "status": "DISABLED_HELPER_REVIEW_REVISION_HERMETIC_PASS_NATIVE_NOT_RUN",
+        "checkpointBeforePatch": "8e89e46f384cea89bb72dde9f7a98a4dda4299e9",
+        "selectedMainCommit": "dc314fcfe02bbc30877bb1a4a1720d1bb3abccde",
+        "beforeArchiveSha256": "beeee427aa53c166d2011b757a99597729086c2d7835ede9ad4cb768006abfa0",
+        "corrections": [
+            "EXACT_NATIVE_OLLAMA_PROBE_AND_DIMENSIONED_EMBED_DTOS",
+            "NOFOLLOW_SINGLE_DESCRIPTOR_CURL_METADATA_BYTES_AND_FINALLY_CLOSE"
+        ],
+        "changedRuntimeAndTests": {
+            "vector-curl.mjs": {
+                "bytes": 8657,
+                "sha256": "d71fab7fc8e41462af1fa7b780221c9ce36347df8983440ae11234c7547016e8"
+            },
+            "vector-embedding.mjs": {
+                "bytes": 7998,
+                "sha256": "3812d99f3ed80021791f707201ac9494b6240b530b2c5ab63ac4a95c501efac4"
+            },
+            "vector.test.mjs": {
+                "bytes": 44174,
+                "sha256": "9f12f2cb66c505061e65cd6382991688d509303696aa72b7ef07b7da719cb8e3"
+            }
+        },
+        "currentSources": {
+            "README.md": {
+                "bytes": 21919,
+                "sha256": "640a64fa3dad0c080c7eb50e33f80c14e0837c26369a2c53146cd45c40669b67"
+            },
+            "bucket.mjs": {
+                "bytes": 6679,
+                "sha256": "84ec4e6f176d63a1b1122f13de65f71d876a5391bfb0eecfc75f6004eebf4f24"
+            },
+            "cleanup-fixture.mjs": {
+                "bytes": 13025,
+                "sha256": "fc54ad3f0045dbef1c720dd902dd920c3a409547668798a3d48c0c05df552bbb"
+            },
+            "cleanup-observe.mjs": {
+                "bytes": 33495,
+                "sha256": "0152a23220bc4827e434710ca3bf5ec7995ce08c6dddd34f42a52831205f869c"
+            },
+            "cleanup.test.mjs": {
+                "bytes": 22103,
+                "sha256": "581aeb09a39315db748f883f3636d9c4623fa5ef5db51dfcd6d6a07ded121da8"
+            },
+            "fault.py": {
+                "bytes": 23931,
+                "sha256": "4df4a461529a27ce4e812a32352d7c0f356cf908b08dbe10ba403b9087b68ac0"
+            },
+            "fault_test.py": {
+                "bytes": 19222,
+                "sha256": "ec9a5dda206002eaf3eaac55b864004d4f8bb4da814aff75af293b5f33e198d3"
+            },
+            "fixtures/expected.json": {
+                "bytes": 926,
+                "sha256": "67c562dfb951d9751d76468f4cf29b89d6fae3432ed9debb5c7f0790cb4fac7d"
+            },
+            "fixtures/s3-outage-v1.txt": {
+                "bytes": 522,
+                "sha256": "110bf3def2634f5a3c6addd02b8b61d35fddd3e3ea776077144041e6c2599719"
+            },
+            "fixtures/s3-outage-v2.txt": {
+                "bytes": 620,
+                "sha256": "ef488f9ba8481a42e7f79aceafde979d9f09ddc0072f2edc0577e6b064cc3d2f"
+            },
+            "lifecycle.py": {
+                "bytes": 46196,
+                "sha256": "1e3a5a2e9499339457e498d38e5d854b82c2160c81a646d413bb7cbf61057c3f"
+            },
+            "lifecycle_test.py": {
+                "bytes": 12572,
+                "sha256": "da06bc9f5463eba9b4be96fb9af76028c22f745a309b56198debd5051e97fcb0"
+            },
+            "objects.mjs": {
+                "bytes": 16033,
+                "sha256": "a0ca8db7a7b46ddcdba416da74f1c13d26e931a5effa9df4de1fc2232623faaf"
+            },
+            "objects.test.mjs": {
+                "bytes": 7304,
+                "sha256": "1a5a90b04a6502b14337ac843d7c20f88df87f4d0c18758cb1b94031fcab0d36"
+            },
+            "observe.mjs": {
+                "bytes": 46519,
+                "sha256": "4772ce32a66e3a37a7a6a9d9ebb92cad1c1d3d67199a8506162e2be1ac347161"
+            },
+            "observe.test.mjs": {
+                "bytes": 19167,
+                "sha256": "00f9dfc507b9b856cb199f4e740eaa6c8e202d3f95d177438c6021171a2d2dd6"
+            },
+            "private.mjs": {
+                "bytes": 11069,
+                "sha256": "8bc9d92a0d6f4fd07002a68db891998b985d69743f8f966a957d03b07b8d1d71"
+            },
+            "seed.mjs": {
+                "bytes": 11621,
+                "sha256": "f9e10a8fbde5c655b8fb09f26644ec994a554331d284ada182b0f0a8eca40d69"
+            },
+            "smtp.mjs": {
+                "bytes": 10728,
+                "sha256": "82523128c0ad7a77d7b8d8d3743f278482d079fb7b1a26e9ee31e625b50b86f5"
+            },
+            "vector-curl.mjs": {
+                "bytes": 8657,
+                "sha256": "d71fab7fc8e41462af1fa7b780221c9ce36347df8983440ae11234c7547016e8"
+            },
+            "vector-embedding.mjs": {
+                "bytes": 7998,
+                "sha256": "3812d99f3ed80021791f707201ac9494b6240b530b2c5ab63ac4a95c501efac4"
+            },
+            "vector-observation.mjs": {
+                "bytes": 18807,
+                "sha256": "618fcd163cb9f03efcc181480a7302fd27f3a148235200f504ca9fd839204fff"
+            },
+            "vector-observe.mjs": {
+                "bytes": 18495,
+                "sha256": "fe5de79f807e493bba9869478eb63b3013e65fa5de8df8629ccbc07a8d1963f6"
+            },
+            "vector-snapshot.mjs": {
+                "bytes": 15318,
+                "sha256": "771ce4d74c1f93a9def8f0f6f15f59d41ca5b029b1980799ddc83db32ae7c706"
+            },
+            "vector-workflow.mjs": {
+                "bytes": 20085,
+                "sha256": "78b05f2749862555d77e2cbb63f07560b9956693e8c01217ecd73aa7ce9a265f"
+            },
+            "vector.test.mjs": {
+                "bytes": 44174,
+                "sha256": "9f12f2cb66c505061e65cd6382991688d509303696aa72b7ef07b7da719cb8e3"
+            }
+        },
+        "runtimeGates": {
+            "allDisabled": true,
+            "count": 13
+        },
+        "run": "NOT_SELECTED",
+        "offlineValidation": {
+            "status": "PASS",
+            "pythonTests": 37,
+            "nodeTests": 52,
+            "addedNodeTests": 5,
+            "nodeSyntaxChecks": 14,
+            "pythonAstChecks": 4,
+            "documents": 3,
+            "mermaidDiagrams": 1,
+            "localMarkdownLinks": 80,
+            "resultSha256": "ecb615c353b69d4e3f5f95155e0653b789f852ee62ba3bde5c5cdec924ba0379",
+            "guardLogSha256": "c78e100ff346cff52771030a48bd27ea394148ef0d68f4f9834a559c16b749dd"
+        },
+        "previousApplicationValidation": {
+            "receiptSha256": "ddd1adf7654c7f9fa35dfcecfebaca730e6dd96209ce71bc6f8abccce7320158",
+            "scopedTypeChecks": 4,
+            "scopedLintChecks": 4,
+            "productionBuilds": 4,
+            "status": "PASS_BEFORE_ACCEPTANCE_ONLY_CORRECTION_NOT_REPEATED"
+        },
+        "productionPackageLockAndCiBytes": "IDENTICAL_TO_EXACT_SELECTED_MAIN",
+        "nativeValidation": "NOT_RUN",
+        "historicalRecord": "All fifteen preceding fields and their archived sources/results remain unchanged. This acceptance-only correction is not an executed native inventory and does not replay or replace any previous trial.",
+        "currentSourcesSha256": "2c7f2b2bd2a3199c8c2f1b2d8dab5dff214d479979c8adbc6e252a21f2bbcd0d"
     }
 }

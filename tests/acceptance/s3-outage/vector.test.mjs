@@ -1,5 +1,6 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
+import fs from 'node:fs';
 import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import { receiptScope, sameScope, scenarioSpec } from './private.mjs';
@@ -22,6 +23,7 @@ import {
 } from './vector-workflow.mjs';
 import {
     assertCurlRoute,
+    assertPinnedCurl,
     parseCurlResponse,
     runPrivateCurl,
     STATIC_DRAFT_ONLY as curlDraft,
@@ -382,6 +384,165 @@ test('synthetic native protocol has finite exact routes/model/vector response an
         ],
     ])
         assert.throws(() => syntheticResponse(method, route, body));
+});
+test('synthetic embed accepts the native capability probe and dimensioned embedding DTOs', () => {
+    // These are the two bodies sent by packages/embeddings/src/ollama.ts.
+    const probe = {
+        model: MODEL,
+        input: ['Vectorix embedding capability check.'],
+        truncate: false,
+    };
+    const embedding = {
+        model: MODEL,
+        input: ['recovery fixture', 'query fixture'],
+        dimensions: 3,
+        truncate: false,
+    };
+    for (const body of [probe, embedding]) {
+        const result = syntheticResponse('POST', '/api/embed', body);
+        assert.equal(result.model, MODEL);
+        assert.deepEqual(result.embeddings, body.input.map(syntheticVector));
+        assert.equal(
+            result.prompt_eval_count,
+            body.input.reduce(
+                (sum, text) => sum + Math.ceil(Buffer.byteLength(text) / 4),
+                0
+            )
+        );
+    }
+});
+test('synthetic embed refuses every other dimension and extra fields in both native forms', () => {
+    const body = { model: MODEL, input: ['fixture'], truncate: false };
+    for (const dimensions of [undefined, null, 0, -1, 2, 4, 3.5, '3', true])
+        assert.throws(
+            () =>
+                syntheticResponse('POST', '/api/embed', {
+                    ...body,
+                    dimensions,
+                }),
+            /FIXTURE_BODY/u
+        );
+    for (const dimensions of [null, 3]) {
+        const candidate = dimensions === null ? body : { ...body, dimensions };
+        assert.throws(
+            () =>
+                syntheticResponse('POST', '/api/embed', {
+                    ...candidate,
+                    options: {},
+                }),
+            /FIXTURE_BODY/u
+        );
+    }
+});
+function pinnedCurlIo(overrides = {}) {
+    const bytes = Buffer.from('owned curl binary fixture');
+    const calls = [];
+    const descriptor = 73;
+    const io = {
+        realpathSync(file) {
+            assert.equal(file, '/usr/bin/curl');
+            return file;
+        },
+        openSync(file, flags) {
+            assert.equal(file, '/usr/bin/curl');
+            assert.equal(
+                flags,
+                fs.constants.O_RDONLY | fs.constants.O_NOFOLLOW
+            );
+            calls.push('open');
+            return descriptor;
+        },
+        fstatSync(fd) {
+            assert.equal(fd, descriptor);
+            calls.push('fstat');
+            return {
+                isFile: () => true,
+                uid: 0,
+                mode: 0o755,
+                size: bytes.length,
+            };
+        },
+        readFileSync(fd) {
+            assert.equal(fd, descriptor);
+            calls.push('read');
+            return bytes;
+        },
+        closeSync(fd) {
+            assert.equal(fd, descriptor);
+            calls.push('close');
+        },
+        ...overrides,
+    };
+    return { io, calls, pin: { path: '/usr/bin/curl', sha256: sha(bytes) } };
+}
+test('curl pin checks and reads the same no-follow descriptor despite pathname replacement', () => {
+    const value = pinnedCurlIo();
+    value.io.openSync = (file, flags) => {
+        assert.equal(file, '/usr/bin/curl');
+        assert.equal(flags, fs.constants.O_RDONLY | fs.constants.O_NOFOLLOW);
+        value.calls.push('open');
+        // A pathname reopen after this boundary would observe different bytes.
+        const readDescriptor = value.io.readFileSync;
+        value.io.readFileSync = (fd) =>
+            typeof fd === 'string'
+                ? Buffer.from('replacement')
+                : readDescriptor(fd);
+        return 73;
+    };
+    assertPinnedCurl(value.pin, value.io);
+    assert.deepEqual(value.calls, ['open', 'fstat', 'read', 'close']);
+});
+test('curl pin refuses descriptor ownership/mode/type/size/hash drift and always closes', () => {
+    for (const change of [
+        { uid: 1000 },
+        { mode: 0o775 },
+        { mode: 0o757 },
+        { isFile: () => false },
+        { size: 0 },
+        { size: 16 * 1024 * 1024 + 1 },
+    ]) {
+        const value = pinnedCurlIo();
+        const originalStat = value.io.fstatSync;
+        value.io.fstatSync = (fd) => ({ ...originalStat(fd), ...change });
+        assert.throws(() => assertPinnedCurl(value.pin, value.io), /CURL_PIN/u);
+        assert.deepEqual(value.calls, ['open', 'fstat', 'close']);
+    }
+    for (const replacement of [
+        Buffer.alloc(Buffer.byteLength('owned curl binary fixture')),
+        Buffer.alloc(0),
+    ]) {
+        const value = pinnedCurlIo();
+        value.io.readFileSync = (fd) => {
+            assert.equal(fd, 73);
+            value.calls.push('read');
+            return replacement;
+        };
+        assert.throws(() => assertPinnedCurl(value.pin, value.io), /CURL_PIN/u);
+        assert.deepEqual(value.calls, ['open', 'fstat', 'read', 'close']);
+    }
+});
+test('curl descriptor refusal never reads and read failure still closes once', () => {
+    const refused = pinnedCurlIo({
+        openSync() {
+            throw new Error('nofollow refusal');
+        },
+    });
+    assert.throws(
+        () => assertPinnedCurl(refused.pin, refused.io),
+        /nofollow refusal/u
+    );
+    assert.deepEqual(refused.calls, []);
+    const failure = pinnedCurlIo();
+    failure.io.readFileSync = (fd) => {
+        assert.equal(fd, 73);
+        failure.calls.push('read');
+        throw new Error('read refusal');
+    };
+    assert.throws(
+        () => assertPinnedCurl(failure.pin, failure.io),
+        /read refusal/u
+    );
+    assert.deepEqual(failure.calls, ['open', 'fstat', 'read', 'close']);
 });
 test('curl route/method closure excludes deletes, keys, credentials, retargeting and repaired URLs', () => {
     const origin = 'http://127.0.0.1:17000';
