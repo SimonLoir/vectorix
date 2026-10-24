@@ -181,6 +181,8 @@ pnpm test
 pnpm build
 ```
 
+`pnpm test` runs `turbo run test`. The API package's runner discovers every `*.test.ts` unit test under `apps/` and `packages/`, so new tests need no list edits; `pnpm test:coverage` adds a coverage report. See [unit test discovery](docs/testing.md).
+
 `pnpm test:catalog` starts disposable application/vector PostgreSQL, Redis and private RustFS containers on random loopback ports, tests a fresh install and upgrade from the initial schema, repeats deployment, checks schema parity and existing records, runs the core and RAG API journeys, then removes its containers and volumes. It does not load `.env` or start application servers. The “Catalog checks” GitHub Actions workflow runs it on pull requests and `main`, alongside schema, type, lint, and unit checks. The same workflow runs `pnpm audit --audit-level=high` as a visible, non-blocking step; run it locally before dependency changes.
 
 Deploy the approved `20261031000000_sql_function_search_path` migration before capturing a new corrected backup baseline. It pins the trusted lookup path of the 28 existing application functions so populated CHECK validators resolve their helpers during ordinary PostgreSQL restoration. See [the SQL correction and populated regression](docs/rag-sql-function-restore.md).
