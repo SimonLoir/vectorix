@@ -2,7 +2,7 @@ import { Prisma, type PrismaClient } from '@repo/db';
 
 const DEFAULT_MAX_ATTEMPTS = 3;
 
-/** Prisma's pg adapter may expose a commit-time serialization abort before mapping it to P2034. */
+/** Prisma's pg adapter may expose a serialization abort or deadlock before mapping it to P2034. */
 export function isSerializationConflict(error: unknown): boolean {
     if (
         error instanceof Prisma.PrismaClientKnownRequestError &&
@@ -18,7 +18,7 @@ export function isSerializationConflict(error: unknown): boolean {
         'kind' in cause &&
         cause.kind === 'TransactionWriteConflict' &&
         'originalCode' in cause &&
-        cause.originalCode === '40001'
+        (cause.originalCode === '40001' || cause.originalCode === '40P01')
     );
 }
 
@@ -33,8 +33,8 @@ export type SerializableTransactionOptions = Readonly<{
  *
  * PostgreSQL may abort a serializable transaction when concurrent writes
  * conflict. Prisma reports that case as P2034, so the complete
- * callback is retried with a fresh transaction. Commit-time pg adapter 40001
- * errors are also retried. Callbacks must only contain
+ * callback is retried with a fresh transaction. Typed pg adapter 40001/40P01
+ * conflicts are also retried. Callbacks must only contain
  * database work and other safely repeatable operations; external side effects
  * such as provider calls and emails must run after this function.
  */
