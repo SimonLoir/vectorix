@@ -449,6 +449,16 @@ HTTP body limits were committed as `0d357f5` and delivered in [PR #33](https://g
 - [x] Build API, workers, web and admin serially, then pass all six checks in the existing disposable `test:queues` runner: encoded/fallback queue-worker authentication, three atomic-window cases and native HTTP limiter replicas. Its owned loopback Redis was removed, with zero new matching containers remaining. Web public/static and admin static copies match their standalone targets. Both Next declarations and the lockfile were restored with exact presence, bytes and modes; all 29 manifest/lock pins remain exact to dependency head `9f0beeab`.
 - [ ] Full disposable core/RAG catalog, six-image CI and browser TOTP acceptance remain NOT_RUN for this correction. Existing authoritative-session, email-ownership, organization/API-key, mail and full first-code/pending-session/backup-code journeys still require the catalog/CI and a separately authorized browser recipe. Memory-adapter and Redis HTTP tests do not establish a live dashboard, deployed provider or production upgrade. No commit, push or merge is authorized by this checkpoint.
 
+### Subsequent exact-head CI and isolated auth acceptance
+
+The previously pending catalog and six-image CI pass at `927cef00d4a8203b9df806379818252352abaa62` (runs `40127153948` and `40127153949`); CodeQL also passes. Fresh isolated run `c2c9ff05c95c` uses that exact product and its existing production builds. No build or application test is repeated for this acceptance record.
+
+Native session-curl creates two synthetic ordinary users and one owner organization each. Its 13 scripted responses are HTTP 200; this count excludes browser traffic. Explicit `method: totp` enrollment proves disabled/unverified state before the first code, then enabled/verified state through native verification and authoritative reads. Both transient sessions sign out normally. Root then verifies English browser login with a visible TOTP challenge, unchecked trust-device and one successful code submission; the account shows Enabled. The second existing account shows Disabled and opens only the empty setup password step, which is closed without entry or submission. Both normal browser logouts pass. Six ordered read-only observations show session counts of 0/0/1/0/1/0 and unchanged owner/2FA states. Console warnings/errors are zero; one nonmutating out-of-viewport scroll observation is retained separately.
+
+Owned teardown removes API/web and both PostgreSQL/Redis containers/volumes. All 48 private source pins, three disabled gates, protected Next/lock and clean tracked source are restored. Root independently audits 69 safe proofs. A later receipt (`aecbeac9…1ff8`) records removal of only three hash/owner/mode/inode-verified secret artifacts after that audit. Terminal summary SHA-256 remains `862224b4…39251`.
+
+No browser signup, enrollment submission, credential/key/role/grant change or file transfer occurs. Mail delivery, backup-code/passkey/alternative OTP login, provider quality and capacity are not established. Historical preparation failures remain separate; this later documentation edit is not a new native execution.
+
 ## Security follow-up — canonical password-reset links (issue #17)
 
 - [x] Confirm the request-header fallback and review the current mail callback and native reset flow.
