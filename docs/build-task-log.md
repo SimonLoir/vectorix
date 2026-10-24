@@ -992,7 +992,7 @@ The file chooser tool waits 40,370 seconds, then the same four live handles and 
 
 ## Issue #26 — Bound the member and API-key lists
 
-- [x] Add optional `offset`/`limit`/`query` inputs and a `total` output to `admin.members.get` and `admin.organization.apiKeys.list` (compatible revision 1.20.0). Calls without `limit` keep the full-list shape, capped at 1,000 rows.
+- [x] Add optional `offset`/`limit`/`query` inputs and a `total` output to `admin.members.get` and `admin.organization.apiKeys.list` (compatible revision 1.20.0). Calls without any window options retain the complete legacy list; explicit offset/query/limit calls are bounded, defaulting to 25 rows with a maximum of 100.
 - [x] Page and search both dashboard tables on the server, with localized search labels (EN/FR/nl-BE).
 - [x] Add integration coverage and document the behavior in [bounded member and API-key lists](member-key-list-windows.md).
 - [ ] Review and merge through a separate PR.
@@ -1000,3 +1000,5 @@ The file chooser tool waits 40,370 seconds, then the same four live handles and 
 Branch `codex/bounded-member-key-lists`. The revision bump and test-assertion updates are identical to the issue #56 branch. No schema or migration change.
 
 Validation is recorded in the PR.
+
+PR #80 review correction on `codex/pr80-list-review` removes the incompatible 1,000-row legacy truncation while keeping every new window bounded. Confirmed native member removal now invalidates all TanStack page/search variants. Both tables have localized loading, empty-search/empty-page and finite error recovery; failed member reads hide cached rows. A third focused catalog case creates 1,005 ordinary members and 1,005 disabled synthetic key records to exercise both real RPC/REST handlers, stable ID ordering and window limits, with scoped `finally` cleanup. No schema/migration or permission change is introduced. Frozen installation and ignored-client generation pass, followed by 24 type checks, 24 lint tasks and 159 API/backend plus 11 utility tests. A focused members-table extraction removes the added cognitive-complexity warning; final web types/lint pass again. Local Next declaration state is restored exactly (web absent, admin bytes/mode unchanged). The new >1,000-row catalog case, builds, images and browser checks await the coordinated validation slot; no browser credential, role or deletion action is part of this correction.

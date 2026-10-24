@@ -3,9 +3,14 @@ import type { TestContext } from 'node:test';
 import { prisma } from '@repo/db';
 import { app } from '../app';
 import { fixture as f } from './fixtures';
+import { assertLegacyListCompatibility } from './list-window-compatibility';
 
 /** Members and API-key lists accept optional server-side windows without changing legacy calls. */
 export async function listWindowTests(t: TestContext) {
+    await t.test(
+        'legacy member and key lists stay complete above 1000 while every new window is bounded',
+        assertLegacyListCompatibility
+    );
     await t.test(
         'member lists keep the legacy full shape and add organization-scoped windows and search',
         async () => {
@@ -83,43 +88,51 @@ export async function listWindowTests(t: TestContext) {
         async () => {
             const permissions = { ragCollection: ['read'] };
             const created = [];
-            for (const name of ['Window alpha key', 'Window beta key'])
-                created.push(
-                    await f.owner.client.admin.organization.apiKeys.create({
-                        name,
-                        permissions,
-                    })
-                );
-            const all = await f.owner.client.admin.organization.apiKeys.list(
-                {}
-            );
-            assert.ok(all.total >= 2);
-            assert.equal(all.keys.length, all.total);
-            const page = await f.owner.client.admin.organization.apiKeys.list({
-                limit: 1,
-            });
-            assert.equal(page.keys.length, 1);
-            assert.equal(page.total, all.total);
-            const beta = await f.owner.client.admin.organization.apiKeys.list({
-                limit: 25,
-                query: 'window BETA',
-            });
-            assert.deepEqual(
-                beta.keys.map(({ name }) => name),
-                ['Window beta key']
-            );
-            assert.equal(
-                (
-                    await f.other.client.admin.organization.apiKeys.list({
+            try {
+                for (const name of ['Window alpha key', 'Window beta key'])
+                    created.push(
+                        await f.owner.client.admin.organization.apiKeys.create({
+                            name,
+                            permissions,
+                        })
+                    );
+                const all =
+                    await f.owner.client.admin.organization.apiKeys.list({});
+                assert.ok(all.total >= 2);
+                assert.equal(all.keys.length, all.total);
+                const page =
+                    await f.owner.client.admin.organization.apiKeys.list({
+                        limit: 1,
+                    });
+                assert.equal(page.keys.length, 1);
+                assert.equal(page.total, all.total);
+                const beta =
+                    await f.owner.client.admin.organization.apiKeys.list({
                         limit: 25,
-                        query: 'Window',
-                    })
-                ).total,
-                0
-            );
-            await prisma.apikey.deleteMany({
-                where: { id: { in: created.map(({ id }) => id) } },
-            });
+                        query: 'window BETA',
+                    });
+                assert.deepEqual(
+                    beta.keys.map(({ name }) => name),
+                    ['Window beta key']
+                );
+                assert.equal(
+                    (
+                        await f.other.client.admin.organization.apiKeys.list({
+                            limit: 25,
+                            query: 'Window',
+                        })
+                    ).total,
+                    0
+                );
+            } finally {
+                await prisma.apikey.deleteMany({
+                    where: {
+                        configId: 'org',
+                        referenceId: f.org,
+                        id: { in: created.map(({ id }) => id) },
+                    },
+                });
+            }
         }
     );
 }

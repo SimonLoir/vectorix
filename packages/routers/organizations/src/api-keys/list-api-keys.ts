@@ -1,12 +1,13 @@
 import { ORPCError } from '@orpc/server';
 import type { PermissionSet } from '@repo/auth/permissions';
-import { LEGACY_LIST_LIMIT } from '@repo/api-contracts/v1/list-window';
+import { resolveListWindow } from '@repo/api-contracts/v1/list-window';
 import { adminOrganizationsV1 } from '../v1-implementer';
 
 /** Lists a server-side window of safe key metadata for a session-authenticated member. */
 export const listScopedApiKeys = adminOrganizationsV1.apiKeys.list.handler(
     async ({ context, input }) => {
         if (!context.user) throw new ORPCError('FORBIDDEN');
+        const window = resolveListWindow(input);
         const query = input.query?.trim();
         const where = {
             configId: 'org',
@@ -40,8 +41,8 @@ export const listScopedApiKeys = adminOrganizationsV1.apiKeys.list.handler(
                     vectorixLegacyFullAccess: true,
                 },
                 orderBy: [{ createdAt: 'desc' }, { id: 'asc' }],
-                skip: input.offset ?? 0,
-                take: input.limit ?? LEGACY_LIST_LIMIT,
+                skip: window.offset,
+                take: window.limit,
             }),
             context.db.apikey.count({ where }),
         ]);

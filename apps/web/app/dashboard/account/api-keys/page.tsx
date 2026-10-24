@@ -17,12 +17,13 @@ import {
 import {
     Table,
     TableBody,
+    TableCell,
     TableHead,
     TableHeader,
     TableRow,
 } from '@repo/ui/table';
 import { CopyToClipboardButton } from '@repo/dashboard-core/components/copy-to-clipboard-button';
-import PaddedSpinner from '@repo/dashboard-core/components/padded-spinner';
+import { Spinner } from '@repo/ui/spinner';
 import { CopyIcon } from 'lucide-react';
 import { useORPC } from '@/hooks/use-orpc';
 import { useVectorixPermissions } from '@/contexts/vectorix-permissions';
@@ -53,8 +54,6 @@ export default function APIKeysPage() {
             },
         })
     );
-    if (query.isPending && !page.query && page.offset === 0)
-        return <PaddedSpinner />;
     if (query.isError)
         return (
             <DashboardPage className='space-y-6'>
@@ -86,14 +85,37 @@ export default function APIKeysPage() {
                         <TableHead>{t('name')}</TableHead>
                         <TableHead>{t('created')}</TableHead>
                         <TableHead>{t('expires')}</TableHead>
-                        <TableHead>Permissions</TableHead>
+                        <TableHead>{t('permissions')}</TableHead>
                         <TableHead>{t('actions')}</TableHead>
                     </TableRow>
                 </TableHeader>
                 <TableBody>
-                    {query.data?.keys.map((key) => (
-                        <ApiKeyLine key={key.id} apiKey={key} />
-                    ))}
+                    {query.isPending ? (
+                        <TableRow>
+                            <TableCell colSpan={5}>
+                                <Spinner aria-label={t('loading')} />
+                            </TableCell>
+                        </TableRow>
+                    ) : query.data.keys.length === 0 ? (
+                        <TableRow>
+                            <TableCell
+                                colSpan={5}
+                                className='text-center text-muted-foreground'
+                            >
+                                {t(
+                                    page.query
+                                        ? 'noMatches'
+                                        : page.offset > 0
+                                          ? 'emptyPage'
+                                          : 'noApiKeys'
+                                )}
+                            </TableCell>
+                        </TableRow>
+                    ) : (
+                        query.data.keys.map((key) => (
+                            <ApiKeyLine key={key.id} apiKey={key} />
+                        ))
+                    )}
                 </TableBody>
             </Table>
             {query.data && (

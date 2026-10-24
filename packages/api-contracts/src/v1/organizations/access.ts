@@ -37,7 +37,7 @@ export const organizationAccessV1Contract = {
                 method: 'GET',
                 path: '/api-keys',
                 description:
-                    'List organization API keys without their secrets. Pass limit (with optional offset and name query) for a server-side page; total counts every match.',
+                    'List organization API keys without their secrets. Any offset, limit or name query requests a bounded page (default 25, maximum 100); no options preserves the complete legacy list. Total counts every match.',
             })
             .input(z.object(listWindowFields).strict().default({}))
             .output(

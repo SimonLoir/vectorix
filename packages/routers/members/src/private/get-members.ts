@@ -1,4 +1,4 @@
-import { LEGACY_LIST_LIMIT } from '@repo/api-contracts/v1/list-window';
+import { resolveListWindow } from '@repo/api-contracts/v1/list-window';
 import { adminMembersV1 } from './v1-implementer';
 export const memberSelect = {
     id: true,
@@ -12,6 +12,7 @@ export const memberSelect = {
 /** Server-side window over current members; name/email search is case-insensitive. */
 export const getMembers = adminMembersV1.get.handler(
     async ({ context: { db, organizationId }, input }) => {
+        const window = resolveListWindow(input);
         const query = input.query?.trim();
         const where = {
             organizationId,
@@ -41,8 +42,8 @@ export const getMembers = adminMembersV1.get.handler(
                 where,
                 select: memberSelect,
                 orderBy: [{ createdAt: 'asc' }, { id: 'asc' }],
-                skip: input.offset ?? 0,
-                take: input.limit ?? LEGACY_LIST_LIMIT,
+                skip: window.offset,
+                take: window.limit,
             }),
             db.member.count({ where }),
         ]);

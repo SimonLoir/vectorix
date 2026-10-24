@@ -152,7 +152,11 @@
         "expires": "Vervalt op",
         "actions": "Acties",
         "noApiKeys": "Nog geen API-sleutels",
-        "search": "API-sleutels zoeken op naam"
+        "search": "API-sleutels zoeken op naam",
+        "permissions": "Rechten",
+        "loading": "API-sleutels laden",
+        "noMatches": "Geen API-sleutels komen overeen met deze zoekopdracht.",
+        "emptyPage": "Er staan geen API-sleutels op deze pagina. Gebruik Vorige om terug te gaan naar eerdere resultaten."
     },
     "permissions": {
         "title": "Rollen en rechten",
@@ -438,7 +442,9 @@
             "role": "Deze rol is niet beschikbaar of je mag hem niet toewijzen.",
             "generic": "De actie kon niet worden voltooid. Laad de pagina opnieuw om de huidige toestand te controleren voordat je opnieuw probeert."
         },
-        "search": "Leden zoeken op naam of e-mailadres"
+        "search": "Leden zoeken op naam of e-mailadres",
+        "noMatches": "Geen leden komen overeen met deze zoekopdracht.",
+        "emptyPage": "Er staan geen leden op deze pagina. Gebruik Vorige om terug te gaan naar eerdere resultaten."
     },
     "requestErrors": {
         "permission": "Je hebt geen toestemming om deze actie uit te voeren.",

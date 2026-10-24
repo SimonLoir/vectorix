@@ -6,7 +6,6 @@ import PageTitle from '@repo/dashboard-core/components/page-title';
 import {
     Table,
     TableBody,
-    TableCell,
     TableHead,
     TableHeader,
     TableRow,
@@ -14,7 +13,7 @@ import {
 import { Spinner } from '@repo/ui/spinner';
 import { Button } from '@repo/ui/button';
 import InviteMember from './components/invite-member';
-import MemberLine from './components/member-line';
+import { MembersTable } from './components/members-table';
 import InvitationLine from './components/invitation-line';
 import { Separator } from '@repo/ui/separator';
 import { useTranslations } from 'next-intl';
@@ -22,6 +21,8 @@ import { BreadCrumbs } from '@repo/dashboard-core/components/app-page-context';
 import { useQuery } from '@tanstack/react-query';
 import { useORPC } from '@/hooks/use-orpc';
 import { useVectorixPermissions } from '@/contexts/vectorix-permissions';
+import { requestErrorKey } from '@repo/dashboard-core/lib/request-errors';
+import { RequestErrorState } from '@/components/request-error-state';
 import {
     CatalogPagination,
     CatalogSearch,
@@ -102,6 +103,7 @@ export function MembersManager({
               ) ?? [])
             : []
     );
+    const memberReadFailed = canReadMembers && memberDetails.isError;
     const invitations = (activeOrganization.invitations || []).filter(
         (i) => i.status === 'pending'
     );
@@ -139,61 +141,37 @@ export function MembersManager({
                             />
                         </div>
                     )}
-                    {canReadMembers && memberDetails.isError && (
-                        <p role='alert' className='mb-3 text-sm'>
-                            {t('loadFailed')}
-                        </p>
-                    )}
-                    <Table>
-                        <TableHeader>
-                            <TableRow>
-                                <TableHead>{t('name')}</TableHead>
-                                <TableHead>{t('email')}</TableHead>
-                                <TableHead>{t('role')}</TableHead>
-                                <TableHead className='text-center'>
-                                    {t('actions')}
-                                </TableHead>
-                            </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                            {canReadMembers && memberDetails.isPending ? (
-                                <TableRow>
-                                    <TableCell colSpan={4}>
-                                        <Spinner aria-label={t('loading')} />
-                                    </TableCell>
-                                </TableRow>
-                            ) : members.length === 0 ? (
-                                <TableRow>
-                                    <TableCell
-                                        colSpan={4}
-                                        className='text-center text-muted-foreground'
-                                    >
-                                        {t('noMembers')}
-                                    </TableCell>
-                                </TableRow>
-                            ) : (
-                                members.map((member) => (
-                                    <MemberLine
-                                        key={member.id}
-                                        member={member}
-                                        avatarColor={avatarColors.get(
-                                            member.id
-                                        )}
-                                    />
-                                ))
+                    {memberReadFailed ? (
+                        <RequestErrorState
+                            errorKey={requestErrorKey(memberDetails.error)}
+                            onRetry={memberDetails.refetch}
+                        />
+                    ) : (
+                        <MembersTable
+                            members={members}
+                            avatarColors={avatarColors}
+                            isPending={
+                                canReadMembers && memberDetails.isPending
+                            }
+                            emptyMessage={emptyMemberMessage(
+                                canReadMembers,
+                                page.query,
+                                page.offset
                             )}
-                        </TableBody>
-                    </Table>
-                    {canReadMembers && memberDetails.data && (
-                        <div className='mt-3'>
-                            <CatalogPagination
-                                offset={page.offset}
-                                total={memberDetails.data.total}
-                                limit={page.limit}
-                                onChange={page.setOffset}
-                            />
-                        </div>
+                        />
                     )}
+                    {canReadMembers &&
+                        !memberReadFailed &&
+                        memberDetails.data && (
+                            <div className='mt-3'>
+                                <CatalogPagination
+                                    offset={page.offset}
+                                    total={memberDetails.data.total}
+                                    limit={page.limit}
+                                    onChange={page.setOffset}
+                                />
+                            </div>
+                        )}
                 </div>
 
                 {invitations.length > 0 && (
@@ -233,4 +211,11 @@ export function MembersManager({
             </div>
         </Container>
     );
+}
+
+/** Keep legacy filtered views distinct from empty search or deleted-last-row pages. */
+function emptyMemberMessage(windowed: boolean, query: string, offset: number) {
+    if (windowed && query) return 'noMatches';
+    if (windowed && offset > 0) return 'emptyPage';
+    return 'noMembers';
 }
