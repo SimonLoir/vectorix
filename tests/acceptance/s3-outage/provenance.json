@@ -3074,5 +3074,174 @@
         "replacementRun": "NOT_SELECTED",
         "nativeActivation": "NOT_AUTHORIZED",
         "productBuildsRepeated": false
+    },
+    "vectorProvisionComposedNativeTrial": {
+        "status": "COMPLETE",
+        "runId": "9ab83712ad3f",
+        "helperCommit": "5f71fed71c3da4d269af7c7e27d37a044042d3ab",
+        "helperTree": "d1c6ab43cb0b67ccfceb1b61fae6c7d0910bdda0",
+        "selectedProductionBuildCommit": "77ac06bd99c113b8cf32e2f48bcaec79038dd94a",
+        "preparationManifestSha256": "bc2955bd5add9632f3f5c4ba32f496a653cbf1bb16b1644fb1600522397d321d",
+        "applicationValidationReceiptSha256": "2d23c8bb1d3b96815b94a39ac1b753c910b5f22e0fde20bdc8441f44886cc4c5",
+        "applicationValidation": "25_TYPES_25_LINT_UNITS_FOUR_SERIAL_BUILDS_AT_77AC",
+        "helperOfflineValidation": "70_PYTHON_100_NODE_21_SYNTAX_6_AST_AT_DIAGNOSTIC_CHECKPOINT",
+        "completedObservations": {
+            "vector-g1-ready": {
+                "status": "OBSERVED",
+                "snapshots": 1,
+                "sha256": "fd0289cca98982be5860c9f1bbf8f01b5e683096f042ea3acb4daabaa185ecc6"
+            },
+            "vector-g2-staged": {
+                "status": "OBSERVED",
+                "snapshots": 1,
+                "sha256": "10f775bfc453efcf6180307794058bc33bfe091227885572a73b710b2abfa621"
+            },
+            "vector-outage-failed": {
+                "status": "OBSERVED",
+                "snapshots": 44,
+                "sha256": "96e37cd09e3a600a6f0396c7de62a5fd7af958025b59e4c671d55d59a7a58795"
+            },
+            "vector-restored-before-retry": {
+                "status": "OBSERVED",
+                "snapshots": 1,
+                "sha256": "53157a338b2cd102143ada8c15f316c624cdf49e4d6e6ba53161283d4d9dd2cd"
+            },
+            "vector-g2-ready": {
+                "status": "OBSERVED",
+                "snapshots": 1,
+                "sha256": "6b09a86f815e6324834dc17bf03b4a6ecf7aa624774b4bff2fc6139e6061bbd6"
+            },
+            "vector-signed-out": {
+                "status": "OBSERVED",
+                "snapshots": 1,
+                "sha256": "d4eff70a0d8dc4785e724a1890d7bc5b3c4ece38c15b3df54dd6687543e969b2"
+            }
+        },
+        "completedWorkflows": {
+            "prepare-g1": {
+                "confirmedResponses": 13,
+                "statusCounts": {
+                    "200": 13
+                },
+                "signOutConfirmed": true,
+                "finalizationSha256": "f0b9a695b0ab67cdc5caee0a90eb1da28a7dc90211b1ba5c21f64308894b3c9b"
+            },
+            "search-g1": {
+                "confirmedResponses": 13,
+                "statusCounts": {
+                    "200": 13
+                },
+                "signOutConfirmed": true,
+                "finalizationSha256": "a91588837f79223e25adef3341c2009e9cca94088a7097ff14a3b80625a31764"
+            },
+            "rebuild-g2": {
+                "confirmedResponses": 5,
+                "statusCounts": {
+                    "200": 5
+                },
+                "signOutConfirmed": true,
+                "finalizationSha256": "f5bfef137723eda393d00d33cc46477fc20f6e0f370342dcf31bd9ddd94a3770"
+            },
+            "search-outage": {
+                "confirmedResponses": 8,
+                "statusCounts": {
+                    "200": 7,
+                    "409": 1
+                },
+                "signOutConfirmed": true,
+                "finalizationSha256": "34adafa636fb037f3dc743f46013f9b3a3a62d53c179247293f0005300b70415"
+            },
+            "search-g2": {
+                "confirmedResponses": 13,
+                "statusCounts": {
+                    "200": 13
+                },
+                "signOutConfirmed": true,
+                "finalizationSha256": "4d9cd5d7d27fa056df91d2c52561d5b59ab37bd95f1b08d71c96bb6d3ff025d6"
+            }
+        },
+        "confirmedHttpResponses": 52,
+        "confirmedHttpResponseStatusCounts": {
+            "200": 51,
+            "409": 1
+        },
+        "nullAfterStatusReceipts": 0,
+        "outage": {
+            "snapshots": 44,
+            "closedTraceRows": 5,
+            "attempts": [1, 2, 3, 4, 5],
+            "leaseEpochs": ["1", "2", "3", "4", "5"],
+            "backoffMilliseconds": [10000, 20000, 40000, 80000]
+        },
+        "retry": {
+            "sameProvisionTaskId": "79657358-883d-457a-a5be-7cb7e83852ce",
+            "sameG2": "848b2d55-9e25-4ce1-b1bf-c834915f812f",
+            "failedEpoch": "5",
+            "completeEpoch": "7",
+            "postRetryAttempts": 1,
+            "oneSuccessfulBrowserActivationObserved": true,
+            "pendingScreenshotObserved": true,
+            "earlierLocatorResolutionFailure": "RETAINED_SEPARATELY_NO_DISPATCH_INFERENCE",
+            "extraAdmittedRetryReset": "NOT_INDICATED_BY_EXACT_EPOCH_CHAIN"
+        },
+        "finalUsage": {
+            "activeChunks": "1",
+            "reservedChunks": "0",
+            "retainedChunks": "1"
+        },
+        "normalRootLogoutAndFormalSessionZero": true,
+        "rootBrowser": {
+            "normalLoginCount": 1,
+            "successfulRetryActivationsObserved": 1,
+            "immediatePendingScreenshot": true,
+            "earlierLocatorResolutionInputFailure": "PRESERVED_NO_DISPATCH_INFERENCE",
+            "normalLogout": true,
+            "language": "EN_ONLY",
+            "consoleWarningsErrors": 0,
+            "browserFileTransfers": 0,
+            "securityMutations": 0,
+            "originalReceiptSha256": "d07c078c918aa2fe448f5f03f407fb6dd67df412b66ce60e21a7fe1d2c11db5b"
+        },
+        "watchdog": {
+            "intervened": false,
+            "sameWorkerResumed": true,
+            "originalWindowSeconds": 900,
+            "lateMinimumSeconds": 625
+        },
+        "syntheticEmbeddingFinal": {
+            "requests": 29,
+            "embeddings": 9,
+            "inputs": 9,
+            "rejected": 0,
+            "connections": 29
+        },
+        "terminal": {
+            "phase": "CLEANED_EVIDENCE_RETAINED",
+            "resources": 0,
+            "appProcessesTerminal": 5,
+            "observerTerminal": true,
+            "watchdogTerminal": true,
+            "containersAbsent": 4,
+            "volumesAbsent": 4,
+            "restoredPairs": 42,
+            "disabledGates": 16,
+            "protectedNextLockExact": true,
+            "gitClean": true
+        },
+        "nativeTerminalSummarySha256": "9a3e9c76f2902f3df1dd4d8b64d69e689bab8f7280a32af85c386de778dd74c7",
+        "terminalProofInventorySha256": "25b4e572833bc2c301725a5239c55e879204973547a34296eb8ba845c496c7c8",
+        "terminalProofFiles": 167,
+        "teardownReceiptSha256": "512296547e0480eec2ccf3b6830d0526b910d21324065e7299c2626f0eb38759",
+        "restoreReceiptSha256": "1a40f1cc80e71e84053ef697ba763abd86979b9a9b9e49be3bf38027a6415994",
+        "rootIndependentFinalAuditSha256": "0bfb73212beb5fe88de58fd00b8e625b674a02d6135012b1cbc8da9fd1e0c4eb",
+        "rootAuditResourceAttribution": "SAVED_ACTUAL_INDEPENDENT_DOCKER_PROC_CENSUS_NO_NEW_ROOT_NATIVE_QUERY",
+        "priorProvenanceFieldsPreserved": 25,
+        "historical5ff": "COMPLETE_ONLY_AT_9CEF_DC314",
+        "historical778": "INCOMPLETE_NESTED_CAUSE_UNKNOWN",
+        "nativeGuardFailureEnvelope": "NO_REFUSAL_OBSERVED_FAILURE_BRANCH_REMAINS_HERMETIC_COVERAGE",
+        "qualityWeightsCapacity": "NOT_ESTABLISHED",
+        "intraDdlWriteSealInterruption": "NOT_ESTABLISHED",
+        "laterMainExecution": "NOT_CLAIMED",
+        "productOrHelperBehaviorChangedForOutcomeDocs": false
     }
 }
