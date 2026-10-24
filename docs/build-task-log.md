@@ -1260,6 +1260,21 @@ The PR83 branch subsequently aligns locally with actual PR82 squash `c93e30c7b11
 
 PR83's first GitHub CodeQL workflow completes successfully, while the separate GitHub Advanced Security check reports one new high-severity filesystem-race finding in the test helper. The path-stat-before-open sequence is corrected using direct non-truncating write admission and descriptor-based read metadata with `O_NOFOLLOW`, preserving actual permission refusals and cache I/O. No alert suppression or analysis exclusion is added. Independent source review is CLEAR. The repeated six-image script passes in 232.260 seconds, including all five actual permission probes, both cache checks, three Docker health checks and the existing infrastructure/runtime checks. Protected Next declarations, lockfile and the reviewed helper hash remain exact. New final-head CI and the separate security check remain required before merge.
 
+## Docker Node major policy — PR87 correction
+
+- [x] Restore all five service Dockerfiles to the exact `node:24-alpine` bytes and current digest from main `b91549e630a5f5df53803dc2316b60aba39917c0`.
+- [x] Exclude only Docker `node` major updates from Dependabot while preserving the other grouped updates.
+- [x] Document coordinated Node-major upgrades against the root engine range, catalog version and service images.
+- [ ] Review and publish the corrected PR head; new exact-head CI remains pending.
+
+The original PR87 head `6101a4eac0e0408a2a28753a624c2e4237af5c64` changes ten base/runtime stages to Node 25 despite the declared `>=24 <25` engine and Node 24 catalog workflow. Its existing CI results do not approve that unsupported runtime policy. The correction restores the existing Node 24 image pin and leaves Dockerfiles with no residual difference from main. Only Dependabot configuration and these two guides remain changed relative to that base. Static configuration/documentation validation is recorded separately; no installation, image build, service, native acceptance or new CI execution is performed for this policy correction.
+
+The corrected policy head `fe73d39f3e57373d7515607befa38244d26e1132` subsequently passes its catalog, Docker-image, CodeQL workflow, separate security and Dependabot-configuration checks. PR87 then aligns with actual main `dc314fcfe02bbc30877bb1a4a1720d1bb3abccde`, retaining its complete build history before this policy section. All five Node 24 Dockerfiles and all other application, runtime, dependency and CI-workflow files remain exact main; the only residual changes are Dependabot policy and these two guides.
+
+This alignment verifies YAML, documentation formatting and local links, Mermaid syntax, diff whitespace and exact preservation of both Next declarations and the lockfile. No installation, test, application/image build, service or native action is repeated. The earlier green checks belong to `fe73d39`; the aligned head still requires its own successful CI before merge.
+
+The supported-Node policy candidate subsequently incorporates the deployment/entitlement candidate chain, including reviewed transaction-conflict PR97. Every Dockerfile and application/dependency byte follows that incoming candidate; only the existing Dependabot policy, supply-chain guide and complete policy build-log suffix remain residual. Node 24 remains the supported runtime. No install, build or native validation is repeated; new exact-head CI and all prerequisite merges remain required.
+
 ## M7c.7 — Physical S3 cleanup outage and dashboard retry preparation
 
 - [x] Implement a disabled protocol-2 extension of the existing S3 outage harness with two explicit, disjoint scenarios.
