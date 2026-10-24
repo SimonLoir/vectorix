@@ -1,6 +1,7 @@
 import { oc } from '@orpc/contract';
 import { z } from 'zod';
 import { collectionScopes } from '../rag/common';
+import { listWindowFields } from '../list-window';
 
 // Explicit V1 DTOs, independent of both Prisma and the mutable permission catalogue.
 const PermissionsV1Schema = z.record(z.string(), z.array(z.string()));
@@ -35,9 +36,10 @@ export const organizationAccessV1Contract = {
             .route({
                 method: 'GET',
                 path: '/api-keys',
-                description: 'List organization API keys without their secrets',
+                description:
+                    'List organization API keys without their secrets. Pass limit (with optional offset and name query) for a server-side page; total counts every match.',
             })
-            .input(empty)
+            .input(z.object(listWindowFields).strict().default({}))
             .output(
                 z.object({
                     keys: z.array(
@@ -53,6 +55,7 @@ export const organizationAccessV1Contract = {
                             issuerMemberId: z.string().nullable(),
                         })
                     ),
+                    total: z.number().int(),
                 })
             ),
         create: oc

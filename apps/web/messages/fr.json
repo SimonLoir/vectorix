@@ -151,7 +151,8 @@
         "created": "Créée le",
         "expires": "Expire le",
         "actions": "Actions",
-        "noApiKeys": "Aucune clé API"
+        "noApiKeys": "Aucune clé API",
+        "search": "Rechercher une clé API par nom"
     },
     "permissions": {
         "title": "Rôles et permissions",
@@ -436,7 +437,8 @@
             "limit": "L’organisation a atteint sa limite de membres ou d’invitations.",
             "role": "Ce rôle est indisponible ou vous ne pouvez pas l’attribuer.",
             "generic": "L’action n’a pas pu aboutir. Rechargez la page pour vérifier l’état actuel avant de réessayer."
-        }
+        },
+        "search": "Rechercher un membre par nom ou e-mail"
     },
     "requestErrors": {
         "permission": "Vous n’avez pas l’autorisation d’effectuer cette action.",

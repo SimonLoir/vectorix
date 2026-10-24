@@ -30,6 +30,11 @@ import { ApiKeyPermissionsDialog } from './components/api-key-permissions-dialog
 import ApiKeyLine from './components/api-key-line';
 import { requestErrorKey } from '@repo/dashboard-core/lib/request-errors';
 import { RequestErrorState } from '@/components/request-error-state';
+import {
+    CatalogPagination,
+    CatalogSearch,
+    useCatalogPagination,
+} from '@/components/rag/catalog-controls';
 
 /** Lists legacy/scoped keys without rotating or changing existing production secrets. */
 export default function APIKeysPage() {
@@ -38,10 +43,18 @@ export default function APIKeysPage() {
     const t = useTranslations('apiKeys');
     const [creating, setCreating] = useState(false);
     const [newKey, setNewKey] = useState<string | null>(null);
+    const page = useCatalogPagination();
     const query = useQuery(
-        orpc.admin.organization.apiKeys.list.queryOptions({})
+        orpc.admin.organization.apiKeys.list.queryOptions({
+            input: {
+                offset: page.offset,
+                limit: page.limit,
+                query: page.query,
+            },
+        })
     );
-    if (query.isPending) return <PaddedSpinner />;
+    if (query.isPending && !page.query && page.offset === 0)
+        return <PaddedSpinner />;
     if (query.isError)
         return (
             <DashboardPage className='space-y-6'>
@@ -62,6 +75,11 @@ export default function APIKeysPage() {
                     </Button>
                 )}
             </div>
+            <CatalogSearch
+                value={page.query}
+                onChange={page.search}
+                label={t('search')}
+            />
             <Table>
                 <TableHeader>
                     <TableRow>
@@ -78,6 +96,14 @@ export default function APIKeysPage() {
                     ))}
                 </TableBody>
             </Table>
+            {query.data && (
+                <CatalogPagination
+                    offset={page.offset}
+                    total={query.data.total}
+                    limit={page.limit}
+                    onChange={page.setOffset}
+                />
+            )}
             {creating && (
                 <ApiKeyPermissionsDialog
                     onClose={() => setCreating(false)}

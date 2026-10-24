@@ -22,6 +22,11 @@ import { BreadCrumbs } from '@repo/dashboard-core/components/app-page-context';
 import { useQuery } from '@tanstack/react-query';
 import { useORPC } from '@/hooks/use-orpc';
 import { useVectorixPermissions } from '@/contexts/vectorix-permissions';
+import {
+    CatalogPagination,
+    CatalogSearch,
+    useCatalogPagination,
+} from '@/components/rag/catalog-controls';
 
 export function MembersManager({
     embedded = false,
@@ -39,8 +44,9 @@ export function MembersManager({
     const { canOperation } = useVectorixPermissions();
     const canReadMembers = canOperation('admin.members.get');
     const organizationId = session?.session.activeOrganizationId;
+    const page = useCatalogPagination();
     const memberOptions = orpc.admin.members.get.queryOptions({
-        input: undefined,
+        input: { offset: page.offset, limit: page.limit, query: page.query },
     });
     const memberDetails = useQuery({
         ...memberOptions,
@@ -81,9 +87,16 @@ export function MembersManager({
             </div>
         );
 
-    const members = activeOrganization.members || [];
+    // Readers get a bounded server-side page; others keep Better Auth's own filtered view.
+    const pagedMembers = memberDetails.data?.members.map((member) => ({
+        ...member,
+        user: { ...member.user, image: member.user.image ?? undefined },
+    }));
+    const members = canReadMembers
+        ? (pagedMembers ?? [])
+        : activeOrganization.members || [];
     const avatarColors = new Map(
-        canReadMembers && activeOrganization.id === organizationId
+        canReadMembers
             ? (memberDetails.data?.members.map(
                   (member) => [member.id, member.avatarColor] as const
               ) ?? [])
@@ -117,6 +130,20 @@ export function MembersManager({
                     <h3 className='text-lg font-medium mb-2'>
                         {t('membersSection')}
                     </h3>
+                    {canReadMembers && (
+                        <div className='mb-3'>
+                            <CatalogSearch
+                                value={page.query}
+                                onChange={page.search}
+                                label={t('search')}
+                            />
+                        </div>
+                    )}
+                    {canReadMembers && memberDetails.isError && (
+                        <p role='alert' className='mb-3 text-sm'>
+                            {t('loadFailed')}
+                        </p>
+                    )}
                     <Table>
                         <TableHeader>
                             <TableRow>
@@ -129,7 +156,13 @@ export function MembersManager({
                             </TableRow>
                         </TableHeader>
                         <TableBody>
-                            {members.length === 0 ? (
+                            {canReadMembers && memberDetails.isPending ? (
+                                <TableRow>
+                                    <TableCell colSpan={4}>
+                                        <Spinner aria-label={t('loading')} />
+                                    </TableCell>
+                                </TableRow>
+                            ) : members.length === 0 ? (
                                 <TableRow>
                                     <TableCell
                                         colSpan={4}
@@ -151,6 +184,16 @@ export function MembersManager({
                             )}
                         </TableBody>
                     </Table>
+                    {canReadMembers && memberDetails.data && (
+                        <div className='mt-3'>
+                            <CatalogPagination
+                                offset={page.offset}
+                                total={memberDetails.data.total}
+                                limit={page.limit}
+                                onChange={page.setOffset}
+                            />
+                        </div>
+                    )}
                 </div>
 
                 {invitations.length > 0 && (

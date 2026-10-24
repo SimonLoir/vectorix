@@ -151,7 +151,8 @@
         "created": "Aangemaakt op",
         "expires": "Vervalt op",
         "actions": "Acties",
-        "noApiKeys": "Nog geen API-sleutels"
+        "noApiKeys": "Nog geen API-sleutels",
+        "search": "API-sleutels zoeken op naam"
     },
     "permissions": {
         "title": "Rollen en rechten",
@@ -436,7 +437,8 @@
             "limit": "De organisatie heeft de limiet voor leden of uitnodigingen bereikt.",
             "role": "Deze rol is niet beschikbaar of je mag hem niet toewijzen.",
             "generic": "De actie kon niet worden voltooid. Laad de pagina opnieuw om de huidige toestand te controleren voordat je opnieuw probeert."
-        }
+        },
+        "search": "Leden zoeken op naam of e-mailadres"
     },
     "requestErrors": {
         "permission": "Je hebt geen toestemming om deze actie uit te voeren.",

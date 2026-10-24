@@ -1,5 +1,6 @@
 import { oc } from '@orpc/contract';
 import { z } from 'zod';
+import { listWindowFields } from '../list-window';
 const member = z.object({
     id: z.string(),
     organizationId: z.string(),
@@ -19,8 +20,10 @@ const member = z.object({
 export const adminMembersV1Contract = {
     get: oc
         .route({ method: 'GET', path: '/' })
-        .input(z.object({}).default({}))
-        .output(z.object({ members: z.array(member) })),
+        .input(z.object(listWindowFields).default({}))
+        .output(
+            z.object({ members: z.array(member), total: z.number().int() })
+        ),
     me: oc
         .route({ method: 'GET', path: '/me' })
         .input(z.object({}).default({}))
