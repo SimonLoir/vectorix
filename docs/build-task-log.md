@@ -992,12 +992,15 @@ The file chooser tool waits 40,370 seconds, then the same four live handles and 
 
 ## Issue #55 — Share auth rate limits and stop trusting client-supplied addresses
 
-- [x] Back Better Auth's limiter with an atomic Redis fixed window (`@repo/queues/rate-limit`) instead of per-process memory, with a bounded per-process fallback.
+- [x] Back Better Auth's limiter with an atomic Redis last-allowed-request window (`@repo/queues/rate-limit`) instead of per-process memory, with a bounded per-process fallback.
 - [x] Derive the client address from the socket peer and walk `X-Forwarded-For` only through `VECTORIX_TRUSTED_PROXIES`, then pass it to Better Auth through an internal header that the API always overwrites.
-- [x] Add stricter budgets for second-factor verification and password-reset completion.
+- [x] Preserve the installed second-factor plugin rule and tighten password-reset completion.
+- [x] Hash canonical auth keys, keep active fallback budgets at saturation, and bound Redis connection attempts and sanitized diagnostics.
 - [x] Document the reverse-proxy requirement in `README.md`, `.env.example` and [authentication rate limiting](auth-rate-limiting.md).
 - [ ] Review and merge through a separate PR.
 
 Branch `codex/auth-rate-limit-storage`. Entry points: [`authRateLimitOptions`](../packages/auth/src/rate-limit.ts), [`consumeRateLimit`](../packages/queues/src/rate-limit.ts), [`resolveClientIp`](../apps/api/src/http/client-ip.ts) and the `/api/auth/*` route in [`app.ts`](../apps/api/src/app.ts). Sessions and sign-in notifications store the same derived address. Adds `ioredis` 5.11.1 to `@repo/queues` (already installed through BullMQ) and links `@repo/auth` to `@repo/queues`. No schema, migration or API contract change.
 
 Validation is recorded in the PR.
+
+PR76 independent review corrections are prepared in isolated branch `codex/pr76-rate-limit-review`, based on head `41934fa` and current `origin/main` `b59a14b`. The earlier implementation was not merged: review found raw token-bearing rate keys, active fallback resets at capacity, unsanitized ioredis error events, a replacing second-factor override and first-hit window semantics. The correction preserves native last-allowed-request cooldown, removes the second-factor override and adds focused local, real Redis and separate-process native HTTP admission regressions. The corrected worktree passes frozen installation, generation, scoped queues/auth/API types and lint, 170 API/auth/backend unit tests plus 11 utility tests, and all five disposable Redis-runner tests. Actual Redis proves 20 concurrent consumers admit exactly five, allowed requests refresh TTL and denied requests do not. Two separate native HTTP processes preserve the plugin 3/10 threshold despite spoofed headers; their missing-challenge responses do not claim TOTP enrollment or successful authentication. All 316 corrected disposable catalog tests pass (210,744 ms), followed by four successful serial API/workers/web/admin builds. The isolated build wrapper restores the exact initial declaration state: web `next-env.d.ts` was absent and remains absent; admin's existing declaration is restored byte-for-byte with its original mode. The primary workspace is untouched. Corrected six-image checks, final-base validation and exact-head CI remain pending. The original head had green six-image CI but a vector-store startup failure before the API catalog. No schema, migration, versioned API, browser credential or production-data action is introduced.

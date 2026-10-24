@@ -4,20 +4,25 @@ This page covers issue #55. Better Auth's limiter protects `/api/auth/*` sign-in
 
 ## Shared counters
 
-[`authRateLimitStorage`](../packages/auth/src/rate-limit.ts) implements Better Auth's atomic `consume` storage contract with [`consumeRateLimit`](../packages/queues/src/rate-limit.ts). A Lua script runs `INCR` and `PEXPIRE` in one step under `vectorix:rate-limit:auth:<address>|<path>`, so every API replica shares one fixed window per client address and path, and a restart no longer resets the budget. The connection uses the existing `REDIS_URL` / `REDIS_PASSWORD` settings and opens lazily on the first counted request.
+[`authRateLimitStorage`](../packages/auth/src/rate-limit.ts) implements Better Auth's atomic `consume` storage contract with [`consumeRateLimit`](../packages/queues/src/rate-limit.ts). The complete framework-canonical client/path key is SHA-256 hashed before storage, so native token-bearing paths and raw addresses do not appear in Redis keys. All replicas use `vectorix:rate-limit:v2:auth:<digest>`; earlier fixed-window keys expire naturally.
 
-If Redis is unreachable, each process falls back to a bounded in-memory window (at most 10,000 keys) and logs one sanitized warning. Limits then degrade to per replica instead of disappearing. Better Auth enables the limiter only when `NODE_ENV=production`, as before.
+One Lua script preserves the installed Better Auth window semantics: an allowed request increments the count and refreshes its deadline; a rejected request neither increments the count nor extends the deadline. For example, three allowed sign-in attempts at 0, 9 and 9.5 seconds remain blocked at 10 seconds, until the cooldown after the last allowed attempt ends. The connection uses the existing `REDIS_URL` / `REDIS_PASSWORD` settings and opens lazily on the first counted request.
 
-Effective budgets per client address:
+If Redis is unreachable, each process keeps at most 10,000 local budgets with the same window semantics. Active budgets are never cleared to make room; at capacity, new keys are denied until expired entries can be reclaimed. Each sweep examines at most 64 entries. This outage mode is per process: it cannot guarantee the global budget across replicas or across restarts, and a transition from Redis to local storage can admit an additional local allowance. Deploy Redis for shared enforcement; do not treat the fallback as strict global fail-closed availability.
 
-| Path                                                            | Window      | Max | Source              |
-| --------------------------------------------------------------- | ----------- | --- | ------------------- |
-| `/sign-in/*`, `/sign-up/*`, `/change-password`, `/change-email` | 10 s        | 3   | Better Auth default |
-| `/request-password-reset`, `/send-verification-email`           | 60 s        | 3   | Better Auth default |
-| `/two-factor/*`                                                 | 10 s        | 3   | two-factor plugin   |
-| `/two-factor/verify-totp`, `verify-otp`, `verify-backup-code`   | 300 s       | 10  | Vectorix            |
-| `/reset-password`                                               | 300 s       | 5   | Vectorix            |
-| `/get-session`, organization reads                              | not limited |     | Vectorix            |
+Connection attempts have a two-second timeout and commands a 500 ms timeout. There is no background reconnect or offline command queue; a request can start one new connection attempt per five seconds. An attached error listener suppresses raw library errors, and one fixed warning is emitted per process without keys, URLs, error messages or stacks. Shutdown disconnects the client and prevents further attempts. Better Auth enables its limiter only when `NODE_ENV=production`, as before.
+
+Effective budgets per canonical client address and path:
+
+| Path                                                            | Window      | Max | Source                      |
+| --------------------------------------------------------------- | ----------- | --- | --------------------------- |
+| `/sign-in/*`, `/sign-up/*`, `/change-password`, `/change-email` | 10 s        | 3   | Better Auth default         |
+| `/request-password-reset`, `/send-verification-email`           | 60 s        | 3   | Better Auth default         |
+| `/two-factor/*`                                                 | 10 s        | 3   | Installed two-factor plugin |
+| `/reset-password`                                               | 300 s       | 5   | Vectorix                    |
+| `/get-session`, organization reads                              | not limited |     | Vectorix                    |
+
+There are no Vectorix overrides for second-factor verification. Its native plugin rule is preserved; a longer custom window would replace that rule rather than add another budget.
 
 ## Client addresses
 
@@ -47,5 +52,19 @@ flowchart TD
 ## Verification
 
 - `apps/api/src/http/client-ip.test.ts`: peer precedence, trusted-hop walking, malformed chains, IPv4-mapped peers, startup validation and header replacement.
-- `packages/queues/src/rate-limit.test.ts`: the per-process fallback when Redis is unreachable.
-- `packages/queues/src/rate-limit.integration.ts` (run by `pnpm test:queues` on disposable authenticated Redis): 20 concurrent consumers with `max: 5` get exactly 5 grants, and the window expires.
+- `packages/auth/tests/rate-limit.test.ts`: opaque canonical-key hashing, exact rule forwarding and preservation of the installed second-factor rule.
+- `packages/queues/src/rate-limit.test.ts`: local cooldown refresh, non-clearing saturation, expiry reclamation, result validation and sanitized outage handling.
+- `packages/queues/src/rate-limit.integration.ts` (run by `pnpm test:queues` on disposable authenticated Redis): 20 concurrent consumers with `max: 5` get exactly 5 grants, expiry works, allowed hits refresh the real TTL, and rejected hits do not.
+- `apps/api/src/http/auth-rate-limit.integration.ts`: two separate native HTTP processes share the unchanged second-factor admission budget despite spoofed headers. These requests intentionally have no valid challenge and prove admission, not successful second-factor authentication. A native reset callback also proves that stored auth keys remain opaque.
+
+The corrected worktree passes frozen installation, client generation, type checks and lint for queues/auth/API, 170 API/auth/backend unit tests, 11 utility tests and all five isolated Redis-runner tests. The Redis tests include actual concurrent Lua admission and deadline reads. The native HTTP case uses two separate processes and the real Better Auth two-factor middleware with in-memory account adapters; it intentionally has no challenge cookie and verifies three native 400/401 responses followed by 429 per verification path. It does not establish successful TOTP enrollment, account authentication or a dashboard journey.
+
+The PR author's earlier manual two-process sign-in observation is separate. The corrected worktree also passes all 316 disposable catalog tests (210,744 ms) and four serial API/workers/web/admin builds. The build wrapper preserves the exact initial Next declaration state: web was absent and is absent again; admin was present and its bytes and mode are restored. No primary-workspace declaration is touched. Corrected six-image checks, final-base validation and exact-head CI remain pending; the original head's catalog failed in vector-store startup, while its six-image job passed.
+
+## Reproduce and deploy
+
+From a checkout with the supported Node/pnpm versions, run `pnpm install --frozen-lockfile`, `pnpm db:generate`, `pnpm test` and `pnpm test:queues`. The last command owns and removes one disposable, authenticated loopback Redis, then starts and stops its two synthetic HTTP processes. It does not read `.env`, use an application database or contact an external identity provider. Do not run these admission probes against real users or a production authentication endpoint.
+
+For your instance, retain the normal server-only `REDIS_URL` / `REDIS_PASSWORD` configuration and run the API with `NODE_ENV=production`. Leave `VECTORIX_TRUSTED_PROXIES` blank for direct connections; behind a proxy, configure only its exact connecting addresses or necessary CIDRs and make it append the peer address. Restart the API to apply configuration changes. There is no new schema, migration or rate-limit environment toggle. Existing session address records are historical and are not rewritten.
+
+A normal dashboard sign-in should still open the account, and new session/sign-in records should show the derived client address. Second-factor enrollment and successful challenge behavior are covered separately by the existing native tests, not the new two-process admission probe. Do not claim a fresh browser verification unless that journey is actually performed.

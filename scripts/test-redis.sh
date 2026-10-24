@@ -35,6 +35,7 @@ export REDIS_URL="redis://$userinfo@127.0.0.1:$redis_port/15"
 export REDIS_PASSWORD=not-the-configured-redis-password
 timeout --signal=TERM --kill-after=5s 60s pnpm --filter api exec tsx --test ../../packages/queues/src/redis-auth.integration.ts
 timeout --signal=TERM --kill-after=5s 60s pnpm --filter api exec tsx --test ../../packages/queues/src/rate-limit.integration.ts
+timeout --signal=TERM --kill-after=5s 60s pnpm --filter api exec tsx --test src/http/auth-rate-limit.integration.ts
 export VECTORIX_REDIS_TEST_MODE=fallback
 export REDIS_URL="redis://127.0.0.1:$redis_port/15" REDIS_PASSWORD="$redis_default_password"
 timeout --signal=TERM --kill-after=5s 60s pnpm --filter api exec tsx --test ../../packages/queues/src/redis-auth.integration.ts

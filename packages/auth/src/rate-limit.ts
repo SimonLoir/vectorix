@@ -1,15 +1,10 @@
+import { createHash } from 'node:crypto';
 import type { BetterAuthOptions } from 'better-auth';
 import { consumeRateLimit } from '@repo/queues/rate-limit';
 
-type RateLimitRule = {
-    window: number;
-    max: number;
-};
+type RateLimitRule = { window: number; max: number };
 
-/**
- * Disables rate limiting for read-only organization requests while preserving
- * the active rule for mutations such as invitations, updates, and deletion.
- */
+/** Preserve the framework-selected mutation rule; organization reads are exempt. */
 export function getOrganizationRateLimitRule(
     request: Request,
     currentRule: RateLimitRule
@@ -19,11 +14,7 @@ export function getOrganizationRateLimitRule(
         : currentRule;
 }
 
-/**
- * Internal header carrying the client address the API derived from the socket
- * peer and its trusted proxies. The API overwrites or removes it on every auth
- * request, so a client-supplied value never reaches Better Auth.
- */
+/** Internal socket-derived address header, overwritten by the API auth route. */
 export const VECTORIX_CLIENT_IP_HEADER = 'x-vectorix-client-ip';
 
 type RateLimitStorage = NonNullable<
@@ -31,42 +22,48 @@ type RateLimitStorage = NonNullable<
 >;
 
 /**
- * Shares Better Auth's counters across API replicas and restarts through one
- * atomic Redis window per client address and path. Only `consume` is used;
- * `get`/`set` exist for the storage contract's legacy fallback.
+ * Hash the complete framework-canonical IP/path key. Native token-bearing paths
+ * such as /reset-password/:token must never appear in Redis keys or diagnostics.
  */
-export const authRateLimitStorage: RateLimitStorage = {
-    get: () => Promise.resolve(null),
-    set: () => Promise.resolve(),
-    async consume(key, rule) {
-        const decision = await consumeRateLimit(
-            `auth:${key}`,
-            rule.window,
-            rule.max
-        );
-        return {
-            allowed: decision.allowed,
-            retryAfter: decision.allowed ? null : decision.retryAfterSeconds,
-        };
-    },
-};
+export function hashAuthRateLimitKey(key: string): string {
+    return `auth:${createHash('sha256').update(key).digest('hex')}`;
+}
 
-const secondFactorRule = { window: 300, max: 10 };
+/** Build the native atomic storage adapter; injection is for focused pure tests. */
+export function createAuthRateLimitStorage(
+    consume: typeof consumeRateLimit = consumeRateLimit
+): RateLimitStorage {
+    return {
+        get: () => Promise.resolve(null),
+        set: () => Promise.resolve(),
+        async consume(key, rule) {
+            const decision = await consume(
+                hashAuthRateLimitKey(key),
+                rule.window,
+                rule.max
+            );
+            return {
+                allowed: decision.allowed,
+                retryAfter: decision.allowed
+                    ? null
+                    : decision.retryAfterSeconds,
+            };
+        },
+    };
+}
+
+export const authRateLimitStorage = createAuthRateLimitStorage();
 
 /**
- * Excludes high-frequency session and organization reads from Better Auth's
- * limiter. Authentication and organization mutations remain rate limited, and
- * second-factor verification and password-reset completion get stricter
- * five-minute budgets on top of Better Auth's built-in sign-in rules.
+ * Exempt high-frequency reads and tighten password-reset completion. Second
+ * factor rules remain selected by the installed native plugin, without custom
+ * overrides that would replace its short-window verification limit.
  */
 export const authRateLimitOptions = {
     customStorage: authRateLimitStorage,
     customRules: {
         '/get-session': false,
         '/organization/*': getOrganizationRateLimitRule,
-        '/two-factor/verify-totp': secondFactorRule,
-        '/two-factor/verify-otp': secondFactorRule,
-        '/two-factor/verify-backup-code': secondFactorRule,
         '/reset-password': { window: 300, max: 5 },
     },
 } satisfies NonNullable<BetterAuthOptions['rateLimit']>;
