@@ -4,7 +4,13 @@ import path from 'node:path';
 import { createHash } from 'node:crypto';
 import { createRequire } from 'node:module';
 import { Transform } from 'node:stream';
-import { ROOT, need, RecipeError } from './private.mjs';
+import {
+    ROOT,
+    need,
+    RecipeError,
+    scenarioSpec,
+    sameScope,
+} from './private.mjs';
 
 export const STATIC_DRAFT_ONLY = true;
 export const OBJECT_LIMITS = Object.freeze({
@@ -29,6 +35,11 @@ export function assertOnlineObjectPhase(phase) {
             'restored-before-retry',
             'v2-ready',
             'signed-out',
+            'cleanup-ready',
+            'cleanup-staged',
+            'cleanup-restored-before-retry',
+            'cleanup-complete',
+            'cleanup-signed-out',
         ].includes(phase),
         'S3_OUTAGE_OBJECT_ONLINE_ADMISSION'
     );
@@ -60,7 +71,10 @@ export function assertObjectDescriptor(input, state, fixture, bindings) {
             id(input.organizationId) &&
             input.organizationId === fixture.organization.id &&
             input.documentId === saved.documentId &&
-            ['original', 'artifact'].includes(input.kind) &&
+            (['original', 'artifact'].includes(input.kind) ||
+                (state.scenario === 'CLEANUP_V1' &&
+                    saved.purged === true &&
+                    input.kind === 'structuredArtifact')) &&
             input.location?.organizationId === input.organizationId &&
             input.location.credentialId === null &&
             input.location.endpoint === endpoint &&
@@ -71,7 +85,7 @@ export function assertObjectDescriptor(input, state, fixture, bindings) {
             input.expectedSha256 === saved.sha256,
         'S3_OUTAGE_OBJECT_SCOPE'
     );
-    const key = `${input.organizationId}/${saved.documentId}/${saved.versionId}/${input.kind === 'original' ? 'original' : 'text.txt'}`;
+    const key = `${input.organizationId}/${saved.documentId}/${saved.versionId}/${input.kind === 'original' ? 'original' : input.kind === 'artifact' ? 'text.txt' : 'extraction.json'}`;
     need(input.key === key, 'S3_OUTAGE_OBJECT_KEY');
     return key;
 }
@@ -151,14 +165,20 @@ export function createReadOnlyObjectObserver({
     const endpoint = `http://127.0.0.1:${state.ports.rustfs}`,
         env = state.environment;
     need(
-        state.namespace === 'vectorix-m7c-s3-outage' &&
+        state.protocolVersion === 2 &&
+            state.namespace === scenarioSpec(state.scenario).namespace &&
+            sameScope(state, fixture) &&
+            (state.scenario === 'CLEANUP_V1'
+                ? phase.startsWith('cleanup-')
+                : !phase.startsWith('cleanup-')) &&
             fixture.namespace === state.namespace &&
             fixture.runId === state.runId &&
             env.VECTORIX_DEFAULT_S3_ENDPOINT === endpoint &&
             env.VECTORIX_DEFAULT_S3_FORCE_PATH_STYLE === 'true' &&
-            env.VECTORIX_DEFAULT_S3_BUCKET === `m7c-s3-outage-${state.runId}` &&
+            env.VECTORIX_DEFAULT_S3_BUCKET ===
+                `${scenarioSpec(state.scenario).objectPrefix}-${state.runId}` &&
             env.VECTORIX_DEFAULT_S3_ACCESS_KEY_ID ===
-                `m7c-s3-outage-${state.runId}`,
+                `${scenarioSpec(state.scenario).objectPrefix}-${state.runId}`,
         'S3_OUTAGE_OBJECT_ENDPOINT'
     );
     const require = createRequire(path.join(ROOT, 'apps/api/package.json'));
@@ -256,7 +276,8 @@ export function createReadOnlyObjectObserver({
         totalBytes = 0,
         originals = 0,
         artifacts = 0,
-        absentArtifacts = 0;
+        absentArtifacts = 0,
+        absentPurgedObjects = 0;
     async function send(Command, key, until) {
         need(
             ++requests <= OBJECT_LIMITS.requests &&
@@ -362,10 +383,38 @@ export function createReadOnlyObjectObserver({
             }
             need(false, 'S3_OUTAGE_OBJECT_UNEXPECTED_ARTIFACT');
         },
+        async absentPurged(input) {
+            need(
+                state.scenario === 'CLEANUP_V1' &&
+                    ['cleanup-complete', 'cleanup-signed-out'].includes(
+                        phase
+                    ) &&
+                    bindings.find((row) => row.versionId === input.versionId)
+                        ?.purged === true,
+                'S3_OUTAGE_OBJECT_PURGE_SCOPE'
+            );
+            const key = claim(input);
+            try {
+                await send(
+                    sdk.HeadObjectCommand,
+                    key,
+                    Math.min(deadline, performance.now() + 5000)
+                );
+            } catch (error) {
+                need(
+                    error?.$metadata?.httpStatusCode === 404,
+                    'S3_OUTAGE_OBJECT_PURGE_ABSENCE_UNCONFIRMED'
+                );
+                absentPurgedObjects++;
+                return;
+            }
+            need(false, 'S3_OUTAGE_OBJECT_PURGED_OBJECT_PRESENT');
+        },
         summary: () => ({
             originals,
             artifacts,
             absentArtifacts,
+            absentPurgedObjects,
             requests,
             objectBytes: totalBytes,
             scope: 'EXACT_PLATFORM_BINDING_READ_ONLY',
