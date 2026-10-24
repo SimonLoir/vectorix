@@ -1137,6 +1137,13 @@ The two bundle checks transform 452 API modules and 244 worker modules. The inst
 
 Touched files: [root manifest](../package.json), [API manifest](../apps/api/package.json), [workers manifest](../apps/workers/package.json) and [lockfile](../pnpm-lock.yaml).
 
+## Form resolver dependency — PR93
+
+- [x] Reviewed exact dependency head `d8223587ae598e907fe14b4bd2825d49ff63f259` on main `7382aed3`. The [official v6 release](https://github.com/react-hook-form/resolvers/releases/tag/v6.0.0) changes the unused Effect resolver to Effect v4. Our [invitation form](../apps/web/app/dashboard/settings/members/components/invite-member-form.tsx) and [create/join organization form](../packages/dashboard-core/src/components/team-switcher/new-organization-form.tsx) use only the unchanged Zod resolver. The published integrity matches the lock; React Hook Form 7.90.0 and Zod 4.6.7 are unchanged. No product migration is required.
+- [x] Isolated `codex/pr93-resolver-review` validation passed frozen installation, dummy-only client generation, ten offline checks executing the three actual AST-extracted schema initializers with 24 resolver calls across EN/FR/nl-BE, and serial uncached types/lint for dashboard-core, web and admin. Valid values, required/invalid fields, opaque-ID refinement and localized messages passed. The first relative private `--test` path was refused before module execution; the unchanged checker passed by absolute Node entry. Both Next declarations retain their original bytes, modes and presence/absence; product sources and lock remain exact to `d8223587`.
+- [x] At that source head, catalog `40120778388`, six-image workflow `40120778362`, CodeQL workflow `40120778453` and security check `120951906526` all report SUCCESS. These are exact-head CI results, not local native or dashboard acceptance. No local service, application database, browser journey, Docker run or production build was performed.
+- [ ] The validation-log addition awaits review/publication and fresh exact-head CI. No merge is claimed here.
+
 ## Issue #15 — Clear the reported transitive advisories
 
 - [x] Bump the Prisma CLI from 7.10.0 to 7.10.1 in `packages/db`. Its pinned dependencies move `mysql2` from 3.15.3 to 3.24.4 (GHSA-3f6p-5ww8-9rcr, GHSA-rgwj-5xj2-c3m3) and `@prisma/config`'s `deepmerge-ts` from 7.1.5 to 8.0.2.
