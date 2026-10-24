@@ -5,7 +5,20 @@ name="vectorix-m3-adapter-$RANDOM-$$"
 cleanup(){ result=$?; if ((result)); then docker logs --tail 30 "$name" >&2 || true; fi; docker rm -fv "$name" >/dev/null 2>&1 || true; exit "$result"; }
 trap cleanup EXIT
 docker run -d --name "$name" -p 127.0.0.1::5432 -e POSTGRES_PASSWORD=adapter-test-admin -e POSTGRES_DB=vectorix_vector_adapter_test -e VECTOR_PROVISIONER_PASSWORD=adapter-test-indexer -e VECTOR_RUNTIME_PASSWORD=adapter-test-runtime "${VECTOR_POSTGRES_IMAGE:-pxdv.be/vectorix/postgres-vector:local}" >/dev/null
-for attempt in {1..60}; do if docker exec "$name" pg_isready -U postgres -d vectorix_vector_adapter_test >/dev/null 2>&1; then break; fi; sleep 1; done
+# The entrypoint's temporary initialization server exposes only a Unix socket.
+# Wait for the final TCP listener used by the published test connection.
+ready=false
+for attempt in {1..60}; do
+    if docker exec "$name" pg_isready -h 127.0.0.1 -U postgres -d vectorix_vector_adapter_test >/dev/null 2>&1; then
+        ready=true
+        break
+    fi
+    if ((attempt < 60)); then sleep 1; fi
+done
+if [[ "$ready" != true ]]; then
+    echo 'Vector adapter test PostgreSQL TCP readiness timed out.' >&2
+    exit 1
+fi
 port=$(docker port "$name" 5432/tcp | cut -d: -f2)
 export VECTOR_ADAPTER_TEST_CONFIG="{\"runtimeUrl\":\"postgresql://vectorix_runtime:adapter-test-runtime@127.0.0.1:$port/vectorix_vector_adapter_test\",\"provisioningUrl\":\"postgresql://vectorix_indexer:adapter-test-indexer@127.0.0.1:$port/vectorix_vector_adapter_test\",\"schema\":\"vector_collections\"}"
 export VECTOR_ADAPTER_TEST_ADMIN_URL="postgresql://postgres:adapter-test-admin@127.0.0.1:$port/vectorix_vector_adapter_test"
