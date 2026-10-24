@@ -989,3 +989,15 @@ The host pass completes frozen installation, 24 type checks, 24 lint tasks, 159 
 All six image/runtime/infrastructure checks subsequently pass. Actual production browser run `f3a033c5ced8` verifies native sign-in, a 327-byte FR/EN TXT upload to READY, all 318 canonical characters, an exact-byte original download, EN/FR/nl-BE reloads, account/return and French logout. API and workers have no platform S3 endpoint; their malformed-first CSV must admit the saved organization binding for both real object writes and worker reads. Six read-only checkpoints and a separately reviewed projected-proof aggregate corroborate unchanged owner/organization/credential, 0→1 document/version, two exact private objects (654 bytes), zero reserved ingestion bytes and session 1→0. They are not atomic cross-store snapshots or UI proof alone. Embedding vectors remain controlled test responses, with no live provider or capacity result.
 
 The file chooser tool waits 40,370 seconds, then the same four live handles and source/build/resource guard are revalidated before upload, without restart. The download tool waits 115 seconds; neither wait is a benchmark. An exact-text language locator finds no segmented label, then refreshed AX actions complete the normal selection. The last document-page console capture has zero warnings/errors; there is no post-logout console capture after turn interruption automatically closes the temporary tab. French logout and its zero-session proof already pass. Owned cleanup confirms all four processes terminal, four containers and four volumes absent, and tab 51 absent. The one 530-byte local sign-in email and login fixture are removed after hash verification; safe screenshots/proofs remain private. Final PR delivery and exact-head catalog/six-image CI remain pending. Work now follows the implementation plan and other agents' PRs; no further issue consultation is part of the task.
+
+## Issue #56 — Rate-limit the versioned API
+
+- [x] Count every authenticated v1 operation against a Redis-shared per-principal budget, with stricter per-principal and per-organization budgets for provider-backed search, probe and model listing.
+- [x] Return 429 `TOO_MANY_REQUESTS` with `Retry-After` on RPC and REST, and declare it in OpenAPI (compatible revision 1.20.0).
+- [x] Document configuration in `.env.example`, `README.md` and [API rate limiting](api-rate-limiting.md).
+- [ ] Monthly per-organization usage budgets: not implemented; they need a product decision.
+- [ ] Review and merge through a separate PR.
+
+Branch `codex/api-rate-limit`. Entry points: [`enforceApiRateLimit`](../packages/routers/utils/src/api-rate-limit.ts), called from [`authMiddleware`](../packages/routers/utils/src/authorized.ts); `ResponseHeadersPlugin` in the [runtime factory](../apps/api/src/api-versioning/runtime-factory.ts); 429 documentation in [`openapi.ts`](../apps/api/src/api-versioning/openapi.ts). The Redis store in `packages/queues/src/rate-limit.ts` is byte-identical to the issue #55 branch. No schema or migration change.
+
+Validation is recorded in the PR.

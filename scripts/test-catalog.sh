@@ -99,6 +99,8 @@ export ROOT_DOMAIN= BETTER_AUTH_COOKIE_NAME= BETTER_AUTH_COOKIE_PREFIX=
 export ALLOW_ACCOUNT_CREATION=true ALLOW_ORGANIZATION_CREATION=true
 export VECTORIX_FEATURE_PROVIDER_URL= VECTORIX_DEFAULT_RESEND_API_KEY= VECTORIX_DEFAULT_SMTP_HOST=
 export VECTORIX_WEB_PUSH_ENABLED=false
+# Functional journeys issue many calls per minute from one owner; rate limits have their own tests.
+export VECTORIX_API_RATE_LIMIT_PER_MINUTE=0 VECTORIX_API_PROVIDER_RATE_LIMIT_PER_MINUTE=0 VECTORIX_API_ORGANIZATION_PROVIDER_RATE_LIMIT_PER_MINUTE=0
 # Real private object storage for binary HTTP and extraction journeys.
 docker run -d --name "$prefix-rustfs" -p 127.0.0.1::9000 \
     -e RUSTFS_ACCESS_KEY=catalog-storage -e RUSTFS_SECRET_KEY=catalog-storage-test-secret \

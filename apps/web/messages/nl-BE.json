@@ -843,6 +843,7 @@
             "playground": "Zoeken testen",
             "collectionJourney": "Indexeren en zoeken",
             "failed": "De bewerking kon niet worden voltooid. Controleer je rechten en configuratie en probeer opnieuw.",
+            "rateLimited": "Er zijn te veel zoekopdrachten of providerverzoeken verstuurd. Wacht een minuut en probeer het daarna opnieuw.",
             "loadFailed": "Deze informatie kon niet worden geladen. Je rechten zijn mogelijk gewijzigd.",
             "working": "Bezig…",
             "readDenied": "Je hebt geen leesrecht voor deze collectie. Catalogusbeheer geeft geen toegang tot de inhoud.",

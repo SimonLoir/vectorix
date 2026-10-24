@@ -843,6 +843,7 @@
             "playground": "Search playground",
             "collectionJourney": "Index and search",
             "failed": "The operation could not be completed. Check your access and configuration, then try again.",
+            "rateLimited": "Too many search or provider requests were sent. Wait a minute, then try again.",
             "loadFailed": "This information could not be loaded. Your access may have changed.",
             "working": "Working…",
             "readDenied": "Reading this collection is not granted. Catalog administration alone does not grant content access.",

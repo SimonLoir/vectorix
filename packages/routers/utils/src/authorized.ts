@@ -13,6 +13,9 @@ import {
 } from './expected-organization';
 import { resolveCurrentApiKeyAccess } from './api-key-access';
 import { normalizeAuthorizationError } from './authorization-error';
+import { enforceApiRateLimit, parseApiRateLimits } from './api-rate-limit';
+
+const apiRateLimits = parseApiRateLimits(process.env);
 
 const authorize = async (
     headers: Headers,
@@ -135,6 +138,17 @@ export const authMiddleware = base.middleware(
             throw new ORPCError('FORBIDDEN', {
                 message: 'Organization is inactive.',
             });
+        // Count authenticated callers before permission checks so denied loops are throttled too.
+        await enforceApiRateLimit(
+            {
+                organizationId: access.organizationId,
+                keyId: access.key?.id ?? null,
+                userId: access.user?.id ?? null,
+            },
+            path.join('.'),
+            apiRateLimits,
+            context.resHeaders
+        );
         requireOperationPermissions(access, path);
         requirePermissions(access, compoundPermissions(path.join('.'), input));
         return next({
