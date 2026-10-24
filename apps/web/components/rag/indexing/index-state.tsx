@@ -5,6 +5,7 @@ import { useTranslations } from 'next-intl';
 import { useQueryClient } from '@tanstack/react-query';
 import { indexFailure } from '@repo/api-contracts/v1/rag/indexing-types';
 import { Button } from '@repo/ui/button';
+import { requestErrorKey } from '@repo/dashboard-core/lib/request-errors';
 
 /** Render only public domain codes; transport/provider messages are never UI copy. */
 export function useIndexAction() {
@@ -12,7 +13,7 @@ export function useIndexAction() {
     const cache = useQueryClient();
     const [busy, setBusy] = useState(false);
     const [errorCode, setErrorCode] = useState<
-        z.infer<typeof indexFailure> | 'UNKNOWN' | null
+        z.infer<typeof indexFailure> | 'UNKNOWN' | 'RATE_LIMITED' | null
     >(null);
     async function run<T>(
         action: () => Promise<T>,
@@ -34,16 +35,21 @@ export function useIndexAction() {
                 data && typeof data === 'object' && 'errorCode' in data
                     ? indexFailure.safeParse(data.errorCode)
                     : null;
-            setErrorCode(code?.success ? code.data : 'UNKNOWN');
+            if (code?.success) setErrorCode(code.data);
+            else
+                setErrorCode(
+                    requestErrorKey(cause) === 'rateLimited'
+                        ? 'RATE_LIMITED'
+                        : 'UNKNOWN'
+                );
         } finally {
             setBusy(false);
         }
     }
-    const error = errorCode
-        ? errorCode === 'UNKNOWN'
-            ? tr('failed')
-            : tr(`errors.${errorCode}`)
-        : null;
+    let error: string | null = null;
+    if (errorCode === 'UNKNOWN') error = tr('failed');
+    else if (errorCode === 'RATE_LIMITED') error = tr('rateLimited');
+    else if (errorCode) error = tr(`errors.${errorCode}`);
     return { busy, error, run };
 }
 export function IndexError({ error }: Readonly<{ error: string | null }>) {

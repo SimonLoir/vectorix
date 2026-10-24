@@ -22,7 +22,9 @@
             "dependsOn": ["^check-types"]
         },
         "lint": {},
-        "test": {},
+        "test": {
+            "cache": false
+        },
         "dev": {
             "cache": false,
             "persistent": true

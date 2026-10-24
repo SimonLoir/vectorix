@@ -1,5 +1,10 @@
 import type { PrismaClient } from '@repo/db';
-import { decrypt } from '@routers/utils/encryption';
+import {
+    decrypt,
+    EncryptionConfigurationError,
+    EncryptionKeyUnavailableError,
+    pushSubscriptionContext,
+} from '@routers/utils/encryption';
 import {
     admitPushEndpoint,
     createPushEndpointPolicy,
@@ -53,11 +58,14 @@ function vapidDetails() {
     return { subject, publicKey, privateKey };
 }
 
-/** Decrypt only bounded subscription shapes; retain opaque endpoint bytes. */
-function parseSubscription(value: string): StoredPushSubscription | null {
+/** Decrypt only bounded subscription shapes bound to this row; retain opaque endpoint bytes. */
+function parseSubscription(
+    value: string,
+    context: string
+): StoredPushSubscription | null {
     try {
         if (value.length > 16_384) return null;
-        const parsed = JSON.parse(decrypt(value)) as unknown;
+        const parsed = JSON.parse(decrypt(value, context)) as unknown;
         if (
             typeof parsed !== 'object' ||
             parsed === null ||
@@ -78,7 +86,14 @@ function parseSubscription(value: string): StoredPushSubscription | null {
             endpoint: parsed.endpoint,
             keys: { p256dh: parsed.keys.p256dh, auth: parsed.keys.auth },
         };
-    } catch {
+    } catch (error) {
+        // A deployment/key-retirement error cannot prove a device is corrupt.
+        // Propagate it to the durable delivery retry path without revocation.
+        if (
+            error instanceof EncryptionConfigurationError ||
+            error instanceof EncryptionKeyUnavailableError
+        )
+            throw error;
         return null;
     }
 }
@@ -209,9 +224,26 @@ export async function sendNotificationPush(
             if (sent > 0) break;
             throw error;
         }
-        const parsed = parseSubscription(
-            current.subscription.subscriptionEncrypted
-        );
+        let parsed: StoredPushSubscription | null;
+        try {
+            parsed = parseSubscription(
+                current.subscription.subscriptionEncrypted,
+                pushSubscriptionContext(
+                    current.subscription.organizationId,
+                    current.subscription.endpointHash
+                )
+            );
+        } catch (error) {
+            // A later unreadable key cannot undo an already accepted device.
+            // With no success, preserve the durable delivery failure/retry path.
+            if (
+                sent > 0 &&
+                (error instanceof EncryptionConfigurationError ||
+                    error instanceof EncryptionKeyUnavailableError)
+            )
+                break;
+            throw error;
+        }
         if (!parsed) {
             await revokeSubscription(db, input, candidate, new Date());
             continue;

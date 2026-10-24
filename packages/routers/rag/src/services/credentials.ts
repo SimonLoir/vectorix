@@ -1,6 +1,11 @@
+import { randomUUID } from 'node:crypto';
 import { ORPCError } from '@orpc/server';
 import type { AuthorizedContext } from '@routers/utils/authorized';
-import { updateProviderData } from './credential-update';
+import {
+    changesSecretDestination,
+    suppliesSecretsForDestination,
+    updateProviderData,
+} from './credential-update';
 import {
     credentialData,
     credentialUpdateData,
@@ -32,9 +37,16 @@ export function createCredential(
                 throw new ORPCError('CONFLICT', {
                     message: 'The organization credential limit is reached.',
                 });
+            // Generate the ID first so ciphertexts can be bound to this row.
+            const credentialId = randomUUID();
             const credential = await db.credentials.create({
                 data: {
-                    ...(await encryptedProviderData(input.data)),
+                    id: credentialId,
+                    ...(await encryptedProviderData(
+                        input.data,
+                        actor.organizationId,
+                        credentialId
+                    )),
                     name: input.name,
                     provider: input.data.provider,
                     organization: { connect: { id: actor.organizationId } },
@@ -121,6 +133,12 @@ export function updateCredential(
                     message:
                         'This destination is referenced. Create and activate new credentials for new writes or a new collection revision.',
                 });
+            const movedSecret = changesSecretDestination(old, input.data);
+            if (movedSecret && !suppliesSecretsForDestination(old, input.data))
+                throw new ORPCError('BAD_REQUEST', {
+                    message:
+                        'Re-enter the secret when changing the endpoint, bucket, or S3 addressing mode.',
+                });
             await updateProviderData(db, current, input.data);
             const result = await db.credentials.update({
                 where: { id: current.id },
@@ -129,6 +147,8 @@ export function updateCredential(
             });
             await audit(db, actor, 'credential.update', current.id, {
                 revision: result.revision,
+                // Audit readers may lack credential access, so record the fact, not the URLs.
+                ...(movedSecret ? { destinationChanged: true } : {}),
             });
             return credentialDto(result);
         }
