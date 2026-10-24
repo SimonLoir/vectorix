@@ -139,6 +139,56 @@ export function assessVectorSnapshot(
             value.liveClaims === 0,
         'TASK_BOUND_OR_LIVE_CLAIM'
     );
+    const cleanup = value.tasks.filter(
+        (task) => task.kind === 'CLEAN_GENERATION'
+    );
+    const costTasks = value.tasks.filter((task) =>
+        ['PROVISION', 'INDEX_DOCUMENT'].includes(task.kind)
+    );
+    failure(
+        costTasks.length === generations.length * 2 &&
+            value.tasks.length === costTasks.length + (completed ? 1 : 0) &&
+            cleanup.length === (completed ? 1 : 0),
+        'EXACT_TASK_INVENTORY'
+    );
+    if (completed) {
+        const old = value.generations.find((row) => row.id === binding.g1);
+        const active = value.generations.find((row) => row.id === binding.g2);
+        const task = cleanup[0];
+        const hold = value.holds.find(
+            (row) =>
+                row.indexedDocumentId ===
+                value.candidates.find(
+                    (candidate) => candidate.generationId === binding.g1
+                )?.id
+        );
+        failure(
+            Number.isSafeInteger(layout.sourceRetireGraceMs) &&
+                layout.sourceRetireGraceMs > 0 &&
+                Number.isFinite(at(old?.retiredAt)) &&
+                at(active?.activatedAt) === at(old.retiredAt) &&
+                at(old.cleanupAfter) ===
+                    at(old.retiredAt) + layout.sourceRetireGraceMs &&
+                at(hold?.retainUntil) === at(old.cleanupAfter) &&
+                at(task.availableAt) === at(old.cleanupAfter) &&
+                at(old.cleanupAfter) > at(value.observedAt),
+            'NATIVE_RETENTION'
+        );
+        failure(
+            id(task.id) &&
+                task.generationId === binding.g1 &&
+                task.indexedDocumentId === null &&
+                task.status === 'PENDING' &&
+                task.stage === 'ACCEPTED' &&
+                task.attempts === 0 &&
+                BigInt(task.leaseEpoch) === 0n &&
+                task.leasedUntil === null &&
+                task.errorCode === null &&
+                task.reservedChunks === 0 &&
+                task.completedChunks === 0,
+            'CLEANUP_TASK'
+        );
+    }
     let materialized = 0;
     const manifests = [];
     for (const generationId of generations) {
@@ -427,9 +477,87 @@ export function assertVectorContinuity({
         failure(epoch > oldEpoch, 'TASK_EPOCH_CONTINUITY');
     else failure(epoch === oldEpoch, 'TASK_EPOCH_CONTINUITY');
 }
+/** Keep only the closed durable failure schedule; arbitrary task or provider fields never reach receipts. */
+export function vectorTraceRow(input) {
+    const fields = [
+        'id',
+        'status',
+        'attempts',
+        'leaseEpoch',
+        'errorCode',
+        'availableAt',
+        'updatedAt',
+        'leasedUntil',
+    ];
+    failure(
+        input &&
+            Object.keys(input).sort().join(',') ===
+                [...fields].sort().join(','),
+        'TRACE_ROW'
+    );
+    failure(
+        id(input.id) &&
+            ['PENDING', 'FAILED'].includes(input.status) &&
+            Number.isSafeInteger(input.attempts) &&
+            input.attempts >= 1 &&
+            input.attempts <= 5 &&
+            input.errorCode === 'VECTOR_UNAVAILABLE' &&
+            input.leasedUntil === null,
+        'TRACE_ROW'
+    );
+    const epoch =
+        typeof input.leaseEpoch === 'bigint'
+            ? input.leaseEpoch.toString()
+            : input.leaseEpoch;
+    failure(
+        typeof epoch === 'string' && /^\d{1,20}$/u.test(epoch),
+        'TRACE_ROW'
+    );
+    const dates = {};
+    for (const field of ['availableAt', 'updatedAt']) {
+        const milliseconds = at(input[field]);
+        failure(Number.isFinite(milliseconds), 'TRACE_ROW');
+        dates[field] = new Date(milliseconds).toISOString();
+    }
+    return {
+        id: input.id,
+        status: input.status,
+        attempts: input.attempts,
+        leaseEpoch: epoch,
+        errorCode: input.errorCode,
+        ...dates,
+        leasedUntil: null,
+    };
+}
+/** Preserve up to eleven changes and a separate twelfth event without increasing the admitted trace bound. */
+export function createVectorTraceCollector() {
+    const changes = [];
+    let overflow = null;
+    return {
+        record(input) {
+            const row = vectorTraceRow(input);
+            if (changes.length && same(row, changes.at(-1))) return;
+            if (changes.length === 11) {
+                overflow = row;
+                failure(false, 'COLLECT_BOUND');
+            }
+            changes.push(row);
+        },
+        evidence() {
+            return {
+                changes: changes.map(vectorTraceRow),
+                overflow: overflow && vectorTraceRow(overflow),
+            };
+        },
+        validate() {
+            return validateVectorTrace(changes);
+        },
+    };
+}
 /** Require all four observed natural backoffs; neither an observed task nor a stage label is an I/O count. */
 export function validateVectorTrace(changes) {
-    failure(changes.length >= 5 && changes.length <= 11, 'TRACE_BOUND');
+    failure(changes.length <= 11, 'COLLECT_BOUND');
+    failure(changes.length >= 5, 'INCOMPLETE_TRACE');
     for (let attempt = 1; attempt <= 5; attempt++) {
         const row = changes.find(
             (item) =>

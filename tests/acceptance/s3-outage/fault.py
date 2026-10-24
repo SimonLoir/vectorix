@@ -330,18 +330,24 @@ def storage_outage(state):
     l.require(staged['documentId'] == ack['baseline']['documentId'], 'm7c-s3-outage-replacement-document-binding')
     if state['scenario'] == 'VECTOR_PROVISION_V1':
         l.require(all(staged[key] == ack['baseline'][key] for key in ['versionId', 'originalSha256', 'activeGenerationId']), 'm7c-vector-staged-g1-binding')
+    observer = l.vector_observer_admission(state, ready=True, fresh=True, live=True) if state['scenario'] == 'VECTOR_PROVISION_V1' else None
+    observer_binding = {'observerReadySha256': observer['readySha256']} if observer else {}
     record(state, 'fault-storage-outage-intent.json', {'at': stamp(), 'stagedProofSha256': staged_sha,
-        l.fault_store(state): state['resources'][l.fault_store(state)], 'staged': staged})
+        l.fault_store(state): state['resources'][l.fault_store(state)], 'staged': staged, **observer_binding})
     l.owned(state, l.fault_store(state), running=True)
+    if observer:
+        l.require(l.vector_observer_admission(state, ready=True, fresh=True, live=True)['readySha256'] == observer['readySha256'], 'm7c-vector-observer-ready-drift')
     require_remaining(state, ack)  # Last check immediately before the destructive store stop.
     l.run(['docker', 'stop', '-t', '55', state['resources'][l.fault_store(state)]['id']], timeout=60)
     l.owned(state, l.fault_store(state), running=False)
     l.watchdog_admission(state)
+    if observer:
+        l.require(l.vector_observer_admission(state, ready=True, fresh=True, live=True)['readySha256'] == observer['readySha256'], 'm7c-vector-observer-ready-drift')
     worker_signal(state, signal.SIGCONT)
     l.watchdog_admission(state)
     record(state, 'fault-storage-outage-receipt.json', {'at': stamp(), 'stagedProofSha256': staged_sha,
         'staged': staged, 'storageStopped': True, 'sameWorkerResumed': True,
-        'worker': state['processes']['workers'], l.fault_store(state): state['resources'][l.fault_store(state)]})
+        'worker': state['processes']['workers'], l.fault_store(state): state['resources'][l.fault_store(state)], **observer_binding})
 
 
 def restore(state):

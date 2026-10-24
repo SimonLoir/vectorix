@@ -30,6 +30,7 @@ import {
     assessVectorSnapshot,
     assertVectorContinuity,
     validateVectorTrace,
+    createVectorTraceCollector,
     failure,
     canonical,
 } from './vector-observation.mjs';
@@ -77,7 +78,21 @@ async function preparedLayout(state, original) {
             layout.parents.length <= 8,
         'PLANNER_BOUND'
     );
-    return { children, ...layout };
+    const { SOURCE_RETIRE_GRACE_MS } = await tsImport(
+        pathToFileURL(
+            path.join(
+                ROOT,
+                'packages/routers/rag/src/services/indexing/source-retention.ts'
+            )
+        ).href,
+        { parentURL: import.meta.url, tsconfig: false }
+    );
+    failure(
+        Number.isSafeInteger(SOURCE_RETIRE_GRACE_MS) &&
+            SOURCE_RETIRE_GRACE_MS > 0,
+        'RETENTION_SOURCE'
+    );
+    return { children, ...layout, sourceRetireGraceMs: SOURCE_RETIRE_GRACE_MS };
 }
 /** Drain both independently owned readers even when one rejects; publish only after final admission. */
 export async function finalizeVectorObservation({
@@ -104,6 +119,111 @@ export async function finalizeVectorObservation({
         publish,
     });
 }
+function validatePhysicalRows(physical, value) {
+    for (const generation of physical.generations)
+        if (generation.provisioned) {
+            failure(
+                generation.destinationFingerprint ===
+                    value.generations.find(
+                        (row) => row.id === generation.generationId
+                    ).destinationFingerprint,
+                'DESTINATION_BINDING'
+            );
+            for (const row of generation.rows) {
+                const appRow = value.chunks.find((item) => item.id === row.id);
+                failure(
+                    appRow &&
+                        row.vectorHash ===
+                            sha(
+                                '[' +
+                                    syntheticVector(appRow.text).join(',') +
+                                    ']'
+                            ),
+                    'PHYSICAL_VECTOR_HASH'
+                );
+            }
+            delete generation.rows;
+        }
+}
+/** Publish control/ACK metadata atomically: concurrent fault admission never sees partially written JSON. */
+export function publishVectorObserverControl(filename, value) {
+    const temporary = path.join(
+        path.dirname(filename),
+        '.pending-' + path.basename(filename)
+    );
+    writePrivate(temporary, value);
+    fs.linkSync(temporary, filename);
+    const descriptor = fs.openSync(
+        path.dirname(filename),
+        fs.constants.O_RDONLY |
+            fs.constants.O_DIRECTORY |
+            fs.constants.O_NOFOLLOW
+    );
+    try {
+        fs.fsyncSync(descriptor);
+        fs.unlinkSync(temporary);
+        fs.fsyncSync(descriptor);
+    } finally {
+        fs.closeSync(descriptor);
+    }
+}
+/** The production ACK publisher owns its Node clock lookup outside the phase's metadata lexical scope. */
+export function publishVectorObserverReady({ directory, binding, phase }) {
+    const ready = {
+        ...binding,
+        status: 'ARMED',
+        intentSha256: sha(
+            privateBytes(
+                path.join(directory, `observe-${phase}-intent.json`),
+                16384
+            )
+        ),
+        armedAt: new Date().toISOString(),
+        armedMonotonicNs: process.hrtime.bigint().toString(),
+    };
+    const filename = path.join(directory, 'vector-observer-ready.json');
+    publishVectorObserverControl(filename, ready);
+    return privateBytes(filename, 16384);
+}
+/** Publish readiness only after the real staged read, validations and physical-reader drain all succeed. */
+export async function primeVectorObserver({
+    readStaged,
+    verifyStaged,
+    closePhysical,
+    recheck,
+    publish,
+}) {
+    const value = await readStaged();
+    await verifyStaged(value);
+    await closePhysical();
+    recheck();
+    publish();
+    return value;
+}
+function observerControlIdentity() {
+    const directory = `/proc/${process.pid}`;
+    const fields = fs
+        .readFileSync(path.join(directory, 'stat'), 'utf8')
+        .split(')')
+        .at(-1)
+        .trim()
+        .split(/\s+/u);
+    failure(
+        fields.length > 19 &&
+            /^\d+$/u.test(fields[19]) &&
+            fs.statSync(directory).uid === process.getuid(),
+        'OBSERVER_IDENTITY'
+    );
+    return {
+        pid: process.pid,
+        startTicks: fields[19],
+        bootId: fs
+            .readFileSync('/proc/sys/kernel/random/boot_id', 'utf8')
+            .trim(),
+        cwd: process.cwd(),
+        commandSha256: sha(fs.readFileSync(path.join(directory, 'cmdline'))),
+    };
+}
 async function main() {
     failure(!STATIC_DRAFT_ONLY, 'OBSERVER_DRAFT_REVIEW_REQUIRED');
     const args = process.argv.slice(2),
@@ -112,7 +232,7 @@ async function main() {
             phase === 'vector-g2-staged'
                 ? 'staged-observe'
                 : phase === 'vector-outage-failed'
-                  ? 'outage-observe'
+                  ? 'vector-outage-watch'
                   : 'observe';
     const { state, directory, recheck } = context(args.slice(0, 4), purpose),
         fixture = privateJson(path.join(directory, 'fixture.json'), 16384),
@@ -181,22 +301,69 @@ async function main() {
                 previous.status === 'OBSERVED'),
         'PHASE_CHAIN'
     );
-    writePrivate(path.join(directory, `observe-${phase}-intent.json`), {
-        ...receiptScope(state),
-        phase,
-        status: 'ONE_SHOT_READ_ONLY',
-    });
+    const outage = phase === 'vector-outage-failed';
+    const watchdogBytes = outage
+        ? privateBytes(path.join(directory, 'watchdog-ack.json'), 8192)
+        : null;
+    const watchdog = watchdogBytes && JSON.parse(watchdogBytes);
+    const observerBinding = outage
+        ? {
+              ...receiptScope(state),
+              namespace: state.namespace,
+              phase,
+              sourceCommit: state.commit,
+              helperPinsSha256: sha(canonical(state.inputs.helpers)),
+              stagedProofSha256: sha(
+                  privateBytes(
+                      path.join(directory, 'observe-vector-g2-staged.json'),
+                      32768
+                  )
+              ),
+              watchdogAckSha256: sha(watchdogBytes),
+              deadlineMonotonicNs: watchdog.deadlineMonotonicNs,
+              workerPid: state.processes.workers.pid,
+              workerStartTicks: state.processes.workers.startTicks,
+              vectorContainerId: state.resources.vector.id,
+              control: observerControlIdentity(),
+          }
+        : null;
+    const intent = outage
+        ? { ...observerBinding, status: 'ONE_SHOT_READ_ONLY' }
+        : { ...receiptScope(state), phase, status: 'ONE_SHOT_READ_ONLY' };
+    if (outage)
+        publishVectorObserverControl(
+            path.join(directory, `observe-${phase}-intent.json`),
+            intent
+        );
+    else
+        writePrivate(
+            path.join(directory, `observe-${phase}-intent.json`),
+            intent
+        );
     let app,
         pool,
         result,
         finalizationStarted = false,
         until = performance.now() + 120000;
-    const trace = [];
+    const collector = createVectorTraceCollector();
+    let trace = [],
+        observerStage = 'ARMING',
+        observerReadyBytes = null,
+        originalTraceDeadline = null,
+        interrupted = false;
+    const stopObserver = () => {
+        interrupted = true;
+    };
+    if (outage) {
+        process.on('SIGTERM', stopObserver);
+        process.on('SIGINT', stopObserver);
+    }
     let snapshots = 0,
         ackBytes = null;
     const finalGuard = () => {
+        failure(!interrupted, 'OBSERVER_INTERRUPTED');
         failure(performance.now() < until, 'OBSERVATION_DEADLINE');
-        recheck(
+        const proof = recheck(
             Math.max(1, Math.min(120000, Math.floor(until - performance.now())))
         );
         failure(
@@ -221,6 +388,25 @@ async function main() {
                     ) === sha(ackBytes)),
             'INTERVENTION'
         );
+        failure(
+            !observerReadyBytes ||
+                sha(
+                    privateBytes(
+                        path.join(directory, 'vector-observer-ready.json'),
+                        16384
+                    )
+                ) === sha(observerReadyBytes),
+            'OBSERVER_READY_DRIFT'
+        );
+        if (
+            outage &&
+            observerStage === 'ARMED_WAIT' &&
+            proof.vectorTransition === 'DOWN_RUNNING'
+        ) {
+            observerStage = 'COLLECTING';
+            until = originalTraceDeadline;
+        }
+        return proof;
     };
     try {
         const original = readVectorOriginal(state),
@@ -237,15 +423,88 @@ async function main() {
             assessment,
             physical = { scope: 'DB_ONLY_VECTOR_OFFLINE', requests: 0 };
         if (phase === 'vector-outage-failed') {
-            ackBytes = privateBytes(
-                path.join(directory, 'watchdog-ack.json'),
-                16384
+            ackBytes = watchdogBytes;
+            failure(sameScope(state, watchdog), 'ACK_SCOPE');
+            const deadline = watchdogTraceDeadline(watchdog, state.runId);
+            originalTraceDeadline = deadline;
+            const warmDeadline = until;
+            until = Math.min(until, deadline);
+            await primeVectorObserver({
+                readStaged: async () => {
+                    snapshots++;
+                    return read();
+                },
+                verifyStaged: async (staged) => {
+                    failure(
+                        performance.now() < warmDeadline &&
+                            staged.liveClaims === 0,
+                        'OBSERVER_WARM_DEADLINE'
+                    );
+                    const admitted = assessVectorSnapshot(
+                        staged,
+                        'vector-g2-staged',
+                        fixture,
+                        binding,
+                        state,
+                        layout
+                    );
+                    pool = await vectorPool(state);
+                    const checked = await readPhysicalVector(
+                        pool,
+                        state,
+                        binding,
+                        admitted,
+                        {
+                            remainingMilliseconds: () =>
+                                until - performance.now(),
+                        }
+                    );
+                    const after = await read();
+                    failure(
+                        canonical({ ...after, observedAt: null }) ===
+                            canonical({ ...staged, observedAt: null }),
+                        'POST_PHYSICAL_METADATA_DRIFT'
+                    );
+                    validatePhysicalRows(checked, staged);
+                    assertVectorContinuity({
+                        phase: 'vector-g2-staged',
+                        binding,
+                        assessment: admitted,
+                        physical: checked,
+                        baseline,
+                        previous,
+                    });
+                },
+                closePhysical: async () => {
+                    await pool?.end();
+                    pool = null;
+                },
+                recheck: () => {
+                    failure(
+                        finalGuard().vectorTransition === 'UP_PAUSED',
+                        'OBSERVER_READY_PAIR'
+                    );
+                },
+                publish: () => {
+                    observerReadyBytes = publishVectorObserverReady({
+                        directory,
+                        binding: observerBinding,
+                        phase,
+                    });
+                },
+            });
+            observerStage = 'ARMED_WAIT';
+            const faultStartDeadline = Math.min(
+                deadline,
+                performance.now() + 90000
             );
-            const ack = JSON.parse(ackBytes);
-            failure(sameScope(state, ack), 'ACK_SCOPE');
-            const deadline = watchdogTraceDeadline(ack, state.runId);
-            until = deadline;
+            until = faultStartDeadline;
             while (true) {
+                if (observerStage === 'ARMED_WAIT')
+                    failure(
+                        performance.now() < faultStartDeadline,
+                        'OBSERVER_FAULT_WAIT_DEADLINE'
+                    );
                 failure(
                     snapshots++ < 360 && performance.now() < deadline,
                     'TRACE_DEADLINE'
@@ -294,19 +553,14 @@ async function main() {
                         baseline,
                         previous,
                     });
-                    const row = assessment.provision;
-                    if (
-                        !trace.length ||
-                        canonical(row) !== canonical(trace.at(-1))
-                    ) {
-                        failure(trace.length < 11, 'TRACE_BOUND');
-                        trace.push(row);
-                    }
+                    collector.record(assessment.provision);
                     if (provision.status === 'FAILED') break;
                 }
                 await waitForNextSnapshot(performance.now() + 2000, deadline);
             }
-            validateVectorTrace(trace);
+            observerStage = 'VALIDATING_TRACE';
+            ({ changes: trace } = collector.evidence());
+            collector.validate();
         } else {
             value = await read();
             snapshots++;
@@ -333,34 +587,7 @@ async function main() {
                     canonical({ ...value, observedAt: null }),
                 'POST_PHYSICAL_METADATA_DRIFT'
             );
-            for (const g of physical.generations)
-                if (g.provisioned) {
-                    failure(
-                        g.destinationFingerprint ===
-                            value.generations.find(
-                                (r) => r.id === g.generationId
-                            ).destinationFingerprint,
-                        'DESTINATION_BINDING'
-                    );
-                    for (const row of g.rows) {
-                        const appRow = value.chunks.find(
-                            (r) => r.id === row.id
-                        );
-                        failure(
-                            appRow &&
-                                row.vectorHash ===
-                                    sha(
-                                        '[' +
-                                            syntheticVector(appRow.text).join(
-                                                ','
-                                            ) +
-                                            ']'
-                                    ),
-                            'PHYSICAL_VECTOR_HASH'
-                        );
-                    }
-                    delete g.rows;
-                }
+            validatePhysicalRows(physical, value);
         }
         assertVectorContinuity({
             phase,
@@ -394,7 +621,7 @@ async function main() {
                 observedAt: value.observedAt,
                 activeGenerationId: binding.g1,
             },
-            process = {
+            processIdentity = {
                 workerPid: state.processes.workers.pid,
                 workerStartTicks: state.processes.workers.startTicks,
                 vectorContainerId: state.resources.vector.id,
@@ -421,7 +648,7 @@ async function main() {
                 ? {
                       faultEnrollmentAdmission: {
                           ...common,
-                          ...process,
+                          ...processIdentity,
                           kind: 'VECTOR_G1_READY_IDLE',
                           liveClaims: 0,
                       },
@@ -431,7 +658,7 @@ async function main() {
                 ? {
                       faultAdmission: {
                           ...common,
-                          ...process,
+                          ...processIdentity,
                           kind: 'VECTOR_PROVISION_ACCEPTED',
                           targetGenerationId: binding.g2,
                           taskId: assessment.provision.id,
@@ -456,6 +683,7 @@ async function main() {
                   }
                 : {}),
         };
+        observerStage = 'FINALIZING';
         finalizationStarted = true;
         await finalizeVectorObservation({
             app,
@@ -485,6 +713,9 @@ async function main() {
                     phase,
                     status: 'INCOMPLETE',
                     snapshots,
+                    ...(outage
+                        ? { observerStage, ...collector.evidence() }
+                        : {}),
                 }
             );
         } catch {
@@ -492,13 +723,20 @@ async function main() {
         }
         throw error;
     } finally {
-        if (!finalizationStarted) {
-            const results = await Promise.allSettled([
-                Promise.resolve().then(() => app?.$disconnect()),
-                Promise.resolve().then(() => pool?.end()),
-            ]);
-            if (results.some((r) => r.status === 'rejected'))
-                failure(false, 'READER_CLOSE');
+        try {
+            if (!finalizationStarted) {
+                const results = await Promise.allSettled([
+                    Promise.resolve().then(() => app?.$disconnect()),
+                    Promise.resolve().then(() => pool?.end()),
+                ]);
+                if (results.some((r) => r.status === 'rejected'))
+                    failure(false, 'READER_CLOSE');
+            }
+        } finally {
+            if (outage) {
+                process.off('SIGTERM', stopObserver);
+                process.off('SIGINT', stopObserver);
+            }
         }
     }
 }

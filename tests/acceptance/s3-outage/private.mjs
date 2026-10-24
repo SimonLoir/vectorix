@@ -118,6 +118,19 @@ export function writePrivate(filename, value) {
     }
 }
 
+/** The primed vector poller may skip unobserved transition steps but can never move backwards. */
+export function advanceVectorObserverTransition(previous, next) {
+    const order = ['UP_PAUSED', 'DOWN_PAUSED', 'DOWN_RUNNING'];
+    need(
+        order.includes(next) &&
+            (previous === null ||
+                (order.includes(previous) &&
+                    order.indexOf(next) >= order.indexOf(previous))),
+        'S3_OUTAGE_VECTOR_OBSERVER_TRANSITION'
+    );
+    return next;
+}
+
 export function context(args, purpose) {
     need(
         args.length === 4 &&
@@ -136,6 +149,7 @@ export function context(args, purpose) {
             'observe',
             'staged-observe',
             'outage-observe',
+            'vector-outage-watch',
         ].includes(purpose),
         'M7C_S3_OUTAGE_PURPOSE'
     );
@@ -170,6 +184,7 @@ export function context(args, purpose) {
             state.vectorDatabase === `${spec.databaseStem}_vectors_${run}_test`,
         'M7C_S3_OUTAGE_STATE'
     );
+    let vectorTransition = null;
     const recheck = (maximumMilliseconds = 120000) => {
         need(
             Number.isSafeInteger(maximumMilliseconds) &&
@@ -193,7 +208,10 @@ export function context(args, purpose) {
             {
                 cwd: ROOT,
                 env: cleanEnvironment(),
-                timeout: maximumMilliseconds,
+                timeout:
+                    purpose === 'vector-outage-watch'
+                        ? Math.min(15000, maximumMilliseconds)
+                        : maximumMilliseconds,
                 maxBuffer: 16384,
                 encoding: 'utf8',
                 stdio: ['ignore', 'pipe', 'ignore'],
@@ -224,6 +242,9 @@ export function context(args, purpose) {
                         'resourceOwnership',
                         'exactTestDatabases',
                         'sourceBuildPins',
+                        ...(purpose === 'vector-outage-watch'
+                            ? ['vectorTransition']
+                            : []),
                     ].sort()
                 ) &&
                 sameScope(state, proof) &&
@@ -235,6 +256,17 @@ export function context(args, purpose) {
                 proof.sourceBuildPins === true,
             'M7C_S3_OUTAGE_INDEPENDENT_GUARD'
         );
+        if (purpose === 'vector-outage-watch') {
+            need(
+                scenario === 'VECTOR_PROVISION_V1',
+                'S3_OUTAGE_VECTOR_OBSERVER_SCENARIO'
+            );
+            vectorTransition = advanceVectorObserverTransition(
+                vectorTransition,
+                proof.vectorTransition
+            );
+        }
+        return proof;
     };
     recheck();
     // Prevent SDK/profile/dotenv/credential resolution from inheriting the operator shell.

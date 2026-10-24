@@ -1560,5 +1560,272 @@
         "productionPackageLockAndCiBytes": "IDENTICAL_TO_SELECTED_MAIN_DC314FC",
         "historicalRecord": "All seventeen preceding fields and their archives/results remain unchanged. The failed READY trial is INCOMPLETE, its prior setup/search successes remain separate, and the source-inferred SQLSTATE is not a captured native error. Pure schema-contract tests do not establish PostgreSQL execution or native recovery.",
         "currentSourcesSha256": "d5de02042993ee5db8598a7484e0666c86872d88622e4857e5e9d7e497d66926"
+    },
+    "vectorProvisionReviewRevision5": {
+        "schemaVersion": 1,
+        "scenario": "VECTOR_PROVISION_V1",
+        "status": "DISABLED_PRIMED_OBSERVER_HERMETIC_PASS_NATIVE_REVISION_NOT_RUN",
+        "checkpointBeforePatch": "ba755dbdfa13eb39e653b4df3a8d829175b479e4",
+        "beforeArchiveSha256": "74697ec3a274bd8bce5cdc4abe83c06d3b1a8b7c7d69af1605ac84aa3e3fefe7",
+        "nativeTrial": {
+            "runId": "8aa5a366fd76",
+            "sourceCommit": "ba755dbdfa13eb39e653b4df3a8d829175b479e4",
+            "selectedProductionMain": "dc314fcfe02bbc30877bb1a4a1720d1bb3abccde",
+            "preparationManifestSha256": "df02ba304c03ff3a2afdcb377ca187d87ea07a5e79aa9d20bf3c20e9f326e5b4",
+            "outcome": "INCOMPLETE_TRACE_BOUND_NO_REPLAY",
+            "separateCompletedWorkflows": {
+                "prepare-g1": {
+                    "completed": true,
+                    "httpCalls": 12,
+                    "statuses": {
+                        "200": 12
+                    },
+                    "signOutConfirmed": true,
+                    "finalizationSha256": "d4e50a08ecf40d2e82cabb760c6806284d007ea79f290db65d88c6b8ea9fa0a7"
+                },
+                "search-g1": {
+                    "completed": true,
+                    "httpCalls": 13,
+                    "statuses": {
+                        "200": 13
+                    },
+                    "signOutConfirmed": true,
+                    "finalizationSha256": "6d9acf8d9f13e837a521e14440cf3750af919399791b5a9ca47511915222599c"
+                },
+                "rebuild-g2": {
+                    "completed": true,
+                    "httpCalls": 5,
+                    "statuses": {
+                        "200": 5
+                    },
+                    "signOutConfirmed": true,
+                    "finalizationSha256": "8fb2dc1a88948ac2a3bdb9b30d3b6fe51d5764c2ab079e4f08ced8d90531c988"
+                },
+                "search-outage": {
+                    "completed": true,
+                    "httpCalls": 8,
+                    "statuses": {
+                        "200": 7,
+                        "409": 1
+                    },
+                    "signOutConfirmed": true,
+                    "finalizationSha256": "18ae3b15070f5cdb1e70c16561e05395b6c500d6366d03657cf89103d82e4e39"
+                }
+            },
+            "separateObservedPhases": {
+                "vector-g1-ready": {
+                    "status": "OBSERVED",
+                    "snapshots": 1,
+                    "sha256": "9230dc819d8eae02c56db2047f4f1f5c4676175ed96bf5d351d12a04afb5c666",
+                    "nativeApplicationSqlExecution": "PASS_AT_BA755"
+                },
+                "vector-g2-staged": {
+                    "status": "OBSERVED",
+                    "snapshots": 1,
+                    "sha256": "bd43afa6bfd3e71bc6d716156138198bb3d75b12f3fdd955f8125093574c3792"
+                }
+            },
+            "firstFailedPhase": "vector-outage-failed",
+            "firstDiagnostic": "S3_OUTAGE_VECTOR_TRACE_BOUND",
+            "snapshots": 40,
+            "incompleteReceiptSha256": "630774d535cf581f6f1478780be8f09e468ec1171a4220f84350974584820aa7",
+            "failedTraceRows": "NOT_RETAINED_IN_HISTORICAL_RECEIPT",
+            "traceBoundBranch": "UNKNOWN_COLLECTOR_OVERFLOW_OR_INCOMPLETE_FINAL_TRACE",
+            "fiveClaimsAndAllBackoffs": "NOT_ESTABLISHED",
+            "faultReceiptSha256": "601d919ecf1fd86c6886ab886ad230e6d544e23bec7bd09734e60386145e331d",
+            "storageStopped": true,
+            "sameWorkerResumed": true,
+            "measuredTimes": {
+                "faultReceiptAt": "2026-10-24T18:10:18.170913+00:00",
+                "observerIntentMtime": "2026-10-24T18:10:27.562467+00:00",
+                "elapsedBeforeIntentMillisecondsRounded": 9392,
+                "firstBackoffMissed": "UNKNOWN_NOT_INFERRED_FROM_TIMESTAMPS"
+            },
+            "rootBrowser": {
+                "language": "EN",
+                "activeGeneration": "G1",
+                "documents": 1,
+                "children": 1,
+                "retainedChunks": 0,
+                "reservedChunks": 0,
+                "completeTasks": 2,
+                "consoleErrors": 0,
+                "browserTransfers": false,
+                "retryAction": false,
+                "tabClosed": true,
+                "sessionZeroBeforeTeardown": "NOT_CLAIMED"
+            },
+            "abortDiagnostic": "INCOMPLETE_CONTROL_REQUESTED",
+            "watchdogIntervened": true,
+            "watchdogFinalSha256": "283dfb4deb6b958fee8b67c31b2fd037249d499b0022abea2a74d6720d68d679",
+            "syntheticEmbeddingFinal": {
+                "sha256": "f48dc19677ee2c16fe4056c13fa48954d1894cd278f79d35fee9479ff3869a6e",
+                "counters": {
+                    "requests": 20,
+                    "embeddings": 6,
+                    "inputs": 6,
+                    "rejected": 0,
+                    "connections": 20
+                }
+            },
+            "cleanupReceiptSha256": "6c7f108500f49422a85214d7dc0d1927feeeee0508b2ff9e6af9f64c8e8fc34f",
+            "teardownReceiptSha256": "6fc0199c07b5cc6fdcb995ed37e09eeb7d07a2942ea4f204d700be7f9705dc03",
+            "exactDisabledRestoreReceiptSha256": "7d2c96d8abe644e364bd923d192cc5872129a48629b9ab0114221c07f52b9441",
+            "cleanup": "CLEANED_EVIDENCE_RETAINED_0_OWNED_PROCESSES_STORES_VOLUMES"
+        },
+        "corrections": [
+            "ATOMIC_SOURCE_PROOF_PID_BOUND_READY_ACK_AFTER_STAGED_READER_PRIMING",
+            "VECTOR_ONLY_MONOTONE_STOP_RESUME_GUARD_WITH_COHERENT_PHASE_PAIR_SAMPLE",
+            "LIVE_OBSERVER_ACK_BEFORE_INTENT_STOP_AND_RESUME_WITH_ORIGINAL_DEADLINES",
+            "BOUNDED_FAILURE_TRACE_WITH_DISTINCT_OVERFLOW_AND_INCOMPLETE_CODES",
+            "EXACT_NATIVE_RETIRED_G1_CLEANUP_TASK_AND_PRODUCTION_RETENTION",
+            "METADATA_PROCESSIDENTITY_AND_TESTED_REAL_NODE_ACK_PUBLISHER"
+        ],
+        "bounds": {
+            "watchdogSeconds": 900,
+            "minimumRemainingBeforeFaultSeconds": 625,
+            "snapshotLimit": 360,
+            "traceMilliseconds": 720000,
+            "changedRows": 11,
+            "overflowEventLimit": 1,
+            "ackFreshnessAtFaultConsumptionSeconds": 90,
+            "preFaultWaitSeconds": 90,
+            "guardChildMilliseconds": 15000,
+            "appSnapshotMilliseconds": 15000,
+            "observerCleanupMilliseconds": 55000,
+            "claims": 5,
+            "backoffMilliseconds": [10000, 20000, 40000, 80000]
+        },
+        "currentSources": {
+            "README.md": {
+                "bytes": 23857,
+                "sha256": "926a4efda3adc0cab6bebc13d385ea4d15bf5face14cf772d2998f2ee8529bf1"
+            },
+            "bucket.mjs": {
+                "bytes": 6679,
+                "sha256": "84ec4e6f176d63a1b1122f13de65f71d876a5391bfb0eecfc75f6004eebf4f24"
+            },
+            "cleanup-fixture.mjs": {
+                "bytes": 13025,
+                "sha256": "fc54ad3f0045dbef1c720dd902dd920c3a409547668798a3d48c0c05df552bbb"
+            },
+            "cleanup-observe.mjs": {
+                "bytes": 33495,
+                "sha256": "0152a23220bc4827e434710ca3bf5ec7995ce08c6dddd34f42a52831205f869c"
+            },
+            "cleanup.test.mjs": {
+                "bytes": 22103,
+                "sha256": "581aeb09a39315db748f883f3636d9c4623fa5ef5db51dfcd6d6a07ded121da8"
+            },
+            "fault.py": {
+                "bytes": 24570,
+                "sha256": "ebffd21c7a2698b5bfb44a04053519d1269b4874ead51933f267391c767969da"
+            },
+            "fault_test.py": {
+                "bytes": 22627,
+                "sha256": "aca64500d1b58c657b5576e0bb4855b5ef1d6a2e58b118cab83770ad90301d81"
+            },
+            "fixtures/expected.json": {
+                "bytes": 926,
+                "sha256": "67c562dfb951d9751d76468f4cf29b89d6fae3432ed9debb5c7f0790cb4fac7d"
+            },
+            "fixtures/s3-outage-v1.txt": {
+                "bytes": 522,
+                "sha256": "110bf3def2634f5a3c6addd02b8b61d35fddd3e3ea776077144041e6c2599719"
+            },
+            "fixtures/s3-outage-v2.txt": {
+                "bytes": 620,
+                "sha256": "ef488f9ba8481a42e7f79aceafde979d9f09ddc0072f2edc0577e6b064cc3d2f"
+            },
+            "lifecycle.py": {
+                "bytes": 55643,
+                "sha256": "5acd933639910a6961871ecf7b8a02cc83519586b0dc145a4cfa177c22bfb85b"
+            },
+            "lifecycle_test.py": {
+                "bytes": 24684,
+                "sha256": "3fe9899a2d19c4fd06a67ac473cb26ac09ca3f4af50e7de63b30d0cc74d1a32a"
+            },
+            "objects.mjs": {
+                "bytes": 16033,
+                "sha256": "a0ca8db7a7b46ddcdba416da74f1c13d26e931a5effa9df4de1fc2232623faaf"
+            },
+            "objects.test.mjs": {
+                "bytes": 7304,
+                "sha256": "1a5a90b04a6502b14337ac843d7c20f88df87f4d0c18758cb1b94031fcab0d36"
+            },
+            "observe.mjs": {
+                "bytes": 46519,
+                "sha256": "4772ce32a66e3a37a7a6a9d9ebb92cad1c1d3d67199a8506162e2be1ac347161"
+            },
+            "observe.test.mjs": {
+                "bytes": 19167,
+                "sha256": "00f9dfc507b9b856cb199f4e740eaa6c8e202d3f95d177438c6021171a2d2dd6"
+            },
+            "private.mjs": {
+                "bytes": 12293,
+                "sha256": "da9c2d4f5e425556a9669f91273f9096b37fc2e46fe5f17f9412a1d59ceadaba"
+            },
+            "seed.mjs": {
+                "bytes": 11621,
+                "sha256": "f9e10a8fbde5c655b8fb09f26644ec994a554331d284ada182b0f0a8eca40d69"
+            },
+            "smtp.mjs": {
+                "bytes": 10728,
+                "sha256": "82523128c0ad7a77d7b8d8d3743f278482d079fb7b1a26e9ee31e625b50b86f5"
+            },
+            "vector-curl.mjs": {
+                "bytes": 8657,
+                "sha256": "d71fab7fc8e41462af1fa7b780221c9ce36347df8983440ae11234c7547016e8"
+            },
+            "vector-embedding.mjs": {
+                "bytes": 7998,
+                "sha256": "3812d99f3ed80021791f707201ac9494b6240b530b2c5ab63ac4a95c501efac4"
+            },
+            "vector-observation.mjs": {
+                "bytes": 23251,
+                "sha256": "a972aa1a5c47bde4ccc2766a43d7608029cd7122408438abc3d15677c68e6113"
+            },
+            "vector-observe.mjs": {
+                "bytes": 26392,
+                "sha256": "d11970b8d415e56893c43480791c6eab455ce73b87dbee61cc4a4ab50bf72ce0"
+            },
+            "vector-snapshot.mjs": {
+                "bytes": 16279,
+                "sha256": "da6b70f54e675ea69b9326ba35f2544d7ecddd6a6db5e9a231d1eb45c6ab3190"
+            },
+            "vector-workflow.mjs": {
+                "bytes": 23900,
+                "sha256": "9cf06c6da67d2d1bbc7ffa08462b1576a0049e49eb41e57e603f40716d77d4f5"
+            },
+            "vector.test.mjs": {
+                "bytes": 68848,
+                "sha256": "dbec3b90b106000c0971c674427772e32de5688b8eb25ff74a1a9f5045110b80"
+            }
+        },
+        "currentSourcesSha256": "c7a7c3cd9fecdb370bd6e38dcc1498e5cd8e80b3e1e64da2701b3379331064c0",
+        "offlineValidation": {
+            "status": "PASS",
+            "pythonTests": 46,
+            "nodeTests": 67,
+            "addedPythonTests": 9,
+            "addedNodeTests": 7,
+            "nodeSyntaxChecks": 14,
+            "pythonAstChecks": 4,
+            "documents": 3,
+            "mermaidDiagrams": 1,
+            "localMarkdownLinks": 81,
+            "guardLogSha256": "e694291adb1a521ab990981aa696811ca53203b64d0f20cefeaf72fee2da4e7a",
+            "resultSha256": "e336050a1a720401467dba82a2817814cc76fc726676ba0e131803971a1542f1"
+        },
+        "runtimeGates": {
+            "allDisabled": true,
+            "count": 13
+        },
+        "replacementRun": "NOT_SELECTED",
+        "nativeExecutionOfRevision5": "NOT_RUN",
+        "applicationBuilds": "PREVIOUS_4_PASS_PRODUCT_UNCHANGED_NOT_REPEATED",
+        "selectedProductionMain": "dc314fcfe02bbc30877bb1a4a1720d1bb3abccde",
+        "laterMainIntegration": "DEFERRED_UNTIL_COHERENT_NATIVE_RESULT",
+        "historicalRecord": "All eighteen preceding fields remain unchanged. Trial 8aa is INCOMPLETE with an ambiguous historical TRACE_BOUND, no retained failed rows and no reconstructed backoff completion. Separate native G1 READY executes the ba755 reader SQL successfully. Revised ACK/transition/inventory helpers have hermetic coverage only."
     }
 }

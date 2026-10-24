@@ -302,5 +302,56 @@ class VectorFaultTests(unittest.TestCase):
             signal_worker.assert_called_once_with(value, signal.SIGCONT)
 
 
+class PrimedVectorFaultTests(unittest.TestCase):
+    vector_state = VectorFaultTests.vector_state
+    vector_proof = VectorFaultTests.vector_proof
+    def fault_mocks(self, stack, refuse_at=None):
+        value = self.vector_state(); staged = self.vector_proof()['faultAdmission']; events = []; calls = 0
+        stack.enter_context(mock.patch.object(f.l, 'fault_phase', return_value='PAUSED'))
+        stack.enter_context(mock.patch.object(f.l, 'guard'))
+        stack.enter_context(mock.patch.object(f.l, 'watchdog_admission', return_value={'baseline': staged}))
+        stack.enter_context(mock.patch.object(f, 'fresh_admission', return_value=(staged, 'stage-sha')))
+        def ready(*_args, **kwargs):
+            nonlocal calls
+            calls += 1; events.append('ACK' + str(calls))
+            self.assertEqual(kwargs, {'ready': True, 'fresh': True, 'live': True})
+            if calls == refuse_at: raise f.l.GuardError('controlled-observer-refusal')
+            return {'readySha256': 'ack-sha'}
+        stack.enter_context(mock.patch.object(f.l, 'vector_observer_admission', side_effect=ready))
+        stack.enter_context(mock.patch.object(f, 'record', side_effect=lambda *_args: events.append('RECORD')))
+        stack.enter_context(mock.patch.object(f.l, 'owned'))
+        stack.enter_context(mock.patch.object(f, 'require_remaining', side_effect=lambda *_args: events.append('BUDGET')))
+        stack.enter_context(mock.patch.object(f.l, 'run', side_effect=lambda *_args, **_kwargs: events.append('STOP')))
+        stack.enter_context(mock.patch.object(f, 'worker_signal', side_effect=lambda *_args: events.append('RESUME')))
+        return value, events
+
+    def test_fault_consumes_live_ack_before_intent_stop_and_same_worker_resume(self):
+        with contextlib.ExitStack() as stack:
+            value, events = self.fault_mocks(stack)
+            f.storage_outage(value)
+        self.assertEqual(events, ['ACK1', 'RECORD', 'ACK2', 'BUDGET', 'STOP', 'ACK3', 'RESUME', 'RECORD'])
+
+    def test_missing_or_changed_ack_prevents_the_next_destructive_action(self):
+        for refuse_at in [1, 2, 3]:
+            with self.subTest(refuse_at=refuse_at), contextlib.ExitStack() as stack:
+                value, events = self.fault_mocks(stack, refuse_at)
+                with self.assertRaisesRegex(f.l.GuardError, 'observer-refusal'): f.storage_outage(value)
+                self.assertNotIn('RESUME', events)
+                self.assertEqual('STOP' in events, refuse_at == 3)
+
+    def test_fault_intent_is_atomically_complete_before_poller_visibility(self):
+        with tempfile.TemporaryDirectory(dir=common.CACHE) as temporary, mock.patch.object(f, 'directory', return_value=Path(temporary)):
+            target = Path(temporary) / 'fault-storage-outage-intent.json'
+            original_link = f.os.link
+            def link(source, destination, **kwargs):
+                self.assertFalse(target.exists())
+                staged = json.loads((Path(temporary) / source).read_bytes())
+                self.assertEqual(staged['observerReadySha256'], 'a' * 64)
+                return original_link(source, destination, **kwargs)
+            with mock.patch.object(f.os, 'link', side_effect=link):
+                f.record(self.vector_state(), target.name, {'observerReadySha256': 'a' * 64})
+            self.assertEqual(json.loads(target.read_bytes())['observerReadySha256'], 'a' * 64)
+
+
 if __name__ == '__main__':
     unittest.main()

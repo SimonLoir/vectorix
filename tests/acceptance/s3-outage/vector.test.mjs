@@ -1,6 +1,8 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import fs from 'node:fs';
+import os from 'node:os';
+import path from 'node:path';
 import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import {
@@ -8,6 +10,7 @@ import {
     sameScope,
     scenarioSpec,
     RecipeError,
+    advanceVectorObserverTransition,
 } from './private.mjs';
 import {
     syntheticResponse,
@@ -38,6 +41,8 @@ import {
     assessVectorSnapshot,
     assertVectorContinuity,
     validateVectorTrace,
+    createVectorTraceCollector,
+    vectorTraceRow,
 } from './vector-observation.mjs';
 import {
     readVectorSnapshot,
@@ -46,6 +51,9 @@ import {
 } from './vector-snapshot.mjs';
 import {
     finalizeVectorObservation,
+    primeVectorObserver,
+    publishVectorObserverControl,
+    publishVectorObserverReady,
     STATIC_DRAFT_ONLY as observerDraft,
 } from './vector-observe.mjs';
 
@@ -110,6 +118,7 @@ const plan = {
     ],
 };
 const layout = {
+    sourceRetireGraceMs: 1020000,
     children: [plan],
     parents: [{ ...plan, ordinal: 1 }],
     childParentOrdinals: [1],
@@ -197,6 +206,23 @@ function snapshot(phase) {
             updatedAt: now,
         }))
     );
+    if (final)
+        tasks.push({
+            id: 'cleanup-g1',
+            generationId: g1,
+            indexedDocumentId: null,
+            kind: 'CLEAN_GENERATION',
+            status: 'PENDING',
+            stage: 'ACCEPTED',
+            attempts: 0,
+            leaseEpoch: 0n,
+            reservedChunks: 0,
+            completedChunks: 0,
+            leasedUntil: null,
+            errorCode: null,
+            availableAt: new Date(now.getTime() + layout.sourceRetireGraceMs),
+            updatedAt: now,
+        });
     return {
         quota: {
             originalBytes: String(original.length),
@@ -247,6 +273,12 @@ function snapshot(phase) {
                   ? 'RETIRED'
                   : 'ACTIVE',
             previousGenerationId: i ? g1 : null,
+            activatedAt: now,
+            retiredAt: !i && final ? now : null,
+            cleanupAfter:
+                !i && final
+                    ? new Date(now.getTime() + layout.sourceRetireGraceMs)
+                    : null,
             configurationRevision: 1,
             vectorSchema: 'vector_collections',
             tableName: 'g_' + id.replaceAll('-', ''),
@@ -280,7 +312,10 @@ function snapshot(phase) {
             versionId: 'version',
             releasedAt: null,
             state: !i && final ? 'RETIRED' : 'LIVE',
-            retainUntil: !i && final ? new Date(now.getTime() + 1020000) : null,
+            retainUntil:
+                !i && final
+                    ? new Date(now.getTime() + layout.sourceRetireGraceMs)
+                    : null,
         })),
         version: {
             id: 'version',
@@ -1656,4 +1691,305 @@ test('retry must finish the exact failed task with a strictly advanced epoch, st
             ),
         /TASK_EPOCH_CONTINUITY/u
     );
+});
+
+function durableSchedules() {
+    let time = now.getTime();
+    return [1, 2, 3, 4, 5].map((attempts) => {
+        const delay = 5000 * 2 ** attempts;
+        const row = {
+            id: 'same-task',
+            status: attempts === 5 ? 'FAILED' : 'PENDING',
+            attempts,
+            leaseEpoch: BigInt(attempts),
+            errorCode: 'VECTOR_UNAVAILABLE',
+            availableAt: new Date(time + delay),
+            updatedAt: new Date(time),
+            leasedUntil: null,
+        };
+        time += delay;
+        return row;
+    });
+}
+test('actual collector deduplicates repeated native Date/BigInt schedules and requires all five attempts', () => {
+    const collector = createVectorTraceCollector();
+    for (const row of durableSchedules())
+        for (let i = 0; i < 40; i++) collector.record(structuredClone(row));
+    assert.equal(collector.evidence().changes.length, 5);
+    assert.equal(collector.evidence().overflow, null);
+    assert.deepEqual(
+        collector.validate().backoffMilliseconds,
+        [10000, 20000, 40000, 80000]
+    );
+    const missing = createVectorTraceCollector();
+    for (const row of durableSchedules().slice(1)) missing.record(row);
+    assert.throws(() => missing.validate(), /INCOMPLETE_TRACE/u);
+    assert.equal(missing.evidence().changes.length, 4);
+});
+test('collector preserves eleven closed rows plus a distinct twelfth event without increasing its cap', () => {
+    const collector = createVectorTraceCollector(),
+        base = durableSchedules()[0];
+    for (let i = 0; i < 11; i++)
+        collector.record({ ...base, updatedAt: new Date(now.getTime() + i) });
+    assert.throws(
+        () =>
+            collector.record({
+                ...base,
+                updatedAt: new Date(now.getTime() + 11),
+            }),
+        /COLLECT_BOUND/u
+    );
+    const evidence = collector.evidence();
+    assert.equal(evidence.changes.length, 11);
+    assert.equal(
+        evidence.overflow.updatedAt,
+        new Date(now.getTime() + 11).toISOString()
+    );
+    assert.equal(Object.keys(evidence.overflow).length, 8);
+    evidence.changes[0].attempts = 99;
+    assert.equal(collector.evidence().changes[0].attempts, 1);
+    for (const change of [
+        { extra: 'never-store' },
+        { attempts: 0 },
+        { leaseEpoch: '-1' },
+        { leasedUntil: now },
+        { availableAt: 'unknown' },
+    ])
+        assert.throws(
+            () => vectorTraceRow({ ...base, ...change }),
+            /TRACE_ROW/u
+        );
+});
+test('priming cannot publish ACK until real read, validation, physical close and final admission finish', async () => {
+    const events = [];
+    let releaseRead, releaseClose;
+    const read = new Promise((resolve) => {
+        releaseRead = resolve;
+    });
+    const close = new Promise((resolve) => {
+        releaseClose = resolve;
+    });
+    const task = primeVectorObserver({
+        readStaged: () => {
+            events.push('read');
+            return read;
+        },
+        verifyStaged: (value) => {
+            assert.equal(value, 'actual-staged');
+            events.push('validated');
+        },
+        closePhysical: () => {
+            events.push('close');
+            return close;
+        },
+        recheck: () => events.push('guard'),
+        publish: () => events.push('ACK'),
+    });
+    assert.deepEqual(events, ['read']);
+    releaseRead('actual-staged');
+    await new Promise((resolve) => setImmediate(resolve));
+    assert.deepEqual(events, ['read', 'validated', 'close']);
+    releaseClose();
+    await task;
+    assert.deepEqual(events, ['read', 'validated', 'close', 'guard', 'ACK']);
+    for (const at of ['read', 'validate', 'close', 'guard']) {
+        let published = false;
+        const fail = () => {
+            throw new Error('controlled refusal');
+        };
+        await assert.rejects(
+            primeVectorObserver({
+                readStaged: at === 'read' ? fail : () => 'staged',
+                verifyStaged: at === 'validate' ? fail : () => {},
+                closePhysical: at === 'close' ? fail : () => {},
+                recheck: at === 'guard' ? fail : () => {},
+                publish: () => {
+                    published = true;
+                },
+            }),
+            /controlled refusal/u
+        );
+        assert.equal(published, false);
+    }
+});
+test('observer control publication is complete before visibility and never overwrites an ACK', () => {
+    const directory = fs.mkdtempSync(
+        path.join(os.tmpdir(), 'vector-observer-atomic-')
+    );
+    const target = path.join(directory, 'ready.json'),
+        value = { status: 'ARMED', scope: 'synthetic' };
+    const link = fs.linkSync;
+    let links = 0;
+    fs.linkSync = (source, destination) => {
+        links++;
+        assert.deepEqual(JSON.parse(fs.readFileSync(source)), value);
+        assert.equal(fs.statSync(source).mode & 0o777, 0o600);
+        if (links === 1) assert.equal(fs.existsSync(destination), false);
+        return link(source, destination);
+    };
+    try {
+        publishVectorObserverControl(target, value);
+        assert.deepEqual(JSON.parse(fs.readFileSync(target)), value);
+        assert.equal(
+            fs.existsSync(path.join(directory, '.pending-ready.json')),
+            false
+        );
+        assert.throws(() => publishVectorObserverControl(target, value), {
+            code: 'EEXIST',
+        });
+        assert.deepEqual(JSON.parse(fs.readFileSync(target)), value);
+    } finally {
+        fs.linkSync = link;
+        fs.rmSync(directory, { recursive: true, force: true });
+    }
+});
+test('poller transition progression allows skipped middle steps but never resumed worker with online vector or backwards movement', () => {
+    let previous = null;
+    for (const next of [
+        'UP_PAUSED',
+        'UP_PAUSED',
+        'DOWN_PAUSED',
+        'DOWN_RUNNING',
+        'DOWN_RUNNING',
+    ])
+        previous = advanceVectorObserverTransition(previous, next);
+    assert.equal(
+        advanceVectorObserverTransition('UP_PAUSED', 'DOWN_RUNNING'),
+        'DOWN_RUNNING'
+    );
+    for (const next of ['UP_PAUSED', 'DOWN_PAUSED', 'UP_RUNNING', 'unknown'])
+        assert.throws(
+            () => advanceVectorObserverTransition('DOWN_RUNNING', next),
+            /OBSERVER_TRANSITION/u
+        );
+});
+test('post-activation task inventory requires only the exact scheduled native G1 cleanup at saved retention', () => {
+    const phase = 'vector-g2-ready';
+    const valid = snapshot(phase);
+    assert.equal(valid.tasks.length, 5);
+    assessVectorSnapshot(valid, phase, fixture, binding, state, layout);
+    for (const mutate of [
+        (value) => {
+            value.tasks.pop();
+            value.taskCount--;
+        },
+        (value) => {
+            value.tasks.at(-1).kind = 'REMOVE_DOCUMENT';
+        },
+        (value) => {
+            value.tasks.at(-1).generationId = g2;
+        },
+        (value) => {
+            value.tasks.at(-1).status = 'FAILED';
+        },
+        (value) => {
+            value.tasks.at(-1).stage = 'FAILED';
+        },
+        (value) => {
+            value.tasks.at(-1).attempts = 1;
+        },
+        (value) => {
+            value.tasks.at(-1).leaseEpoch = 1n;
+        },
+        (value) => {
+            value.tasks.at(-1).leasedUntil = now;
+        },
+        (value) => {
+            value.tasks.at(-1).errorCode = 'VECTOR_UNAVAILABLE';
+        },
+        (value) => {
+            value.tasks.at(-1).availableAt = now;
+        },
+        (value) => {
+            value.generations[0].cleanupAfter = now;
+        },
+        (value) => {
+            value.holds[0].retainUntil = now;
+        },
+        (value) => {
+            value.generations[1].activatedAt = new Date(now.getTime() + 1);
+        },
+    ]) {
+        const value = structuredClone(valid);
+        mutate(value);
+        assert.throws(() =>
+            assessVectorSnapshot(value, phase, fixture, binding, state, layout)
+        );
+    }
+    const staged = snapshot('vector-g2-staged');
+    staged.tasks.push(structuredClone(valid.tasks.at(-1)));
+    staged.taskCount++;
+    assert.throws(
+        () =>
+            assessVectorSnapshot(
+                staged,
+                'vector-g2-staged',
+                fixture,
+                binding,
+                state,
+                layout
+            ),
+        /EXACT_TASK_INVENTORY/u
+    );
+});
+
+test('real priming publisher uses the Node clock and private intent bytes through the production ACK path', async () => {
+    const directory = fs.mkdtempSync(
+        path.join(os.tmpdir(), 'vector-observer-ready-')
+    );
+    fs.chmodSync(directory, 0o700);
+    const phase = 'vector-outage-failed';
+    const binding = {
+        ...receiptScope(state),
+        phase,
+        sourceCommit: 'c'.repeat(40),
+        helperPinsSha256: 'd'.repeat(64),
+    };
+    const intent = Buffer.from(
+        JSON.stringify({ ...binding, status: 'ONE_SHOT_READ_ONLY' }) + '\n'
+    );
+    const file = path.join(directory, `observe-${phase}-intent.json`);
+    fs.writeFileSync(file, intent, { mode: 0o600, flag: 'wx' });
+    const before = process.hrtime.bigint();
+    let published;
+    try {
+        await primeVectorObserver({
+            readStaged: async () => ({ status: 'actual-staged' }),
+            verifyStaged: async (row) => {
+                assert.equal(row.status, 'actual-staged');
+            },
+            closePhysical: async () => {},
+            recheck: () => {},
+            publish: () => {
+                published = publishVectorObserverReady({
+                    directory,
+                    binding,
+                    phase,
+                });
+            },
+        });
+        const after = process.hrtime.bigint();
+        const receipt = JSON.parse(published);
+        assert.equal(receipt.status, 'ARMED');
+        assert.equal(receipt.intentSha256, sha(intent));
+        assert.equal(receipt.sourceCommit, binding.sourceCommit);
+        assert.ok(
+            BigInt(receipt.armedMonotonicNs) >= before &&
+                BigInt(receipt.armedMonotonicNs) <= after
+        );
+        assert.ok(Number.isFinite(Date.parse(receipt.armedAt)));
+        assert.equal(
+            fs.statSync(path.join(directory, 'vector-observer-ready.json'))
+                .mode & 0o777,
+            0o600
+        );
+        assert.equal(
+            fs.existsSync(
+                path.join(directory, '.pending-vector-observer-ready.json')
+            ),
+            false
+        );
+    } finally {
+        fs.rmSync(directory, { recursive: true, force: true });
+    }
 });
