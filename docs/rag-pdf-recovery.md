@@ -1,6 +1,6 @@
 # Narrow PDF cross-reference recovery
 
-This follow-up to [issue #16](https://github.com/SimonLoir/vectorix/issues/16) is implemented on `codex/pdf-xref-recovery`. Local automated checks and production dashboard acceptance pass; PR delivery and exact-head CI remain pending. It addresses the demonstrated cross-reference reconstruction case; arbitrary font, hint-table and other syntax warnings remain unsupported, so issue #16 stays open for that broader scope.
+This follow-up to [issue #16](https://github.com/SimonLoir/vectorix/issues/16) is delivered in [PR #71](https://github.com/SimonLoir/vectorix/pull/71), squash `c0dec633ff37dd33ef8dd1f7644e296c56e92dc0`. Local automated checks, production dashboard acceptance and both exact-head CI workflows pass. It addresses the demonstrated cross-reference reconstruction case; arbitrary font, hint-table and other syntax warnings remain unsupported, so issue #16 stays open for that broader scope.
 
 ## Diagnostic boundary
 
