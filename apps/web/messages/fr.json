@@ -1578,5 +1578,13 @@
         "saveFailed": "Impossible de confirmer votre préférence de langue. La langue affichée n’a pas changé.",
         "sessionRequired": "Reconnectez-vous avant d’enregistrer la langue de votre compte.",
         "displayFailed": "Impossible de mettre à jour la langue affichée. Rechargez la page et vérifiez votre préférence."
+    },
+    "licenses": {
+        "title": "Licences et fonctionnalités",
+        "loading": "Chargement…",
+        "empty": "Aucune fonctionnalité sous licence n’est configurée.",
+        "enabled": "Activée",
+        "disabled": "Désactivée",
+        "informational": "Ces droits sont pour l’instant informatifs. Vectorix ne restreint encore aucun module en fonction de ceux-ci. Les permissions existantes et les droits sur les collections continuent de s’appliquer."
     }
 }
