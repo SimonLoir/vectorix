@@ -25,8 +25,30 @@ from m7c_restore_common import (GuardError, base_environment, bounded_stream, ca
     private_directory, read_private_bytes, require, run, save_json)
 
 STATIC_DRAFT_ONLY = True
-NAMESPACE = 'vectorix-m7c-s3-outage'
-LABEL = 'vectorix.m7c-s3-outage'
+PROTOCOL_VERSION = 2
+SCENARIOS = {
+    'INGESTION_V1': {'namespace': 'vectorix-m7c-s3-outage', 'label': 'vectorix.m7c-s3-outage',
+        'databaseStem': 'vectorix_m7c_s3_outage', 'objectPrefix': 'm7c-s3-outage'},
+    'CLEANUP_V1': {'namespace': 'vectorix-m7c-s3-cleanup', 'label': 'vectorix.m7c-s3-cleanup',
+        'databaseStem': 'vectorix_m7c_s3_cleanup', 'objectPrefix': 'm7c-s3-cleanup'},
+    'REDIS_V1': {'namespace': 'vectorix-m7c-redis-outage', 'label': 'vectorix.m7c-redis-outage',
+        'databaseStem': 'vectorix_m7c_redis_outage', 'objectPrefix': 'm7c-redis-outage'},
+}
+
+
+def scenario_spec(scenario):
+    require(type(scenario) is str and scenario in SCENARIOS, 'm7c-s3-outage-scenario-required')
+    return SCENARIOS[scenario]
+
+
+def receipt_scope(state):
+    scenario_spec(state['scenario'])
+    return {'schemaVersion': 1, 'protocolVersion': PROTOCOL_VERSION,
+        'scenario': state['scenario'], 'runId': state['runId']}
+
+
+def receipt_matches(state, value):
+    return isinstance(value, dict) and all(value.get(key) == item for key, item in receipt_scope(state).items())
 CACHE = ROOT / 'node_modules/.cache/vectorix'
 SERVICES = {'postgres': (5432, '/var/lib/postgresql'), 'vector': (5432, '/var/lib/postgresql'),
     'redis': (6379, '/data'), 'rustfs': (9000, '/data')}
@@ -41,14 +63,14 @@ BUILT_APPS = ('api', 'workers', 'web', 'admin')
 APPS = ('api', 'web', 'smtp', 'workers')
 DOTENV = {'.env', '.env.local', '.env.production', '.env.production.local', '.env.development'}
 PRODUCTION = ['apps/api', 'apps/workers', 'apps/web', 'apps/admin', 'packages', 'pnpm-lock.yaml', 'package.json']
-HELPERS = ['lifecycle.py', 'fault.py', 'private.mjs', 'seed.mjs', 'bucket.mjs', 'smtp.mjs', 'observe.mjs', 'objects.mjs']
+HELPERS = ['lifecycle.py', 'fault.py', 'private.mjs', 'seed.mjs', 'bucket.mjs', 'smtp.mjs', 'observe.mjs', 'objects.mjs', 'cleanup-fixture.mjs', 'cleanup-observe.mjs', '../redis-outage/pending.mjs', '../redis-outage/redis_queue.py', '../redis-outage/curl.mjs', '../redis-outage/transfers.mjs', '../redis-outage/key-policy.mjs']
 PHASES = {'PREPARING', 'SCHEMA_REQUIRED', 'SCHEMA_READY', 'SEEDING', 'READY', 'CLEANING', 'CLEANED_EVIDENCE_RETAINED'}
 
 
 
-def state_path(run_id):
+def state_path(run_id, scenario):
     require(re.fullmatch('[a-f0-9]{12}', run_id) is not None, 'm7c-s3-outage-run-format')
-    return CACHE / (NAMESPACE + '-' + run_id) / 'state.json'
+    return CACHE / (scenario_spec(scenario)['namespace'] + '-' + run_id) / 'state.json'
 
 
 def inspect(identifier, kind='container'):
@@ -58,7 +80,8 @@ def inspect(identifier, kind='container'):
 
 
 def labels(state, service):
-    return {LABEL + '.run': state['runId'], LABEL + '.service': service}
+    label = scenario_spec(state['scenario'])['label']
+    return {label + '.run': state['runId'], label + '.service': service}
 
 
 def volume_identity(value):
@@ -193,23 +216,31 @@ def fixture_manifest():
         for name in ['s3-outage-v1.txt', 's3-outage-v2.txt', 'expected.json']}
 
 
-def inputs():
+def inputs(scenario=None):
     migrations = sorted((ROOT / 'packages/db/prisma/migrations').glob('*/migration.sql'))
     require(0 < len(migrations) <= 64, 'm7c-s3-outage-migration-count')
-    return {'sourceSha256': source_manifest(), 'builds': build_manifest(), 'runtime': runtime_manifest(),
+    result = {'sourceSha256': source_manifest(), 'builds': build_manifest(), 'runtime': runtime_manifest(),
         'textFixtures': fixture_manifest(),
         'migrations': {p.parent.name: file_hash(p, 8 * 1024 ** 2) for p in migrations},
         'prismaConfigSha256': file_hash(ROOT / 'packages/db/prisma.config.ts'),
         'helpers': {**{name: file_hash(HERE / name) for name in HELPERS},
             'shared-restore-common.py': file_hash(ROOT / 'tests/acceptance/restore/m7c_restore_common.py')}}
+    if scenario == 'REDIS_V1':
+        binary = Path('/usr/bin/curl')
+        require(binary.is_file() and not binary.is_symlink() and binary.resolve() == binary
+            and binary.stat().st_mode & 0o022 == 0 and binary.stat().st_size <= 16 * 1024 ** 2, 'm7c-redis-curl-binary')
+        result['curl'] = {'path': str(binary), 'sha256': digest(binary.read_bytes())}
+    return result
 
 
-def validate(state, run_id):
-    require(state.get('schemaVersion') == 1 and state.get('namespace') == NAMESPACE
-        and state.get('runId') == run_id and state.get('prefix') == NAMESPACE + '-' + run_id
+def validate(state, run_id, scenario):
+    spec = scenario_spec(scenario)
+    require(state.get('schemaVersion') == 1 and state.get('protocolVersion') == PROTOCOL_VERSION
+        and state.get('scenario') == scenario and state.get('namespace') == spec['namespace']
+        and state.get('runId') == run_id and state.get('prefix') == spec['namespace'] + '-' + run_id
         and state.get('phase') in PHASES, 'm7c-s3-outage-state-identity')
-    require(state['applicationDatabase'] == 'vectorix_m7c_s3_outage_app_' + run_id + '_test'
-        and state['vectorDatabase'] == 'vectorix_m7c_s3_outage_vectors_' + run_id + '_test', 'm7c-s3-outage-test-databases')
+    require(state['applicationDatabase'] == spec['databaseStem'] + '_app_' + run_id + '_test'
+        and state['vectorDatabase'] == spec['databaseStem'] + '_vectors_' + run_id + '_test', 'm7c-s3-outage-test-databases')
     require(state['images'] == IMAGES and set(state['resources']).issubset(SERVICES)
         and set(state['processes']).issubset(APPS), 'm7c-s3-outage-state-resource-set')
     require(set(state['ports']) == {*SERVICES, 'api', 'web', 'admin', 'smtp'}
@@ -222,10 +253,10 @@ def validate(state, run_id):
     return state
 
 
-def load(run_id):
-    path = state_path(run_id)
+def load(run_id, scenario):
+    path = state_path(run_id, scenario)
     private_directory(path.parent)
-    return validate(json.loads(read_private_bytes(path, 128 * 1024)), run_id)
+    return validate(json.loads(read_private_bytes(path, 128 * 1024)), run_id, scenario)
 
 
 def app_entry(state, service):
@@ -238,23 +269,23 @@ def app_entry_hash(state, service):
 
 def app_environment(state, service):
     return {**state['environment'], 'VECTORIX_M7C_S3_OUTAGE_RUN': state['runId'],
-        'VECTORIX_M7C_S3_OUTAGE_ROLE': service}
+        'VECTORIX_M7C_S3_OUTAGE_ROLE': service, 'VECTORIX_M7C_S3_SCENARIO': state['scenario']}
 
 
 def smtp_ready(state):
-    value = json.loads(read_private_bytes(state_path(state['runId']).parent / 'smtp-ready.json', 4096))
-    require(value == {'schemaVersion': 1, 'runId': state['runId'], 'smtpPort': state['ports']['smtp'],
+    value = json.loads(read_private_bytes(state_path(state['runId'], state['scenario']).parent / 'smtp-ready.json', 4096))
+    require(value == {**receipt_scope(state), 'smtpPort': state['ports']['smtp'],
         'scope': 'OWNED_LOOPBACK_CAPTURE_ONLY'}, 'm7c-s3-outage-smtp-ready-receipt')
 
 
 def save(state, exclusive=False):
-    validate(state, state['runId'])
-    save_json(state_path(state['runId']), state, exclusive=exclusive)
+    validate(state, state['runId'], state['scenario'])
+    save_json(state_path(state['runId'], state['scenario']), state, exclusive=exclusive)
 
 
 @contextmanager
-def lifecycle_lock():
-    descriptor = os.open(CACHE / (NAMESPACE + '-lifecycle.lock'), os.O_CREAT | os.O_RDWR | os.O_NOFOLLOW | os.O_CLOEXEC, 0o600)
+def lifecycle_lock(scenario):
+    descriptor = os.open(CACHE / (scenario_spec(scenario)['namespace'] + '-lifecycle.lock'), os.O_CREAT | os.O_RDWR | os.O_NOFOLLOW | os.O_CLOEXEC, 0o600)
     try:
         info = os.fstat(descriptor)
         require(stat.S_ISREG(info.st_mode) and info.st_uid == os.getuid() and stat.S_IMODE(info.st_mode) == 0o600,
@@ -277,6 +308,7 @@ def free_port(port=0):
 
 def environment(state):
     ports, secret = state['ports'], state['secrets']
+    spec = scenario_spec(state['scenario'])
     origin = lambda app: 'http://127.0.0.1:' + str(ports[app])
     trust = origin('web') + ',' + origin('admin')
     empty = ['ROOT_DOMAIN', 'BETTER_AUTH_COOKIE_NAME', 'BETTER_AUTH_COOKIE_PREFIX', 'VECTORIX_FEATURE_PROVIDER_URL',
@@ -296,8 +328,8 @@ def environment(state):
         BETTER_AUTH_URL=origin('api'), API_URL=origin('api'), VECTORIX_WEB_URL=origin('web'), TRUSTED_ORIGINS=trust,
         ALLOW_ACCOUNT_CREATION='true', ALLOW_ORGANIZATION_CREATION='true', VECTORIX_WEB_PUSH_ENABLED='false',
         VECTORIX_DEFAULT_S3_ENDPOINT=origin('rustfs'), VECTORIX_S3_ALLOWED_ENDPOINTS=origin('rustfs'),
-        VECTORIX_DEFAULT_S3_BUCKET='m7c-s3-outage-' + state['runId'], VECTORIX_DEFAULT_S3_REGION='us-east-1',
-        VECTORIX_DEFAULT_S3_FORCE_PATH_STYLE='true', VECTORIX_DEFAULT_S3_ACCESS_KEY_ID='m7c-s3-outage-' + state['runId'],
+        VECTORIX_DEFAULT_S3_BUCKET=spec['objectPrefix'] + '-' + state['runId'], VECTORIX_DEFAULT_S3_REGION='us-east-1',
+        VECTORIX_DEFAULT_S3_FORCE_PATH_STYLE='true', VECTORIX_DEFAULT_S3_ACCESS_KEY_ID=spec['objectPrefix'] + '-' + state['runId'],
         VECTORIX_DEFAULT_S3_SECRET_ACCESS_KEY=secret['s3'],
         PASSKEY_RP_ID='127.0.0.1', PASSKEY_RP_NAME='Vectorix isolated S3 recovery', PASSKEY_ORIGINS=trust)
     return env
@@ -338,10 +370,11 @@ def owned(state, service, running=None):
 
 
 def pins(state):
-    require(inputs() == state['inputs'], 'm7c-s3-outage-source-build-helper-migration-drift')
+    require(inputs(state['scenario']) == state['inputs'], 'm7c-s3-outage-source-build-helper-migration-drift')
 
 
 def create_service(state, service):
+    spec = scenario_spec(state['scenario'])
     name = state['prefix'] + '-' + service
     require(not run(['docker', 'container', 'ls', '--all', '--filter', 'name=^/' + name + '$', '--format', '{{.ID}}']).strip(),
         'm7c-s3-outage-refuse-existing-container')
@@ -362,7 +395,7 @@ def create_service(state, service):
         if service == 'vector':
             values.update(VECTOR_PROVISIONER_PASSWORD=state['secrets']['indexer'], VECTOR_RUNTIME_PASSWORD=state['secrets']['runtime'])
     elif service == 'rustfs':
-        values = {'RUSTFS_ACCESS_KEY': 'm7c-s3-outage-' + state['runId'], 'RUSTFS_SECRET_KEY': state['secrets']['s3'],
+        values = {'RUSTFS_ACCESS_KEY': spec['objectPrefix'] + '-' + state['runId'], 'RUSTFS_SECRET_KEY': state['secrets']['s3'],
             'RUSTFS_REGION': 'us-east-1', 'RUSTFS_CONSOLE_ENABLE': 'false', 'RUSTFS_OBS_LOG_DIRECTORY': '/tmp/logs'}
     free_port(state['ports'][service])
     identifier = run(['docker', 'create', '--pull=never', '--name', name, '--network=bridge', *args,
@@ -409,8 +442,9 @@ def empty(state):
     require(result == [0, 0, 0, 0, 0], 'm7c-s3-outage-fresh-empty-business-database-required')
 
 
-def prepare(run_id):
-    path = state_path(run_id)
+def prepare(run_id, scenario):
+    spec = scenario_spec(scenario)
+    path = state_path(run_id, scenario)
     require(not path.parent.exists() and shutil.disk_usage(CACHE).free >= 4 * 1024 ** 3, 'm7c-s3-outage-fresh-directory-and-disk-required')
     ports = {}
     for service in [*SERVICES, 'api', 'web', 'admin', 'smtp']:
@@ -420,11 +454,12 @@ def prepare(run_id):
         image = inspect(identifier, 'image')
         require(image['Id'] == identifier and set(image['Config'].get('Volumes') or {}).issubset({SERVICES[service][1]}),
             'm7c-s3-outage-existing-local-image-no-extra-volume')
-    state = {'schemaVersion': 1, 'namespace': NAMESPACE, 'runId': run_id, 'prefix': NAMESPACE + '-' + run_id,
+    state = {'schemaVersion': 1, 'protocolVersion': PROTOCOL_VERSION, 'scenario': scenario,
+        'namespace': spec['namespace'], 'runId': run_id, 'prefix': spec['namespace'] + '-' + run_id,
         'phase': 'PREPARING', 'ports': ports, 'images': IMAGES, 'resources': {}, 'processes': {},
-        'inputs': inputs(), 'commit': run(['git', 'rev-parse', 'HEAD']).decode().strip(),
-        'applicationDatabase': 'vectorix_m7c_s3_outage_app_' + run_id + '_test',
-        'vectorDatabase': 'vectorix_m7c_s3_outage_vectors_' + run_id + '_test',
+        'inputs': inputs(scenario), 'commit': run(['git', 'rev-parse', 'HEAD']).decode().strip(),
+        'applicationDatabase': spec['databaseStem'] + '_app_' + run_id + '_test',
+        'vectorDatabase': spec['databaseStem'] + '_vectors_' + run_id + '_test',
         'secrets': {**{k: secrets.token_urlsafe(32) for k in ['postgres', 'indexer', 'runtime', 's3', 'auth']},
             'encryption': secrets.token_hex(32)}}
     state['environment'] = environment(state)
@@ -509,7 +544,7 @@ def app(state, service):
         env.update(PORT=str(state['ports'][service]), HOSTNAME='127.0.0.1')
     if service == 'api':
         # The production Hono entry has no host option; bind only its exact port to loopback.
-        preload = state_path(state['runId']).parent / 'api-loopback.mjs'
+        preload = state_path(state['runId'], state['scenario']).parent / 'api-loopback.mjs'
         content = ("import net from 'node:net';const f=net.Server.prototype.listen;const p=" + str(state['ports']['api'])
             + ";net.Server.prototype.listen=function(...a){if(a[0]&&typeof a[0]==='object'&&Number(a[0].port)===p)a[0]={...a[0],host:'127.0.0.1'};else if(Number(a[0])===p){if(typeof a[1]==='string')a[1]='127.0.0.1';else a.splice(1,0,'127.0.0.1');}return f.apply(this,a);};\n").encode()
         if preload.exists():
@@ -528,26 +563,36 @@ def app(state, service):
         'entry': str(entry), 'cwd': str(entry.parent)}
     save(state)
     # Each command becomes its foreground Node process. Logs are private, never emitted by this CLI.
-    log = state_path(state['runId']).parent / (service + '-' + current['startTicks'] + '.log')
+    log = state_path(state['runId'], state['scenario']).parent / (service + '-' + current['startTicks'] + '.log')
     fd = os.open(log, os.O_CREAT | os.O_EXCL | os.O_WRONLY | os.O_NOFOLLOW, 0o600)
     os.dup2(fd, 1)
     os.dup2(fd, 2)
     os.close(fd)
     os.chdir(entry.parent)
-    os.execvpe(arguments[0], arguments + [str(entry)] + (['--run', state['runId']] if service in {'smtp'} else []), env)
+    os.execvpe(arguments[0], arguments + [str(entry)] + (['--run', state['runId'], '--scenario', state['scenario']] if service in {'smtp'} else []), env)
+
+
+def fault_service(state):
+    """Only the closed REDIS_V1 scenario may stop Redis; S3 scenarios retain RustFS."""
+    scenario_spec(state['scenario'])
+    return 'redis' if state['scenario'] == 'REDIS_V1' else 'rustfs'
+
+
+def outage_receipt_name(state):
+    return 'fault-redis-outage-receipt.json' if fault_service(state) == 'redis' else 'fault-storage-outage-receipt.json'
 
 
 def fault_phase(state):
     """Immutable intervention evidence always dominates successful operator receipts."""
-    directory = state_path(state['runId']).parent
+    directory = state_path(state['runId'], state['scenario']).parent
     ordered = [('watchdog-intervention.json', 'WATCHDOG_INTERVENED'),
         ('fault-complete-receipt.json', 'COMPLETE'), ('fault-restore-receipt.json', 'RESTORED'),
-        ('fault-storage-outage-receipt.json', 'OUTAGE'), ('fault-pause-receipt.json', 'PAUSED'),
+        (outage_receipt_name(state), 'OUTAGE'), ('fault-pause-receipt.json', 'PAUSED'),
         ('watchdog-ack.json', 'ARMED')]
     for filename, phase in ordered:
         if (directory / filename).exists():
             value = json.loads(read_private_bytes(directory / filename, 8192))
-            require(value.get('schemaVersion') == 1 and value.get('runId') == state['runId'],
+            require(receipt_matches(state, value),
                 'm7c-s3-outage-fault-receipt-scope')
             return phase
     return 'NOT_STARTED'
@@ -567,11 +612,13 @@ def control_alive(saved):
 
 
 def watchdog_admission(state):
-    directory = state_path(state['runId']).parent
+    directory = state_path(state['runId'], state['scenario']).parent
     ack = json.loads(read_private_bytes(directory / 'watchdog-ack.json', 8192))
-    require(ack.get('schemaVersion') == 1 and ack.get('runId') == state['runId']
+    require(receipt_matches(state, ack)
         and ack.get('budgetSeconds') == 900 and ack.get('worker') == state['processes']['workers']
-        and ack.get('rustfs') == state['resources']['rustfs'] and control_alive(ack['control'])
+        and ack.get('rustfs') == state['resources']['rustfs']
+        and (state['scenario'] != 'REDIS_V1' or ack.get('redis') == state['resources']['redis'])
+        and control_alive(ack['control'])
         and type(ack.get('deadlineMonotonicNs')) is str and ack['deadlineMonotonicNs'].isdigit()
         and time.monotonic_ns() < int(ack['deadlineMonotonicNs'])
         and not (directory / 'watchdog-intervention.json').exists(),
@@ -586,7 +633,7 @@ def guard(state, purpose):
     require(set(state['resources']) == set(SERVICES), 'm7c-s3-outage-four-owned-stores-required')
     phase = fault_phase(state)
     for service in SERVICES:
-        owned(state, service, running=not (service == 'rustfs' and purpose == 'outage-observe'))
+        owned(state, service, running=not (service == fault_service(state) and purpose == 'outage-observe'))
     schema(state)
     if purpose in {'bucket', 'seed'}:
         require(state['phase'] in ({'SCHEMA_REQUIRED'} if purpose == 'bucket' else {'SEEDING'}), 'm7c-s3-outage-setup-phase')
@@ -616,24 +663,25 @@ def guard(state, purpose):
         else:
             require(phase in {'NOT_STARTED', 'ARMED', 'RESTORED', 'COMPLETE'}, 'm7c-s3-outage-online-phase')
             if phase in {'RESTORED', 'COMPLETE'}:
-                final = json.loads(read_private_bytes(state_path(state['runId']).parent / 'watchdog-final.json', 8192))
-                require(final.get('schemaVersion') == 1 and final.get('runId') == state['runId']
-                    and final.get('intervened') is False and final.get('storageRunning') is True
+                final = json.loads(read_private_bytes(state_path(state['runId'], state['scenario']).parent / 'watchdog-final.json', 8192))
+                require(receipt_matches(state, final)
+                    and final.get('intervened') is False
+                    and final.get('redisRunning' if state['scenario'] == 'REDIS_V1' else 'storageRunning') is True
                     and final.get('sameWorkerResumed') is True, 'm7c-s3-outage-watchdog-normal-stop-required')
-    return {'schemaVersion': 1, 'namespace': NAMESPACE, 'runId': state['runId'], 'purpose': purpose,
+    return {**receipt_scope(state), 'namespace': state['namespace'], 'purpose': purpose,
         'resourceOwnership': True, 'exactTestDatabases': True, 'sourceBuildPins': True}
 
 
 def child(state, operation):
     require(operation in {'seed', 'bucket'}, 'm7c-s3-outage-child-operation')
     result = bounded_stream([shutil.which('node'), str(HERE / (operation + '.mjs')),
-        '--run', state['runId']], environment=base_environment(), capture=True, maximum=16384, timeout=180,
+        '--run', state['runId'], '--scenario', state['scenario']], environment=base_environment(), capture=True, maximum=16384, timeout=180,
         allowed_exit_codes=(0, 1))
     try:
         value = json.loads(result['data'])
     except (ValueError, UnicodeError):
         raise GuardError('m7c-s3-outage-child-safe-protocol') from None
-    require(result['exitCode'] == 0 and value == {'completed': True, 'operation': operation, 'runId': state['runId']},
+    require(result['exitCode'] == 0 and value == {**receipt_scope(state), 'completed': True, 'operation': operation},
         'm7c-s3-outage-child-incomplete-no-replay')
 
 
@@ -643,8 +691,8 @@ def seed(state):
     save(state)
     guard(state, 'seed')
     child(state, 'seed')
-    fixture = json.loads(read_private_bytes(state_path(state['runId']).parent / 'fixture.json', 16384))
-    require(fixture.get('runId') == state['runId'] and set(fixture.get('users', {})) == {'owner'}
+    fixture = json.loads(read_private_bytes(state_path(state['runId'], state['scenario']).parent / 'fixture.json', 16384))
+    require(receipt_matches(state, fixture) and set(fixture.get('users', {})) == {'owner'}
         and fixture.get('setup', {}).get('directWrites') == 'NONE_NATIVE_HTTP_ONLY',
         'm7c-s3-outage-private-fixture-required')
     state['phase'] = 'READY'
@@ -655,10 +703,10 @@ def cleanup(state):
     """Gracefully stop only identity-checked processes, then exact owned stores; evidence is retained."""
     state['phase'] = 'CLEANING'
     save(state)
-    ack_path = state_path(state['runId']).parent / 'watchdog-ack.json'
+    ack_path = state_path(state['runId'], state['scenario']).parent / 'watchdog-ack.json'
     if ack_path.exists():
         ack = json.loads(read_private_bytes(ack_path, 8192))
-        require(ack.get('runId') == state['runId'] and ack.get('schemaVersion') == 1,
+        require(receipt_matches(state, ack),
             'm7c-s3-outage-cleanup-watchdog-scope')
         control = ack['control']
         if control_alive(control):
@@ -719,7 +767,7 @@ def cleanup(state):
 
 def summary(state):
     # Ports/origins are public recipe values; credentials, IDs, database URLs and logs are omitted.
-    return {'completed': True, 'runId': state['runId'], 'phase': state['phase'],
+    return {**receipt_scope(state), 'completed': True, 'phase': state['phase'],
         'origins': {app: 'http://127.0.0.1:' + str(state['ports'][app]) for app in ['api', 'web', 'admin']},
         'smtpLoopbackPort': state['ports']['smtp'],
         'resourceCount': len(state['resources']), 'privateEvidenceRetained': True,
@@ -730,6 +778,7 @@ def main():
     require(not STATIC_DRAFT_ONLY, 'm7c-s3-outage-draft-awaiting-root-review')
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--run', required=True)
+    parser.add_argument('--scenario', required=True, choices=sorted(SCENARIOS))
     parser.add_argument('--mode', required=True, choices=['prepare', 'deploy-existing-migrations', 'app-api',
         'app-web', 'app-smtp', 'app-workers', 'seed', 'check', 'cleanup', 'guard'])
     parser.add_argument('--purpose', choices=['bucket', 'seed', 'check', 'smtp', 'observe', 'staged-observe', 'outage-observe'])
@@ -744,13 +793,13 @@ def main():
         and stat.S_IMODE(cache.st_mode) in {0o700, 0o755} and CACHE.resolve() == CACHE,
         'm7c-s3-outage-cache-directory')
     if args.mode == 'guard':
-        print(json.dumps(guard(load(args.run), args.purpose), sort_keys=True))
+        print(json.dumps(guard(load(args.run, args.scenario), args.purpose), sort_keys=True))
         return
-    with lifecycle_lock():
+    with lifecycle_lock(args.scenario):
         if args.mode == 'prepare':
-            state = prepare(args.run)
+            state = prepare(args.run, args.scenario)
         else:
-            state = load(args.run)
+            state = load(args.run, args.scenario)
             if args.mode == 'deploy-existing-migrations':
                 deploy(state)
             elif args.mode.startswith('app-'):

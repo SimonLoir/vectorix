@@ -5,6 +5,8 @@ import { randomBytes } from 'node:crypto';
 import { fileURLToPath } from 'node:url';
 import {
     context,
+    receiptScope,
+    scenarioSpec,
     need,
     writePrivate,
     entryError,
@@ -23,7 +25,7 @@ async function main() {
         'M7C_S3_OUTAGE_SEED_NO_REPLAY'
     );
     writePrivate(path.join(directory, 'seed-intent.json'), {
-        runId: run,
+        ...receiptScope(state),
         status: 'STARTED_EFFECTS_UNKNOWN_UNTIL_FIXTURE',
     });
     const started = performance.now(),
@@ -169,7 +171,7 @@ async function main() {
             }),
             'M7C_S3_OUTAGE_PERMISSIONS_INITIALIZED'
         );
-        const email = `m7c-s3-outage-owner-${run}@example.test`,
+        const email = `${scenarioSpec(state.scenario).objectPrefix}-owner-${run}@example.test`,
             password = randomBytes(24).toString('base64url');
         const result = await auth('owner', 'sign-up/email', {
             name: `S3 recovery owner ${run}`,
@@ -183,7 +185,7 @@ async function main() {
             'M7C_S3_OUTAGE_SIGNUP_IDENTITY'
         );
         const user = { userId: result.user.id, email, password };
-        const slug = `m7c-s3-outage-${run}-owner`;
+        const slug = `${scenarioSpec(state.scenario).objectPrefix}-${run}-owner`;
         const organization = await auth('owner', 'organization/create', {
             name: `S3 recovery organization ${run}`,
             slug,
@@ -205,7 +207,7 @@ async function main() {
             (await auth('owner', 'sign-out')).success === true,
             'M7C_S3_OUTAGE_SEED_SIGNOUT_REQUIRED'
         );
-        context(['--run', run], 'check');
+        context(['--run', run, '--scenario', state.scenario], 'check');
         const snapshot = await client.$transaction(
             async (tx) => {
                 const counts = await Promise.all([
@@ -269,8 +271,12 @@ async function main() {
             performance.now() - started < 120000,
             'M7C_S3_OUTAGE_SEED_DEADLINE'
         );
+        const activeClient = client;
+        client = null;
+        await activeClient.$disconnect();
+        context(['--run', run, '--scenario', state.scenario], 'check');
         writePrivate(path.join(directory, 'fixture.json'), {
-            schemaVersion: 1,
+            ...receiptScope(state),
             namespace: state.namespace,
             runId: run,
             users: { owner: user },
@@ -294,7 +300,12 @@ async function main() {
             },
         });
         console.log(
-            JSON.stringify({ completed: true, operation: 'seed', runId: run })
+            JSON.stringify({
+                ...receiptScope(state),
+                completed: true,
+                operation: 'seed',
+                runId: run,
+            })
         );
     } finally {
         for (const jar of jars.values()) jar.clear();
