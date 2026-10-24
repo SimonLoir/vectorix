@@ -309,5 +309,38 @@
             "resourceTeardown": "NOT_RUN"
         },
         "historicalRecord": "All existing top-level provenance fields remain protocol-1 history; current sources were not used for that native trial."
+    },
+    "cleanupFinalizationPatch": {
+        "schemaVersion": 1,
+        "status": "DISABLED_OFFLINE_VALIDATED_NATIVE_NOT_RERUN",
+        "baseCommit": "2ccfd0f5db10722aa6e9afb4f695a6ede925ec2e",
+        "historicalProtocol2SourceCommit": "d68d93714e4b22e66105e806307b545aad0aaa7d",
+        "historicalProtocol2SourcesSha256": "61fcbc288bad2521e67b596dd9a8e4cafa32c171fb7d31cf2fc2055489052a8d",
+        "scope": "Close the object reader and Prisma, then recheck admission before publishing a cleanup observation. No protocol or native evidence is rewritten.",
+        "changedSources": {
+            "cleanup-observe.mjs": {
+                "bytes": 33495,
+                "sha256": "0152a23220bc4827e434710ca3bf5ec7995ce08c6dddd34f42a52831205f869c"
+            },
+            "cleanup.test.mjs": {
+                "bytes": 22103,
+                "sha256": "581aeb09a39315db748f883f3636d9c4623fa5ef5db51dfcd6d6a07ded121da8"
+            }
+        },
+        "changedPathToSha256CanonicalJsonSha256": "91e37615f40cc48cf0dc3638cec33e0e4fbf1b19e39389286ac1afcf9ba11f3d",
+        "runtimeGates": {
+            "disabled": true,
+            "count": 9
+        },
+        "offlineValidation": {
+            "status": "PASS",
+            "pythonTests": 31,
+            "nodeTests": 28,
+            "addedInjectedNodeTests": 3,
+            "nodeSyntaxChecks": 8,
+            "independentStaticReview": "CLEAR"
+        },
+        "nativeValidation": "NOT_RERUN",
+        "historicalRecord": "All preceding provenance fields retain their original checkpoint and trial meanings. Run 8070c4f9162b used the historical source inventory, exited successfully and had its close verified; it does not attest this patch."
     }
 }

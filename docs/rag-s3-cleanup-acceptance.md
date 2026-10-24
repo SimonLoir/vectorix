@@ -66,3 +66,11 @@ English dashboard captures show “File cleanup stopped” with the retry contro
 Teardown confirms four owned processes, four stores and volumes, the watchdog and owned tab gone. Lifecycle is disabled first during restoration; all 19 source files and the provenance bytes match their reviewed disabled archives, all nine gates are true, and the tracked tree is clean before these result notes. Safe evidence remains private. No new resource check or scenario is executed by the independent filesystem-only result review.
 
 The earlier run `7e3c4660c0eb` remains **INCOMPLETE**: a browser download took approximately fourteen minutes after its one-shot READY proof, so watchdog enrollment refused stale evidence before any watchdog, pause or DELETE intent. Its resources were cleaned and its receipt is retained separately (SHA-256 `76c4c43c9a8270635a2fd752bd318463b3a2e0c863c68512f4deb8e70883ad89`). The successful trial uses a fresh run; it does not refresh or replay that stale proof. Publication and new exact-head CI remain pending.
+
+## Current observer finalization guard
+
+A follow-up helper patch, based on `2ccfd0f5db10722aa6e9afb4f695a6ede925ec2e`, closes the object reader and awaits Prisma disconnect before the final resource/watchdog/ACK recheck. Only then may the cleanup observer write its consumable `OBSERVED` proof and completed stdout receipt. A reader-close failure or final-guard refusal follows the incomplete path without publishing that success proof. The actual CLI and the injected tests use the same finalization function.
+
+The focused offline runner passes 31 mocked Python tests, 28 pure/injected Node tests and eight Node syntax checks. Three new injected cases cover pending disconnect ordering, both reader-close failures and post-close guard refusal; independent source review is CLEAR. All nine gates remain disabled. No native scenario, build, provider or resource operation is rerun for this patch.
+
+The [provenance](../tests/acceptance/s3-outage/provenance.json) records these two changed sources under the separate `cleanupFinalizationPatch` inventory. Its preceding protocol-1 history and protocol-2 preparation inventory remain unchanged. Run `8070c4f9162b` retains its original source hashes, successful CLI exit and independently verified close; it is historical native evidence, not a native retest of this guard patch.
