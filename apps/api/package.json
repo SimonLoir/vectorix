@@ -30,7 +30,7 @@
         "@repo/queues": "workspace:*",
         "@routers/utils": "workspace:*",
         "hono": "^4.13.8",
-        "ioredis": "5.11.1",
+        "ioredis": "6.0.0",
         "pino": "^10.3.1",
         "zod": "^4.6.5",
         "bullmq": "^5.81.5",
@@ -56,7 +56,7 @@
         "eslint": "^10.11.0",
         "tsx": "^4.23.15",
         "typescript": "npm:@typescript/typescript6@6.0.2",
-        "vite": "^8.3.0",
+        "vite": "^8.3.5",
         "@scalar/api-reference": "1.75.1"
     }
 }

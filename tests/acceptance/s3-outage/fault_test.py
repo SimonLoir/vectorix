@@ -353,5 +353,37 @@ class PrimedVectorFaultTests(unittest.TestCase):
             self.assertEqual(json.loads(target.read_bytes())['observerReadySha256'], 'a' * 64)
 
 
+class ComposedFaultTests(unittest.TestCase):
+    def test_existing_per_scenario_remaining_budgets_are_not_retuned(self):
+        for scenario in f.l.SCENARIOS:
+            minimum = 625 if scenario in {'CLEANUP_V1', 'VECTOR_PROVISION_V1'} else 120
+            with mock.patch.object(f.time, 'monotonic_ns', return_value=1000000000):
+                f.require_remaining({'scenario': scenario}, {'deadlineMonotonicNs': str((minimum + 1) * 1000000000)})
+                with self.assertRaisesRegex(f.l.GuardError, 'original-budget'):
+                    f.require_remaining({'scenario': scenario}, {'deadlineMonotonicNs': str((minimum + 1) * 1000000000 - 1)})
+
+    def test_cli_routes_vector_and_redis_only_to_their_own_fault_modes(self):
+        cases = [('VECTOR_PROVISION_V1', 'storage-outage', 'storage_outage'), ('REDIS_V1', 'redis-outage', 'redis_outage')]
+        for scenario, mode, operation in cases:
+            value = state(); value['scenario'] = scenario
+            with mock.patch.object(f, 'STATIC_DRAFT_ONLY', False), mock.patch.object(f.l, 'STATIC_DRAFT_ONLY', False), mock.patch.object(f.l, 'load', return_value=value), mock.patch.object(f, 'require_clean_evidence'), mock.patch.object(f.l, 'lifecycle_lock', return_value=contextlib.nullcontext()), mock.patch.object(f, operation) as action, mock.patch.object(sys, 'argv', ['fault.py', '--run', RUN, '--scenario', scenario, '--mode', mode]), contextlib.redirect_stdout(io.StringIO()):
+                f.main()
+                action.assert_called_once_with(value)
+        for scenario, mode in [('VECTOR_PROVISION_V1', 'redis-outage'), ('VECTOR_PROVISION_V1', 'queue-observation'), ('REDIS_V1', 'storage-outage')]:
+            with mock.patch.object(f, 'STATIC_DRAFT_ONLY', False), mock.patch.object(f.l, 'STATIC_DRAFT_ONLY', False), mock.patch.object(f.l, 'load', side_effect=AssertionError('no state IO')) as load, mock.patch.object(sys, 'argv', ['fault.py', '--run', RUN, '--scenario', scenario, '--mode', mode]):
+                with self.assertRaisesRegex(f.l.GuardError, 'mode-scenario'): f.main()
+                load.assert_not_called()
+
+    def test_restore_owned_preserves_each_target_and_native_final_flag(self):
+        for scenario in f.l.SCENARIOS:
+            value = state(); value['scenario'] = scenario
+            value['resources'] = {name: {'id': name + '-owned'} for name in f.l.SERVICES}
+            service = f.l.fault_store(value)
+            with mock.patch.object(f.l, 'owned', return_value={'State': {'Running': False}}) as owned, mock.patch.object(f.l, 'run') as run, mock.patch.object(f.l, 'process_alive', return_value=True), mock.patch.object(f.l, 'process_identity', return_value={'state': 'S'}):
+                self.assertEqual(f.restore_owned(value), {('redisRunning' if scenario == 'REDIS_V1' else 'storageRunning'): True, 'sameWorkerResumed': True})
+                self.assertEqual([call.args[1] for call in owned.call_args_list], [service, service])
+                run.assert_called_once_with(['docker', 'start', service + '-owned'], timeout=30)
+
+
 if __name__ == '__main__':
     unittest.main()

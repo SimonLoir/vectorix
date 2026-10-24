@@ -9,7 +9,7 @@ import { pathToFileURL } from 'node:url';
 export const HERE = path.dirname(fileURLToPath(import.meta.url));
 export const ROOT = path.resolve(HERE, '../../..');
 export const PROTOCOL_VERSION = 2;
-/** Closed scenarios; historical protocol-1 states cannot be adopted. */
+/** Exactly four closed scenarios; historical protocol-1 states cannot be adopted. */
 export function scenarioSpec(scenario) {
     const specs = {
         INGESTION_V1: {
@@ -26,6 +26,11 @@ export function scenarioSpec(scenario) {
             namespace: 'vectorix-m7c-s3-cleanup',
             databaseStem: 'vectorix_m7c_s3_cleanup',
             objectPrefix: 'm7c-s3-cleanup',
+        },
+        REDIS_V1: {
+            namespace: 'vectorix-m7c-redis-outage',
+            databaseStem: 'vectorix_m7c_redis_outage',
+            objectPrefix: 'm7c-redis-outage',
         },
     };
     need(

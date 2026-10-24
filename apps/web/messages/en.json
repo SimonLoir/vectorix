@@ -1578,5 +1578,13 @@
         "saveFailed": "We could not confirm your language preference. The display language has not changed.",
         "sessionRequired": "Sign in again before saving your account language.",
         "displayFailed": "The display language could not be updated. Reload the page and check your preference."
+    },
+    "licenses": {
+        "title": "Licenses and features",
+        "loading": "Loading…",
+        "empty": "No licensed feature is configured.",
+        "enabled": "Enabled",
+        "disabled": "Disabled",
+        "informational": "These entitlements are informational for now. Vectorix does not restrict any module based on them yet. Existing permissions and collection access still apply."
     }
 }

@@ -157,11 +157,22 @@ export function createReadOnlyObjectObserver({
     bindings,
     phase,
     admit,
+    outerDeadline = Infinity,
 }) {
     need(!STATIC_DRAFT_ONLY, 'S3_OUTAGE_OBJECT_DRAFT_REVIEW_REQUIRED');
     assertOnlineObjectPhase(phase);
     need(typeof admit === 'function', 'S3_OUTAGE_OBJECT_ONLINE_ADMISSION');
+    need(
+        outerDeadline === Infinity || Number.isFinite(outerDeadline),
+        'S3_OUTAGE_OBJECT_DEADLINE'
+    );
+    need(performance.now() < outerDeadline, 'S3_OUTAGE_OBJECT_DEADLINE');
     admit();
+    const deadline = Math.min(
+        performance.now() + OBJECT_LIMITS.deadlineMs,
+        outerDeadline
+    );
+    need(performance.now() < deadline, 'S3_OUTAGE_OBJECT_DEADLINE');
     const endpoint = `http://127.0.0.1:${state.ports.rustfs}`,
         env = state.environment;
     need(
@@ -205,7 +216,6 @@ export function createReadOnlyObjectObserver({
         requestTimeout: 5000,
         throwOnRequestTimeout: true,
     });
-    const deadline = performance.now() + OBJECT_LIMITS.deadlineMs;
     const handler = {
         async handle(request, options) {
             need(

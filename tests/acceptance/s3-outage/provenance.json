@@ -343,6 +343,444 @@
         "nativeValidation": "NOT_RERUN",
         "historicalRecord": "All preceding provenance fields retain their original checkpoint and trial meanings. Run 8070c4f9162b used the historical source inventory, exited successfully and had its close verified; it does not attest this patch."
     },
+    "redisPreparation": {
+        "protocolVersion": 2,
+        "scenario": "REDIS_V1",
+        "namespace": "vectorix-m7c-redis-outage",
+        "status": "DISABLED_OFFLINE_VERIFIED_NATIVE_NOT_RUN_FINAL_REVIEW_PENDING",
+        "baseMainCommit": "f916e57c4ce57c12c54427cb1d55e317e7b4ac72",
+        "reviewedProtocol2FoundationCommit": "d68d93714e4b22e66105e806307b545aad0aaa7d",
+        "reviewedProtocol2SourceInventorySha256": "61fcbc288bad2521e67b596dd9a8e4cafa32c171fb7d31cf2fc2055489052a8d",
+        "disabledFoundationArchiveManifestSha256": "bdcd6e7cb97e655a77822f287c1bc43d74311d72582eb927258a041530d89c1b",
+        "currentSources": {
+            "docs/build-task-log.md": {
+                "bytes": 250894,
+                "sha256": "5363950be717d6ea393b971c179564f2b89da92cb3c487afb0b2c0683b9fa982"
+            },
+            "docs/rag-redis-outage-acceptance.md": {
+                "bytes": 11053,
+                "sha256": "abcd87c5e3995585ab605579fcf5a04399c75fd3ea2908b2268fc66f9cebdbe1"
+            },
+            "docs/rag-s3-cleanup-acceptance.md": {
+                "bytes": 6520,
+                "sha256": "10b6f107ad3afffa5f3785784024e1878a313e0ce5d638fdbd68bf5868bf4fdb"
+            },
+            "scripts/test-s3-outage-guards.sh": {
+                "bytes": 912,
+                "sha256": "fad76d1204101b2f7b7173ed0e49bbe23acb39a4c5b5b784e3f2ad02dce25383"
+            },
+            "tests/acceptance/redis-outage/pending.mjs": {
+                "bytes": 5426,
+                "sha256": "0d99526cbe8a0577693c199a1f756e9ff4c30a953e9bcf73051b6400dd7d3ae5"
+            },
+            "tests/acceptance/redis-outage/pending.test.mjs": {
+                "bytes": 7292,
+                "sha256": "9ff97d86717808e0f45743fae6098ee95e6d50c3aaacc5d118ecc83543415bc7"
+            },
+            "tests/acceptance/redis-outage/redis_queue.py": {
+                "bytes": 3844,
+                "sha256": "cd7c5015074ec6a5e67f1d103491901e1e69df617202df939a9f02b17c6da152"
+            },
+            "tests/acceptance/redis-outage/redis_test.py": {
+                "bytes": 9432,
+                "sha256": "3c356120ca6e9689017930c2806af67638616309ab6272c97dbb4362afb2118f"
+            },
+            "tests/acceptance/s3-outage/README.md": {
+                "bytes": 21731,
+                "sha256": "2502f89537c1c49149eac6b3c8af5e717a2df4ee14ea398810921958f2a202dc"
+            },
+            "tests/acceptance/s3-outage/bucket.mjs": {
+                "bytes": 6679,
+                "sha256": "84ec4e6f176d63a1b1122f13de65f71d876a5391bfb0eecfc75f6004eebf4f24"
+            },
+            "tests/acceptance/s3-outage/cleanup-fixture.mjs": {
+                "bytes": 13025,
+                "sha256": "fc54ad3f0045dbef1c720dd902dd920c3a409547668798a3d48c0c05df552bbb"
+            },
+            "tests/acceptance/s3-outage/cleanup-observe.mjs": {
+                "bytes": 32538,
+                "sha256": "1254c877e69b768114aa614fa9a6761d79f44d74a9b4befec2e671e61e6de9bf"
+            },
+            "tests/acceptance/s3-outage/cleanup.test.mjs": {
+                "bytes": 19108,
+                "sha256": "5d6074f791c59f14c22edb2c7cef0b701cd0ab0776942a8f85596c3ae8d93e34"
+            },
+            "tests/acceptance/s3-outage/fault.py": {
+                "bytes": 24195,
+                "sha256": "d7987015e52fc19a77927a2123bb02f0473210869b9faedddb13c369050e3050"
+            },
+            "tests/acceptance/s3-outage/fault_test.py": {
+                "bytes": 15737,
+                "sha256": "63430cb47f45940c6ce293baf3dbe3f70f7f921f29d40ec75b8d01f65bbf8e8d"
+            },
+            "tests/acceptance/s3-outage/fixtures/expected.json": {
+                "bytes": 926,
+                "sha256": "67c562dfb951d9751d76468f4cf29b89d6fae3432ed9debb5c7f0790cb4fac7d"
+            },
+            "tests/acceptance/s3-outage/fixtures/s3-outage-v1.txt": {
+                "bytes": 522,
+                "sha256": "110bf3def2634f5a3c6addd02b8b61d35fddd3e3ea776077144041e6c2599719"
+            },
+            "tests/acceptance/s3-outage/fixtures/s3-outage-v2.txt": {
+                "bytes": 620,
+                "sha256": "ef488f9ba8481a42e7f79aceafde979d9f09ddc0072f2edc0577e6b064cc3d2f"
+            },
+            "tests/acceptance/s3-outage/lifecycle.py": {
+                "bytes": 44031,
+                "sha256": "cc76a72eb7793d05969c71d366c4d27fa01f4ffebc67e58edce2e513cf378743"
+            },
+            "tests/acceptance/s3-outage/lifecycle_test.py": {
+                "bytes": 10562,
+                "sha256": "030cb7e82ffdab4632601ce9781a3e627cb4d50d4164f71eff44dc96907f7c15"
+            },
+            "tests/acceptance/s3-outage/objects.mjs": {
+                "bytes": 16376,
+                "sha256": "0d4a840046ddd7430d14515891e9f25587e79785c1b2dcdcdaaf54e026af39dc"
+            },
+            "tests/acceptance/s3-outage/objects.test.mjs": {
+                "bytes": 7304,
+                "sha256": "1a5a90b04a6502b14337ac843d7c20f88df87f4d0c18758cb1b94031fcab0d36"
+            },
+            "tests/acceptance/s3-outage/observe.mjs": {
+                "bytes": 59279,
+                "sha256": "61346bc239fb74af4698381b0a11919ec2cc24490046a9b766b581e9ff839397"
+            },
+            "tests/acceptance/s3-outage/observe.test.mjs": {
+                "bytes": 21456,
+                "sha256": "613d49da8fe881eea8510960868f9e0d824d5a77198a3cb209eee64c27a70f88"
+            },
+            "tests/acceptance/s3-outage/private.mjs": {
+                "bytes": 11035,
+                "sha256": "01e51fb862dfae3863c908f7467032b999d389022385677f4a56291dd177e375"
+            },
+            "tests/acceptance/s3-outage/seed.mjs": {
+                "bytes": 11447,
+                "sha256": "4282e9d27f7dcfbfb0b0530cf5de0a28e04bcc42c63c57420d11a1eac2866d4c"
+            },
+            "tests/acceptance/s3-outage/smtp.mjs": {
+                "bytes": 10728,
+                "sha256": "82523128c0ad7a77d7b8d8d3743f278482d079fb7b1a26e9ee31e625b50b86f5"
+            }
+        },
+        "currentSourcesSha256": "9cb51736b2a90af4c0f21c9a99d1fec23753e225ce008ccdeb1f981d7a968a43",
+        "sourceInventoryEncoding": "SHA256_SORTED_COMPACT_JSON_OBJECT_UTF8",
+        "runtimeGates": {
+            "tests/acceptance/s3-outage/bucket.mjs": "DISABLED",
+            "tests/acceptance/s3-outage/cleanup-fixture.mjs": "DISABLED",
+            "tests/acceptance/s3-outage/cleanup-observe.mjs": "DISABLED",
+            "tests/acceptance/s3-outage/fault.py": "DISABLED",
+            "tests/acceptance/s3-outage/lifecycle.py": "DISABLED",
+            "tests/acceptance/s3-outage/objects.mjs": "DISABLED",
+            "tests/acceptance/s3-outage/observe.mjs": "DISABLED",
+            "tests/acceptance/s3-outage/seed.mjs": "DISABLED",
+            "tests/acceptance/s3-outage/smtp.mjs": "DISABLED",
+            "tests/acceptance/redis-outage/redis_queue.py": "DISABLED"
+        },
+        "sharedRestoreCommonSha256": "a2c2471e02841cc26f56ebe85dd58bd3440a0db575e1e962ffdf643fc960d597",
+        "offlineValidation": {
+            "status": "PASS",
+            "pythonTests": 42,
+            "nodeTests": 37,
+            "nodeSyntaxChecks": 10,
+            "pythonAstChecks": 6,
+            "shellSyntax": "PASS",
+            "gitDiffCheck": "PASS",
+            "documents": 4,
+            "mermaidDiagrams": 2,
+            "localMarkdownFileLinks": 68,
+            "finalLogSha256": "dec81a1e4b4a1bc91273b8dad1f440790ee22dd1edb199114ac708966bb789a8",
+            "scope": "PURE_INJECTED_NO_LIVE_REDIS_DATABASE_DOCKER_S3_APPLICATION_BROWSER_PROVIDER"
+        },
+        "nativeValidation": {
+            "redisOutage": "NOT_RUN",
+            "automaticRecovery": "NOT_RUN",
+            "browser": "NOT_RUN",
+            "resourceTeardown": "NOT_RUN"
+        },
+        "history": "Existing protocol-1 fields and protocol2Preparation are preserved checkpoints, not current source or Redis-native evidence."
+    },
+    "redisUnattendedPreparation": {
+        "protocolVersion": 2,
+        "scenario": "REDIS_V1",
+        "namespace": "vectorix-m7c-redis-outage",
+        "status": "DISABLED_OFFLINE_VERIFIED_NATIVE_NOT_RUN",
+        "baseMainCommit": "f916e57c4ce57c12c54427cb1d55e317e7b4ac72",
+        "previousRedisFreezeSha256": "dcadcfcbac9bcde573c481c5c541fec8fb9fd7f1f18198da0ec752d9d70c9ba8",
+        "priorProvenanceFieldSha256": {
+            "schemaVersion": "6b86b273ff34fce19d6b804eff5a3f5747ada4eaa22f1d49c01e52ddb7875b4b",
+            "namespace": "67c3c5557c4dc48fc00127aa39f8b114f8531ef4adff95b7ebba35267fca1ad4",
+            "status": "841fc2e57f27d08ce43f670752425381ce0fe0e75a26f5b31ec1e77bf6888fb4",
+            "derivation": "5a06559a1d664462b26f75460a0b79fd4e71df5c13105749cba1832187984b45",
+            "relocatedSources": "c780c9e52a753b12111faa9987c3037e618ea88313fd1ecc2403e488f104a8ce",
+            "sharedRestoreCommonSha256": "ab3241b6139a1f7c9a687aa730391dd208433e7652e1c36d8d8687c9596852f5",
+            "scope": "0be703206b9e595e20e02c65a2cf69af68dad076dbbbc880726384485601fd9b",
+            "validation": "3fd6a6a11e9758a74d5b4259ffe888c1d1bbeaba48b87f75d80d3167854ce31e",
+            "preparedSourceInventory": "47a46d7dd4ab5923b7c182040fa18f1ab5f1d643cef84174a054f49d37e1850b",
+            "nativeTrial": "bc7842b4b7dea642d757a3b68ee39e464fa19469b94da9b248b36daa51a1b1f9",
+            "protocol2Preparation": "c854434b64ffba6202d878adb3952f5a917355f4bdae816fea03e15e19d9496c",
+            "redisPreparation": "2f132988eaa733113d1c31bb80e7189228946128dc0b56abd3c2a8b0bab387ec"
+        },
+        "currentSources": {
+            "docs/build-task-log.md": {
+                "bytes": 254394,
+                "sha256": "66cee07fe04fc46b12f34ecd8be73d1daf03339af945a9faa6f039dd153b6a3d"
+            },
+            "docs/rag-redis-outage-acceptance.md": {
+                "bytes": 16307,
+                "sha256": "b0bbaf096258378a5707bb4a2437d77b7a0a990259e48a5c0c1be21626a61329"
+            },
+            "docs/rag-s3-cleanup-acceptance.md": {
+                "bytes": 6520,
+                "sha256": "10b6f107ad3afffa5f3785784024e1878a313e0ce5d638fdbd68bf5868bf4fdb"
+            },
+            "scripts/test-s3-outage-guards.sh": {
+                "bytes": 1002,
+                "sha256": "524ddc79751d0a3b004629e860ed853d5154573937ece6799572aad43ef841b0"
+            },
+            "tests/acceptance/redis-outage/curl.mjs": {
+                "bytes": 7704,
+                "sha256": "3aa230c61d9a9c43c621dc4930b1657c79cc54ac89d1132894babf9e920c9826"
+            },
+            "tests/acceptance/redis-outage/key-policy.mjs": {
+                "bytes": 1830,
+                "sha256": "02ce821cdf588d3eb2aaaa3e9c83316555d6f30ac6a2ea2d3e2809fda0d015f3"
+            },
+            "tests/acceptance/redis-outage/pending.mjs": {
+                "bytes": 5843,
+                "sha256": "b82ad20d2b620ed983eb2f668969ceeebdd41833990c04dd9e75ab72c6c907cb"
+            },
+            "tests/acceptance/redis-outage/pending.test.mjs": {
+                "bytes": 7862,
+                "sha256": "695c1d80d5af2a7e58fb5206e68178922e67a6be1d566f5de9ab0cef527b616c"
+            },
+            "tests/acceptance/redis-outage/redis_queue.py": {
+                "bytes": 3844,
+                "sha256": "cd7c5015074ec6a5e67f1d103491901e1e69df617202df939a9f02b17c6da152"
+            },
+            "tests/acceptance/redis-outage/redis_test.py": {
+                "bytes": 12327,
+                "sha256": "bb957ffcba823c2a307ff71bfb2739428b40eee73cc54c31b5f8a91a8f1286d7"
+            },
+            "tests/acceptance/redis-outage/transfers.mjs": {
+                "bytes": 19074,
+                "sha256": "a91f6db080bef8bb92022e35fe01be3cf67c5ce569c0d6da5a4f2958a8470330"
+            },
+            "tests/acceptance/redis-outage/transfers.test.mjs": {
+                "bytes": 11088,
+                "sha256": "991d0abafa37750d3b044e78485674e54d1fecd561eae23baf2089fed5d7f494"
+            },
+            "tests/acceptance/s3-outage/README.md": {
+                "bytes": 22684,
+                "sha256": "f0e886e06f36362ec59a51a79f701e0bfe37849e8710593b69bcf7fa6d5f85f4"
+            },
+            "tests/acceptance/s3-outage/bucket.mjs": {
+                "bytes": 6679,
+                "sha256": "84ec4e6f176d63a1b1122f13de65f71d876a5391bfb0eecfc75f6004eebf4f24"
+            },
+            "tests/acceptance/s3-outage/cleanup-fixture.mjs": {
+                "bytes": 13025,
+                "sha256": "fc54ad3f0045dbef1c720dd902dd920c3a409547668798a3d48c0c05df552bbb"
+            },
+            "tests/acceptance/s3-outage/cleanup-observe.mjs": {
+                "bytes": 32866,
+                "sha256": "9e08604df4d390a3523a8b62122bbc836f3ca7554308474d3b4e28492a9ddca7"
+            },
+            "tests/acceptance/s3-outage/cleanup.test.mjs": {
+                "bytes": 19108,
+                "sha256": "5d6074f791c59f14c22edb2c7cef0b701cd0ab0776942a8f85596c3ae8d93e34"
+            },
+            "tests/acceptance/s3-outage/fault.py": {
+                "bytes": 25358,
+                "sha256": "b15c4c063a76b0a010e80ebb8bed1c7014a075f05c268f2bc5829b87338404d7"
+            },
+            "tests/acceptance/s3-outage/fault_test.py": {
+                "bytes": 15737,
+                "sha256": "63430cb47f45940c6ce293baf3dbe3f70f7f921f29d40ec75b8d01f65bbf8e8d"
+            },
+            "tests/acceptance/s3-outage/fixtures/expected.json": {
+                "bytes": 926,
+                "sha256": "67c562dfb951d9751d76468f4cf29b89d6fae3432ed9debb5c7f0790cb4fac7d"
+            },
+            "tests/acceptance/s3-outage/fixtures/s3-outage-v1.txt": {
+                "bytes": 522,
+                "sha256": "110bf3def2634f5a3c6addd02b8b61d35fddd3e3ea776077144041e6c2599719"
+            },
+            "tests/acceptance/s3-outage/fixtures/s3-outage-v2.txt": {
+                "bytes": 620,
+                "sha256": "ef488f9ba8481a42e7f79aceafde979d9f09ddc0072f2edc0577e6b064cc3d2f"
+            },
+            "tests/acceptance/s3-outage/lifecycle.py": {
+                "bytes": 44553,
+                "sha256": "32731b32d089938f14fb12351deac1898891c9b7b4a6daa80edf31c93f1fc5e4"
+            },
+            "tests/acceptance/s3-outage/lifecycle_test.py": {
+                "bytes": 10562,
+                "sha256": "030cb7e82ffdab4632601ce9781a3e627cb4d50d4164f71eff44dc96907f7c15"
+            },
+            "tests/acceptance/s3-outage/objects.mjs": {
+                "bytes": 16376,
+                "sha256": "0d4a840046ddd7430d14515891e9f25587e79785c1b2dcdcdaaf54e026af39dc"
+            },
+            "tests/acceptance/s3-outage/objects.test.mjs": {
+                "bytes": 7304,
+                "sha256": "1a5a90b04a6502b14337ac843d7c20f88df87f4d0c18758cb1b94031fcab0d36"
+            },
+            "tests/acceptance/s3-outage/observe.mjs": {
+                "bytes": 64530,
+                "sha256": "5a5c1fcef9f459a0ae1d509eb9eafda408c31537ed31f1705e7be41af7100198"
+            },
+            "tests/acceptance/s3-outage/observe.test.mjs": {
+                "bytes": 25059,
+                "sha256": "ebe39f5791042b948e7a732b82ba62a1f950b1fd25d74536b4030a673e075d02"
+            },
+            "tests/acceptance/s3-outage/private.mjs": {
+                "bytes": 11035,
+                "sha256": "01e51fb862dfae3863c908f7467032b999d389022385677f4a56291dd177e375"
+            },
+            "tests/acceptance/s3-outage/seed.mjs": {
+                "bytes": 11621,
+                "sha256": "f9e10a8fbde5c655b8fb09f26644ec994a554331d284ada182b0f0a8eca40d69"
+            },
+            "tests/acceptance/s3-outage/smtp.mjs": {
+                "bytes": 10728,
+                "sha256": "82523128c0ad7a77d7b8d8d3743f278482d079fb7b1a26e9ee31e625b50b86f5"
+            }
+        },
+        "currentSourcesSha256": "8d36122a9bfa3c68b83821bbad67454e76cdbea042707117d6cc064e43427309",
+        "sourceInventoryEncoding": "SHA256_SORTED_COMPACT_JSON_OBJECT_UTF8",
+        "runtimeGates": {
+            "tests/acceptance/s3-outage/bucket.mjs": "DISABLED",
+            "tests/acceptance/s3-outage/cleanup-fixture.mjs": "DISABLED",
+            "tests/acceptance/s3-outage/cleanup-observe.mjs": "DISABLED",
+            "tests/acceptance/s3-outage/fault.py": "DISABLED",
+            "tests/acceptance/s3-outage/lifecycle.py": "DISABLED",
+            "tests/acceptance/s3-outage/objects.mjs": "DISABLED",
+            "tests/acceptance/s3-outage/observe.mjs": "DISABLED",
+            "tests/acceptance/s3-outage/seed.mjs": "DISABLED",
+            "tests/acceptance/s3-outage/smtp.mjs": "DISABLED",
+            "tests/acceptance/redis-outage/curl.mjs": "DISABLED",
+            "tests/acceptance/redis-outage/redis_queue.py": "DISABLED",
+            "tests/acceptance/redis-outage/transfers.mjs": "DISABLED"
+        },
+        "acceptanceOrder": [
+            "V1_READY",
+            "PAUSE_SAME_WORKER",
+            "CURL_NATIVE_SESSION_ACCEPTS_V2_REDIS_ONLINE",
+            "STAGED_PHYSICAL_PROOF",
+            "STOP_SAME_REDIS_RESUME_SAME_WORKER",
+            "DB_ONLY_PENDING_15S",
+            "RESTORE_SAME_REDIS",
+            "AUTOMATIC_SAME_V2_READY",
+            "CURL_EXACT_SOURCES",
+            "UI_READ_ONLY_AND_SIGNOUT",
+            "OWNED_CLEANUP"
+        ],
+        "httpPolicy": {
+            "allPositiveFileTransfers": "UNATTENDED_NATIVE_SESSION_CURL",
+            "apiKeyPermissions": {
+                "ragLibrary": ["read"]
+            },
+            "apiKeyCollectionScopes": [],
+            "apiKeyDocumentOutcome": "EXPECTED_404_ISOLATION_ONLY",
+            "noHttpRequiredDuringRedisOutage": true,
+            "noPolicyBypass": true,
+            "curlBinaryPinCapturedAtPreparation": true
+        },
+        "successBoundary": "CLOSE_AND_DISCONNECT_THEN_FINAL_GUARDS_BEFORE_SUCCESS_PUBLICATION",
+        "offlineValidation": {
+            "status": "PASS",
+            "pythonTests": 45,
+            "nodeTests": 48,
+            "nodeSyntaxChecks": 14,
+            "pythonAstChecks": 6,
+            "shellSyntax": "PASS",
+            "gitDiffCheck": "PASS",
+            "documents": 4,
+            "mermaidDiagrams": 2,
+            "localMarkdownFileLinks": 68,
+            "finalLogSha256": "d1b2c792fc2643a9057e1d497f26157882982f25f3c1ddea3c3cf18dd46a233c",
+            "scope": "PURE_INJECTED_NO_NATIVE_CURL_REDIS_DATABASE_DOCKER_S3_APPLICATION_BROWSER_PROVIDER"
+        },
+        "nativeValidation": {
+            "nativeKeyIssuance": "NOT_RUN",
+            "curlTransfers": "NOT_RUN",
+            "redisOutage": "NOT_RUN",
+            "automaticRecovery": "NOT_RUN",
+            "browser": "NOT_RUN",
+            "resourceTeardown": "NOT_RUN"
+        },
+        "history": "Every previous provenance field is retained as a separate historical checkpoint; none is current Redis-native proof."
+    },
+    "redisNativeAcceptance": {
+        "schemaVersion": 1,
+        "status": "NATIVE_AND_READ_ONLY_EN_DASHBOARD_PASS_CLEANED",
+        "runId": "25404079bb4e",
+        "scenario": "REDIS_V1",
+        "date": "2026-10-24",
+        "productCommit": "f916e57c4ce57c12c54427cb1d55e317e7b4ac72",
+        "helperCheckpointCommit": "80e61f0adf4aa92013e0a020fd346e7b87e34cf1",
+        "sourceFreezeSha256": "dd9d7c5d1c92597f04f7e3d6c6948473a16826cc3b1b5b6fbb48bdfa648a9791",
+        "preparationManifestSha256": "9a39d2e596e2dcd44cf93032336714713e6c81b2b49d1c0b8ae4512136496cc1",
+        "completedSummarySha256": "311b829f6ac85e805ced33b73acb0b138434342cd67788fc1abada16f0d427d8",
+        "independentRootAuditSha256": "15d12fb139cccbad102573e96931b81f0fc3368f59241b02f4c8b4b867fe6e4e",
+        "cleanupSha256": "dbef454622a8a80d8b342ae48395d8a0e982b24e2a70cc68e68eba2a587b3d94",
+        "secretCleanupSha256": "6c0a5338f52569adbe720ded0c5f1481183b4cbba55dce9df72b4697cbb22723",
+        "milestones": 14,
+        "formalObservations": 5,
+        "sessionCounts": [1, 1, 1, 1, 0],
+        "pending": {
+            "snapshots": 6,
+            "utcMilliseconds": 15110,
+            "monotonicMilliseconds": 15109.442719,
+            "attempts": 0,
+            "claimTokenCount": 0,
+            "noExtraction": true,
+            "dbOnly": true
+        },
+        "automaticSameV2Ready": true,
+        "sameRedisContainerAndVolume": true,
+        "sameWorkerPidAndStartTicks": true,
+        "watchdog": {
+            "budgetSeconds": 900,
+            "refreshed": false,
+            "intervened": false,
+            "exitCode": 0
+        },
+        "allPositiveFileTransfers": "UNATTENDED_NATIVE_SESSION_CURL",
+        "nativeMinimumKey": "RAG_LIBRARY_READ_ZERO_COLLECTION_SCOPES_EXPECTED_404_ONLY",
+        "browser": {
+            "locale": "en",
+            "scope": "ROOT_READ_ONLY_STATUS_HISTORY_USAGE_OPERATIONS_LOGIN_LOGOUT",
+            "fileTransfers": 0,
+            "warnings": 0,
+            "errors": 0,
+            "screenshots": 3,
+            "usageZeroMiBIsRounded": true
+        },
+        "quotaBytes": {
+            "v1": 1044,
+            "v2Staged": 2284,
+            "v2Reserved": 620,
+            "recovered": 2284,
+            "recoveredReserved": 0
+        },
+        "retention": "G1_V1_SEVEN_DAYS_NATURALLY_SCHEDULED_NOT_EXPIRED",
+        "cleanup": {
+            "containers": 0,
+            "volumes": 0,
+            "recordedProcesses": 0,
+            "sourcePairsRestored": 32,
+            "gatesRestoredDisabled": 12,
+            "lifecycleRestoredFirst": true,
+            "nextAndLockExact": true,
+            "secretFilesRemoved": 9,
+            "capturedMailRemoved": 6,
+            "curlTransientFilesRemaining": 0
+        },
+        "scope": "ONE_ACCEPTED_DOCUMENT_REPLACEMENT_REDIS_INTERRUPTION_NOT_CAPACITY_PROVIDER_OR_FULL_RECOVERY_MATRIX",
+        "laterDocumentationOrIntegrationHeadNativeValidation": "NOT_RUN",
+        "historicalFields": "All prior fields including NOT_RUN preparation records remain unchanged; this appended record is the actual Redis execution."
+    },
     "vectorProvisionPreparation": {
         "schemaVersion": 1,
         "protocolVersion": 2,
@@ -2265,5 +2703,239 @@
             "LATER_MAIN_AND_DEPENDENCY_UPDATES_NOT_EXECUTED",
             "FINAL_MAIN_ALIGNMENT_AND_EXACT_HEAD_CI_PENDING"
         ]
+    },
+    "vectorProvisionComposedMainAlignment": {
+        "schemaVersion": 1,
+        "status": "DISABLED_FOUR_SCENARIO_COMPOSITION_OFFLINE_AND_CURRENT_BUILDS_PASS_NATIVE_NOT_RUN",
+        "selectedActualMain": "77ac06bd99c113b8cf32e2f48bcaec79038dd94a",
+        "actualMainTree": "7985a480",
+        "nativeResultSourceCommit": "9cef0fdf86dda0b03dee545f284d5894479d7d74",
+        "nativeResultProductBuild": "dc314fcfe02bbc30877bb1a4a1720d1bb3abccde",
+        "outcomeDocumentationCheckpoint": "b86db1021abb19c7f83f079a1e17935883d29071",
+        "reconciliationPlanV2Sha256": "bbb6bbeaf90099033be494d0500af42e2171081eef593cb5e2a4aa0e907edb73",
+        "scenarios": [
+            "INGESTION_V1",
+            "CLEANUP_V1",
+            "REDIS_V1",
+            "VECTOR_PROVISION_V1"
+        ],
+        "disabledGateCount": 16,
+        "lateRemainingSeconds": {
+            "INGESTION_V1": 120,
+            "CLEANUP_V1": 625,
+            "REDIS_V1": 120,
+            "VECTOR_PROVISION_V1": 625
+        },
+        "watchdogSeconds": 900,
+        "preservation": {
+            "existingUnionFields": 23,
+            "mainFieldsUnchanged": 15,
+            "vectorFieldsUnchanged": 20,
+            "native5ff": "HISTORICAL_9CEF_DC314_UNCHANGED",
+            "redisNative": "HISTORICAL_80E61_F916_UNCHANGED",
+            "priorFailedVectorTrials": "UNCHANGED_INCOMPLETE"
+        },
+        "incomingProductPackageLockCiDeploy": "EXACT_ACTUAL_MAIN",
+        "incomingTransactionClassifier": "PR97_P2034_AND_TYPED_PG_40001_40P01",
+        "incomingDependencies": "PR94_DIRECT_IOREDIS6_BULLMQ_LOCKED5_AND_PR93_RESOLVER6",
+        "excluded": "PR95_UNICORN_MAJOR_DEFERRED",
+        "newNativeRun": "NOT_SELECTED",
+        "newApplicationBuilds": "FOUR_CURRENT_BUILDS_PASS_NATIVE_NOT_RUN",
+        "currentSources": {
+            "tests/acceptance/redis-outage/curl.mjs": {
+                "bytes": 8165,
+                "sha256": "622992f50845f8254eadc3fe31237eb7267f51306efd44cd6df909aaac3e2b49"
+            },
+            "tests/acceptance/redis-outage/key-policy.mjs": {
+                "bytes": 1830,
+                "sha256": "02ce821cdf588d3eb2aaaa3e9c83316555d6f30ac6a2ea2d3e2809fda0d015f3"
+            },
+            "tests/acceptance/redis-outage/pending.mjs": {
+                "bytes": 5843,
+                "sha256": "b82ad20d2b620ed983eb2f668969ceeebdd41833990c04dd9e75ab72c6c907cb"
+            },
+            "tests/acceptance/redis-outage/pending.test.mjs": {
+                "bytes": 7862,
+                "sha256": "695c1d80d5af2a7e58fb5206e68178922e67a6be1d566f5de9ab0cef527b616c"
+            },
+            "tests/acceptance/redis-outage/redis_queue.py": {
+                "bytes": 3844,
+                "sha256": "cd7c5015074ec6a5e67f1d103491901e1e69df617202df939a9f02b17c6da152"
+            },
+            "tests/acceptance/redis-outage/redis_test.py": {
+                "bytes": 12319,
+                "sha256": "2deee66193ea4c8c74358952f597d66b43a257c0e4ad5c443a82c868ba62b08e"
+            },
+            "tests/acceptance/redis-outage/transfers.mjs": {
+                "bytes": 19074,
+                "sha256": "a91f6db080bef8bb92022e35fe01be3cf67c5ce569c0d6da5a4f2958a8470330"
+            },
+            "tests/acceptance/redis-outage/transfers.test.mjs": {
+                "bytes": 17106,
+                "sha256": "e4f4039e785a8b1b797b7e89dc18ce8b990535cb290cd4faebff27044f842105"
+            },
+            "tests/acceptance/s3-outage/README.md": {
+                "bytes": 28387,
+                "sha256": "cb2fde02e0ec627b92c70030023c22629440cab30759c22eb3a9f9ee78f2866a"
+            },
+            "tests/acceptance/s3-outage/bucket.mjs": {
+                "bytes": 6679,
+                "sha256": "84ec4e6f176d63a1b1122f13de65f71d876a5391bfb0eecfc75f6004eebf4f24"
+            },
+            "tests/acceptance/s3-outage/cleanup-fixture.mjs": {
+                "bytes": 13025,
+                "sha256": "fc54ad3f0045dbef1c720dd902dd920c3a409547668798a3d48c0c05df552bbb"
+            },
+            "tests/acceptance/s3-outage/cleanup-observe.mjs": {
+                "bytes": 33495,
+                "sha256": "0152a23220bc4827e434710ca3bf5ec7995ce08c6dddd34f42a52831205f869c"
+            },
+            "tests/acceptance/s3-outage/cleanup.test.mjs": {
+                "bytes": 22103,
+                "sha256": "581aeb09a39315db748f883f3636d9c4623fa5ef5db51dfcd6d6a07ded121da8"
+            },
+            "tests/acceptance/s3-outage/fault.py": {
+                "bytes": 29980,
+                "sha256": "e5705b0147ded6355720ff6ec52f73652751801d6c00da5db9e924bb9b2ff925"
+            },
+            "tests/acceptance/s3-outage/fault_test.py": {
+                "bytes": 25683,
+                "sha256": "72d6b33e9a2c2b9cea12b4bd3f31c70c8f8065e73bdaf6f7bf1ec7e5cfe343ff"
+            },
+            "tests/acceptance/s3-outage/fixtures/expected.json": {
+                "bytes": 926,
+                "sha256": "67c562dfb951d9751d76468f4cf29b89d6fae3432ed9debb5c7f0790cb4fac7d"
+            },
+            "tests/acceptance/s3-outage/fixtures/s3-outage-v1.txt": {
+                "bytes": 522,
+                "sha256": "110bf3def2634f5a3c6addd02b8b61d35fddd3e3ea776077144041e6c2599719"
+            },
+            "tests/acceptance/s3-outage/fixtures/s3-outage-v2.txt": {
+                "bytes": 620,
+                "sha256": "ef488f9ba8481a42e7f79aceafde979d9f09ddc0072f2edc0577e6b064cc3d2f"
+            },
+            "tests/acceptance/s3-outage/lifecycle.py": {
+                "bytes": 56622,
+                "sha256": "ed997e9402c97a5f5ba705c461050cf4711904c572d1ddf52adf32bce98d9d9c"
+            },
+            "tests/acceptance/s3-outage/lifecycle_test.py": {
+                "bytes": 27607,
+                "sha256": "c1d27d7c61d986d386493d427a6ffd1185c56fb5069addfd27213a18daa8d42a"
+            },
+            "tests/acceptance/s3-outage/objects.mjs": {
+                "bytes": 16376,
+                "sha256": "0d4a840046ddd7430d14515891e9f25587e79785c1b2dcdcdaaf54e026af39dc"
+            },
+            "tests/acceptance/s3-outage/objects.test.mjs": {
+                "bytes": 7304,
+                "sha256": "1a5a90b04a6502b14337ac843d7c20f88df87f4d0c18758cb1b94031fcab0d36"
+            },
+            "tests/acceptance/s3-outage/observe.mjs": {
+                "bytes": 64530,
+                "sha256": "5a5c1fcef9f459a0ae1d509eb9eafda408c31537ed31f1705e7be41af7100198"
+            },
+            "tests/acceptance/s3-outage/observe.test.mjs": {
+                "bytes": 25059,
+                "sha256": "ebe39f5791042b948e7a732b82ba62a1f950b1fd25d74536b4030a673e075d02"
+            },
+            "tests/acceptance/s3-outage/private.mjs": {
+                "bytes": 12490,
+                "sha256": "041990c06f7a0ba892fd1063b25c05b1eea9b8b590422dc66b0d1e836c6c2bd9"
+            },
+            "tests/acceptance/s3-outage/seed.mjs": {
+                "bytes": 11621,
+                "sha256": "f9e10a8fbde5c655b8fb09f26644ec994a554331d284ada182b0f0a8eca40d69"
+            },
+            "tests/acceptance/s3-outage/smtp.mjs": {
+                "bytes": 10728,
+                "sha256": "82523128c0ad7a77d7b8d8d3743f278482d079fb7b1a26e9ee31e625b50b86f5"
+            },
+            "tests/acceptance/s3-outage/vector-curl.mjs": {
+                "bytes": 8657,
+                "sha256": "d71fab7fc8e41462af1fa7b780221c9ce36347df8983440ae11234c7547016e8"
+            },
+            "tests/acceptance/s3-outage/vector-embedding.mjs": {
+                "bytes": 7998,
+                "sha256": "3812d99f3ed80021791f707201ac9494b6240b530b2c5ab63ac4a95c501efac4"
+            },
+            "tests/acceptance/s3-outage/vector-observation.mjs": {
+                "bytes": 23251,
+                "sha256": "a972aa1a5c47bde4ccc2766a43d7608029cd7122408438abc3d15677c68e6113"
+            },
+            "tests/acceptance/s3-outage/vector-observe.mjs": {
+                "bytes": 26392,
+                "sha256": "d11970b8d415e56893c43480791c6eab455ce73b87dbee61cc4a4ab50bf72ce0"
+            },
+            "tests/acceptance/s3-outage/vector-snapshot.mjs": {
+                "bytes": 16279,
+                "sha256": "da6b70f54e675ea69b9326ba35f2544d7ecddd6a6db5e9a231d1eb45c6ab3190"
+            },
+            "tests/acceptance/s3-outage/vector-workflow.mjs": {
+                "bytes": 23900,
+                "sha256": "9cf06c6da67d2d1bbc7ffa08462b1576a0049e49eb41e57e603f40716d77d4f5"
+            },
+            "tests/acceptance/s3-outage/vector.test.mjs": {
+                "bytes": 68848,
+                "sha256": "dbec3b90b106000c0971c674427772e32de5688b8eb25ff74a1a9f5045110b80"
+            }
+        },
+        "currentSourcesSha256": "242655fba2fa94855cb9423abf1390b4034386fc5b1654514f1d5868ec235ffa",
+        "offlineValidation": {
+            "status": "PASS",
+            "pythonTests": 66,
+            "nodeTests": 93,
+            "nodeSyntaxChecks": 20,
+            "pythonAstChecks": 6,
+            "receiptSha256": "69005a70bdc2bb9dfc83861214416acaff46057a54f26abb9ce221bcf4d9cdae"
+        },
+        "applicationValidation": {
+            "status": "PASS",
+            "frozenInstall": true,
+            "dummyIgnoredClientGeneration": true,
+            "schemaValidation": true,
+            "uncachedTypes": 25,
+            "uncachedLint": 25,
+            "unitTasks": 5,
+            "unitCounts": {
+                "discovery": 11,
+                "apiBackend": 215,
+                "configuration": 7,
+                "chunking": 56,
+                "embeddings": 146,
+                "vitestUtilities": 11
+            },
+            "serializedBuilds": [
+                {
+                    "stage": "build-api",
+                    "exitCode": 0,
+                    "seconds": 0.515,
+                    "logSha256": "c660c5a882ce86c3480ce32acca8a19090e86b02cdc66ad5a5ca7a3652b4dd6f"
+                },
+                {
+                    "stage": "build-workers",
+                    "exitCode": 0,
+                    "seconds": 0.465,
+                    "logSha256": "867c148f6466b87c8afc7172ae96f0372bffcf7237c5783ffa79a6f256b22ccc"
+                },
+                {
+                    "stage": "build-web",
+                    "exitCode": 0,
+                    "seconds": 28.626,
+                    "logSha256": "198447fdeeb099775febac97fb4c54e46dc03b9aed77259af0570bc6b88fc5bb"
+                },
+                {
+                    "stage": "build-admin",
+                    "exitCode": 0,
+                    "seconds": 25.138,
+                    "logSha256": "73d7a12c0d2fe752b07d47ae692521b688b7f577ed007e4807e4d744eeac296d"
+                }
+            ],
+            "receiptSha256": "2d23c8bb1d3b96815b94a39ac1b753c910b5f22e0fde20bdc8441f44886cc4c5",
+            "protectedNextLockExact": true,
+            "noServiceOrMigration": true
+        },
+        "standaloneAssetsReceiptSha256": "ce549789b69d6bc28c2088f6e85bd2f3480ffefd4822a38ae2e0373c6c20654e",
+        "disabledFilesystemInputInventorySha256": "5d59d0db161ba57bf58be1a5a9faba49a424be5c9be436c6e2cc7de5121f3d06",
+        "sourceReview": "ROOT_AND_INDEPENDENT_7_CODE_PINS_CLEAR_FINAL_METADATA_REVIEW_PENDING"
     }
 }

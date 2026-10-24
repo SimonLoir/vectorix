@@ -338,5 +338,45 @@ class PrimedVectorGuardWiringTests(unittest.TestCase):
                 mutate.assert_not_called()
 
 
+class ComposedScenarioTests(unittest.TestCase):
+    def test_four_scenarios_choose_exact_targets_receipts_and_watchdog_resources(self):
+        expected = {'INGESTION_V1': ('rustfs', {'rustfs'}), 'CLEANUP_V1': ('rustfs', {'rustfs'}),
+            'REDIS_V1': ('redis', {'rustfs', 'redis'}), 'VECTOR_PROVISION_V1': ('vector', {'vector'})}
+        paths = set()
+        for scenario, (service, keys) in expected.items():
+            value = state(); value['scenario'] = scenario
+            value['resources'] = {name: {'id': name + '-owned'} for name in l.SERVICES}
+            self.assertEqual(l.fault_store(value), service)
+            self.assertEqual(l.watchdog_resources(value), {key: value['resources'][key] for key in keys})
+            self.assertEqual(l.outage_receipt_name(value), 'fault-redis-outage-receipt.json' if scenario == 'REDIS_V1' else 'fault-storage-outage-receipt.json')
+            paths.add(l.state_path(RUN, scenario))
+        self.assertEqual(len(paths), 4)
+        for invalid in ['OTHER', None, '__proto__']:
+            with self.assertRaises(l.GuardError): l.fault_store({'scenario': invalid})
+
+    def test_real_watchdog_admission_rejects_cross_scenario_and_retargeted_envelopes(self):
+        for scenario in l.SCENARIOS:
+            value = state(); value['scenario'] = scenario
+            value['resources'] = {name: {'id': name + '-owned'} for name in l.SERVICES}
+            ack = {**l.receipt_scope(value), 'budgetSeconds': 900, 'worker': value['processes']['workers'],
+                **l.watchdog_resources(value), 'control': {'pid': 456}, 'deadlineMonotonicNs': '900000000001'}
+            candidates = [ack, {**ack, 'scenario': next(key for key in l.SCENARIOS if key != scenario)}]
+            for key in l.watchdog_resources(value): candidates.append({**ack, key: {'id': 'foreign'}})
+            for index, candidate in enumerate(candidates):
+                with self.subTest(scenario=scenario, candidate=index), mock.patch.object(l, 'read_private_bytes', return_value=json.dumps(candidate).encode()), mock.patch.object(l, 'control_alive', return_value=True), mock.patch.object(l.time, 'monotonic_ns', return_value=1):
+                    if index == 0: self.assertEqual(l.watchdog_admission(value), ack)
+                    else:
+                        with self.assertRaises(l.GuardError): l.watchdog_admission(value)
+
+    def test_pin_recheck_uses_the_saved_scenario_including_both_curl_consumers(self):
+        for scenario in l.SCENARIOS:
+            value = {'scenario': scenario, 'inputs': {'scenario': scenario}}
+            with mock.patch.object(l, 'inputs', return_value=value['inputs']) as inputs:
+                l.pins(value)
+                inputs.assert_called_once_with(scenario)
+            with mock.patch.object(l, 'inputs', return_value={'scenario': 'different'}):
+                with self.assertRaisesRegex(l.GuardError, 'migration-drift'): l.pins(value)
+
+
 if __name__ == '__main__':
     unittest.main()

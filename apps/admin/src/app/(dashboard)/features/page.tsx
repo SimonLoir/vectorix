@@ -1,5 +1,6 @@
 import { FeatureCatalog } from '@/components/feature-catalog';
 import { PageHeader } from '@/components/page-header';
+import { EntitlementsNotice } from '@/components/entitlements-notice';
 
 export default function FeaturesPage() {
     return (
@@ -8,6 +9,7 @@ export default function FeaturesPage() {
                 titleKey='secondary.pages.featuresTitle'
                 descriptionKey='secondary.pages.featuresDescription'
             />
+            <EntitlementsNotice />
             <FeatureCatalog />
         </div>
     );
