@@ -31,6 +31,7 @@ jobs:
                   pnpm check-types
                   pnpm lint
                   pnpm test
+                  pnpm --filter @repo/config test
                   pnpm test:documents
                   pnpm test:rag-primitives
                   pnpm test:restore:guards

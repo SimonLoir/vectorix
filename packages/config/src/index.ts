@@ -46,10 +46,11 @@ function checkSecrets(
                 reason: 'must be at least 32 characters',
             });
     }
-    const key = present(environment, 'ENCRYPTION_SECRET');
-    if (!key)
+    // Validate the exact bytes encryption.ts will consume, without trimming.
+    const key = environment.ENCRYPTION_SECRET;
+    if (!key || !key.trim())
         issues.push({ variable: 'ENCRYPTION_SECRET', reason: 'is not set' });
-    else if (isPlaceholder(key))
+    else if (isPlaceholder(key.trim()))
         issues.push({
             variable: 'ENCRYPTION_SECRET',
             reason: 'still uses the published placeholder; generate 64 random hex characters',
@@ -66,14 +67,51 @@ function checkSecrets(
         });
 }
 
+/** Control characters must fail before WHATWG URL parsing can remove them. */
+function hasUrlControls(value: string): boolean {
+    for (const character of value) {
+        const code = character.codePointAt(0) ?? 0;
+        if (code < 32 || code === 127) return true;
+    }
+    return false;
+}
+
+/** Reject URL repairs and private suffixes before parsing a deployment base. */
+function validHttpBase(value: string): URL | undefined {
+    if (
+        !value ||
+        value.length > 8192 ||
+        hasUrlControls(value) ||
+        value.includes(' ') ||
+        value.includes('\\') ||
+        value.includes('?') ||
+        value.includes('#')
+    )
+        return;
+    const authority = /^https?:\/\/([^/?#]+)/iu.exec(value)?.[1];
+    if (!authority || authority.includes('@') || authority.includes('*'))
+        return;
+    try {
+        const url = new URL(value);
+        return ['http:', 'https:'].includes(url.protocol) &&
+            url.hostname &&
+            !url.username &&
+            !url.password
+            ? url
+            : undefined;
+    } catch {
+        return;
+    }
+}
+
 function checkUrl(
     environment: Environment,
     name: string,
     issues: ConfigurationIssue[],
     required: boolean
 ) {
-    const value = present(environment, name);
-    if (!value) {
+    const value = environment[name];
+    if (!value || !value.trim()) {
         if (required)
             issues.push({
                 variable: name,
@@ -81,22 +119,27 @@ function checkUrl(
             });
         return;
     }
-    for (const entry of name === 'TRUSTED_ORIGINS'
-        ? value.split(',')
-        : [value]) {
-        if (!entry.trim()) continue;
-        try {
-            const url = new URL(entry.trim());
-            if (!['http:', 'https:'].includes(url.protocol))
-                throw new Error('Unsupported URL scheme.');
-        } catch {
-            issues.push({
-                variable: name,
-                reason: 'must contain HTTP(S) URLs',
-            });
-            return;
-        }
-    }
+    const origins = name === 'TRUSTED_ORIGINS';
+    const entries = origins
+        ? value
+              .split(',')
+              .map((entry) => entry.trim())
+              .filter(Boolean)
+        : [value];
+    const valid =
+        !hasUrlControls(value) &&
+        entries.length > 0 &&
+        entries.every((entry) => {
+            const url = validHttpBase(entry);
+            return Boolean(url && (!origins || url.origin === entry));
+        });
+    if (!valid)
+        issues.push({
+            variable: name,
+            reason: origins
+                ? 'must contain non-empty serialized HTTP(S) origins'
+                : 'must be an explicit HTTP(S) base without credentials, query or fragment',
+        });
 }
 
 /**

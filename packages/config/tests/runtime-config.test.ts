@@ -112,3 +112,96 @@ void test('outside production issues are warnings and origins are optional', () 
     assert.equal(warnings.length, 1);
     assert.ok(!warnings[0]!.includes('replace-with'));
 });
+
+void test('encryption preflight validates the exact runtime key bytes', () => {
+    for (const service of ['api', 'workers'] as const)
+        for (const key of [
+            ` ${valid.ENCRYPTION_SECRET}`,
+            `${valid.ENCRYPTION_SECRET} `,
+            `${valid.ENCRYPTION_SECRET}\n`,
+            `\t${valid.ENCRYPTION_SECRET}`,
+        ]) {
+            const issues = findConfigurationIssues(service, {
+                ...valid,
+                ENCRYPTION_SECRET: key,
+            });
+            assert.deepEqual(
+                issues.map(({ variable }) => variable),
+                ['ENCRYPTION_SECRET']
+            );
+            assert.ok(
+                !JSON.stringify(issues).includes(valid.ENCRYPTION_SECRET)
+            );
+        }
+});
+
+void test('deployment bases reject credentials, repaired authorities and suffixes without exposing values', () => {
+    const invalid = [
+        'https:private-config.example.test',
+        'https:/private-config.example.test',
+        'https://private-user:private-password@private-config.example.test',
+        'https://private-config.example.test/?private-query',
+        'https://private-config.example.test/#private-fragment',
+        String.raw`https://private-config.example.test/\repaired`,
+        'https://private-config.example.test/\nrepaired',
+        ' https://private-config.example.test',
+    ];
+    for (const [service, variable] of [
+        ['api', 'BETTER_AUTH_URL'],
+        ['api', 'API_URL'],
+        ['api', 'VECTORIX_WEB_URL'],
+        ['workers', 'VECTORIX_WEB_URL'],
+    ] as const)
+        for (const value of invalid) {
+            const issues = findConfigurationIssues(service, {
+                ...valid,
+                [variable]: value,
+            });
+            assert.deepEqual(
+                issues.map(({ variable }) => variable),
+                [variable]
+            );
+            assert.ok(!JSON.stringify(issues).includes('private-'));
+        }
+    assert.deepEqual(
+        findConfigurationIssues('api', {
+            ...valid,
+            BETTER_AUTH_URL: 'https://api.example.test/auth-prefix',
+            API_URL: 'https://api.example.test/api-prefix/',
+            VECTORIX_WEB_URL: 'https://app.example.test/app-prefix',
+        }),
+        []
+    );
+});
+
+void test('trusted origins are nonempty serialized origins consistent with the HTTP guard', () => {
+    for (const value of [
+        ',',
+        ' , , ',
+        'https://app.example.test/',
+        'https://app.example.test/private-path',
+        'https://user:password@app.example.test',
+        'https://app.example.test?private-query',
+        'https://app.example.test#private-fragment',
+        'https:app.example.test',
+        'https://app.example.test\n',
+    ]) {
+        const issues = findConfigurationIssues('api', {
+            ...valid,
+            TRUSTED_ORIGINS: value,
+        });
+        assert.deepEqual(
+            issues.map(({ variable }) => variable),
+            ['TRUSTED_ORIGINS']
+        );
+        assert.ok(!JSON.stringify(issues).includes('example.test'));
+    }
+    assert.deepEqual(
+        findConfigurationIssues('api', {
+            ...valid,
+            TRUSTED_ORIGINS:
+                ' https://app.example.test , https://admin.example.test , ',
+        }),
+        []
+    );
+});

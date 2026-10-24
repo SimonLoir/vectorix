@@ -71,6 +71,7 @@ Vectorix is a multi-tenant application foundation. Preserve its reusable authent
 ## Frontend and runtime configuration
 
 - Read environment variables on the server and pass only public values to client components through props or context. Never introduce `NEXT_PUBLIC_*` variables or expose secrets to the browser.
+- Keep startup security configuration validation dependency-free in `@repo/config`, imported before API/worker infrastructure starts. Validate exact encryption-key bytes and explicit server destinations, emit variable-only diagnostics, and preserve the API origin resolver as the sole CORS/CSRF allowlist.
 - Serve browser dependencies on the authentication origin as exact-version local build assets, with a nonce script CSP and no CDN fallback. Keep vendor build dependencies out of production images when only their emitted browser bytes are needed.
 - Keep deployment configuration available at container startup. Do not bake deployment origins or private settings into frontend builds.
 - Share static frontend framing/MIME/referrer rules through `@repo/dashboard-core/config/security-headers`. Preserve the later, stronger `/sw.js` override and the API playground's separate nonce CSP. Verify final documents and actual auth redirects; do not assume every framework or edge response inherits Next configuration. HSTS belongs to the deployment's HTTPS policy.
