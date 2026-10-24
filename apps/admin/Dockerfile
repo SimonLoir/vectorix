@@ -1,6 +1,6 @@
 # syntax=docker/dockerfile:1.7
 
-FROM node:24-alpine AS base
+FROM node:24-alpine@sha256:06d7adf3e0ef61a13f1d28682726366f97a15aa1888c934d3ecec86c33918b53 AS base
 RUN apk add --no-cache libc6-compat openssl
 RUN npm install --global pnpm@11.25.0
 WORKDIR /app
@@ -26,16 +26,20 @@ ENV NODE_OPTIONS=--max-old-space-size=6144
 RUN pnpm --filter @repo/db generate
 RUN pnpm --filter admin build
 
-FROM node:24-alpine AS runner
+FROM node:24-alpine@sha256:06d7adf3e0ef61a13f1d28682726366f97a15aa1888c934d3ecec86c33918b53 AS runner
 RUN apk add --no-cache libc6-compat openssl
 WORKDIR /app
 ENV NODE_ENV=production
 ENV HOSTNAME=0.0.0.0
 ENV PORT=3006
 RUN adduser -D nextjs
-COPY --from=build --chown=nextjs:node /app/apps/admin/.next/standalone ./
-COPY --from=build --chown=nextjs:node /app/apps/admin/.next/static ./apps/admin/.next/static
+COPY --from=build /app/apps/admin/.next/standalone ./
+COPY --from=build /app/apps/admin/.next/static ./apps/admin/.next/static
+# Application files stay root-owned; only the Next.js cache is writable.
+RUN mkdir -p apps/admin/.next/cache && chown nextjs:node apps/admin/.next/cache
 USER nextjs
 WORKDIR /app/apps/admin
 EXPOSE 3006
+HEALTHCHECK --interval=30s --timeout=5s --start-period=30s --retries=3 \
+    CMD ["node", "-e", "fetch('http://127.0.0.1:'+(process.env.PORT||3006)+'/sign-in',{redirect:'manual'}).then(r=>process.exit(r.status<500?0:1),()=>process.exit(1))"]
 CMD ["node", "server.js"]

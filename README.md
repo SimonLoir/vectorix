@@ -253,6 +253,7 @@ Implement changes on a dedicated `codex/*` branch and open a pull request agains
 - [Repository conventions](AGENTS.md): architecture, authorization, API compatibility, development, and validation rules.
 - [Dashboard timezones](docs/dashboard-timezones.md): shared server validation, public provider configuration and locale-independent runtime dates.
 - [Superadmin transactions](docs/superadmin-transactions.md): atomic mutations/audits, current actor checks, audit address provenance and remaining native owner-guard work.
+- [Supply-chain and image hardening](docs/supply-chain.md): Dependabot, CodeQL, Trivy image scans, digest-pinned bases, root-owned runtime files and health checks.
 - [Redis connections](docs/redis-connections.md): encoded URL credentials, raw fallback precedence and isolated queue/worker acceptance.
 - [Canonical password-reset links](docs/password-reset-links.md): server-only destinations, strict configuration precedence and reset-request acceptance.
 - [HTTP request limits](docs/http-request-limits.md): pre-parser body budgets, upload exceptions, actual-byte counting and acceptance.

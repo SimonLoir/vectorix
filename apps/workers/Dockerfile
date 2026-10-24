@@ -1,7 +1,7 @@
 # syntax=docker/dockerfile:1.7
 
 # Multi-stage Dockerfile for the Vectorix BullMQ workers.
-FROM node:24-alpine AS base
+FROM node:24-alpine@sha256:06d7adf3e0ef61a13f1d28682726366f97a15aa1888c934d3ecec86c33918b53 AS base
 
 RUN apk add --no-cache libc6-compat openssl
 RUN npm install --global pnpm@11.25.0
@@ -36,7 +36,7 @@ RUN pnpm --filter workers build
 # peers (Next, TypeScript) or native accelerators; pure-JS fallbacks are used.
 RUN pnpm --config.inject-workspace-packages=true deploy --filter workers --prod --no-optional /out
 
-FROM node:24-alpine AS runner
+FROM node:24-alpine@sha256:06d7adf3e0ef61a13f1d28682726366f97a15aa1888c934d3ecec86c33918b53 AS runner
 
 ENV NODE_ENV=production
 
@@ -45,9 +45,9 @@ RUN adduser -D workers
 
 WORKDIR /app
 
-COPY --from=build --chown=workers:node /out/package.json ./package.json
-COPY --from=build --chown=workers:node /out/node_modules ./node_modules
-COPY --from=build --chown=workers:node /app/apps/workers/dist ./dist
+COPY --from=build /out/package.json ./package.json
+COPY --from=build /out/node_modules ./node_modules
+COPY --from=build /app/apps/workers/dist ./dist
 
 USER workers
 
