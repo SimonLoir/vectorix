@@ -1578,5 +1578,13 @@
         "saveFailed": "Je taalvoorkeur kon niet worden bevestigd. De weergegeven taal is niet gewijzigd.",
         "sessionRequired": "Meld je opnieuw aan voordat je de taal van je account opslaat.",
         "displayFailed": "De weergegeven taal kon niet worden bijgewerkt. Laad de pagina opnieuw en controleer je voorkeur."
+    },
+    "licenses": {
+        "title": "Licenties en functies",
+        "loading": "Laden…",
+        "empty": "Er is geen gelicentieerde functie geconfigureerd.",
+        "enabled": "Ingeschakeld",
+        "disabled": "Uitgeschakeld",
+        "informational": "Deze rechten zijn voorlopig informatief. Vectorix beperkt nog geen enkele module op basis ervan. De bestaande rechten en collectietoegang blijven gelden."
     }
 }

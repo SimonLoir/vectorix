@@ -9,6 +9,7 @@ import { useORPC } from '@/hooks/use-orpc';
 import { LoadingState } from './loading-state';
 import { OrganizationLegacyFeatureEditor } from './organization-legacy-feature-editor';
 import { OrganizationFeatureCard } from './organization-feature-card';
+import { EntitlementsNotice } from './entitlements-notice';
 
 /** Displays provider rights and lets superadmins explicitly select the legacy organization's grants. */
 export function OrganizationFeatures({
@@ -45,6 +46,7 @@ export function OrganizationFeatures({
                         ? tr('legacyFeaturesHint')
                         : tr('externalFeaturesHint')}
                 </p>
+                <EntitlementsNotice />
                 {query.isError && (
                     <p role='alert' className='text-sm text-amber-200'>
                         {tr('refreshFailed')}
