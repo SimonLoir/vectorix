@@ -21,6 +21,7 @@ Vectorix is a multi-tenant application foundation. Preserve its reusable authent
 - Reuse `@routers/utils/base` for explicitly public operations, `@routers/utils/authorized` for organization operations, and the existing superadmin guard for global administration.
 - Resolve organization identity through authenticated context and scope database reads and writes accordingly. Validate related identifiers within the same organization; possession of an identifier never grants access.
 - Register private operations in `packages/auth/src/permissions/`, including compound effects. Unknown private operations must fail closed. UI visibility is not an authorization check.
+- Keep API personal request throttling before permissions. Invoke the optional request-scoped `AuthorizedContext.admitProviderRequest` only after resource and saved-binding guards, immediately before the admitted provider operation; preserve post-I/O rechecks. Memoized request admission is not native usage or billing.
 - Preserve session-only restrictions and explicit API key scopes. Key creation or updates must not grant permissions the issuer does not hold, and initialization must not grant existing keys automatic privileges.
 - On every organization API-key admission, intersect stored permissions with the bound issuer's current roles; reject missing membership, unbound and legacy keys, and keep key contexts sessionless.
 - Preserve organization suspension checks, member removal behavior, explicit feature grants, and audit records. Licensing provider failure or expiration must not grant access.
@@ -71,6 +72,7 @@ Vectorix is a multi-tenant application foundation. Preserve its reusable authent
 ## Frontend and runtime configuration
 
 - Read environment variables on the server and pass only public values to client components through props or context. Never introduce `NEXT_PUBLIC_*` variables or expose secrets to the browser.
+- Keep startup security configuration validation dependency-free in `@repo/config`, imported before API/worker infrastructure starts. Validate exact encryption-key bytes and explicit server destinations, emit variable-only diagnostics, and preserve the API origin resolver as the sole CORS/CSRF allowlist.
 - Serve browser dependencies on the authentication origin as exact-version local build assets, with a nonce script CSP and no CDN fallback. Keep vendor build dependencies out of production images when only their emitted browser bytes are needed.
 - Keep deployment configuration available at container startup. Do not bake deployment origins or private settings into frontend builds.
 - Share static frontend framing/MIME/referrer rules through `@repo/dashboard-core/config/security-headers`. Preserve the later, stronger `/sw.js` override and the API playground's separate nonce CSP. Verify final documents and actual auth redirects; do not assume every framework or edge response inherits Next configuration. HSTS belongs to the deployment's HTTPS policy.

@@ -151,7 +151,12 @@
         "created": "Created",
         "expires": "Expires",
         "actions": "Actions",
-        "noApiKeys": "No API keys yet"
+        "noApiKeys": "No API keys yet",
+        "search": "Search API keys by name",
+        "permissions": "Permissions",
+        "loading": "Loading API keys",
+        "noMatches": "No API keys match this search.",
+        "emptyPage": "There are no API keys on this page. Use Previous to return to earlier results."
     },
     "permissions": {
         "title": "Roles and permissions",
@@ -436,7 +441,10 @@
             "limit": "The organization has reached its member or invitation limit.",
             "role": "This role is unavailable or you cannot assign it.",
             "generic": "The action could not be completed. Reload to check the current state before trying again."
-        }
+        },
+        "search": "Search members by name or email",
+        "noMatches": "No members match this search.",
+        "emptyPage": "There are no members on this page. Use Previous to return to earlier results."
     },
     "requestErrors": {
         "permission": "You do not have permission to perform this action.",
@@ -660,6 +668,8 @@
             "accessKey": "S3 access key ID",
             "secretKey": "S3 secret access key",
             "keepSecret": "Leave blank to keep unchanged",
+            "reenterSecret": "Required because the destination changed",
+            "destinationSecretHint": "Changing the service URL, bucket, or S3 addressing mode can change where credentialed requests are sent. Re-enter every required secret to save this change.",
             "apiKey": "API key",
             "optionalKey": "API key (optional)",
             "removeKey": "Remove the current API key",
@@ -843,6 +853,7 @@
             "playground": "Search playground",
             "collectionJourney": "Index and search",
             "failed": "The operation could not be completed. Check your access and configuration, then try again.",
+            "rateLimited": "Too many search or provider requests were sent. Wait a minute, then try again.",
             "loadFailed": "This information could not be loaded. Your access may have changed.",
             "working": "Working…",
             "readDenied": "Reading this collection is not granted. Catalog administration alone does not grant content access.",

@@ -52,14 +52,14 @@ export async function listEmbeddingModels(
             profile.revision !== expectedRevision
         )
             throw indexError('MODEL_CHANGED');
-        const items = await discoverModels(
-            await boundEmbeddingConfiguration(
-                context.db,
-                actor.organizationId,
-                collectionId,
-                profile.revision
-            )
+        const configuration = await boundEmbeddingConfiguration(
+            context.db,
+            actor.organizationId,
+            collectionId,
+            profile.revision
         );
+        await context.admitProviderRequest?.();
+        const items = await discoverModels(configuration);
         const latest = await savedProfile(context, collectionId);
         if (latest.profile.revision !== profile.revision)
             throw indexError('MODEL_CHANGED');
@@ -96,20 +96,19 @@ export async function probeEmbeddingModel(
         );
         if (collection.configurationRevision !== input.expectedRevision)
             throw indexError('MODEL_CHANGED');
-        const identity = await verifyEmbeddingModel(
-            await boundEmbeddingConfiguration(
-                context.db,
-                actor.organizationId,
-                input.collectionId,
-                profile.revision
-            ),
-            {
-                model: profile.model,
-                dimensions: profile.dimensions,
-                preset: embeddingPreset.parse(profile.embeddingPreset),
-                preparation: profile.preparation,
-            }
+        const configuration = await boundEmbeddingConfiguration(
+            context.db,
+            actor.organizationId,
+            input.collectionId,
+            profile.revision
         );
+        await context.admitProviderRequest?.();
+        const identity = await verifyEmbeddingModel(configuration, {
+            model: profile.model,
+            dimensions: profile.dimensions,
+            preset: embeddingPreset.parse(profile.embeddingPreset),
+            preparation: profile.preparation,
+        });
         const latest = await savedProfile(context, input.collectionId);
         if (latest.collection.configurationRevision !== input.expectedRevision)
             throw indexError('MODEL_CHANGED');
