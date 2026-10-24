@@ -90,8 +90,9 @@ export function emailVerificationPath(
     returnTo: string
 ): string | null {
     const callback = emailOwnershipCallback(returnTo);
-    if (!isEmailVerificationToken(token) || !callback) return null;
-    return `/verify-email?${new URLSearchParams({ token, returnTo: callback })}`;
+    return isEmailVerificationToken(token) && callback
+        ? `/verify-email?${new URLSearchParams({ token, returnTo: callback })}`
+        : null;
 }
 
 /** Never forward a caller-controlled redirect to the sign-in form or router. */
@@ -141,12 +142,13 @@ export function emailVerificationOutcome(
 }
 
 export function requiresInvitationVerification(value: unknown): boolean {
-    if (typeof value !== 'object' || value === null || !('code' in value))
-        return false;
     return (
-        value.code === 'EMAIL_VERIFICATION_REQUIRED_FOR_INVITATION' ||
-        value.code ===
-            'EMAIL_VERIFICATION_REQUIRED_BEFORE_ACCEPTING_OR_REJECTING_INVITATION'
+        typeof value === 'object' &&
+        value !== null &&
+        'code' in value &&
+        (value.code === 'EMAIL_VERIFICATION_REQUIRED_FOR_INVITATION' ||
+            value.code ===
+                'EMAIL_VERIFICATION_REQUIRED_BEFORE_ACCEPTING_OR_REJECTING_INVITATION')
     );
 }
 

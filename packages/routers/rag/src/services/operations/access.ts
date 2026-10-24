@@ -84,7 +84,7 @@ function documentAccess(actor: RagActor) {
 export function operationAccess(actor: RagActor, category: OperationCategory) {
     if (actor.keyId) return Prisma.sql`FALSE`;
     if (category === 'INDEXING') return collectionAccess(actor);
-    if (category === 'DOCUMENT_CLEANUP')
-        return Prisma.sql`${permits(actor.permissions, libraryWrite)}`;
-    return documentAccess(actor);
+    return category === 'DOCUMENT_CLEANUP'
+        ? Prisma.sql`${permits(actor.permissions, libraryWrite)}`
+        : documentAccess(actor);
 }

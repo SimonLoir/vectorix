@@ -28,8 +28,7 @@ function initialDraft(configuration?: Configuration): EmbeddingDraft {
 function providerHintPrefix(provider: Provider) {
     if (provider === 'VOYAGE') return 'voyage';
     if (provider === 'OPENAI') return 'openai';
-    if (provider === 'MISTRAL') return 'mistral';
-    return 'cohere';
+    return provider === 'MISTRAL' ? 'mistral' : 'cohere';
 }
 
 /** Keep unsaved provider/model choices separate from discovery of a saved credential binding. */

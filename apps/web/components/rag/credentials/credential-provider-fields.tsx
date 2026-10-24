@@ -53,7 +53,7 @@ export function CredentialProviderFields({
                 label={tr('credentials.pathStyle')}
                 name='forcePathStyle'
                 defaultChecked={
-                    current?.provider === 'S3' ? current.forcePathStyle : true
+                    current?.provider !== 'S3' || current.forcePathStyle
                 }
             />
             <TextField

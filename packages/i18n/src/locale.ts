@@ -15,8 +15,7 @@ export function normalizeLocale(value: unknown): Locale | null {
     const language = value.trim().toLowerCase();
     if (!/^(?:en|fr|nl)(?:-[a-z0-9]{1,8})*$/.test(language)) return null;
     if (language === 'fr' || language.startsWith('fr-')) return 'fr';
-    if (language === 'nl' || language.startsWith('nl-')) return 'nl-BE';
-    return 'en';
+    return language === 'nl' || language.startsWith('nl-') ? 'nl-BE' : 'en';
 }
 
 function preferenceWeight(parameters: string[]): number | null {

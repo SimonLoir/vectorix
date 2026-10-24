@@ -3,11 +3,10 @@ import * as React from 'react';
 const MOBILE_BREAKPOINT = 768;
 
 function getIsMobileViewport() {
-    if (globalThis.window === undefined) {
-        return false;
-    }
-
-    return globalThis.window.innerWidth < MOBILE_BREAKPOINT;
+    return (
+        globalThis.window !== undefined &&
+        globalThis.window.innerWidth < MOBILE_BREAKPOINT
+    );
 }
 
 export function useIsMobile() {

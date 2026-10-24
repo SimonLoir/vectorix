@@ -19,7 +19,7 @@ function family(address: string): 'ipv4' | 'ipv6' | null {
  * ranges of the reverse proxies directly in front of the API. Invalid entries
  * fail startup with their 1-based position, never their value.
  */
-export function parseTrustedProxies(value: string | undefined): BlockList {
+export function parseTrustedProxies(value: string | undefined = ''): BlockList {
     const trusted = new BlockList();
     for (const [index, raw] of (value ?? '').split(',').entries()) {
         const entry = raw.trim();

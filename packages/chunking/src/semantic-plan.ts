@@ -101,12 +101,10 @@ function preferredEnd(
     if (before >= first) end = boundaries[before]!;
     else if (after < boundaries.length && boundaries[after]! <= maximum)
         end = boundaries[after]!;
-    if (
-        maximum === text.length &&
+    return maximum === text.length &&
         Buffer.byteLength(text.slice(end), 'utf8') < budget.minimum
-    )
-        return text.length;
-    return end;
+        ? text.length
+        : end;
 }
 
 /** Keep overlap bounded while leaving room for at least one new Unicode scalar. */

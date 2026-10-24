@@ -1269,8 +1269,8 @@
     "packages/documents/src/index.ts": "2314ddda3678fbc73547fc3dcd50d45245c1a478e763ad38879c33ba07959710",
     "packages/routers/rag/src/services/documents/extract.ts": "ced0b5a42cdd3d9330ecc15137975e7684790f94b45c63372c0a8a8022fda567",
     "packages/chunking/src/semantic-units.ts": "bf8e17c12dca23251051d93694838d7615e975495b11de0aa4480eae7ed639ea",
-    "packages/chunking/src/semantic-plan.ts": "c57f1e79439138a441bed923a224ed6636740e053dc2f0edce6d4190c748903d",
-    "packages/chunking/src/parent-context.ts": "4d33e597129df3009b78ae2b54c91772e267438e7c88215c640599b1a4362202",
+    "packages/chunking/src/semantic-plan.ts": "010b3c6bcca62001d916a9580dd95371b7a50a20b4a885c3723bfbf74c703aed",
+    "packages/chunking/src/parent-context.ts": "0126f7d66a297420585e7bc83e89f816d2219df146f9b7d6d771d170f3b942b9",
     "packages/embeddings/src/preparation.ts": "3336fff9b9250eb9393c76ab33223cd1c5c62ad3a7b37d07d611d4b503d7d76f"
   },
   "fixtureSourceSha256": {

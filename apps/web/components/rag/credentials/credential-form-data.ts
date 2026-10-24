@@ -40,8 +40,9 @@ export function requiresSecretReentry(
         (current.provider === 'S3' &&
             (String(form.get('bucket') ?? '') !== current.bucket ||
                 form.has('forcePathStyle') !== current.forcePathStyle));
-    if (!moved) return false;
-    if (current.provider === 'OLLAMA')
-        return current.apiKey !== null && !form.has('removeKey');
-    return true;
+    return (
+        moved &&
+        (current.provider !== 'OLLAMA' ||
+            (current.apiKey !== null && !form.has('removeKey')))
+    );
 }

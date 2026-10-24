@@ -5,9 +5,10 @@ export const ORGANIZATION_CREATION_ENV_NAME = 'ALLOW_ORGANIZATION_CREATION';
  * only explicit truthy values enable it.
  */
 export function parseOrganizationCreationAllowed(value: string | undefined) {
-    if (value === undefined) return false;
-
-    return ['1', 'true', 'yes', 'on'].includes(value.trim().toLowerCase());
+    return (
+        value !== undefined &&
+        ['1', 'true', 'yes', 'on'].includes(value.trim().toLowerCase())
+    );
 }
 
 /** Returns whether authenticated users may create organizations. */

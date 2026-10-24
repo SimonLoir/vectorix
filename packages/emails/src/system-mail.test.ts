@@ -210,7 +210,12 @@ void test('delivery uses the chosen sender once and sanitizes failures without S
     const delivery = t.mock.method(
         MailService.prototype,
         'sendMail',
-        (_to: string, _subject: string, _html: string, from?: string) => {
+        (
+            _to: string,
+            _subject: string,
+            _html: string,
+            from: string | undefined = ''
+        ) => {
             sent.push(from ?? '');
             return Promise.reject(new Error(rawFailure));
         }

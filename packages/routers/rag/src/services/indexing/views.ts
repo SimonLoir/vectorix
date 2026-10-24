@@ -171,11 +171,11 @@ async function readIndexStatus(
         }))
     );
     const unsupported = !configuration || !supportsIndexProfile(configuration);
-    const candidateStates: IndexGenerationStatus[] = [
+    const candidateStates = new Set<IndexGenerationStatus>([
         'PROVISIONING',
         'BUILDING',
         'FAILED',
-    ];
+    ]);
     const [uncleaned, organizationRebuild] = await Promise.all([
         db.indexGeneration.count({
             where: { organizationId, collectionId, status: { not: 'CLEANED' } },
@@ -190,7 +190,7 @@ async function readIndexStatus(
     ]);
     const rebuildBlockedReason = unsupported
         ? ('PROFILE_UNSUPPORTED' as const)
-        : generations.some((item) => candidateStates.includes(item.status)) ||
+        : generations.some((item) => candidateStates.has(item.status)) ||
             organizationRebuild
           ? ('REBUILD_IN_PROGRESS' as const)
           : uncleaned >= 2 || !access.collection.activeGenerationId

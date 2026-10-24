@@ -43,7 +43,7 @@ export function DocumentSources({
             ? undefined
             : query.data;
     const totalSources =
-        !query.isError && !changedVersion ? (query.data?.totalSources ?? 0) : 0;
+        query.isError || changedVersion ? 0 : (query.data?.totalSources ?? 0);
     const validJump =
         jump.trim() !== '' &&
         Number.isInteger(Number(jump)) &&

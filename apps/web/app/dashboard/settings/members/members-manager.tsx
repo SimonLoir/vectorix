@@ -216,6 +216,5 @@ export function MembersManager({
 /** Keep legacy filtered views distinct from empty search or deleted-last-row pages. */
 function emptyMemberMessage(windowed: boolean, query: string, offset: number) {
     if (windowed && query) return 'noMatches';
-    if (windowed && offset > 0) return 'emptyPage';
-    return 'noMembers';
+    return windowed && offset > 0 ? 'emptyPage' : 'noMembers';
 }
