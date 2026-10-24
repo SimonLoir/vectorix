@@ -1,19 +1,22 @@
 'use client';
 import { useQuery } from '@tanstack/react-query';
+import { useTranslations } from 'next-intl';
 import { useORPC } from '@/hooks/use-orpc';
 import DashboardPage from '@/components/dashboard-page';
 import { requestErrorKey } from '@repo/dashboard-core/lib/request-errors';
 import { RequestErrorState } from '@/components/request-error-state';
 export default function LicensesPage() {
     const { orpc } = useORPC();
+    const t = useTranslations('licenses');
     const query = useQuery(orpc.admin.organization.features.queryOptions({}));
     return (
         <DashboardPage>
-            <h1 className='text-2xl font-semibold'>
-                Licences et fonctionnalités
-            </h1>
+            <h1 className='text-2xl font-semibold'>{t('title')}</h1>
+            <p role='note' className='mt-2 text-sm text-muted-foreground'>
+                {t('informational')}
+            </p>
             {query.isPending ? (
-                <p className='mt-6'>Chargement…</p>
+                <p className='mt-6'>{t('loading')}</p>
             ) : query.isError ? (
                 <RequestErrorState
                     errorKey={requestErrorKey(query.error)}
@@ -27,9 +30,7 @@ export default function LicensesPage() {
                         </p>
                     )}
                     {query.data.features.length === 0 ? (
-                        <p className='text-muted-foreground'>
-                            Aucune fonctionnalité sous licence n’est configurée.
-                        </p>
+                        <p className='text-muted-foreground'>{t('empty')}</p>
                     ) : (
                         query.data.features.map((feature) => (
                             <div
@@ -45,7 +46,9 @@ export default function LicensesPage() {
                                     </p>
                                 </div>
                                 <span>
-                                    {feature.enabled ? 'Activée' : 'Désactivée'}
+                                    {feature.enabled
+                                        ? t('enabled')
+                                        : t('disabled')}
                                 </span>
                             </div>
                         ))

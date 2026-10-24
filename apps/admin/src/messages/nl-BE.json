@@ -365,7 +365,8 @@
                 "featuresTitle": "Functies",
                 "featuresDescription": "Beheer modulesleutels en globale beschikbaarheid. Abonnementen en de bijbehorende rechten worden door de externe provider bepaald.",
                 "usersTitle": "Gebruikers",
-                "usersDescription": "Bekijk Vectorix-accounts, hun organisaties en hun toegang tot de superadminconsole."
+                "usersDescription": "Bekijk Vectorix-accounts, hun organisaties en hun toegang tot de superadminconsole.",
+                "entitlementsInformational": "Rechten zijn voorlopig informatief: nog geen enkele Vectorix-route controleert ze. Elke actieve organisatie kan dus alle modules gebruiken, ongeacht haar rechten, de vervaldatum of de status van de provider. Handhaving wordt per module ingeschakeld."
             }
         },
         "semanticQuota": {
