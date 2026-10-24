@@ -136,6 +136,236 @@ export function advanceVectorObserverTransition(previous, next) {
     return next;
 }
 
+const GUARD_PURPOSES = [
+    'seed',
+    'bucket',
+    'check',
+    'smtp',
+    'embedding',
+    'observe',
+    'staged-observe',
+    'outage-observe',
+    'vector-outage-watch',
+];
+const GUARD_STAGES = [
+    'ADMISSION',
+    'STATE',
+    'SOURCE_PINS',
+    'STORE_IDENTITY',
+    'SCHEMA',
+    'PROCESS_IDENTITY',
+    'PROCESS_RUNSTATE',
+    'SMTP',
+    'CONTROL_PHASE',
+];
+const guardFailures = new WeakMap();
+class IndependentGuardError extends RecipeError {
+    constructor(descriptor) {
+        super('M7C_S3_OUTAGE_INDEPENDENT_GUARD');
+        guardFailures.set(this, Object.freeze(descriptor));
+    }
+}
+/** Return only locally validated finite guard metadata, never properties of arbitrary errors. */
+export function guardFailure(error) {
+    return error !== null &&
+        (typeof error === 'object' || typeof error === 'function')
+        ? guardFailures.get(error)
+        : undefined;
+}
+function ownData(value, key) {
+    const descriptor = Object.getOwnPropertyDescriptor(value, key);
+    if (descriptor && !Object.hasOwn(descriptor, 'value')) throw new Error();
+    return descriptor?.value;
+}
+function guardResult(result, binding) {
+    let status = null,
+        outcome = 'INVALID_RESULT',
+        stdout;
+    const refuse = (stage = 'PROTOCOL', category = 'UNKNOWN') => {
+        throw new IndependentGuardError({
+            ...binding,
+            stage,
+            category,
+            childOutcome: outcome,
+            exitStatus: status,
+        });
+    };
+    try {
+        const code = ownData(result, 'status'),
+            signal = ownData(result, 'signal'),
+            error = ownData(result, 'error');
+        if (
+            code !== null &&
+            (!Number.isSafeInteger(code) || code < 0 || code > 255)
+        )
+            return refuse();
+        status = code;
+        if (error !== undefined && error !== null) {
+            outcome =
+                ownData(error, 'code') === 'ETIMEDOUT'
+                    ? 'TIMEOUT'
+                    : 'SPAWN_ERROR';
+            return refuse();
+        }
+        if (signal !== undefined && signal !== null) {
+            if (typeof signal !== 'string') return refuse();
+            outcome = 'SIGNAL';
+            return refuse();
+        }
+        if (status === null) return refuse();
+        outcome = status === 0 ? 'EXIT_ZERO' : 'NONZERO';
+        stdout = ownData(result, 'stdout');
+        if (typeof stdout !== 'string' || Buffer.byteLength(stdout) > 16384)
+            return refuse('PROTOCOL', 'INVALID_PROTOCOL');
+    } catch (error) {
+        if (guardFailure(error)) throw error;
+        return refuse();
+    }
+    let proof;
+    try {
+        proof = JSON.parse(stdout);
+    } catch {
+        return refuse('PROTOCOL', 'INVALID_PROTOCOL');
+    }
+    if (!proof || typeof proof !== 'object' || Array.isArray(proof))
+        return refuse('PROTOCOL', 'INVALID_PROTOCOL');
+    if (status !== 0) {
+        const keys = [
+            ...Object.keys(binding),
+            'completed',
+            'stage',
+            'category',
+        ];
+        if (
+            JSON.stringify(Object.keys(proof).sort()) !==
+                JSON.stringify(keys.sort()) ||
+            proof.completed !== false ||
+            !GUARD_STAGES.includes(proof.stage) ||
+            !['REFUSED', 'ERROR', 'INTERRUPTED'].includes(proof.category)
+        )
+            return refuse('PROTOCOL', 'INVALID_PROTOCOL');
+        if (
+            !Object.entries(binding).every(
+                ([key, value]) => proof[key] === value
+            )
+        )
+            return refuse('PROTOCOL', 'CONTEXT_MISMATCH');
+        return refuse(proof.stage, proof.category);
+    }
+    const keys = [
+        'schemaVersion',
+        'protocolVersion',
+        'scenario',
+        'namespace',
+        'runId',
+        'purpose',
+        'resourceOwnership',
+        'exactTestDatabases',
+        'sourceBuildPins',
+        ...(binding.purpose === 'vector-outage-watch'
+            ? ['vectorTransition']
+            : []),
+    ];
+    if (
+        JSON.stringify(Object.keys(proof).sort()) !==
+            JSON.stringify(keys.sort()) ||
+        ![
+            'schemaVersion',
+            'protocolVersion',
+            'scenario',
+            'namespace',
+            'runId',
+            'purpose',
+        ].every((key) => proof[key] === binding[key]) ||
+        proof.resourceOwnership !== true ||
+        proof.exactTestDatabases !== true ||
+        proof.sourceBuildPins !== true
+    )
+        return refuse('PROTOCOL', 'INVALID_PROTOCOL');
+    return proof;
+}
+/** The real independent child boundary; injection is confined to offline child-outcome tests. */
+export function createGuardRecheck(state, purpose, execute = spawnSync) {
+    const spec = scenarioSpec(state.scenario),
+        run = state.runId,
+        sourceSha256 = state.inputs?.helpers?.['lifecycle.py'];
+    need(
+        /^[a-f0-9]{12}$/u.test(run) &&
+            state.namespace === spec.namespace &&
+            GUARD_PURPOSES.includes(purpose) &&
+            typeof sourceSha256 === 'string' &&
+            /^[a-f0-9]{64}$/u.test(sourceSha256),
+        'M7C_S3_OUTAGE_GUARD_BINDING'
+    );
+    const binding = Object.freeze({
+        schemaVersion: 1,
+        protocolVersion: PROTOCOL_VERSION,
+        guardProtocol: 1,
+        scenario: state.scenario,
+        namespace: spec.namespace,
+        runId: run,
+        purpose,
+        sourceSha256,
+    });
+    let vectorTransition = null;
+    return (maximumMilliseconds = 120000) => {
+        need(
+            Number.isSafeInteger(maximumMilliseconds) &&
+                maximumMilliseconds >= 1 &&
+                maximumMilliseconds <= 120000,
+            'M7C_S3_OUTAGE_GUARD_TIMEOUT'
+        );
+        let result;
+        try {
+            result = execute(
+                'python3',
+                [
+                    path.join(HERE, 'lifecycle.py'),
+                    '--run',
+                    run,
+                    '--scenario',
+                    state.scenario,
+                    '--mode',
+                    'guard',
+                    '--purpose',
+                    purpose,
+                ],
+                {
+                    cwd: ROOT,
+                    env: cleanEnvironment(),
+                    timeout:
+                        purpose === 'vector-outage-watch'
+                            ? Math.min(15000, maximumMilliseconds)
+                            : maximumMilliseconds,
+                    maxBuffer: 16384,
+                    encoding: 'utf8',
+                    stdio: ['ignore', 'pipe', 'ignore'],
+                }
+            );
+        } catch {
+            throw new IndependentGuardError({
+                ...binding,
+                stage: 'PROTOCOL',
+                category: 'UNKNOWN',
+                childOutcome: 'SPAWN_ERROR',
+                exitStatus: null,
+            });
+        }
+        const proof = guardResult(result, binding);
+        if (purpose === 'vector-outage-watch') {
+            need(
+                state.scenario === 'VECTOR_PROVISION_V1',
+                'S3_OUTAGE_VECTOR_OBSERVER_SCENARIO'
+            );
+            vectorTransition = advanceVectorObserverTransition(
+                vectorTransition,
+                proof.vectorTransition
+            );
+        }
+        return proof;
+    };
+}
+
 export function context(args, purpose) {
     need(
         args.length === 4 &&
@@ -189,90 +419,7 @@ export function context(args, purpose) {
             state.vectorDatabase === `${spec.databaseStem}_vectors_${run}_test`,
         'M7C_S3_OUTAGE_STATE'
     );
-    let vectorTransition = null;
-    const recheck = (maximumMilliseconds = 120000) => {
-        need(
-            Number.isSafeInteger(maximumMilliseconds) &&
-                maximumMilliseconds >= 1 &&
-                maximumMilliseconds <= 120000,
-            'M7C_S3_OUTAGE_GUARD_TIMEOUT'
-        );
-        const result = spawnSync(
-            'python3',
-            [
-                path.join(HERE, 'lifecycle.py'),
-                '--run',
-                run,
-                '--scenario',
-                scenario,
-                '--mode',
-                'guard',
-                '--purpose',
-                purpose,
-            ],
-            {
-                cwd: ROOT,
-                env: cleanEnvironment(),
-                timeout:
-                    purpose === 'vector-outage-watch'
-                        ? Math.min(15000, maximumMilliseconds)
-                        : maximumMilliseconds,
-                maxBuffer: 16384,
-                encoding: 'utf8',
-                stdio: ['ignore', 'pipe', 'ignore'],
-            }
-        );
-        need(
-            !result.error &&
-                result.status === 0 &&
-                Buffer.byteLength(result.stdout ?? '') <= 16384,
-            'M7C_S3_OUTAGE_INDEPENDENT_GUARD'
-        );
-        let proof;
-        try {
-            proof = JSON.parse(result.stdout);
-        } catch {
-            throw new RecipeError('M7C_S3_OUTAGE_INDEPENDENT_GUARD');
-        }
-        need(
-            JSON.stringify(Object.keys(proof).sort()) ===
-                JSON.stringify(
-                    [
-                        'schemaVersion',
-                        'protocolVersion',
-                        'scenario',
-                        'namespace',
-                        'runId',
-                        'purpose',
-                        'resourceOwnership',
-                        'exactTestDatabases',
-                        'sourceBuildPins',
-                        ...(purpose === 'vector-outage-watch'
-                            ? ['vectorTransition']
-                            : []),
-                    ].sort()
-                ) &&
-                sameScope(state, proof) &&
-                proof.namespace === state.namespace &&
-                proof.runId === run &&
-                proof.purpose === purpose &&
-                proof.resourceOwnership === true &&
-                proof.exactTestDatabases === true &&
-                proof.sourceBuildPins === true,
-            'M7C_S3_OUTAGE_INDEPENDENT_GUARD'
-        );
-        if (purpose === 'vector-outage-watch') {
-            need(
-                scenario === 'VECTOR_PROVISION_V1',
-                'S3_OUTAGE_VECTOR_OBSERVER_SCENARIO'
-            );
-            vectorTransition = advanceVectorObserverTransition(
-                vectorTransition,
-                proof.vectorTransition
-            );
-        }
-        return proof;
-    };
+    const recheck = createGuardRecheck(state, purpose);
     recheck();
     // Prevent SDK/profile/dotenv/credential resolution from inheriting the operator shell.
     const safe = cleanEnvironment();
@@ -354,6 +501,12 @@ export function entryError(error) {
         /^(?:M7C_S3_OUTAGE_|S3_OUTAGE_)[A-Z0-9_]{1,70}$/u.test(error.message)
             ? error.message
             : 'M7C_S3_OUTAGE_SANITIZED_FAILURE';
-    console.log(JSON.stringify({ completed: false, diagnostic }));
+    console.log(
+        JSON.stringify({
+            completed: false,
+            diagnostic,
+            guardFailure: guardFailure(error),
+        })
+    );
     process.exitCode = 1;
 }

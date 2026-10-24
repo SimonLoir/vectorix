@@ -99,6 +99,12 @@ python3 tests/acceptance/s3-outage/fault.py --run "$S3_OUTAGE_RUN" --scenario IN
 
 Then wait for the watchdog's nonintervening final receipt/exit, and use the remaining fixed observation phases around the actual dashboard retry/sign-out. Do not delete the document or click any irreversible deletion confirmation. No notification permission, role, key, credential change or restoration is part of the browser recipe.
 
+## Finite independent-guard diagnostics
+
+The current diagnostic-only revision keeps every admission check and existing successful proof shape. Guard failures return only a source/run/scenario/namespace/purpose-bound stage/category envelope. Node validates exact fields and bindings, ignores stderr and retains a fixed child outcome with a bounded exit status or null; unknown/malformed output still refuses. Validated metadata reaches failed CLI/observer receipts and separate primary/sign-out workflow finalization fields. No raw nested errors or provider payloads are recorded. See the [finite diagnostic contract and incomplete composed trial](../../../docs/rag-vector-outage-acceptance.md#offline-finite-guard-diagnostics).
+
+Composed run `778e85d66c6d` at `0ccc`/product `77ac` remains INCOMPLETE after the final G2 search's generic guard failure, despite five separately passed observations and actual same-task recovery. Its nested cause was not captured and stays UNKNOWN. All 41 source pairs were restored and all 16 gates disabled after exact owned teardown; the new diagnostics have offline validation only and do not authorize replay or a new run.
+
 ## Guard and evidence contract
 
 Normal `observe` still requires online stores and running processes. `staged-observe` separately requires RustFS online and the exact worker stopped. `outage-observe` separately requires the exact owned RustFS stopped and the same worker running. These are closed fault states, not a relaxed normal resource guard. Outage state can prove v1 retained/published in the database, but **cannot promise readable S3 original/preview while storage is down**. UI metadata/history can remain useful; record the actual localized storage error without exposing provider details.

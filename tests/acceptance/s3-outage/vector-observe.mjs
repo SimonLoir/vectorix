@@ -14,6 +14,7 @@ import {
     sameScope,
     openFixturePrisma,
     entryError,
+    guardFailure,
 } from './private.mjs';
 import { finalizeCleanupObservation } from './cleanup-observe.mjs';
 import { watchdogTraceDeadline, waitForNextSnapshot } from './observe.mjs';
@@ -713,6 +714,9 @@ async function main() {
                     phase,
                     status: 'INCOMPLETE',
                     snapshots,
+                    ...(guardFailure(error)
+                        ? { guardFailure: guardFailure(error) }
+                        : {}),
                     ...(outage
                         ? { observerStage, ...collector.evidence() }
                         : {}),

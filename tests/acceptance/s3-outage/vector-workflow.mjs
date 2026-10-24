@@ -13,6 +13,7 @@ import {
     receiptScope,
     sameScope,
     entryError,
+    guardFailure,
 } from './private.mjs';
 import { runPrivateCurl } from './vector-curl.mjs';
 import { PROFILE } from './vector-embedding.mjs';
@@ -374,8 +375,10 @@ export async function executeVectorWorkflow({
         failed = true;
         failure = error;
     }
-    const primaryFailureObserved = failed;
-    let signOutConfirmed = false,
+    const primaryFailureObserved = failed,
+        primaryGuardFailure = guardFailure(failure);
+    let signOutGuardFailure,
+        signOutConfirmed = false,
         signOutFailed = false;
     if (signedIn) {
         try {
@@ -387,6 +390,7 @@ export async function executeVectorWorkflow({
             signOutConfirmed = true;
         } catch (error) {
             signOutFailed = true;
+            signOutGuardFailure = guardFailure(error);
             if (!failed) {
                 failed = true;
                 failure = error;
@@ -399,6 +403,8 @@ export async function executeVectorWorkflow({
             signOutAttempted: signedIn,
             signOutConfirmed,
             secondarySignOutFailure: primaryFailureObserved && signOutFailed,
+            ...(primaryGuardFailure ? { primaryGuardFailure } : {}),
+            ...(signOutGuardFailure ? { signOutGuardFailure } : {}),
         });
     } catch (error) {
         if (!failed) {

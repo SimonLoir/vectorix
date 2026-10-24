@@ -2937,5 +2937,142 @@
         "standaloneAssetsReceiptSha256": "ce549789b69d6bc28c2088f6e85bd2f3480ffefd4822a38ae2e0373c6c20654e",
         "disabledFilesystemInputInventorySha256": "5d59d0db161ba57bf58be1a5a9faba49a424be5c9be436c6e2cc7de5121f3d06",
         "sourceReview": "ROOT_AND_INDEPENDENT_7_CODE_PINS_CLEAR_FINAL_METADATA_REVIEW_PENDING"
+    },
+    "vectorProvisionGuardDiagnosticsRevision1": {
+        "status": "OFFLINE_VALIDATED_NATIVE_NOT_RUN",
+        "basedOnHelperCommit": "0ccc1719c65e85bb3a2a249b0e2a166477f5ab73",
+        "selectedProductBuildCommit": "77ac06bd99c113b8cf32e2f48bcaec79038dd94a",
+        "priorFieldsPreserved": 24,
+        "priorProvenanceSha256": "07ee20b28bf0675d528a8ad243fb0d81e7fbb3b0df109b2cc2cd8dbb54b18b40",
+        "immutableBeforeArchiveSha256": "a9a009d5b33b7774df5df426e6f78a04c5c58100cbd8a4728aaf125af40d9374",
+        "codeInventory": {
+            "scripts/test-s3-outage-guards.sh": {
+                "bytes": 1193,
+                "mode": 436,
+                "sha256": "2c4ca0b6b348ec568e2ff4d5d1ca4ca5aa3cfc2c58ee55682b1d8d3290d64e63"
+            },
+            "tests/acceptance/s3-outage/lifecycle.py": {
+                "bytes": 59565,
+                "mode": 436,
+                "sha256": "69ab35035ff46f4f33a3ec10969da8b51ef2bd284691068120c2e80dcfc691c1"
+            },
+            "tests/acceptance/s3-outage/lifecycle_test.py": {
+                "bytes": 31956,
+                "mode": 436,
+                "sha256": "95b181d6adf1996ea2eb8775a5eaddca0213e6d93f164a2bac9bf4257bc21798"
+            },
+            "tests/acceptance/s3-outage/private.mjs": {
+                "bytes": 17034,
+                "mode": 436,
+                "sha256": "f25ddb879da274466a04eb339810fd2ba10ebcf0a1a2d5f0a1edd20395aee57a"
+            },
+            "tests/acceptance/s3-outage/vector-workflow.mjs": {
+                "bytes": 24193,
+                "mode": 436,
+                "sha256": "53e1657e5d56518734ec0758e01cebb4d6f6bf9f9c783ccd0f67726dcd25da78"
+            },
+            "tests/acceptance/s3-outage/vector-observe.mjs": {
+                "bytes": 26549,
+                "mode": 436,
+                "sha256": "41231a0f1b4e79f0e831293124ab3ccbae0ef5e07232ebaf94f6161087d9ce53"
+            },
+            "tests/acceptance/s3-outage/guard.test.mjs": {
+                "bytes": 12098,
+                "mode": 436,
+                "sha256": "29ca52767523f9a629357d9a9082771a50c8459c86b3e74369fac86bc85ace42"
+            }
+        },
+        "failureProtocol": {
+            "version": 1,
+            "scope": [
+                "sourceSha256",
+                "protocolVersion",
+                "scenario",
+                "namespace",
+                "runId",
+                "purpose"
+            ],
+            "stages": [
+                "ADMISSION",
+                "STATE",
+                "SOURCE_PINS",
+                "STORE_IDENTITY",
+                "SCHEMA",
+                "PROCESS_IDENTITY",
+                "PROCESS_RUNSTATE",
+                "SMTP",
+                "CONTROL_PHASE"
+            ],
+            "categories": ["REFUSED", "ERROR", "INTERRUPTED"],
+            "localProtocolCategories": [
+                "UNKNOWN",
+                "INVALID_PROTOCOL",
+                "CONTEXT_MISMATCH"
+            ],
+            "childOutcomes": [
+                "INVALID_RESULT",
+                "EXIT_ZERO",
+                "NONZERO",
+                "TIMEOUT",
+                "SIGNAL",
+                "SPAWN_ERROR"
+            ],
+            "maximumChildOutputBytes": 16384,
+            "maximumExitStatus": 255,
+            "rawDiagnostics": "DISCARDED",
+            "successProofShape": "UNCHANGED",
+            "primaryAndSignOutDescriptors": "SEPARATE"
+        },
+        "offlineValidation": {
+            "pythonTests": 70,
+            "nodeTests": 100,
+            "nodeSyntaxChecks": 21,
+            "pythonAstChecks": 6,
+            "executionReceiptSha256": "4b4963124bb19befdc9c52a107ee396a05fa7cef30fdf335728c2e6ef4651e6a",
+            "logSha256": "7695dea237b1ddbd1c5d7c88891d899af96b8561c3bf8783f11fcd2949b3ca56",
+            "realCliRecheckFinalizationCoverage": true,
+            "nativeOrServices": false
+        },
+        "historicalComposedTrial": {
+            "runId": "778e85d66c6d",
+            "status": "INCOMPLETE",
+            "nestedGuardCause": "UNKNOWN_NOT_RECORDED",
+            "observationsPassed": 5,
+            "workflowsCompleted": 4,
+            "confirmedHttpResponses": 45,
+            "http200": 44,
+            "typedHttp409": 1,
+            "nullAfterStatuses": 2,
+            "wireDispatchNotInferred": true,
+            "outageSnapshots": 44,
+            "closedClaimRows": 5,
+            "naturalBackoffsMilliseconds": [10000, 20000, 40000, 80000],
+            "sameTaskFailedEpoch": "5",
+            "sameTaskCompleteEpoch": "7",
+            "normalFinalLogout": "NOT_ATTEMPTED_DURING_TEARDOWN",
+            "signedOutProof": "NOT_EMITTED",
+            "sessionZero": "NOT_CLAIMED",
+            "ownedTeardown": "COMPLETE",
+            "restoredSourcePairs": 41,
+            "disabledGates": 16,
+            "terminalSummarySha256": "87124ea3015d7ab0b12767469f8f8bb4155b487505d638b8f04381dacb639740",
+            "rootFilesystemAuditSha256": "d8ee00510e181f6e3cec0de296d03efcc7964a8d86243a0d535ef5a3e19bf5c6",
+            "rootBrowserIncompleteReceiptSha256": "5a1c27b588c824d1f2043e3fc19484021983329f5652343f6095a1ba8670084c",
+            "rootPostCleanupArtifactRuntimeAuditSha256": "f08ebcd5400f2a10557ea48330838b8a019a0e4e805e56f6d3191b10154f1fcb"
+        },
+        "unchanged": [
+            "production",
+            "schema",
+            "permissions",
+            "guard predicates",
+            "timeouts",
+            "trace caps",
+            "backoffs",
+            "900-second watchdog",
+            "625-second vector late budget"
+        ],
+        "replacementRun": "NOT_SELECTED",
+        "nativeActivation": "NOT_AUTHORIZED",
+        "productBuildsRepeated": false
     }
 }

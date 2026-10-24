@@ -378,5 +378,81 @@ class ComposedScenarioTests(unittest.TestCase):
                 with self.assertRaisesRegex(l.GuardError, 'migration-drift'): l.pins(value)
 
 
+class GuardDiagnosticTests(unittest.TestCase):
+    def cli(self, replacement=None, purpose='observe'):
+        """Run the actual CLI route and guard; replace only resource/identity boundaries."""
+        value = state()
+        stdout, stderr = io.StringIO(), io.StringIO()
+        with contextlib.ExitStack() as stack:
+            stack.enter_context(mock.patch.object(l, 'STATIC_DRAFT_ONLY', False))
+            stack.enter_context(mock.patch.object(sys, 'argv', ['lifecycle.py', '--run', RUN,
+                '--scenario', 'INGESTION_V1', '--mode', 'guard', '--purpose', purpose]))
+            defaults = {
+                'check_directories': lambda: None, 'load': lambda *_: value,
+                'pins': lambda *_: None, 'schema': lambda *_: None,
+                'owned': lambda *_args, **_kwargs: {'State': {'Running': True}},
+                'fault_phase': lambda *_: 'NOT_STARTED',
+                'process_alive': lambda *_: True, 'process_identity': lambda *_: {'state': 'S'},
+                'smtp_ready': lambda *_: None,
+            }
+            if replacement:
+                defaults.update(replacement)
+            for name, boundary in defaults.items():
+                stack.enter_context(mock.patch.object(l, name, boundary))
+            stack.enter_context(contextlib.redirect_stdout(stdout))
+            stack.enter_context(contextlib.redirect_stderr(stderr))
+            code = l.main()
+        self.assertEqual(stderr.getvalue(), '')
+        self.assertLess(len(stdout.getvalue().encode()), 2048)
+        self.assertNotIn('PRIVATE', stdout.getvalue())
+        return code, json.loads(stdout.getvalue())
+
+    def test_actual_guard_cli_success_keeps_original_proof_shape(self):
+        code, proof = self.cli()
+        self.assertEqual(code, 0)
+        self.assertEqual(proof, {**l.receipt_scope(state()), 'namespace': state()['namespace'],
+            'purpose': 'observe', 'resourceOwnership': True, 'exactTestDatabases': True,
+            'sourceBuildPins': True})
+
+    def test_actual_cli_failure_envelope_covers_each_real_guard_stage(self):
+        def refused(*_args, **_kwargs):
+            raise l.GuardError('PRIVATE secret/path/stack must be discarded')
+        cases = [
+            ('ADMISSION', {'check_directories': refused}), ('STATE', {'load': refused}),
+            ('SOURCE_PINS', {'pins': refused}), ('STORE_IDENTITY', {'owned': refused}),
+            ('SCHEMA', {'schema': refused}), ('PROCESS_IDENTITY', {'process_alive': lambda *_: False}),
+            ('PROCESS_RUNSTATE', {'process_identity': lambda *_: {'state': 'T'}}),
+            ('SMTP', {'smtp_ready': refused}), ('CONTROL_PHASE', {'fault_phase': refused}),
+        ]
+        for stage, replacements in cases:
+            with self.subTest(stage=stage):
+                code, proof = self.cli(replacements)
+                self.assertEqual(code, 1)
+                self.assertEqual(proof, {'schemaVersion': 1, 'protocolVersion': 2, 'guardProtocol': 1,
+                    'scenario': 'INGESTION_V1', 'namespace': state()['namespace'], 'runId': RUN,
+                    'purpose': 'observe', 'sourceSha256': l.digest(Path(l.__file__).read_bytes()),
+                    'completed': False, 'stage': stage, 'category': 'REFUSED'})
+
+    def test_actual_cli_never_reads_unknown_error_payload_and_retains_interruption_category(self):
+        class HostileError(Exception):
+            def __str__(self):
+                self.fail_payload()
+            def fail_payload(self):
+                raise AssertionError('PRIVATE payload accessed')
+        for error, category in [(HostileError(), 'ERROR'), (KeyboardInterrupt(), 'INTERRUPTED')]:
+            def broken(*_args, **_kwargs):
+                raise error
+            code, proof = self.cli({'schema': broken})
+            self.assertEqual(code, 1)
+            self.assertEqual(proof['stage'], 'SCHEMA')
+            self.assertEqual(proof['category'], category)
+
+    def test_guard_binding_rejects_foreign_run_and_purpose_before_capabilities(self):
+        with mock.patch.object(l, 'file_hash', side_effect=AssertionError('capability called')):
+            for run_id, purpose in [('foreign', 'observe'), (RUN, 'arbitrary')]:
+                with self.subTest(run=run_id, purpose=purpose), self.assertRaises(l.GuardError):
+                    l.guard_command(run_id, 'INGESTION_V1', purpose)
+
+
 if __name__ == '__main__':
     unittest.main()
