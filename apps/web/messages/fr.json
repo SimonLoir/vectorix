@@ -660,6 +660,8 @@
             "accessKey": "Identifiant d’accès S3",
             "secretKey": "Secret S3",
             "keepSecret": "Laisser vide pour conserver",
+            "reenterSecret": "Requis, car la destination a changé",
+            "destinationSecretHint": "Modifier l’URL du service, le bucket ou le mode d’adressage S3 peut changer la destination des requêtes authentifiées. Saisissez à nouveau tous les secrets requis pour enregistrer cette modification.",
             "apiKey": "Clé API",
             "optionalKey": "Clé API (facultative)",
             "removeKey": "Supprimer la clé API actuelle",

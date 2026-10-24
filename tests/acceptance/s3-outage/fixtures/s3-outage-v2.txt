@@ -1,0 +1,5 @@
+S3 recovery replacement — version 2
+
+FR : Le second original est enregistré avant la panne. Son extraction doit échouer proprement pendant l'indisponibilité, conserver sa réservation et reprendre sur la même version après le retour du stockage. Le nouveau repère est SOURCE-V2-RIVIERE-942.
+
+EN: This second original is stored before the outage. Extraction must fail safely while storage is unavailable, retain its reservation and retry the same version after storage returns. The replacement marker is SOURCE-V2-RIVER-942. Different words and the bridge 🌉 distinguish these canonical bytes from version one.
