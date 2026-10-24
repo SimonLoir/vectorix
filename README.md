@@ -42,7 +42,7 @@ pnpm admin:grant your-email@example.com
 - Password and passkey authentication, password reset, TOTP two-factor authentication and recovery codes, session management, and account deletion.
 - Organizations, members, invitations, and custom roles. Organization API-key permissions are intersected with the issuing member's current roles on every admission.
 - Sign-in notifications: inbox, read/unread status, personal preferences, email, and Web Push. Workers process durable delivery receipts with bounded retries.
-- A licensed feature catalog, an optional external provider, and explicit manual grants by a super administrator. Provider outages or expired entitlements never grant feature access.
+- A licensed feature catalog, an optional external provider, and explicit manual grants by a super administrator. Provider outages or expired entitlements never resolve as granted. **Entitlements are informational for now:** product modules, including RAG, do not yet enforce license grants or expiry. Current membership, organization permissions, API-key scopes and collection grants still govern access. The `featureAuthorized` guards in `@routers/utils/vectorix-features` are ready for a module to opt in; the admin and dashboard licensing pages say so.
 - User and organization administration, organization suspension, permission management, and audit logging.
 - Shared UI components, light/dark themes, and authentication flows translated into French, English, and Dutch.
 - RAG catalog dashboard and APIs: encrypted S3/Ollama/Cohere/Voyage/OpenAI/Mistral credentials, groups, collection profiles with revision history and grants, scoped API keys, quota/usage views, and transactional audit. The admin panel edits organization quota overrides; the document library provides web upload, inspection, version replacement and deletion with durable cleanup.
@@ -264,6 +264,7 @@ Implement changes on a dedicated `codex/*` branch and open a pull request agains
 - [Bounded member and API-key lists](docs/member-key-list-windows.md): optional `offset`/`limit`/`query` windows with `total`, and paged dashboard tables.
 - [Versioned API rate limiting](docs/api-rate-limiting.md): Redis-shared personal and authorized provider-operation request budgets, 429 responses with `Retry-After`, and configuration.
 - [Authentication rate limiting](docs/auth-rate-limiting.md): Redis-shared opaque Better Auth counters, preserved native second-factor rules, reset budgets and `VECTORIX_TRUSTED_PROXIES` client-address resolution.
+- [Dokploy deployment](deploy/dokploy/README.md): production Swarm and Compose examples, import template, explicit HTTPS setup, startup, updates and backups.
 - [Supply-chain and image hardening](docs/supply-chain.md): Dependabot, CodeQL, Trivy image scans, digest-pinned bases, root-owned runtime files and health checks.
 - [Redis connections](docs/redis-connections.md): encoded URL credentials, raw fallback precedence and isolated queue/worker acceptance.
 - [Canonical password-reset links](docs/password-reset-links.md): server-only destinations, strict configuration precedence and reset-request acceptance.
