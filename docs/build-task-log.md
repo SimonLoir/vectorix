@@ -1067,3 +1067,13 @@ PR76 independent review corrections are prepared in isolated branch `codex/pr76-
 The correction then integrates verified main `1aebd954f0295fb2f64bb353137381cf06993ecc`, retaining the credential destination restrictions, all six FormData tests, disabled S3-outage guards and the Prisma 7.10.1 toolchain. Both build-log histories are preserved. Final-base checks and fresh exact-head CI are pending at this checkpoint.
 
 Final-base PR76 validation on main `1aebd954f0295fb2f64bb353137381cf06993ecc` passes frozen installation, ignored client generation, all 24 type and 24 lint tasks, 176 API/auth/backend tests (including the six inherited credential form cases), 11 utility tests, all five real Redis-runner cases, and API/worker production builds. Production auth, client-address and queue limiter sources remain byte-identical to the independently reviewed correction; the lockfile preserves the 7.10.1 toolchain and freezes without edits. The earlier 316-test catalog and four-build result belongs to the correction base, not this final integrated tree. The workspace type command generates the previously absent web declaration; a post-build absence assertion detects it after both builds pass. Only that known generated file is removed, admin bytes/mode still match the saved baseline, and the wrapper correction is recorded separately. Fresh exact-head catalog and all six images remain required before merge.
+
+## Production deployment with Dokploy
+
+- [x] Publish multi-architecture (`linux/amd64`, `linux/arm64`) images for `main` at `1aebd95` to `pxdv.be/vectorix/*` as `sha-1aebd954f0295fb2f64bb353137381cf06993ecc` and `latest`.
+- [x] Add a Dokploy Stack definition, environment template and deployment guide in [`deploy/dokploy/`](../deploy/dokploy/README.md).
+- [ ] First production deployment and acceptance on vectorix.app.
+
+The _Docker images_ workflow skipped publication because the registry secrets are not configured, so the images were published manually from a clean worktree. BuildKit's direct multi-platform push failed against `pxdv.be` (`blob upload unknown`, then HTTP 499 after about 60 seconds of upload). Each platform was therefore built into the local engine, pushed with chunked `docker push`, and joined with `docker buildx imagetools create`. This leaves intermediate `sha-…-amd64` and `sha-…-arm64` tags in the registry. `docker buildx imagetools inspect` confirms both platforms for all six images under both tags. The images are the same commit that passed catalog and six-image CI; they were not separately run after publication.
+
+The stack renders with `docker stack config` using placeholder values. It has not been deployed to a server.

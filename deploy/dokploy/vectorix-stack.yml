@@ -1,0 +1,264 @@
+# Vectorix production stack for a Dokploy "Docker Compose" service of type "Stack"
+# (docker stack deploy). Every ${VAR} comes from the service Environment tab; see
+# production.env.example and README.md in this directory. Pin VECTORIX_TAG to an
+# immutable sha-<commit> image tag.
+
+x-app-env: &app-env
+    NODE_ENV: production
+    DATABASE_URL: postgresql://vectorix:${POSTGRES_PASSWORD}@postgres:5432/vectorix
+    REDIS_URL: redis://:${REDIS_PASSWORD}@redis:6379
+    VECTOR_DATABASE_URL: postgresql://vectorix_runtime:${VECTOR_RUNTIME_PASSWORD}@postgres-vector:5432/vectorix_vectors
+    VECTOR_DATABASE_PROVISIONING_URL: postgresql://vectorix_indexer:${VECTOR_PROVISIONER_PASSWORD}@postgres-vector:5432/vectorix_vectors
+    VECTOR_DATABASE_SCHEMA: vector_collections
+    API_URL: https://api.vectorix.app
+    BETTER_AUTH_URL: https://api.vectorix.app
+    VECTORIX_WEB_URL: https://vectorix.app
+    TRUSTED_ORIGINS: https://vectorix.app,https://admin.vectorix.app,https://api.vectorix.app
+    ROOT_DOMAIN: vectorix.app
+    # Subnet of dokploy-network, so auth rate limits see real client addresses (images from 76ca3ed on).
+    VECTORIX_TRUSTED_PROXIES: ${VECTORIX_TRUSTED_PROXIES}
+    BETTER_AUTH_SECRET: ${BETTER_AUTH_SECRET}
+    ENCRYPTION_SECRET: ${ENCRYPTION_SECRET}
+    ALLOW_ACCOUNT_CREATION: ${ALLOW_ACCOUNT_CREATION}
+    ALLOW_ORGANIZATION_CREATION: ${ALLOW_ORGANIZATION_CREATION}
+    PASSKEY_RP_ID: vectorix.app
+    PASSKEY_RP_NAME: Vectorix
+    PASSKEY_ORIGINS: https://vectorix.app,https://admin.vectorix.app
+    VECTORIX_TIME_ZONE: Europe/Brussels
+    VECTORIX_DEFAULT_S3_ENDPOINT: http://rustfs:9000
+    VECTORIX_DEFAULT_S3_REGION: us-east-1
+    VECTORIX_DEFAULT_S3_BUCKET: vectorix-documents
+    VECTORIX_DEFAULT_S3_ACCESS_KEY_ID: ${S3_ACCESS_KEY_ID}
+    VECTORIX_DEFAULT_S3_SECRET_ACCESS_KEY: ${S3_SECRET_ACCESS_KEY}
+    VECTORIX_DEFAULT_S3_FORCE_PATH_STYLE: 'true'
+    VECTORIX_S3_ALLOWED_ENDPOINTS: ${VECTORIX_S3_ALLOWED_ENDPOINTS}
+    VECTORIX_EMBEDDING_ALLOWED_ENDPOINTS: ${VECTORIX_EMBEDDING_ALLOWED_ENDPOINTS}
+    VECTORIX_DEFAULT_OLLAMA_ENDPOINT: ${VECTORIX_DEFAULT_OLLAMA_ENDPOINT}
+    VECTORIX_DEFAULT_OLLAMA_API_KEY: ${VECTORIX_DEFAULT_OLLAMA_API_KEY}
+    VECTORIX_DEFAULT_OPENAI_ENDPOINT: https://api.openai.com/v1
+    VECTORIX_DEFAULT_OPENAI_API_KEY: ${VECTORIX_DEFAULT_OPENAI_API_KEY}
+    VECTORIX_DEFAULT_MISTRAL_ENDPOINT: https://api.mistral.ai/v1
+    VECTORIX_DEFAULT_MISTRAL_API_KEY: ${VECTORIX_DEFAULT_MISTRAL_API_KEY}
+    VECTORIX_DEFAULT_COHERE_ENDPOINT: https://api.cohere.com
+    VECTORIX_DEFAULT_COHERE_API_KEY: ${VECTORIX_DEFAULT_COHERE_API_KEY}
+    VECTORIX_DEFAULT_VOYAGE_ENDPOINT: https://api.voyageai.com
+    VECTORIX_DEFAULT_VOYAGE_API_KEY: ${VECTORIX_DEFAULT_VOYAGE_API_KEY}
+    VECTORIX_DEFAULT_RESEND_API_KEY: ${RESEND_API_KEY}
+    VECTORIX_DEFAULT_RESEND_SENDER_EMAIL: ${MAIL_SENDER}
+    VECTORIX_DEFAULT_SMTP_HOST: ${SMTP_HOST}
+    VECTORIX_DEFAULT_SMTP_PORT: ${SMTP_PORT}
+    VECTORIX_DEFAULT_SMTP_USER: ${SMTP_USER}
+    VECTORIX_DEFAULT_SMTP_PASSWORD: ${SMTP_PASSWORD}
+    VECTORIX_DEFAULT_SMTP_SENDER_EMAIL: ${MAIL_SENDER}
+    VECTORIX_WEB_PUSH_ENABLED: 'false'
+
+# Stateful services stay on the node labelled vectorix.data=true (local volumes are per node).
+x-data-node: &data-node
+    placement:
+        constraints: [node.labels.vectorix.data == true]
+    restart_policy:
+        condition: any
+
+services:
+    postgres:
+        image: postgres:18-alpine@sha256:898c60cb390d1085bc97bdd6a1ae968757421df394b071848b52b1c09c89d6a5
+        environment:
+            POSTGRES_USER: vectorix
+            POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+            POSTGRES_DB: vectorix
+        volumes: [postgres-data:/var/lib/postgresql]
+        networks: [internal]
+        healthcheck:
+            test:
+                ['CMD-SHELL', 'pg_isready -h 127.0.0.1 -U vectorix -d vectorix']
+            interval: 10s
+            timeout: 5s
+            retries: 10
+        deploy: *data-node
+
+    redis:
+        image: redis:8-alpine@sha256:0bf6577d7774e592b29d093e3ac9390eb91e13d72c21e506afce736de5e0eeb0
+        command:
+            [
+                'redis-server',
+                '--requirepass',
+                '${REDIS_PASSWORD}',
+                '--appendonly',
+                'yes',
+            ]
+        volumes: [redis-data:/data]
+        networks: [internal]
+        deploy: *data-node
+
+    postgres-vector:
+        image: pxdv.be/vectorix/postgres-vector:${VECTORIX_TAG}
+        environment:
+            POSTGRES_USER: postgres
+            POSTGRES_PASSWORD: ${VECTOR_POSTGRES_PASSWORD}
+            POSTGRES_DB: vectorix_vectors
+            VECTOR_PROVISIONER_PASSWORD: ${VECTOR_PROVISIONER_PASSWORD}
+            VECTOR_RUNTIME_PASSWORD: ${VECTOR_RUNTIME_PASSWORD}
+        volumes: [vector-data:/var/lib/postgresql]
+        networks: [internal]
+        healthcheck:
+            test:
+                [
+                    'CMD-SHELL',
+                    'pg_isready -h 127.0.0.1 -U postgres -d vectorix_vectors',
+                ]
+            interval: 10s
+            timeout: 5s
+            retries: 20
+        deploy: *data-node
+
+    rustfs:
+        image: rustfs/rustfs:1.0.3@sha256:9ca9559533b537d10482fe923288b676ad08f92a7069d9a17327fbae3cab688b
+        environment:
+            RUSTFS_VOLUMES: /data
+            RUSTFS_ADDRESS: 0.0.0.0:9000
+            RUSTFS_CONSOLE_ENABLE: 'false'
+            RUSTFS_ACCESS_KEY: ${S3_ACCESS_KEY_ID}
+            RUSTFS_SECRET_KEY: ${S3_SECRET_ACCESS_KEY}
+            RUSTFS_REGION: us-east-1
+            RUSTFS_OBS_LOG_DIRECTORY: /logs
+        volumes: [rustfs-data:/data, rustfs-logs:/logs]
+        networks: [internal]
+        deploy: *data-node
+
+    # One-off: creates the private bucket if missing, then exits (re-runs harmlessly on redeploy).
+    s3-init:
+        image: amazon/aws-cli:2.31.22@sha256:bf253be91e12d49ba1bd6dc939a76ea9777901772032692b14639e643118e1c1
+        environment:
+            AWS_ACCESS_KEY_ID: ${S3_ACCESS_KEY_ID}
+            AWS_SECRET_ACCESS_KEY: ${S3_SECRET_ACCESS_KEY}
+            AWS_DEFAULT_REGION: us-east-1
+            AWS_ENDPOINT_URL: http://rustfs:9000
+            AWS_EC2_METADATA_DISABLED: 'true'
+        entrypoint:
+            - /bin/sh
+            - -c
+            - >-
+                aws configure set default.s3.addressing_style path &&
+                (aws s3api head-bucket --bucket vectorix-documents ||
+                aws s3api create-bucket --bucket vectorix-documents)
+        networks: [internal]
+        deploy:
+            restart_policy:
+                condition: on-failure
+                delay: 10s
+                max_attempts: 30
+
+    # One-off: applies Prisma migrations, then exits. API/workers restart until it has run.
+    migrator:
+        image: pxdv.be/vectorix/migrator:${VECTORIX_TAG}
+        environment:
+            DATABASE_URL: postgresql://vectorix:${POSTGRES_PASSWORD}@postgres:5432/vectorix
+        networks: [internal]
+        deploy:
+            restart_policy:
+                condition: on-failure
+                delay: 10s
+                max_attempts: 30
+
+    api:
+        image: pxdv.be/vectorix/api:${VECTORIX_TAG}
+        environment:
+            <<: *app-env
+            PORT: '3001'
+        networks: [internal, dokploy-network]
+        deploy:
+            replicas: 1
+            update_config:
+                order: start-first
+                failure_action: rollback
+            restart_policy:
+                condition: any
+                delay: 5s
+            labels:
+                - traefik.enable=true
+                - traefik.docker.network=dokploy-network
+                - traefik.http.routers.vectorix-api.rule=Host(`api.vectorix.app`)
+                - traefik.http.routers.vectorix-api.entrypoints=websecure
+                - traefik.http.routers.vectorix-api.tls.certresolver=letsencrypt
+                - traefik.http.routers.vectorix-api.middlewares=vectorix-hsts
+                - traefik.http.routers.vectorix-api-http.rule=Host(`api.vectorix.app`)
+                - traefik.http.routers.vectorix-api-http.entrypoints=web
+                - traefik.http.routers.vectorix-api-http.middlewares=redirect-to-https@file
+                - traefik.http.services.vectorix-api.loadbalancer.server.port=3001
+                - traefik.http.middlewares.vectorix-hsts.headers.stsSeconds=31536000
+                - traefik.http.middlewares.vectorix-hsts.headers.stsIncludeSubdomains=true
+
+    workers:
+        image: pxdv.be/vectorix/workers:${VECTORIX_TAG}
+        environment: *app-env
+        networks: [internal]
+        deploy:
+            replicas: 1
+            restart_policy:
+                condition: any
+                delay: 5s
+
+    web:
+        image: pxdv.be/vectorix/web:${VECTORIX_TAG}
+        environment:
+            <<: *app-env
+            PORT: '3000'
+        networks: [internal, dokploy-network]
+        deploy:
+            replicas: 1
+            update_config:
+                order: start-first
+                failure_action: rollback
+            restart_policy:
+                condition: any
+                delay: 5s
+            labels:
+                - traefik.enable=true
+                - traefik.docker.network=dokploy-network
+                - traefik.http.routers.vectorix-web.rule=Host(`vectorix.app`)
+                - traefik.http.routers.vectorix-web.entrypoints=websecure
+                - traefik.http.routers.vectorix-web.tls.certresolver=letsencrypt
+                - traefik.http.routers.vectorix-web.middlewares=vectorix-hsts
+                - traefik.http.routers.vectorix-web-http.rule=Host(`vectorix.app`)
+                - traefik.http.routers.vectorix-web-http.entrypoints=web
+                - traefik.http.routers.vectorix-web-http.middlewares=redirect-to-https@file
+                - traefik.http.services.vectorix-web.loadbalancer.server.port=3000
+
+    admin:
+        image: pxdv.be/vectorix/admin:${VECTORIX_TAG}
+        environment:
+            <<: *app-env
+            PORT: '3006'
+        networks: [internal, dokploy-network]
+        deploy:
+            replicas: 1
+            update_config:
+                order: start-first
+                failure_action: rollback
+            restart_policy:
+                condition: any
+                delay: 5s
+            labels:
+                - traefik.enable=true
+                - traefik.docker.network=dokploy-network
+                - traefik.http.routers.vectorix-admin.rule=Host(`admin.vectorix.app`)
+                - traefik.http.routers.vectorix-admin.entrypoints=websecure
+                - traefik.http.routers.vectorix-admin.tls.certresolver=letsencrypt
+                - traefik.http.routers.vectorix-admin.middlewares=vectorix-hsts
+                - traefik.http.routers.vectorix-admin-http.rule=Host(`admin.vectorix.app`)
+                - traefik.http.routers.vectorix-admin-http.entrypoints=web
+                - traefik.http.routers.vectorix-admin-http.middlewares=redirect-to-https@file
+                - traefik.http.services.vectorix-admin.loadbalancer.server.port=3006
+
+networks:
+    internal:
+        driver: overlay
+    dokploy-network:
+        external: true
+
+volumes:
+    postgres-data:
+    redis-data:
+    vector-data:
+    rustfs-data:
+    rustfs-logs:
