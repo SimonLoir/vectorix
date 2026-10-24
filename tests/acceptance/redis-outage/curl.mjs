@@ -108,14 +108,30 @@ export function runPrivateCurl(input, execute = spawnSync) {
             /^[a-f\d]{64}$/u.test(curl.sha256),
         'S3_OUTAGE_CURL_PIN'
     );
-    const bin = fs.lstatSync(curl.path);
-    need(
-        bin.isFile() &&
-            (bin.mode & 0o022) === 0 &&
-            bin.size <= 16 * 1024 * 1024 &&
-            sha(fs.readFileSync(curl.path)) === curl.sha256,
-        'S3_OUTAGE_CURL_PIN'
+    const descriptor = fs.openSync(
+        curl.path,
+        fs.constants.O_RDONLY | fs.constants.O_NOFOLLOW
     );
+    try {
+        const bin = fs.fstatSync(descriptor);
+        need(
+            bin.isFile() &&
+                bin.uid === 0 &&
+                (bin.mode & 0o022) === 0 &&
+                bin.size > 0 &&
+                bin.size <= 16 * 1024 * 1024,
+            'S3_OUTAGE_CURL_PIN'
+        );
+        const bytes = fs.readFileSync(descriptor);
+        need(
+            bytes.length === bin.size &&
+                bytes.length <= 16 * 1024 * 1024 &&
+                sha(bytes) === curl.sha256,
+            'S3_OUTAGE_CURL_PIN'
+        );
+    } finally {
+        fs.closeSync(descriptor);
+    }
     need(
         Array.isArray(headers) &&
             headers.length <= 6 &&

@@ -320,3 +320,170 @@ test('fixed original reader enforces frozen byte/hash pins and refuses unknown f
     tampered.inputs.textFixtures['s3-outage-v1.txt'].sha256 = '0'.repeat(64);
     assert.throws(() => readPinnedOriginal(tampered, 1), /FIXTURE_PIN/u);
 });
+
+test('curl pin reads the opened inode when the pathname is replaced before hashing', (t) => {
+    const input = fixture(),
+        binaryDirectory = fs.mkdtempSync(
+            path.join(os.tmpdir(), 'redis-curl-pin-')
+        ),
+        binary = path.join(binaryDirectory, 'curl'),
+        replacement = path.join(binaryDirectory, 'replacement'),
+        approved = Buffer.from('approved synthetic executable'),
+        changed = Buffer.from('replaced synthetic executable'),
+        open = fs.openSync,
+        stat = fs.fstatSync,
+        read = fs.readFileSync;
+    fs.writeFileSync(binary, approved, { mode: 0o755 });
+    fs.writeFileSync(replacement, changed, { mode: 0o755 });
+    input.curl.sha256 = createHash('sha256').update(approved).digest('hex');
+    let descriptor,
+        reads = 0,
+        calls = 0;
+    t.mock.method(fs, 'openSync', (file, ...args) => {
+        if (file === input.curl.path) {
+            descriptor = open(binary, ...args);
+            return descriptor;
+        }
+        return open(file, ...args);
+    });
+    t.mock.method(fs, 'fstatSync', (file, ...args) => {
+        const info = stat(file, ...args);
+        if (file !== descriptor) return info;
+        fs.renameSync(replacement, binary);
+        // The controlled inode models the fixed system binary's root ownership.
+        return { ...info, uid: 0, isFile: () => info.isFile() };
+    });
+    t.mock.method(fs, 'readFileSync', (file, ...args) => {
+        if (file === descriptor) reads++;
+        // A pathname read would observe the different replacement inode.
+        return read(file === input.curl.path ? binary : file, ...args);
+    });
+    try {
+        const result = enabled.runPrivateCurl(input, () => {
+            calls++;
+            assert.throws(() => stat(descriptor), { code: 'EBADF' });
+            return { status: 0, stdout: response };
+        });
+        assert.equal(result.status, 200);
+        assert.equal(calls, 1);
+        assert.equal(reads, 1);
+        assert.deepEqual(read(binary), changed);
+        assert.deepEqual(fs.readdirSync(input.directory), []);
+    } finally {
+        t.mock.restoreAll();
+        fs.rmSync(input.directory, { recursive: true });
+        fs.rmSync(binaryDirectory, { recursive: true });
+    }
+});
+
+test('curl pin refuses a symlink at open before any child or secret file', (t) => {
+    const input = fixture(),
+        binaryDirectory = fs.mkdtempSync(
+            path.join(os.tmpdir(), 'redis-curl-link-')
+        ),
+        link = path.join(binaryDirectory, 'curl'),
+        open = fs.openSync;
+    fs.symlinkSync(input.curl.path, link);
+    let calls = 0,
+        binaryOpens = 0;
+    t.mock.method(fs, 'openSync', (file, ...args) => {
+        if (file === input.curl.path) {
+            binaryOpens++;
+            return open(link, ...args);
+        }
+        return open(file, ...args);
+    });
+    try {
+        assert.throws(
+            () =>
+                enabled.runPrivateCurl(input, () => {
+                    calls++;
+                }),
+            { code: 'ELOOP' }
+        );
+        assert.equal(binaryOpens, 1);
+        assert.equal(calls, 0);
+        assert.deepEqual(fs.readdirSync(input.directory), []);
+    } finally {
+        t.mock.restoreAll();
+        fs.rmSync(input.directory, { recursive: true });
+        fs.rmSync(binaryDirectory, { recursive: true });
+    }
+});
+
+test('curl pin closes its descriptor on metadata, changed-size, hash and read failures without dispatch', (t) => {
+    for (const kind of [
+        'type',
+        'owner',
+        'mode',
+        'size',
+        'changed-size',
+        'hash',
+        'read',
+    ]) {
+        const input = fixture(),
+            open = fs.openSync,
+            stat = fs.fstatSync,
+            read = fs.readFileSync,
+            close = fs.closeSync;
+        let descriptor,
+            reads = 0,
+            closes = 0,
+            calls = 0;
+        if (kind === 'hash') input.curl.sha256 = '0'.repeat(64);
+        t.mock.method(fs, 'openSync', (file, ...args) => {
+            const value = open(file, ...args);
+            if (file === input.curl.path) descriptor = value;
+            return value;
+        });
+        t.mock.method(fs, 'fstatSync', (file, ...args) => {
+            const info = stat(file, ...args);
+            if (file !== descriptor) return info;
+            return {
+                ...info,
+                uid: kind === 'owner' ? 1000 : 0,
+                mode: kind === 'mode' ? 0o100777 : info.mode,
+                size:
+                    kind === 'size'
+                        ? 16 * 1024 * 1024 + 1
+                        : kind === 'changed-size'
+                          ? info.size - 1
+                          : info.size,
+                isFile: () => kind !== 'type' && info.isFile(),
+            };
+        });
+        t.mock.method(fs, 'readFileSync', (file, ...args) => {
+            if (file === descriptor) {
+                reads++;
+                if (kind === 'read') throw new Error('CONTROLLED_READ_FAILURE');
+            }
+            return read(file, ...args);
+        });
+        t.mock.method(fs, 'closeSync', (file) => {
+            if (file === descriptor) closes++;
+            return close(file);
+        });
+        try {
+            assert.throws(
+                () =>
+                    enabled.runPrivateCurl(input, () => {
+                        calls++;
+                    }),
+                kind === 'read'
+                    ? /CONTROLLED_READ_FAILURE/u
+                    : /S3_OUTAGE_CURL_PIN/u
+            );
+            assert.equal(
+                reads,
+                ['changed-size', 'hash', 'read'].includes(kind) ? 1 : 0
+            );
+            assert.equal(closes, 1);
+            assert.throws(() => stat(descriptor), { code: 'EBADF' });
+            assert.equal(calls, 0);
+            assert.deepEqual(fs.readdirSync(input.directory), []);
+        } finally {
+            t.mock.restoreAll();
+            fs.rmSync(input.directory, { recursive: true });
+        }
+    }
+});
