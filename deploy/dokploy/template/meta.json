@@ -1,0 +1,13 @@
+{
+    "id": "vectorix",
+    "name": "Vectorix",
+    "version": "operator-selected",
+    "description": "Vectorix is a multi-tenant RAG platform: private document libraries, PDF/DOCX extraction, hybrid vector search and organization administration, deployed by Dokploy with PostgreSQL, pgvector, Redis and RustFS.",
+    "logo": "logo.svg",
+    "links": {
+        "github": "https://github.com/SimonLoir/vectorix",
+        "website": "",
+        "docs": "https://github.com/SimonLoir/vectorix/tree/main/deploy/dokploy"
+    },
+    "tags": ["ai", "search", "documents"]
+}
