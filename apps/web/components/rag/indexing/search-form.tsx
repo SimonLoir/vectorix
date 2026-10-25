@@ -146,7 +146,7 @@ function HomeSearchBar({
                     required
                     maxLength={4000}
                     placeholder={tr('queryPlaceholder')}
-                    className='h-16 min-w-0 border-0 bg-transparent px-1 text-lg shadow-none focus-visible:ring-0 sm:h-20 sm:text-2xl'
+                    className='h-16 min-w-0 border-0 bg-transparent px-1 text-lg shadow-none focus-visible:ring-0 sm:h-20 sm:text-2xl md:text-2xl'
                     value={query}
                     onChange={
                         onQueryChange
