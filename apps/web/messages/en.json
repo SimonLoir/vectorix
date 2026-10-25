@@ -489,6 +489,61 @@
         "loggedOut": "Logged out"
     },
     "rag": {
+        "editor": {
+            "description": "Create a collection in a few focused steps. Review every setting before saving.",
+            "progress": "Collection setup steps",
+            "steps": {
+                "details": "Details",
+                "profile": "Profile",
+                "review": "Review"
+            },
+            "titles": {
+                "details": "Give your collection a name",
+                "profile": "Choose how to search your content",
+                "review": "Ready to save your collection"
+            },
+            "mode": "Profile editing mode",
+            "simple": "Simple",
+            "advanced": "Advanced",
+            "sections": "Advanced profile sections",
+            "embedding": "Embedding",
+            "chunking": "Chunking",
+            "metadata": "Metadata",
+            "recommendationHint": "Choose a reviewed model configuration. Availability and capabilities are checked against the saved provider binding after creation; these recommendations do not verify credentials or installed models.",
+            "recommended": "Recommended settings",
+            "summary": "Profile at a glance",
+            "fixedSettings": "Cosine similarity · float32 vectors. Chunk sizes are estimates, not native model tokens.",
+            "dimensionRange": "Reviewed dimensions: {minimum, number}–{maximum, number}.",
+            "dimensionFixedHint": "Use a dimension supported by the selected model.",
+            "hnswHint": "Float32 HNSW is limited to 2,000 dimensions; use DiskANN above that size.",
+            "discovery": "Discover models from the saved provider",
+            "draftPreserved": "Your draft is kept when switching sections.",
+            "resetTitle": "Apply these profile changes?",
+            "resetDescription": "Your customized values will be replaced as shown below. Nothing is saved until you confirm the final review.",
+            "fieldCount": "{count, plural, =0 {No fields} one {# field} other {# fields}}",
+            "valueChange": "{before} → {after}",
+            "keepSettings": "Keep my settings",
+            "applyDefaults": "Apply changes",
+            "back": "Back",
+            "continue": "Continue",
+            "saveProfile": "Save profile",
+            "createCollection": "Create collection",
+            "rebuildHint": "This saves a new profile revision. The active index keeps serving until you review and run a rebuild.",
+            "errors": {
+                "name": "Enter a collection name of 1–200 characters.",
+                "description": "Keep the description within 2,000 characters.",
+                "metadata": "Use up to 20 unique metadata keys: lowercase letters, numbers and underscores, starting with a letter.",
+                "dimensions": "Choose dimensions supported by the reviewed model.",
+                "hnsw": "HNSW supports at most 2,000 float32 dimensions. Choose DiskANN or reduce the dimensions.",
+                "preset": "Hosted providers require the Generic embedding preset.",
+                "chunking": "Check the chunk sizes: minimum ≤ target ≤ maximum, overlap < target, and parent maximum ≥ child maximum.",
+                "invalid": "Check the profile values before continuing.",
+                "unsupportedSimple": "This model has no reviewed defaults. Keep Advanced mode or choose a reviewed model."
+            },
+            "allSettings": "All profile settings",
+            "noPreparation": "No additional prefix",
+            "noMetadata": "No metadata fields"
+        },
         "common": {
             "saved": "Changes saved",
             "failed": "The change could not be saved.",
@@ -548,7 +603,16 @@
             "bindingHint": "The profile uses the selected credentials for this provider, or platform credentials when the organization has no configuration. Saving changes creates a new revision.",
             "dimensionsRevision": "{dimensions, number} dimensions · Revision {revision, number}",
             "deleteDescription": "{name} will no longer be accessible. Library documents will be retained.",
-            "accessSummary": "Your explicit access: reading {read, select, allowed {allowed} other {not granted}} · document management {documents, select, allowed {allowed} other {not granted}}. Catalog administration does not automatically grant content access."
+            "accessSummary": "Your explicit access: reading {read, select, allowed {allowed} other {not granted}} · document management {documents, select, allowed {allowed} other {not granted}}. Catalog administration does not automatically grant content access.",
+            "activeTab": "Active collections",
+            "deletedTab": "Deleted collections",
+            "libraryViews": "Collection views",
+            "overviewTab": "Overview",
+            "workspaceTab": "Indexing & search",
+            "accessTab": "Access",
+            "historyTab": "History",
+            "profileDetails": "View full configuration",
+            "revisionLabel": "Saved revision"
         },
         "history": {
             "title": "Profile history",
@@ -715,6 +779,12 @@
             "count": "{count, plural, =0 {No authorized collections} one {# authorized collection} other {# authorized collections}}"
         },
         "documents": {
+            "workspace": {
+                "navigation": "Document views",
+                "source": "Source",
+                "versions": "Versions",
+                "sourceUnavailable": "The published text is not available. Check processing or the latest version."
+            },
             "title": "Document library",
             "description": "Upload and inspect documents shared by your organization. Readers see documents from their authorized collections.",
             "detailTitle": "Document",

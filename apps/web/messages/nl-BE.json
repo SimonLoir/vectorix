@@ -489,6 +489,61 @@
         "loggedOut": "Afgemeld"
     },
     "rag": {
+        "editor": {
+            "description": "Maak een collectie in enkele gerichte stappen. Controleer alle instellingen voordat je opslaat.",
+            "progress": "Stappen voor het instellen van de collectie",
+            "steps": {
+                "details": "Gegevens",
+                "profile": "Profiel",
+                "review": "Controle"
+            },
+            "titles": {
+                "details": "Geef je collectie een naam",
+                "profile": "Kies hoe je de inhoud wilt doorzoeken",
+                "review": "Je collectie is klaar om op te slaan"
+            },
+            "mode": "Bewerkingsmodus voor het profiel",
+            "simple": "Eenvoudig",
+            "advanced": "Geavanceerd",
+            "sections": "Geavanceerde profielonderdelen",
+            "embedding": "Embedding",
+            "chunking": "Opdeling",
+            "metadata": "Metadata",
+            "recommendationHint": "Kies een beoordeelde modelconfiguratie. Beschikbaarheid en mogelijkheden worden na het aanmaken gecontroleerd via de opgeslagen providerkoppeling. Deze aanbevelingen controleren geen toegangsgegevens of geïnstalleerde modellen.",
+            "recommended": "Aanbevolen instellingen",
+            "summary": "Profiel in één oogopslag",
+            "fixedSettings": "Cosinusgelijkenis · float32-vectoren. Passagegroottes zijn schattingen en worden niet met de tokenizer van het model berekend.",
+            "dimensionRange": "Beoordeelde dimensies: {minimum, number}–{maximum, number}.",
+            "dimensionFixedHint": "Gebruik een dimensie die het gekozen model ondersteunt.",
+            "hnswHint": "HNSW met float32 is beperkt tot 2.000 dimensies. Gebruik DiskANN voor grotere vectoren.",
+            "discovery": "Modellen van de opgeslagen provider ophalen",
+            "draftPreserved": "Je concept blijft behouden wanneer je van onderdeel wisselt.",
+            "resetTitle": "Deze profielwijzigingen toepassen?",
+            "resetDescription": "Je aangepaste waarden worden vervangen zoals hieronder getoond. Er wordt niets opgeslagen voordat je de laatste controle bevestigt.",
+            "fieldCount": "{count, plural, =0 {Geen velden} one {# veld} other {# velden}}",
+            "valueChange": "{before} → {after}",
+            "keepSettings": "Mijn instellingen behouden",
+            "applyDefaults": "Wijzigingen toepassen",
+            "back": "Terug",
+            "continue": "Doorgaan",
+            "saveProfile": "Profiel opslaan",
+            "createCollection": "Collectie aanmaken",
+            "rebuildHint": "Hiermee sla je een nieuwe profielrevisie op. De actieve index blijft zoekopdrachten verwerken totdat je een heropbouw controleert en start.",
+            "errors": {
+                "name": "Voer een collectienaam van 1 tot 200 tekens in.",
+                "description": "Beperk de beschrijving tot 2.000 tekens.",
+                "metadata": "Gebruik maximaal 20 unieke metadatasleutels: kleine letters, cijfers en underscores, beginnend met een letter.",
+                "dimensions": "Kies dimensies die het beoordeelde model ondersteunt.",
+                "hnsw": "HNSW ondersteunt maximaal 2.000 float32-dimensies. Kies DiskANN of verminder het aantal dimensies.",
+                "preset": "Gehoste providers vereisen de embeddingvoorinstelling Generiek.",
+                "chunking": "Controleer de passagegroottes: minimum ≤ doel ≤ maximum, overlap < doel en maximum ouder ≥ maximum kind.",
+                "invalid": "Controleer de profielwaarden voordat je doorgaat.",
+                "unsupportedSimple": "Dit model heeft geen beoordeelde standaardinstellingen. Behoud de geavanceerde modus of kies een beoordeeld model."
+            },
+            "allSettings": "Alle profielinstellingen",
+            "noPreparation": "Geen extra voorvoegsel",
+            "noMetadata": "Geen metadatavelden"
+        },
         "common": {
             "saved": "Wijzigingen opgeslagen",
             "failed": "De wijziging kon niet worden opgeslagen.",
@@ -548,7 +603,16 @@
             "bindingHint": "Het profiel gebruikt de geselecteerde inloggegevens voor deze provider, of die van het platform als de organisatie geen configuratie heeft. Wijzigingen opslaan maakt een nieuwe revisie.",
             "dimensionsRevision": "{dimensions, number} dimensies · Revisie {revision, number}",
             "deleteDescription": "{name} is niet langer toegankelijk. Bibliotheekdocumenten blijven bewaard.",
-            "accessSummary": "Je expliciete toegang: lezen {read, select, allowed {toegestaan} other {niet verleend}} · documentbeheer {documents, select, allowed {toegestaan} other {niet verleend}}. Catalogusbeheer geeft niet automatisch toegang tot de inhoud."
+            "accessSummary": "Je expliciete toegang: lezen {read, select, allowed {toegestaan} other {niet verleend}} · documentbeheer {documents, select, allowed {toegestaan} other {niet verleend}}. Catalogusbeheer geeft niet automatisch toegang tot de inhoud.",
+            "activeTab": "Actieve collecties",
+            "deletedTab": "Verwijderde collecties",
+            "libraryViews": "Collectieweergaven",
+            "overviewTab": "Overzicht",
+            "workspaceTab": "Indexering en zoeken",
+            "accessTab": "Toegang",
+            "historyTab": "Geschiedenis",
+            "profileDetails": "Volledige configuratie bekijken",
+            "revisionLabel": "Opgeslagen revisie"
         },
         "history": {
             "title": "Profielgeschiedenis",
@@ -715,6 +779,12 @@
             "count": "{count, plural, =0 {Geen geautoriseerde collecties} one {# geautoriseerde collectie} other {# geautoriseerde collecties}}"
         },
         "documents": {
+            "workspace": {
+                "navigation": "Documentweergaven",
+                "source": "Bron",
+                "versions": "Versies",
+                "sourceUnavailable": "De gepubliceerde tekst is niet beschikbaar. Controleer de verwerking of de laatste versie."
+            },
             "title": "Documentbibliotheek",
             "description": "Upload en bekijk documenten van je organisatie. Lezers zien documenten uit hun toegestane collecties.",
             "detailTitle": "Document",

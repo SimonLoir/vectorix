@@ -22,14 +22,14 @@ export function CatalogPage({
         useVectorixPermissions();
     return (
         <DashboardPage className='space-y-6'>
-            <header>
-                <p className='mb-2 text-xs font-medium uppercase tracking-widest text-muted-foreground'>
+            <header className='vectorix-catalog-header'>
+                <p className='mb-3 inline-flex rounded-full border border-primary/15 bg-primary/8 px-3 py-1 text-xs font-semibold tracking-wide text-primary dark:text-accent-foreground'>
                     {tr('page.eyebrow')}
                 </p>
                 <h1 className='text-3xl font-semibold tracking-tight'>
                     {tr(titleKey)}
                 </h1>
-                <p className='mt-2 max-w-3xl text-muted-foreground'>
+                <p className='mt-2 max-w-3xl text-sm leading-relaxed text-muted-foreground sm:text-base'>
                     {tr(descriptionKey)}
                 </p>
             </header>

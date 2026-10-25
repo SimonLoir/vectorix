@@ -1,3 +1,5 @@
+import { MISTRAL_MODELS } from './reviewed-models';
+export { MISTRAL_MODELS } from './reviewed-models';
 import { createHash } from 'node:crypto';
 import { Buffer } from 'node:buffer';
 import { isDeepStrictEqual } from 'node:util';
@@ -19,11 +21,6 @@ import {
 } from './types';
 
 const aliases = ['mistral-embed', 'mistral-embed-2312'] as const;
-/** Reviewed fixed-dimension aliases only; 8000 is a conservative processing policy for the documented 8k context. */
-export const MISTRAL_MODELS = {
-    'mistral-embed': { contextTokens: 8000, dimensions: 1024 },
-    'mistral-embed-2312': { contextTokens: 8000, dimensions: 1024 },
-} as const;
 type MistralModel = keyof typeof MISTRAL_MODELS;
 const modelName = z
     .string()

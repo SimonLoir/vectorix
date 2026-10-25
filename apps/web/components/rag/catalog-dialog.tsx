@@ -9,6 +9,7 @@ import {
     DialogDescription,
 } from '@repo/ui/dialog';
 import { Button } from '@repo/ui/button';
+import { cn } from '@repo/ui/utils';
 import { ActionError, useCatalogAction } from './catalog-action';
 
 export function CatalogDialog({
@@ -17,12 +18,14 @@ export function CatalogDialog({
     busy = false,
     onClose,
     children,
+    framed = false,
 }: Readonly<{
     title: string;
     description: string;
     busy?: boolean;
     onClose: () => void;
     children: ReactNode;
+    framed?: boolean;
 }>) {
     const tr = useTranslations('rag');
     return (
@@ -33,7 +36,11 @@ export function CatalogDialog({
             }}
         >
             <DialogContent
-                className='sm:max-w-2xl'
+                className={cn(
+                    'sm:max-w-2xl',
+                    framed &&
+                        'flex flex-col gap-0 overflow-hidden p-0 sm:max-w-4xl'
+                )}
                 showCloseButton={!busy}
                 closeLabel={tr('common.close')}
                 onEscapeKeyDown={(event) => {
@@ -43,7 +50,13 @@ export function CatalogDialog({
                     if (busy) event.preventDefault();
                 }}
             >
-                <DialogHeader>
+                <DialogHeader
+                    className={
+                        framed
+                            ? 'shrink-0 border-b bg-info/5 px-6 py-5 pr-12 text-left'
+                            : undefined
+                    }
+                >
                     <DialogTitle>{title}</DialogTitle>
                     <DialogDescription>{description}</DialogDescription>
                 </DialogHeader>

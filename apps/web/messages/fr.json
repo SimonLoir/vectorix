@@ -489,6 +489,61 @@
         "loggedOut": "Déconnexion réussie"
     },
     "rag": {
+        "editor": {
+            "description": "Créez une collection en quelques étapes ciblées. Vérifiez chaque paramètre avant d’enregistrer.",
+            "progress": "Étapes de configuration de la collection",
+            "steps": {
+                "details": "Informations",
+                "profile": "Profil",
+                "review": "Vérification"
+            },
+            "titles": {
+                "details": "Donnez un nom à votre collection",
+                "profile": "Choisissez comment rechercher dans votre contenu",
+                "review": "Votre collection est prête à être enregistrée"
+            },
+            "mode": "Mode de modification du profil",
+            "simple": "Simple",
+            "advanced": "Avancé",
+            "sections": "Sections du profil avancé",
+            "embedding": "Embedding",
+            "chunking": "Découpage",
+            "metadata": "Métadonnées",
+            "recommendationHint": "Choisissez une configuration de modèle revue. La disponibilité et les capacités sont vérifiées avec la configuration du fournisseur liée au profil enregistré, après la création ; ces recommandations ne vérifient ni les identifiants ni les modèles installés.",
+            "recommended": "Paramètres recommandés",
+            "summary": "Le profil en bref",
+            "fixedSettings": "Similarité cosinus · vecteurs float32. La taille des passages est une estimation, pas un nombre de tokens calculé par le modèle.",
+            "dimensionRange": "Dimensions revues : {minimum, number}–{maximum, number}.",
+            "dimensionFixedHint": "Utilisez une dimension prise en charge par le modèle sélectionné.",
+            "hnswHint": "HNSW en float32 est limité à 2 000 dimensions ; utilisez DiskANN au-delà.",
+            "discovery": "Découvrir les modèles du fournisseur lié au profil enregistré",
+            "draftPreserved": "Votre brouillon est conservé lorsque vous changez de section.",
+            "resetTitle": "Appliquer ces modifications au profil ?",
+            "resetDescription": "Vos valeurs personnalisées seront remplacées comme indiqué ci-dessous. Rien n’est enregistré avant la confirmation de la vérification finale.",
+            "fieldCount": "{count, plural, =0 {Aucun champ} one {# champ} other {# champs}}",
+            "valueChange": "{before} → {after}",
+            "keepSettings": "Conserver mes paramètres",
+            "applyDefaults": "Appliquer les modifications",
+            "back": "Retour",
+            "continue": "Continuer",
+            "saveProfile": "Enregistrer le profil",
+            "createCollection": "Créer la collection",
+            "rebuildHint": "Cette action enregistre une nouvelle révision du profil. L’index actif continue de servir les recherches jusqu’à la vérification et au lancement d’une reconstruction.",
+            "errors": {
+                "name": "Saisissez un nom de collection de 1 à 200 caractères.",
+                "description": "Limitez la description à 2 000 caractères.",
+                "metadata": "Utilisez au maximum 20 clés de métadonnées uniques : lettres minuscules, chiffres et traits de soulignement, en commençant par une lettre.",
+                "dimensions": "Choisissez des dimensions prises en charge par le modèle revu.",
+                "hnsw": "HNSW prend en charge au maximum 2 000 dimensions float32. Choisissez DiskANN ou réduisez les dimensions.",
+                "preset": "Les fournisseurs hébergés nécessitent le préréglage d’embedding Générique.",
+                "chunking": "Vérifiez la taille des passages : minimum ≤ cible ≤ maximum, chevauchement < cible et maximum parent ≥ maximum enfant.",
+                "invalid": "Vérifiez les valeurs du profil avant de continuer.",
+                "unsupportedSimple": "Ce modèle ne dispose pas de paramètres par défaut revus. Conservez le mode Avancé ou choisissez un modèle revu."
+            },
+            "allSettings": "Tous les paramètres du profil",
+            "noPreparation": "Aucun préfixe supplémentaire",
+            "noMetadata": "Aucun champ de métadonnées"
+        },
         "common": {
             "saved": "Modification enregistrée",
             "failed": "La modification a échoué.",
@@ -548,7 +603,16 @@
             "bindingHint": "Le profil utilise les credentials sélectionnés pour ce fournisseur, ou ceux de la plateforme en l’absence de configuration dans l’organisation. Enregistrer une modification crée une nouvelle révision.",
             "dimensionsRevision": "{dimensions, number} dimensions · Révision {revision, number}",
             "deleteDescription": "{name} ne sera plus accessible. Les documents de la bibliothèque restent conservés.",
-            "accessSummary": "Votre accès explicite : lecture {read, select, allowed {autorisée} other {non accordée}} · gestion des documents {documents, select, allowed {autorisée} other {non accordée}}. Administrer le catalogue ne donne pas automatiquement accès au contenu."
+            "accessSummary": "Votre accès explicite : lecture {read, select, allowed {autorisée} other {non accordée}} · gestion des documents {documents, select, allowed {autorisée} other {non accordée}}. Administrer le catalogue ne donne pas automatiquement accès au contenu.",
+            "activeTab": "Collections actives",
+            "deletedTab": "Collections supprimées",
+            "libraryViews": "Vues des collections",
+            "overviewTab": "Vue d’ensemble",
+            "workspaceTab": "Indexation et recherche",
+            "accessTab": "Accès",
+            "historyTab": "Historique",
+            "profileDetails": "Voir la configuration complète",
+            "revisionLabel": "Révision enregistrée"
         },
         "history": {
             "title": "Historique des profils",
@@ -715,6 +779,12 @@
             "count": "{count, plural, =0 {Aucune collection autorisée} one {# collection autorisée} other {# collections autorisées}}"
         },
         "documents": {
+            "workspace": {
+                "navigation": "Vues du document",
+                "source": "Source",
+                "versions": "Versions",
+                "sourceUnavailable": "Le texte publié n’est pas disponible. Consultez le traitement ou la dernière version."
+            },
             "title": "Bibliothèque de documents",
             "description": "Importez et consultez les documents de votre organisation. Les lecteurs voient les documents de leurs collections autorisées.",
             "detailTitle": "Document",

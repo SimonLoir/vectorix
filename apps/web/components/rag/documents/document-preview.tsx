@@ -28,7 +28,7 @@ export function DocumentPreview({ id }: Readonly<{ id: string }>) {
             {!query.isError && query.data && (
                 <>
                     <pre
-                        className='max-h-[60vh] overflow-auto whitespace-pre-wrap break-words rounded-lg bg-muted p-4 text-sm'
+                        className='max-h-[50dvh] overflow-auto overscroll-contain whitespace-pre-wrap break-words rounded-lg bg-muted p-4 text-sm'
                         tabIndex={0}
                         aria-label={tr('documents.preview')}
                     >
