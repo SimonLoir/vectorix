@@ -489,6 +489,33 @@
         "loggedOut": "Afgemeld"
     },
     "rag": {
+        "searchHome": {
+            "eyebrow": "Je kennis, één zoekopdracht verwijderd",
+            "title": "Wat wil je vinden?",
+            "description": "Kies een collectie, stel je vraag en bekijk de overeenkomende passages met hun bronnen.",
+            "shortcuts": "Bibliotheeksnelkoppelingen",
+            "collections": "Collecties",
+            "documents": "Documenten",
+            "chooseCollection": "Collectie kiezen",
+            "selection": "Collectie: {name}",
+            "pickerTitle": "Collectie kiezen",
+            "pickerHint": "Kies een collectie om te doorzoeken. Collecties zonder leestoegang kunnen niet geselecteerd worden.",
+            "searchCollections": "Collecties zoeken",
+            "readRequired": "Leestoegang vereist",
+            "noMatches": "Geen collecties komen overeen met deze zoekopdracht.",
+            "noCollections": "Er zijn voor dit account geen collecties beschikbaar in deze organisatie.",
+            "permissionLoading": "Zoekrechten controleren…",
+            "chooseOrganization": "Kies een organisatie in het organisatiemenu om te beginnen met zoeken.",
+            "searchDenied": "Je huidige rechten laten niet toe om in deze organisatie te zoeken.",
+            "chooseHint": "Kies een collectie om te beginnen met zoeken.",
+            "loadingCollection": "De geselecteerde collectie laden…",
+            "loadingIndex": "De actieve index van de collectie controleren…",
+            "readDenied": "Je hebt geen leestoegang meer tot deze collectie.",
+            "notIndexed": "Deze collectie heeft nog geen actieve index.",
+            "openCollection": "Collectie openen",
+            "options": "Zoekopties",
+            "optionsSummary": "{strategy} · {count, plural, one {Maximaal {count, number} resultaat} other {Maximaal {count, number} resultaten}}"
+        },
         "editor": {
             "description": "Maak een collectie in enkele gerichte stappen. Controleer alle instellingen voordat je opslaat.",
             "progress": "Stappen voor het instellen van de collectie",
