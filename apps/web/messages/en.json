@@ -1656,5 +1656,11 @@
         "enabled": "Enabled",
         "disabled": "Disabled",
         "informational": "These entitlements are informational for now. Vectorix does not restrict any module based on them yet. Existing permissions and collection access still apply."
+    },
+    "appearance": {
+        "label": "Appearance",
+        "light": "Light",
+        "dark": "Dark",
+        "system": "System"
     }
 }

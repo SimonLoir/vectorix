@@ -1656,5 +1656,11 @@
         "enabled": "Activée",
         "disabled": "Désactivée",
         "informational": "Ces droits sont pour l’instant informatifs. Vectorix ne restreint encore aucun module en fonction de ceux-ci. Les permissions existantes et les droits sur les collections continuent de s’appliquer."
+    },
+    "appearance": {
+        "label": "Apparence",
+        "light": "Clair",
+        "dark": "Sombre",
+        "system": "Système"
     }
 }

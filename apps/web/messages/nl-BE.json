@@ -1656,5 +1656,11 @@
         "enabled": "Ingeschakeld",
         "disabled": "Uitgeschakeld",
         "informational": "Deze rechten zijn voorlopig informatief. Vectorix beperkt nog geen enkele module op basis ervan. De bestaande rechten en collectietoegang blijven gelden."
+    },
+    "appearance": {
+        "label": "Weergave",
+        "light": "Licht",
+        "dark": "Donker",
+        "system": "Systeem"
     }
 }

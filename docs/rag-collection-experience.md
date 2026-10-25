@@ -79,6 +79,14 @@ The collection list has separate **Active collections** and **Deleted collection
 
 Detail panels remain mounted while hidden, preserving their current query and interaction state when switching tabs. Tab visibility does not grant content access; existing server authorization remains unchanged.
 
+## Appearance
+
+Open the sun/moon **Appearance** menu at the top right of the web dashboard and choose **Light**, **Dark** or **System**. System is the default and follows the device's color preference. On small screens the button shows only the icon and retains its localized accessible label; the menu keeps text labels and a checked radio choice.
+
+The existing next-themes provider saves this choice in local browser storage for the current origin. It survives reloads in that browser; it is not an account or organization preference and does not synchronize to another origin or the administration application. The administration application's existing dark presentation is unchanged.
+
+The shared [ThemeSwitcher](../packages/dashboard-core/src/components/theme-switcher.tsx) accepts explicit labels and uses the existing theme-provider API. The web [localized wrapper](../apps/web/components/theme-switcher.tsx) supplies EN/FR/nl-BE messages, and the [dashboard layout](../apps/web/app/dashboard/layout.tsx) places it beside notifications. Its constant trigger and initially closed radio menu avoid theme-dependent server markup.
+
 ## Compact document workspace
 
 A document keeps its identity, extraction status, diagnostic and original-download action above three focused views. **Source** shows the currently published TXT/Markdown preview or PDF/DOCX source navigator. **Versions** contains the existing replacement, deletion, retention and version history workspace. **Collections** contains the existing attachment controls.
@@ -128,7 +136,7 @@ Using the same curl-uploaded document, open its detail page and verify Source, V
 
 ### Actual results
 
-Executed on October 25, 2026 with production builds, an ordinary synthetic organization and owned disposable stores. Embeddings used the real local Ollama EmbeddingGemma server, with verified manifest digest 85462619ee721b466c5927d109d4cb765861907d5417b9109caebc4e614679f1, matching the [reproduction guide](rag-ollama-embeddinggemma.md).
+The collection-redesign results below were executed at source checkpoint 205bce1 on October 25, 2026, before the Appearance control was added, with production builds, an ordinary synthetic organization and owned disposable stores. Embeddings used the real local Ollama EmbeddingGemma server, with verified manifest digest 85462619ee721b466c5927d109d4cb765861907d5417b9109caebc4e614679f1, matching the [reproduction guide](rag-ollama-embeddinggemma.md).
 
 | Journey                      | Observed result                                                                                                                                                                                                                                                                                                                                                                                                                      |
 | ---------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
@@ -145,4 +153,26 @@ Two earlier incomplete browser attempts exposed and corrected real UI defects: a
 
 Validation passes 25 workspace type checks, 25 lint tasks, root unit checks including 151 embedding cases, nine draft cases, and four production builds. Web types, lint and production build passed again after the two browser fixes. The offline guard and final source checks pass after restoring ordinary public fixture modes (0755 directories/0644 files); fixture content and source pins are unchanged. Documentation formatting, local links, Mermaid and locale/ICU checks pass separately.
 
-Limits: no hosted-provider calls or paid credentials were used. OpenAI large's 3,072-dimensional choice was inspected locally in the final French editor; the Mistral 1,024-dimensional choice was inspected in the first attempt. Light mode was not browser-verified; only selected palette contrast pairs were calculated at 4.5:1 or higher, which is not a complete accessibility audit. Current UI permission-revocation transitions were reviewed in source rather than exercised in this browser run. Full catalog and Docker suites were not rerun locally for this UI change; the pull request records the required catalog/image CI results. Final cleanup confirmed all three application processes and five owned containers absent and removed the four fresh volumes; the existing Ollama model cache and private test captures were retained, and helper gates were restored. Normal logout was observed; no separate zero-session database assertion is claimed.
+Limits: no hosted-provider calls or paid credentials were used. OpenAI large's 3,072-dimensional choice was inspected locally in the final French editor; the Mistral 1,024-dimensional choice was inspected in the first attempt. In that 205bce1 run, light mode was not browser-verified; only selected palette contrast pairs were calculated at 4.5:1 or higher, which is not a complete accessibility audit. Current UI permission-revocation transitions were reviewed in source rather than exercised in this browser run. Full catalog and Docker suites were not rerun locally for this UI change; the pull request records the required catalog/image CI results. Final cleanup confirmed all three application processes and five owned containers absent and removed the four fresh volumes; the existing Ollama model cache and private test captures were retained, and helper gates were restored. Normal logout was observed; no separate zero-session database assertion is claimed.
+
+### Appearance follow-up validation
+
+The production web journey passes at source checkpoint f25045e on October 25, 2026, in a fresh synthetic organization and disposable environment. The administration application remains unchanged.
+
+| Check                         | Observed result                                                                                                                                                                                                                                        |
+| ----------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Manual choice and persistence | French Appearance offered Light/Dark/System radio choices. Light applied the HTML light class, primary #245bd4 and background #f5f8fc; Dark applied the dark class and primary #2f6fed. Each choice, including System, remained selected after reload. |
+| Keyboard and small screens    | Home focused Light and Enter selected it. At 390×844, the icon-only trigger retained its accessible label, the menu remained usable and no horizontal overflow appeared.                                                                               |
+| Application view and exit     | The collection editor's Review step was inspected in Light. The browser console had zero warnings/errors, followed by normal French logout, owned-tab closure and viewport restoration.                                                                |
+
+French labels were exercised in the browser; the four English and Belgian Dutch labels were checked statically. An operating-system theme change was not simulated. The earlier 205bce1 light-mode limitation remains a historical result, separate from this successful manual Light check.
+
+Frozen installation, shared dashboard-core/web types and lint, root units and the web production build pass. An initial lint fallback-style failure was corrected before the passing checks. API/workers code was unchanged and their existing runtime artifacts were reused; no new backend build is claimed. Final cleanup confirmed three application processes, five owned containers and four fresh volumes absent, with the existing model cache unchanged, private captures retained and helper gates restored. Exact-head CI and delivery status are recorded in the pull request.
+
+### Audit journal verification
+
+No audit product code changed in this follow-up. A normal dashboard collection creation followed by a name-only rename produced two journal rows: update before create, with the expected user actor, collection target and configuration revision 1. The case-insensitive action filter COLLECTION retained both rows; an absent-action filter returned none, and clearing it restored both. With only two rows, both UI pagination buttons were correctly disabled.
+
+A separate session-authenticated native HTTP check used limit 1 with offsets 0 and 1 to establish distinct, correctly ordered pages with total 2, exact actor/target/details and an empty unmatched filter. Its normal finalizer signed out. Nine existing offline guard/error cases pass. This does not claim multi-page button navigation, role changes, permission revocation or cross-organization browser coverage; PostgreSQL isolation/permission integration tests were not repeated locally and remain part of PR CI.
+
+The [audit list](../apps/web/components/rag/audit-list.tsx) uses the shared [catalog pagination](../apps/web/components/rag/catalog-controls.tsx). The existing [audit route](../packages/routers/rag/src/audit.ts) applies organization filtering and stable descending date/ID ordering after the session-only audit-read guard in [access.ts](../packages/routers/rag/src/services/access.ts). The [page shell](../apps/web/app/dashboard/settings/audit/page.tsx) retains its operation check.

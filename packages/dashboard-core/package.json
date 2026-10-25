@@ -15,6 +15,7 @@
         "./components/reset-password-form": "./src/components/reset-password-form.tsx",
         "./components/signup-form": "./src/components/signup-form.tsx",
         "./components/theme-provider": "./src/components/theme-provider.tsx",
+        "./components/theme-switcher": "./src/components/theme-switcher.tsx",
         "./components/query-client-provider": "./src/components/query-client-provider.tsx",
         "./components/nav-user": "./src/components/nav-user.tsx",
         "./components/person-avatar": "./src/components/person-avatar.tsx",
