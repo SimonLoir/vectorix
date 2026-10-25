@@ -241,6 +241,9 @@ importers:
       '@repo/dashboard-core':
         specifier: workspace:*
         version: link:../../packages/dashboard-core
+      '@repo/embeddings':
+        specifier: workspace:*
+        version: link:../../packages/embeddings
       '@repo/ui':
         specifier: workspace:*
         version: link:../../packages/ui

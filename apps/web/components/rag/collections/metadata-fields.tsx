@@ -1,21 +1,14 @@
 'use client';
-import { useState } from 'react';
 import { useTranslations } from 'next-intl';
 import { Button } from '@repo/ui/button';
 import { TextField, SelectField } from '../form-fields';
-import type { MetadataFields as Fields } from '../indexing/types';
+import type { MetadataRow } from './profile-draft';
 
 export function MetadataFields({
-    initial = {},
-}: Readonly<{ initial?: Fields }>) {
+    rows,
+    onChange,
+}: Readonly<{ rows: MetadataRow[]; onChange: (rows: MetadataRow[]) => void }>) {
     const tr = useTranslations('rag.indexing');
-    const [rows, setRows] = useState(() =>
-        Object.entries(initial).map(([key, type]) => ({
-            id: crypto.randomUUID(),
-            key,
-            type,
-        }))
-    );
     const fields = Object.fromEntries(rows.map((row) => [row.key, row.type]));
     const valid =
         rows.every((row) => /^[a-z][a-z0-9_]{0,63}$/.test(row.key)) &&
@@ -48,8 +41,8 @@ export function MetadataFields({
                         required
                         maxLength={64}
                         onChange={(event) =>
-                            setRows((previous) =>
-                                previous.map((item) =>
+                            onChange(
+                                rows.map((item) =>
                                     item.id === row.id
                                         ? { ...item, key: event.target.value }
                                         : item
@@ -68,8 +61,8 @@ export function MetadataFields({
                                 type === 'BOOLEAN' ||
                                 type === 'DATE'
                             )
-                                setRows((previous) =>
-                                    previous.map((item) =>
+                                onChange(
+                                    rows.map((item) =>
                                         item.id === row.id
                                             ? { ...item, type }
                                             : item
@@ -93,9 +86,7 @@ export function MetadataFields({
                             field: row.key || tr('newField'),
                         })}
                         onClick={() =>
-                            setRows((previous) =>
-                                previous.filter((item) => item.id !== row.id)
-                            )
+                            onChange(rows.filter((item) => item.id !== row.id))
                         }
                     >
                         {tr('remove')}
@@ -112,9 +103,13 @@ export function MetadataFields({
                 variant='outline'
                 disabled={rows.length >= 20}
                 onClick={() =>
-                    setRows((previous) => [
-                        ...previous,
-                        { id: crypto.randomUUID(), key: '', type: 'STRING' },
+                    onChange([
+                        ...rows,
+                        {
+                            id: Math.max(-1, ...rows.map((row) => row.id)) + 1,
+                            key: '',
+                            type: 'STRING',
+                        },
                     ])
                 }
             >

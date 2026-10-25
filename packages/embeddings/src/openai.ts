@@ -1,3 +1,5 @@
+import { OPENAI_MODELS } from './reviewed-models';
+export { OPENAI_MODELS } from './reviewed-models';
 import { createHash } from 'node:crypto';
 import { Buffer } from 'node:buffer';
 import { isDeepStrictEqual } from 'node:util';
@@ -18,17 +20,6 @@ import {
     type EmbeddingResult,
 } from './types';
 
-/** Reviewed shortening policy up to each model's natural size; selected dimensions still need a native probe. */
-export const OPENAI_MODELS = {
-    'text-embedding-3-small': {
-        defaultDimensions: 1536,
-        maximumDimensions: 1536,
-    },
-    'text-embedding-3-large': {
-        defaultDimensions: 3072,
-        maximumDimensions: 3072,
-    },
-} as const;
 type OpenAIModel = keyof typeof OPENAI_MODELS;
 const modelName = z
     .string()

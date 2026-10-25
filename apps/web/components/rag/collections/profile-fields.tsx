@@ -1,85 +1,71 @@
 'use client';
 import { useTranslations } from 'next-intl';
-import { useId, useState } from 'react';
-import { TextField, SelectField, CheckField, AreaField } from '../form-fields';
+import { useId } from 'react';
+import { SelectField, TextField, CheckField } from '../form-fields';
 import { MetadataFields } from './metadata-fields';
 import { EmbeddingFields } from './embedding-fields';
+import { ProfileDraftSummary } from './profile-draft-summary';
 import type { Collection } from '../types';
+import type { ProfileDraft, Provider } from './profile-draft';
 
+export type ProfileSection = 'embedding' | 'chunking' | 'metadata';
 export function ProfileFields({
+    draft,
+    onPatch,
+    onSelect,
+    advanced,
+    section,
     configuration,
     collectionId,
     configurationRevision,
 }: Readonly<{
+    draft: ProfileDraft;
+    onPatch: (patch: Partial<ProfileDraft>) => void;
+    onSelect: (provider: Provider, model: string) => void;
+    advanced: boolean;
+    section: ProfileSection;
     configuration?: Collection['configuration'];
     collectionId?: string;
     configurationRevision?: number;
 }>) {
     const tr = useTranslations('rag');
-    const [strategy, setStrategy] = useState(
-        configuration?.chunkingStrategy ?? 'DOCUMENT_STRUCTURE'
-    );
-    const [parent, setParent] = useState(configuration?.parentChild ?? false);
-    const [maximum, setMaximum] = useState(
-        String(configuration?.chunking.maxTokens ?? 768)
-    );
-    const estimateHintId = useId();
-    const windowHintId = useId();
-    const tailHintId = useId();
-    const semanticHintId = useId();
-    const parentHintId = useId();
-    const parentSizeHintId = useId();
-    return (
-        <div className='space-y-5'>
-            <EmbeddingFields
-                configuration={configuration}
-                collectionId={collectionId}
-                configurationRevision={configurationRevision}
-            />
-            <p className='text-sm text-muted-foreground'>
-                {tr('indexing.profileGate')}
-            </p>
-            <div className='grid gap-4 sm:grid-cols-2'>
-                <SelectField
-                    label={tr('profile.index')}
-                    name='indexType'
-                    defaultValue={configuration?.indexType ?? 'DISKANN'}
-                >
-                    <option value='DISKANN'>DiskANN · pgvectorscale</option>
-                    <option value='HNSW'>HNSW · pgvector</option>
-                </SelectField>
+    const estimateId = useId();
+    if (!advanced || section === 'embedding')
+        return (
+            <div className='space-y-4'>
+                <EmbeddingFields
+                    draft={draft}
+                    onPatch={onPatch}
+                    onSelect={onSelect}
+                    advanced={advanced}
+                    configuration={configuration}
+                    collectionId={collectionId}
+                    configurationRevision={configurationRevision}
+                />
+                {!advanced && <ProfileDraftSummary draft={draft} recommended />}
             </div>
-            <p className='text-sm text-muted-foreground'>
-                {tr('profile.indexHint')}
-            </p>
-            <AreaField
-                label={tr('profile.preparation')}
-                name='preparation'
-                maxLength={4000}
-                defaultValue={configuration?.preparation ?? ''}
-                rows={3}
+        );
+    if (section === 'metadata')
+        return (
+            <MetadataFields
+                rows={draft.metadataRows}
+                onChange={(metadataRows) => onPatch({ metadataRows })}
             />
-            <p className='text-xs text-muted-foreground'>
-                {tr('indexing.preparationHint')}
-            </p>
-            <MetadataFields initial={configuration?.metadataFields} />
+        );
+    return (
+        <div className='space-y-4'>
             <SelectField
                 label={tr('profile.chunking')}
                 name='chunkingStrategy'
-                value={strategy}
-                aria-describedby={[
-                    estimateHintId,
-                    ...(strategy === 'TOKEN_WINDOW' ? [windowHintId] : []),
-                    ...(strategy === 'SEMANTIC' ? [semanticHintId] : []),
-                ].join(' ')}
+                value={draft.chunkingStrategy}
                 onChange={(event) => {
-                    const value = event.target.value;
+                    const strategy = event.target.value;
                     if (
-                        value === 'TOKEN_WINDOW' ||
-                        value === 'DOCUMENT_STRUCTURE' ||
-                        value === 'SEMANTIC'
+                        strategy === 'DOCUMENT_STRUCTURE' ||
+                        strategy === 'TOKEN_WINDOW' ||
+                        strategy === 'SEMANTIC'
                     )
-                        setStrategy(value);
+                        onPatch({ chunkingStrategy: strategy });
                 }}
             >
                 <option value='DOCUMENT_STRUCTURE'>
@@ -88,118 +74,97 @@ export function ProfileFields({
                 <option value='TOKEN_WINDOW'>{tr('profile.tokens')}</option>
                 <option value='SEMANTIC'>{tr('profile.semantic')}</option>
             </SelectField>
-            <p id={estimateHintId} className='text-sm text-muted-foreground'>
+            <p
+                id={estimateId}
+                className='rounded-lg bg-info/5 p-3 text-xs leading-relaxed text-muted-foreground'
+            >
                 {tr('profile.tokenEstimationHint', { bytesPerToken: 3 })}
             </p>
-            {strategy === 'TOKEN_WINDOW' && (
-                <div className='space-y-2 text-sm text-muted-foreground'>
-                    <p id={windowHintId}>{tr('profile.tokenWindowHint')}</p>
-                    <p id={tailHintId}>{tr('profile.tokenWindowTailHint')}</p>
-                </div>
-            )}
-            {strategy === 'SEMANTIC' && (
-                <div
-                    id={semanticHintId}
-                    className='space-y-2 text-sm text-muted-foreground'
-                >
-                    <p>{tr('profile.semanticHint')}</p>
-                    <p>{tr('profile.semanticWorkHint')}</p>
-                </div>
+            {draft.chunkingStrategy === 'TOKEN_WINDOW' && (
+                <p className='text-xs text-muted-foreground'>
+                    {tr('profile.tokenWindowTailHint')}
+                </p>
             )}
             <div className='grid gap-4 sm:grid-cols-2'>
-                <TextField
-                    label={tr('profile.target')}
-                    name='targetTokens'
-                    type='number'
-                    required
-                    min={32}
-                    max={8192}
-                    defaultValue={configuration?.chunking.targetTokens ?? 512}
-                    aria-describedby={estimateHintId}
-                />
-                <TextField
-                    label={tr('profile.overlap')}
-                    name='overlapTokens'
-                    type='number'
-                    required
-                    min={0}
-                    max={4096}
-                    defaultValue={configuration?.chunking.overlapTokens ?? 64}
-                    aria-describedby={estimateHintId}
-                />
-                <TextField
-                    label={tr('profile.minimum')}
-                    name='minTokens'
-                    type='number'
-                    required
-                    min={1}
-                    max={8192}
-                    defaultValue={configuration?.chunking.minTokens ?? 128}
-                    aria-describedby={
-                        strategy === 'TOKEN_WINDOW'
-                            ? `${estimateHintId} ${tailHintId}`
-                            : estimateHintId
-                    }
-                />
-                <TextField
-                    label={tr('profile.maximum')}
-                    name='maxTokens'
-                    type='number'
-                    required
-                    min={32}
-                    max={16_384}
-                    value={maximum}
-                    onChange={(event) => setMaximum(event.target.value)}
-                    aria-describedby={estimateHintId}
-                />
+                {(
+                    [
+                        'targetTokens',
+                        'overlapTokens',
+                        'minTokens',
+                        'maxTokens',
+                    ] as const
+                ).map((key, index) => (
+                    <TextField
+                        key={key}
+                        label={tr(
+                            [
+                                'profile.target',
+                                'profile.overlap',
+                                'profile.minimum',
+                                'profile.maximum',
+                            ][index]!
+                        )}
+                        name={key}
+                        type='number'
+                        min={key === 'overlapTokens' ? 0 : 1}
+                        max={key === 'maxTokens' ? 16_384 : 8192}
+                        aria-describedby={estimateId}
+                        value={draft[key]}
+                        onChange={(event) =>
+                            onPatch({ [key]: event.target.value })
+                        }
+                    />
+                ))}
             </div>
-            <TextField
-                label={tr('profile.percentile')}
-                name='semanticPercentile'
-                type='number'
-                required
-                min={1}
-                max={99}
-                defaultValue={configuration?.chunking.semanticPercentile ?? 90}
-                readOnly={strategy !== 'SEMANTIC'}
-                aria-describedby={
-                    strategy === 'SEMANTIC' ? semanticHintId : undefined
-                }
-            />
+            {draft.chunkingStrategy === 'SEMANTIC' && (
+                <section className='space-y-3 rounded-lg border border-info/20 bg-info/5 p-4'>
+                    <TextField
+                        label={tr('profile.percentile')}
+                        name='semanticPercentile'
+                        type='number'
+                        min={1}
+                        max={99}
+                        value={draft.semanticPercentile}
+                        onChange={(event) =>
+                            onPatch({ semanticPercentile: event.target.value })
+                        }
+                    />
+                    <p className='text-xs text-muted-foreground'>
+                        {tr('profile.semanticWorkHint')}
+                    </p>
+                </section>
+            )}
             <CheckField
                 label={tr('profile.parentChild')}
                 name='parentChild'
-                checked={parent}
-                onChange={(event) => setParent(event.target.checked)}
-                aria-describedby={parentHintId}
+                checked={draft.parentChild}
+                onChange={(event) =>
+                    onPatch({ parentChild: event.target.checked })
+                }
             />
-            <p id={parentHintId} className='text-sm text-muted-foreground'>
-                {tr('profile.parentContextHint')}
-            </p>
-            <TextField
-                label={tr('profile.parentMaximum')}
-                name='parentMaxTokens'
-                type='number'
-                required
-                min={parent ? Math.max(32, Number(maximum)) : 32}
-                max={32_768}
-                readOnly={!parent}
-                defaultValue={configuration?.chunking.parentMaxTokens ?? 2048}
-                aria-describedby={[
-                    parentHintId,
-                    ...(parent ? [parentSizeHintId] : []),
-                ].join(' ')}
-            />
-            {parent && (
-                <p
-                    id={parentSizeHintId}
-                    className='text-sm text-muted-foreground'
-                >
-                    {tr('profile.parentSizeHint', {
-                        maxBytes: 49_152,
-                        bytesPerToken: 3,
-                    })}
-                </p>
+            {draft.parentChild && (
+                <section className='space-y-3 rounded-lg border border-info/20 bg-info/5 p-4'>
+                    <TextField
+                        label={tr('profile.parentMaximum')}
+                        name='parentMaxTokens'
+                        type='number'
+                        min={Math.max(32, Number(draft.maxTokens))}
+                        max={32_768}
+                        value={draft.parentMaxTokens}
+                        onChange={(event) =>
+                            onPatch({ parentMaxTokens: event.target.value })
+                        }
+                    />
+                    <p className='text-xs text-muted-foreground'>
+                        {tr('profile.parentContextHint')}
+                    </p>
+                    <p className='text-xs text-muted-foreground'>
+                        {tr('profile.parentSizeHint', {
+                            maxBytes: 49_152,
+                            bytesPerToken: 3,
+                        })}
+                    </p>
+                </section>
             )}
         </div>
     );

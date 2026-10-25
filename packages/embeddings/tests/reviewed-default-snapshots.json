@@ -1,0 +1,42 @@
+{
+    "COHERE:embed-v4.0": {
+        "digest": "65777bb2cffc6471df03c9e1c15404d8339309d9767539920962bc626e4558c5",
+        "snapshotSha256": "5d422c305c2b72ec6d86021c27955d2f4fdfa531e7fca58c6e8b375291d127d4"
+    },
+    "COHERE:embed-english-v3.0": {
+        "digest": "2d8eca43b6e37719b7d32c0b06a927a753bb9d77a88b8be90703f0d5737c8b6f",
+        "snapshotSha256": "a17a6d481bfa9aa4c8577f52a7912586bd2e5ecc9ca7b8112535224b8eb962f4"
+    },
+    "COHERE:embed-multilingual-v3.0": {
+        "digest": "1e1b707fe44bb604b4b4ae9ee25410900c0f0ef061e6bf49a49c87cc1c6a6ddf",
+        "snapshotSha256": "8516129092c4942bfad4da6723a87adcfc0f9a69342aa12a1988fa2082a9572d"
+    },
+    "VOYAGE:voyage-4": {
+        "digest": "1be3b818beac76d9af547f26ed1df06844e4cc9a0c12540578a30914d4670dfe",
+        "snapshotSha256": "8bd3a89b7c637d4bc663d148689aa921cacb20f9e9dd11209c039dcd266b85ee"
+    },
+    "VOYAGE:voyage-4-lite": {
+        "digest": "bdfafa0f645361ec312b57e4a9f7a13734078cf39b7aa95b753a974775cfd6a1",
+        "snapshotSha256": "206041a05a9e36e27456a31f364eebf7366516329489e6bac500946e041775d0"
+    },
+    "VOYAGE:voyage-4-large": {
+        "digest": "be4aff47abd9bf4da909285a503a7eb50151d574d61989c4a026a456a15e48d4",
+        "snapshotSha256": "0706b98d59e6ca6b09e341ecacd05b5133437b16c804b70667b8b4be81b588c8"
+    },
+    "OPENAI:text-embedding-3-small": {
+        "digest": "5154d6b27a27e5bdfbe9d65f32c5e758d3593370011aca434751c134830198c7",
+        "snapshotSha256": "43160728fb1f0f91b572404647ad934c9303e867b9b0d8f7079cf96eb8a5b88d"
+    },
+    "OPENAI:text-embedding-3-large": {
+        "digest": "fdd592f478853c8c0e8802eae6f5ee0c5eff306eb3c5e93e6e90e6d3f8da6d27",
+        "snapshotSha256": "ca0ad42f9292cb59629e1487cc6aba8ad37bb330524cefe2f5f95c99313016aa"
+    },
+    "MISTRAL:mistral-embed": {
+        "digest": "21b0bd2dc99625adf6a520b26c286be75062ce65a0b4c7280b66ada908c85b87",
+        "snapshotSha256": "26b77333123953a44a781369d1ad6225fb6b2e94517f2d2e11596b96d3dbd213"
+    },
+    "MISTRAL:mistral-embed-2312": {
+        "digest": "9c00fc3e5229a4f1bfa3f6bfa32a3c6f95cae7d73f8b84973821b4cc0d2762a1",
+        "snapshotSha256": "0ba0eaaa7287fdfd6b429810bf39adb04978d270837132cf53ba350571c424ac"
+    }
+}

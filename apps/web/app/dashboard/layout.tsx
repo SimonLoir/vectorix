@@ -20,7 +20,7 @@ export default function DashboardLayout({
                 <AppPageProvider>
                     <NotificationProvider>
                         <PwaRegistration />
-                        <SidebarProvider>
+                        <SidebarProvider data-vectorix-dashboard>
                             <AppSidebar
                                 allowOrganizationCreation={isOrganizationCreationAllowed()}
                             />

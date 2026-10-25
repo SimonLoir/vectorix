@@ -1,3 +1,5 @@
+import { VOYAGE_MODELS, VOYAGE_DIMENSIONS } from './reviewed-models';
+export { VOYAGE_MODELS } from './reviewed-models';
 import { createHash } from 'node:crypto';
 import { Buffer } from 'node:buffer';
 import { isDeepStrictEqual } from 'node:util';
@@ -18,18 +20,6 @@ import {
     type EmbeddingResult,
 } from './types';
 
-const dimensions = [256, 512, 1024, 2048] as const;
-const commonCapabilities = {
-    contextTokens: 32_000,
-    defaultDimensions: 1024,
-    supportedDimensions: dimensions,
-} as const;
-/** Reviewed general-purpose text profiles; listing these models does not contact Voyage or verify credentials. */
-export const VOYAGE_MODELS = {
-    'voyage-4': { ...commonCapabilities, maxBatchTokens: 320_000 },
-    'voyage-4-lite': { ...commonCapabilities, maxBatchTokens: 1_000_000 },
-    'voyage-4-large': { ...commonCapabilities, maxBatchTokens: 120_000 },
-} as const;
 type VoyageModel = keyof typeof VOYAGE_MODELS;
 const modelName = z
     .string()
@@ -82,7 +72,7 @@ function capabilityIdentity(
     model: VoyageModel,
     size: number
 ): VoyageModelIdentity {
-    if (!(dimensions as readonly number[]).includes(size))
+    if (!(VOYAGE_DIMENSIONS as readonly number[]).includes(size))
         throw new EmbeddingError('DIMENSIONS_UNSUPPORTED');
     const profile = {
         schemaVersion: 3 as const,
@@ -93,7 +83,7 @@ function capabilityIdentity(
         contextTokens: 32_000 as const,
         defaultDimensions: 1024 as const,
         dimensions: size as VoyageModelIdentity['dimensions'],
-        supportedDimensions: [...dimensions],
+        supportedDimensions: [...VOYAGE_DIMENSIONS],
         capabilities: ['embedding', 'document', 'query'],
         preset: 'GENERIC' as const,
         documentInputType: 'document' as const,

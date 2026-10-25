@@ -1,3 +1,5 @@
+import { COHERE_MODELS } from './reviewed-models';
+export { COHERE_MODELS } from './reviewed-models';
 import { createHash } from 'node:crypto';
 import { Buffer } from 'node:buffer';
 import { isDeepStrictEqual } from 'node:util';
@@ -17,25 +19,6 @@ import {
     type EmbeddingOptions,
     type EmbeddingResult,
 } from './types';
-
-/** Reviewed native text models only; newer, light, custom and multimodal profiles remain unsupported. */
-export const COHERE_MODELS = {
-    'embed-v4.0': {
-        contextTokens: 128_000,
-        defaultDimensions: 1536,
-        supportedDimensions: [256, 512, 1024, 1536],
-    },
-    'embed-english-v3.0': {
-        contextTokens: 512,
-        defaultDimensions: 1024,
-        supportedDimensions: [1024],
-    },
-    'embed-multilingual-v3.0': {
-        contextTokens: 512,
-        defaultDimensions: 1024,
-        supportedDimensions: [1024],
-    },
-} as const;
 
 type CohereModel = keyof typeof COHERE_MODELS;
 const modelName = z

@@ -14,7 +14,15 @@ The RAG layer resolves credentials and enforces exact operator-approved endpoint
 - `embedDocuments(config, identity, [{ text, title? }], options?)` and `embedQuery(config, identity, text, options?)` dispatch only when the configuration and saved identity belong to the same provider.
 - `canonicalEmbeddingModel(provider, model)` applies provider-specific normalization. Ollama adds its implicit `:latest` tag; hosted model IDs remain exact and case-sensitive. The original `canonicalOllamaModel` export remains available.
 - `modelIdentity` parses all five persisted identity formats. `embeddingIdentityKind(identity)` exposes `WEIGHTS_DIGEST` for legacy Ollama snapshots and `CAPABILITY_PROFILE` for Cohere/Voyage/OpenAI/Mistral.
-- `embeddingInputByteLimit(identity, { kind?, title?, preparation? })` supplies the conservative content byte budget used by chunking. `prepareEmbeddingInput` applies the same accounting at the provider boundary. `COHERE_MODELS` exposes the reviewed server-side capability catalog; this package contains Node.js integrations and must not be imported into browser components.
+- `embeddingInputByteLimit(identity, { kind?, title?, preparation? })` supplies the conservative content byte budget used by chunking. `prepareEmbeddingInput` applies the same accounting at the provider boundary. `COHERE_MODELS` exposes the reviewed capability catalog. The package root contains Node.js integrations and must not be imported into browser components; use the dependency-free `@repo/embeddings/profiles` subpath for local form choices and recommendations.
+
+## Browser profile choices
+
+`@repo/embeddings/profiles` shares the reviewed hosted model policy with native adapters without importing Node.js, provider transports or schema libraries. `listReviewedEmbeddingProfiles(provider)` and `getReviewedEmbeddingProfile(provider, exactModel)` expose default dimensions and either a discrete `dimensions` list or a `dimensionCapability` integer range. `supportsReviewedEmbeddingDimensions(profile, size)` checks that policy while preserving compatible manual or saved choices. These are local configuration choices, not evidence of provider availability, valid credentials or model weights. Native verification remains required.
+
+`getRecommendedEmbeddingDefaults(provider, exactModel)` supplies creation-only natural dimensions, the `GENERIC` preset, empty preparation, cosine distance, float32 and DiskANN. In particular, OpenAI large uses 3,072 dimensions, OpenAI small uses 1,536, and Mistral uses 1,024; DiskANN avoids the separate 2,000-dimensional float32 HNSW limit. Existing profiles retain their saved settings.
+
+Ollama has no static capability catalog. Only the exact `embeddinggemma` and `embeddinggemma:latest` names receive an unverified local recommendation of 768 dimensions and the `EMBEDDING_GEMMA` preset. Other tags, namespaces and arbitrary models require explicit advanced configuration or discovery against their saved binding. A name alone never supplies an installed-model capability or bypasses the native architecture, weights and dimension probes.
 
 ```mermaid
 flowchart LR
