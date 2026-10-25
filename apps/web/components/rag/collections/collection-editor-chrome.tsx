@@ -159,7 +159,16 @@ export function CollectionEditorFooter({
                     )}
                 </Button>
                 {step < 2 ? (
-                    <Button type='button' disabled={busy} onClick={onContinue}>
+                    <Button
+                        type='button'
+                        disabled={busy}
+                        onClick={(event) => {
+                            // React can reuse this node as the submit button after
+                            // navigation; cancel this click's native default first.
+                            event.preventDefault();
+                            onContinue();
+                        }}
+                    >
                         {tr('editor.continue')}
                         <ChevronRight className='size-4' aria-hidden />
                     </Button>
