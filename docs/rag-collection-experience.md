@@ -157,6 +157,22 @@ Limits: no hosted-provider calls or paid credentials were used. OpenAI large's 3
 
 ### Appearance follow-up validation
 
-Implementation and source review are prepared. Application checks, production build and browser acceptance for the new control are **pending** at this record; the earlier collection-redesign results do not verify it.
+The production web journey passes at source checkpoint f25045e on October 25, 2026, in a fresh synthetic organization and disposable environment. The administration application remains unchanged.
 
-The browser recipe is to select Light and Dark, confirm the visible palette and checked menu item, reload to confirm persistence, then select System and confirm that it remains the selected preference. Check pointer/keyboard navigation, the narrow-screen icon label, EN/FR/nl-BE messages and the console. No API key, document transfer, provider call or account update is needed for this preference.
+| Check                         | Observed result                                                                                                                                                                                                                                        |
+| ----------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Manual choice and persistence | French Appearance offered Light/Dark/System radio choices. Light applied the HTML light class, primary #245bd4 and background #f5f8fc; Dark applied the dark class and primary #2f6fed. Each choice, including System, remained selected after reload. |
+| Keyboard and small screens    | Home focused Light and Enter selected it. At 390×844, the icon-only trigger retained its accessible label, the menu remained usable and no horizontal overflow appeared.                                                                               |
+| Application view and exit     | The collection editor's Review step was inspected in Light. The browser console had zero warnings/errors, followed by normal French logout, owned-tab closure and viewport restoration.                                                                |
+
+French labels were exercised in the browser; the four English and Belgian Dutch labels were checked statically. An operating-system theme change was not simulated. The earlier 205bce1 light-mode limitation remains a historical result, separate from this successful manual Light check.
+
+Frozen installation, shared dashboard-core/web types and lint, root units and the web production build pass. An initial lint fallback-style failure was corrected before the passing checks. API/workers code was unchanged and their existing runtime artifacts were reused; no new backend build is claimed. Final cleanup confirmed three application processes, five owned containers and four fresh volumes absent, with the existing model cache unchanged, private captures retained and helper gates restored. Exact-head CI and delivery status are recorded in the pull request.
+
+### Audit journal verification
+
+No audit product code changed in this follow-up. A normal dashboard collection creation followed by a name-only rename produced two journal rows: update before create, with the expected user actor, collection target and configuration revision 1. The case-insensitive action filter COLLECTION retained both rows; an absent-action filter returned none, and clearing it restored both. With only two rows, both UI pagination buttons were correctly disabled.
+
+A separate session-authenticated native HTTP check used limit 1 with offsets 0 and 1 to establish distinct, correctly ordered pages with total 2, exact actor/target/details and an empty unmatched filter. Its normal finalizer signed out. Nine existing offline guard/error cases pass. This does not claim multi-page button navigation, role changes, permission revocation or cross-organization browser coverage; PostgreSQL isolation/permission integration tests were not repeated locally and remain part of PR CI.
+
+The [audit list](../apps/web/components/rag/audit-list.tsx) uses the shared [catalog pagination](../apps/web/components/rag/catalog-controls.tsx). The existing [audit route](../packages/routers/rag/src/audit.ts) applies organization filtering and stable descending date/ID ordering after the session-only audit-read guard in [access.ts](../packages/routers/rag/src/services/access.ts). The [page shell](../apps/web/app/dashboard/settings/audit/page.tsx) retains its operation check.
