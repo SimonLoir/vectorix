@@ -95,6 +95,7 @@ export function CollectionIndexing({
                             </TabsContent>
                             <TabsContent value='search'>
                                 <SearchPlayground
+                                    key={collection.id}
                                     collectionId={collection.id}
                                     fields={
                                         status.activeConfiguration

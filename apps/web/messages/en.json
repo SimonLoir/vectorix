@@ -489,6 +489,33 @@
         "loggedOut": "Logged out"
     },
     "rag": {
+        "searchHome": {
+            "eyebrow": "Your knowledge, one search away",
+            "title": "What would you like to find?",
+            "description": "Choose a collection, enter your question and explore the matching passages with their sources.",
+            "shortcuts": "Library shortcuts",
+            "collections": "Collections",
+            "documents": "Documents",
+            "chooseCollection": "Choose a collection",
+            "selection": "Collection: {name}",
+            "pickerTitle": "Choose a collection",
+            "pickerHint": "Choose a collection to search. Collections without read access cannot be selected.",
+            "searchCollections": "Search collections",
+            "readRequired": "Read access required",
+            "noMatches": "No collections match this search.",
+            "noCollections": "No collections are available to this account in this organization.",
+            "permissionLoading": "Checking search permissions…",
+            "chooseOrganization": "Choose an organization from the organization menu to start searching.",
+            "searchDenied": "Your current permissions do not allow searching in this organization.",
+            "chooseHint": "Choose a collection to start searching.",
+            "loadingCollection": "Loading the selected collection…",
+            "loadingIndex": "Checking the collection’s active index…",
+            "readDenied": "You no longer have permission to read this collection.",
+            "notIndexed": "This collection does not have an active index yet.",
+            "openCollection": "Open collection",
+            "options": "Search options",
+            "optionsSummary": "{strategy} · {count, plural, one {Up to {count, number} result} other {Up to {count, number} results}}"
+        },
         "editor": {
             "description": "Create a collection in a few focused steps. Review every setting before saving.",
             "progress": "Collection setup steps",

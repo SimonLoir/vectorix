@@ -1516,3 +1516,13 @@ The successful run completes fresh/upgrade/repeated migrations, schema parity an
 - [x] Verify the existing audit journal without changing audit product code: create/name-only rename rows, actor/target/revision, case-insensitive and empty filters, disabled two-row UI paging, and separate session-HTTP limit-1 offset-0/1 ordering/total checks. Pass nine existing offline guard/error cases; do not claim new PostgreSQL permission/isolation integration or browser role/revocation/cross-organization coverage.
 - [x] Complete normal French logout and final cleanup: three application processes, five containers and four fresh volumes absent, existing model cache unchanged, private captures retained and helper gates restored.
 - [x] Complete source review with no blocking findings. The dedicated pull request records exact-head CI and delivery status.
+
+## Search-first dashboard home
+
+- [x] Prepare a large home query bar, explicit bounded collection dialog and compact Collections/Documents shortcuts. Add complete EN/FR/nl-BE home/picker/options-summary messages without storing questions in URLs or browser storage.
+- [x] Load status only for the selected readable collection, use the serving metadata schema and preserve active search independently of an unsupported draft. Keep current organization/permission/loading/error/unindexed states explicit.
+- [x] Reuse the collection playground's search DTO, strategies, filters, results and exact-version source receipts. Preserve the question across collection changes while resetting results/sources/options; retain generation-labelled receipts across a serving-generation change.
+- [x] Document concrete entry points, the data flow and expected dashboard acceptance in [the search-home guide](rag-search-home.md). Keep actual verification pending until the new home journey runs.
+- [x] Pass web type generation/types and lint after three targeted style fixes, retaining five existing warnings. Pass the closed-environment API/backend suite with 229 cases plus 11 discovery cases and fresh web/API/workers production builds. Validate all 25 home keys and ICU signatures in EN/FR/nl-BE; independent source review has no blocking findings.
+- [ ] Execute production dashboard search/source, picker filtering/paging, options, collection-switch/race, readiness, keyboard/mobile/locales and relevant access states with explicit provider attribution. Use curl for all file transfers.
+- [ ] Complete source review, normal logout, owned-resource cleanup and dedicated pull-request delivery; record exact-head CI and delivery status in the pull request.

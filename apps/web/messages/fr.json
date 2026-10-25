@@ -489,6 +489,33 @@
         "loggedOut": "Déconnexion réussie"
     },
     "rag": {
+        "searchHome": {
+            "eyebrow": "Vos connaissances, à portée de recherche",
+            "title": "Que souhaitez-vous trouver ?",
+            "description": "Choisissez une collection, posez votre question et explorez les passages correspondants avec leurs sources.",
+            "shortcuts": "Raccourcis de la bibliothèque",
+            "collections": "Collections",
+            "documents": "Documents",
+            "chooseCollection": "Choisir une collection",
+            "selection": "Collection : {name}",
+            "pickerTitle": "Choisir une collection",
+            "pickerHint": "Choisissez une collection à interroger. Les collections sans droit de lecture ne peuvent pas être sélectionnées.",
+            "searchCollections": "Rechercher des collections",
+            "readRequired": "Droit de lecture requis",
+            "noMatches": "Aucune collection ne correspond à cette recherche.",
+            "noCollections": "Aucune collection n’est disponible pour ce compte dans cette organisation.",
+            "permissionLoading": "Vérification des droits de recherche…",
+            "chooseOrganization": "Choisissez une organisation dans le menu des organisations pour commencer la recherche.",
+            "searchDenied": "Vos droits actuels ne permettent pas de rechercher dans cette organisation.",
+            "chooseHint": "Choisissez une collection pour commencer la recherche.",
+            "loadingCollection": "Chargement de la collection sélectionnée…",
+            "loadingIndex": "Vérification de l’index actif de la collection…",
+            "readDenied": "Vous n’avez plus le droit de lire cette collection.",
+            "notIndexed": "Cette collection ne dispose pas encore d’un index actif.",
+            "openCollection": "Ouvrir la collection",
+            "options": "Options de recherche",
+            "optionsSummary": "{strategy} · {count, plural, one {Jusqu’à {count, number} résultat} other {Jusqu’à {count, number} résultats}}"
+        },
         "editor": {
             "description": "Créez une collection en quelques étapes ciblées. Vérifiez chaque paramètre avant d’enregistrer.",
             "progress": "Étapes de configuration de la collection",
