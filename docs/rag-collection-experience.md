@@ -79,6 +79,14 @@ The collection list has separate **Active collections** and **Deleted collection
 
 Detail panels remain mounted while hidden, preserving their current query and interaction state when switching tabs. Tab visibility does not grant content access; existing server authorization remains unchanged.
 
+## Appearance
+
+Open the sun/moon **Appearance** menu at the top right of the web dashboard and choose **Light**, **Dark** or **System**. System is the default and follows the device's color preference. On small screens the button shows only the icon and retains its localized accessible label; the menu keeps text labels and a checked radio choice.
+
+The existing next-themes provider saves this choice in local browser storage for the current origin. It survives reloads in that browser; it is not an account or organization preference and does not synchronize to another origin or the administration application. The administration application's existing dark presentation is unchanged.
+
+The shared [ThemeSwitcher](../packages/dashboard-core/src/components/theme-switcher.tsx) accepts explicit labels and uses the existing theme-provider API. The web [localized wrapper](../apps/web/components/theme-switcher.tsx) supplies EN/FR/nl-BE messages, and the [dashboard layout](../apps/web/app/dashboard/layout.tsx) places it beside notifications. Its constant trigger and initially closed radio menu avoid theme-dependent server markup.
+
 ## Compact document workspace
 
 A document keeps its identity, extraction status, diagnostic and original-download action above three focused views. **Source** shows the currently published TXT/Markdown preview or PDF/DOCX source navigator. **Versions** contains the existing replacement, deletion, retention and version history workspace. **Collections** contains the existing attachment controls.
@@ -128,7 +136,7 @@ Using the same curl-uploaded document, open its detail page and verify Source, V
 
 ### Actual results
 
-Executed on October 25, 2026 with production builds, an ordinary synthetic organization and owned disposable stores. Embeddings used the real local Ollama EmbeddingGemma server, with verified manifest digest 85462619ee721b466c5927d109d4cb765861907d5417b9109caebc4e614679f1, matching the [reproduction guide](rag-ollama-embeddinggemma.md).
+The collection-redesign results below were executed at source checkpoint 205bce1 on October 25, 2026, before the Appearance control was added, with production builds, an ordinary synthetic organization and owned disposable stores. Embeddings used the real local Ollama EmbeddingGemma server, with verified manifest digest 85462619ee721b466c5927d109d4cb765861907d5417b9109caebc4e614679f1, matching the [reproduction guide](rag-ollama-embeddinggemma.md).
 
 | Journey                      | Observed result                                                                                                                                                                                                                                                                                                                                                                                                                      |
 | ---------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
@@ -145,4 +153,10 @@ Two earlier incomplete browser attempts exposed and corrected real UI defects: a
 
 Validation passes 25 workspace type checks, 25 lint tasks, root unit checks including 151 embedding cases, nine draft cases, and four production builds. Web types, lint and production build passed again after the two browser fixes. The offline guard and final source checks pass after restoring ordinary public fixture modes (0755 directories/0644 files); fixture content and source pins are unchanged. Documentation formatting, local links, Mermaid and locale/ICU checks pass separately.
 
-Limits: no hosted-provider calls or paid credentials were used. OpenAI large's 3,072-dimensional choice was inspected locally in the final French editor; the Mistral 1,024-dimensional choice was inspected in the first attempt. Light mode was not browser-verified; only selected palette contrast pairs were calculated at 4.5:1 or higher, which is not a complete accessibility audit. Current UI permission-revocation transitions were reviewed in source rather than exercised in this browser run. Full catalog and Docker suites were not rerun locally for this UI change; the pull request records the required catalog/image CI results. Final cleanup confirmed all three application processes and five owned containers absent and removed the four fresh volumes; the existing Ollama model cache and private test captures were retained, and helper gates were restored. Normal logout was observed; no separate zero-session database assertion is claimed.
+Limits: no hosted-provider calls or paid credentials were used. OpenAI large's 3,072-dimensional choice was inspected locally in the final French editor; the Mistral 1,024-dimensional choice was inspected in the first attempt. In that 205bce1 run, light mode was not browser-verified; only selected palette contrast pairs were calculated at 4.5:1 or higher, which is not a complete accessibility audit. Current UI permission-revocation transitions were reviewed in source rather than exercised in this browser run. Full catalog and Docker suites were not rerun locally for this UI change; the pull request records the required catalog/image CI results. Final cleanup confirmed all three application processes and five owned containers absent and removed the four fresh volumes; the existing Ollama model cache and private test captures were retained, and helper gates were restored. Normal logout was observed; no separate zero-session database assertion is claimed.
+
+### Appearance follow-up validation
+
+Implementation and source review are prepared. Application checks, production build and browser acceptance for the new control are **pending** at this record; the earlier collection-redesign results do not verify it.
+
+The browser recipe is to select Light and Dark, confirm the visible palette and checked menu item, reload to confirm persistence, then select System and confirm that it remains the selected preference. Check pointer/keyboard navigation, the narrow-screen icon label, EN/FR/nl-BE messages and the console. No API key, document transfer, provider call or account update is needed for this preference.

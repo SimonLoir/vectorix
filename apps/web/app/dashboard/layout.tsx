@@ -11,6 +11,7 @@ import { NotificationProvider } from '@/components/notifications/notification-pr
 import { NotificationBell } from '@/components/notifications/notification-bell';
 import { DashboardQueryScope } from '@/components/dashboard-query-scope';
 import { PwaRegistration } from '@/components/pwa-registration';
+import { ThemeSwitcher } from '@/components/theme-switcher';
 export default function DashboardLayout({
     children,
 }: Readonly<{ children: React.ReactNode }>) {
@@ -27,7 +28,10 @@ export default function DashboardLayout({
                             <SidebarInset className='min-w-0 bg-muted/20'>
                                 <header className='flex h-16 items-center justify-between border-b px-6'>
                                     <SidebarTrigger />
-                                    <NotificationBell />
+                                    <div className='flex items-center gap-2'>
+                                        <ThemeSwitcher />
+                                        <NotificationBell />
+                                    </div>
                                 </header>
                                 {children}
                             </SidebarInset>
