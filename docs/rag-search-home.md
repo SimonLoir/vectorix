@@ -2,7 +2,7 @@
 
 The dashboard home puts collection search first: a large query bar, collection selection and compact options, followed by matching passages and their sources. This is a passage-search interface; it does not generate an answer with a chat model.
 
-Implementation and offline verification pass. Production browser acceptance for this home experience is **pending** at this record.
+Implementation, offline verification and the functional production-browser journey pass. A subsequent query-text sizing adjustment awaits a fresh visual smoke check; the completed functional run remains recorded separately.
 
 ## Quick search
 
@@ -70,8 +70,24 @@ Prepare documents through native HTTP with curl, using authorized least-privileg
 6. Check no-match/empty list and request-error states, French/English/Belgian Dutch labels and result plurals, keyboard focus, collapsed-option validation and a narrow viewport. Read denial and organization/session changes must clear the old workspace; record whether these were exercised in the browser or covered through automated/source checks.
 7. Check console output, perform normal logout and remove only the owned test resources.
 
-### Actual status
+### Actual results
 
-Web type generation/type checking and lint pass, with five existing warnings. Three targeted style issues from the first lint pass were corrected. The closed-environment API/backend suite passes 229 cases plus 11 discovery cases; fresh web, API and workers production builds also pass. All 25 new home keys have matching EN/FR/nl-BE ICU signatures, and independent source review finds no blocking issue.
+The functional production-browser journey passes at source checkpoint 5d9f66a on October 25, 2026. It used an ordinary synthetic organization, owned disposable stores and real Ollama 0.40.8 with cached embeddinggemma, verified digest 85462619ee721b466c5927d109d4cb765861907d5417b9109caebc4e614679f1, 768 dimensions, DiskANN and document-structure target/overlap 512/64.
 
-**Browser pending:** no completed home search/source journey, provider call, collection-switch race or new cleanup result is claimed yet. Record actual provider attribution and observations after execution. Earlier collection-playground tests do not by themselves establish this new home journey; the dedicated pull request records exact-head CI and delivery.
+| Journey               | Observed result                                                                                                                                                                                                                                                                      |
+| --------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Collection choice     | Empty/no-match states and filtering for Garden were checked. A question entered before selection remained when choosing the indexed Garden collection.                                                                                                                               |
+| Search options        | Enter submitted Hybrid and returned one result (123 ms). Keyword with topK 1, TXT and a document filter returned one (36 ms); Vector with topK 3 returned one (105 ms). A PDF filter returned zero (23 ms). Invalid topK reopened the collapsed options for native validation.       |
+| Collection switch     | Switching to Unindexed cleared results/options/filters, retained the question, disabled Search and showed the collection-workspace action. Keyboard selection back to Garden retained the question and restored Hybrid/10 defaults.                                                  |
+| Exact source          | The browser opened the indexed version-1 preview. Separate scoped key/curl reads returned one Vector result, a 2,023-character source preview and the exact 2,048-byte original.                                                                                                     |
+| Presentation and exit | Light/Dark, EN/FR live messages and a Belgian Dutch reload were checked. At 390×844 there was no page overflow and the picker measured 357×439 inside the viewport. The console had zero warnings/errors; normal Dutch logout, owned-tab closure and viewport restoration completed. |
+
+Individual timings above describe functional observations, not a performance benchmark. The original was uploaded with native curl and matched SHA-256 ec7e2086bed47651af1bdd76a1f8d22678db13fbda17e7c5b5ead04083cd74cf. The native helper completed 20 calls across setup, upload, scoped-key setup and the three source/search/original reads; no browser file transfer occurred.
+
+Web type generation/type checking and lint pass, with five existing warnings. Three targeted style issues from the first lint pass were corrected. The closed-environment API/backend suite passes 229 cases plus 11 discovery cases; fresh web, API and workers production builds pass. All 25 home keys have matching EN/FR/nl-BE ICU signatures, and independent source review finds no blocking issue.
+
+Final functional-run cleanup confirmed three application processes, five owned containers and four fresh volumes absent. The existing model cache remained unchanged, private captures were retained and helper bytes/modes and disabled gates were restored.
+
+Limits: selection during an in-flight request, permission revocation, multiple picker pages, a G1→G2 transition, provider failure and no-organization recovery remain source-reviewed/recipe scenarios rather than actual results from this browser run. No hosted-provider or retrieval-quality claim is made. The pull request records exact-head CI and delivery.
+
+A separate fresh production-browser smoke at b2d0e25 verifies the subsequent CSS-only desktop sizing correction: the query computes to 24 px in an 80 px field on desktop and 18 px in a 64 px field at 390×844, without horizontal overflow. The empty selector, question retention and Light/Dark presentation pass; the console has zero warnings/errors. Fresh web build/type checking and lint pass again. Normal French logout, owned-tab closure and viewport restoration complete. This seed-only smoke does not repeat the earlier indexing/search journey. Its cleanup confirms three app processes, five containers and four fresh volumes absent, with the model cache/private captures preserved and both helpers restored byte/mode-exact with disabled gates.
