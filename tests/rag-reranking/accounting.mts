@@ -4,7 +4,7 @@ import { once } from 'node:events';
 import { createServer } from 'node:http';
 import { createRequire } from 'node:module';
 import type { TestContext } from 'node:test';
-import { prisma } from '../../packages/db/src/index';
+import { prisma, type IndexTask } from '../../packages/db/src/index';
 import { auth } from '../../packages/auth/src/index';
 import { getMemberPermissions } from '../../packages/auth/src/permissions/resolve';
 import type { AuthorizedContext } from '../../packages/routers/utils/src/authorized';
@@ -129,7 +129,34 @@ export async function rerankingAccountingTests(t: TestContext) {
             expectedRevision: 1,
             requestId: randomUUID(),
         });
-        await scanSemantic(fixture, started.generationId, 4);
+        // Activation rotates a bounded global cursor across retained catalog
+        // generations. Await this owned publication rather than four scans.
+        for (let pass = 0; pass < 50; pass++) {
+            await scanSemantic(fixture, started.generationId, 1);
+            const failed: Pick<IndexTask, 'kind' | 'stage' | 'errorCode'>[] =
+                await prisma.indexTask.findMany({
+                    where: {
+                        organizationId: fixture.organizationId,
+                        generationId: started.generationId,
+                        status: 'FAILED',
+                    },
+                    select: { kind: true, stage: true, errorCode: true },
+                    take: 10,
+                });
+            assert.deepEqual(
+                failed,
+                [],
+                'The owned accounting generation must publish without terminal worker failures.'
+            );
+            if (
+                (
+                    await f.owner.rag.indexing.status({
+                        collectionId: collection.id,
+                    })
+                ).active?.id === started.generationId
+            )
+                break;
+        }
         assert.equal(
             (await f.owner.rag.indexing.status({ collectionId: collection.id }))
                 .active?.id,
