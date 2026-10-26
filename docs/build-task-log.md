@@ -1529,3 +1529,17 @@ The successful run completes fresh/upgrade/repeated migrations, schema parity an
 - [x] Pass a fresh web build/types/lint and the separate b2d0e25 CSS-only production smoke: query text 24 px/80 px field on desktop and 18 px/64 px field at 390×844 without horizontal overflow; empty picker, retained question, Light/Dark, console zero and normal French logout. Close the owned tab and reset the viewport. The earlier functional run remains separately attributed.
 - [x] Complete final sizing-smoke cleanup: three app processes, five containers and four fresh volumes absent; model cache/private captures preserved and both helpers restored byte/mode-exact with disabled gates.
 - [x] Prepare the reviewed implementation on `codex/search-home` for dedicated pull-request delivery; its timeline records exact-head CI and delivery status.
+
+## Optional native reranking (suggestion 50)
+
+- [x] Select the opt-in suggestion that needs no product arbitration; leave SDK/MCP publication and generated answers outside this milestone.
+- [x] Add independent immutable collection profiles, explicit API-key permission, native Cohere/Voyage protocols and default-off per-search controls with EN/FR/nl-BE copy.
+- [x] Prepare the additive schema and English workflow documentation; independent schema/SQL review is clear. Manually generate the migration without reading `.env` or applying it to application data.
+- [x] Preserve scalar collection/configuration receipts under organization ownership so validated late usage settles after collection deletion. Keep mandatory daily intent separate from best-effort embedding telemetry and independently nullable native billing.
+- [x] Add actual request admission, replay/concurrency/daily bounds, terminal settlement and bounded worker maintenance. Pure candidate-pool tests preserve children before scoring, deduplicate parents afterward and project exact source receipts.
+- [x] Pass all 26 workspace type/lint tasks, seven unit tasks (including 78 native protocol tests and ten pipeline regressions), four fresh builds and all five existing offline recovery/quality/capacity guards. Repair first-pass style/type issues and the stale 25-workspace lint-policy assertion for the new package.
+- [x] Add [the frozen FR/EN evaluator](rag-reranking-evaluation.md) and 12 injected/offline metric/provenance guard tests; no HTTP or hosted quality result is claimed.
+- [x] Pass the targeted native slice: fresh/upgrade/repeat migrations, schema parity, 75 new SQL guard proofs on each database, populated restore, existing lock proofs, ten HTTP journey tests and eight accounting tests. Preserve earlier failures: stale migration/revision assertions, a readiness fixture behind the existing activation cursor, a malformed filter testing the wrong boundary, and a CJS/ESM fixture graph with an empty cookie jar. Repair the test fixtures without authentication or production bypasses.
+- [ ] Complete the full default catalog matrix on the final source; the targeted slice is not full catalog acceptance.
+- [ ] Complete controlled-provider browser acceptance, ordinary-search regression, source receipts, mobile/theme and locale verification. No browser transfers; native curl handles fixture uploads and scoped keys.
+- [ ] Record exact-head CI, independent final review and PR delivery. Real hosted quality/billing stays unverified and reranking off by default.

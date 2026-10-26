@@ -2,6 +2,8 @@
 set -Eeuo pipefail
 cd "$(dirname "${BASH_SOURCE[0]}")/.."
 # Own disposable containers and databases; never load the developer's .env.
+suite="${VECTORIX_CATALOG_TEST_SUITE:-all}"
+[[ "$suite" == all || "$suite" == reranking ]] || { echo 'Unsupported catalog test suite.' >&2; exit 2; }
 prefix="vectorix-catalog-${RANDOM}-$$"
 cleanup() {
     result=$?
@@ -26,6 +28,7 @@ redis_port=$(docker port "$prefix-redis" 6379/tcp | cut -d: -f2)
 sql() { docker exec -i "$prefix-postgres" psql -U postgres -d "$1" -v ON_ERROR_STOP=1; }
 sql postgres <<< 'CREATE DATABASE vectorix_upgrade_test; CREATE DATABASE vectorix_catalog_test;'
 docker cp tests/catalog "$prefix-postgres:/catalog-tests"
+docker cp tests/rag-reranking/schema-check.sql "$prefix-postgres:/catalog-tests/reranking-schema-check.sql"
 docker cp packages/db/prisma/migrations/20261031000000_sql_function_search_path/migration.sql "$prefix-postgres:/catalog-tests/sql-function-migration.sql"
 
 # Preserve pre-catalog and catalog data through the approved additive migrations.
@@ -64,6 +67,7 @@ pnpm --filter @repo/db exec prisma migrate resolve --applied 20261030000000_rag_
 docker exec "$prefix-postgres" psql -X -q -U postgres -d vectorix_upgrade_test -v ON_ERROR_STOP=1 -f /catalog-tests/sql-function-upgrade-check.sql
 pnpm --filter @repo/db exec prisma migrate resolve --applied 20261031000000_sql_function_search_path
 for attempt in 1 2; do pnpm --filter @repo/db migrate:deploy; done
+sql vectorix_upgrade_test < tests/rag-reranking/schema-check.sql
 sql vectorix_upgrade_test < tests/catalog/observability-upgrade-check.sql
 sql vectorix_upgrade_test < tests/catalog/observability-schema-check.sql
 sql vectorix_upgrade_test < tests/catalog/lifecycle-upgrade-check.sql
@@ -80,6 +84,7 @@ pnpm --filter @repo/db exec prisma migrate diff --from-config-datasource --to-sc
 # Also validate a fresh installation and a no-op repeat deployment.
 export DATABASE_URL="postgresql://postgres:catalog-test-password@127.0.0.1:$pg_port/vectorix_catalog_test"
 for attempt in 1 2; do pnpm --filter @repo/db migrate:deploy; done
+sql vectorix_catalog_test < tests/rag-reranking/schema-check.sql
 sql vectorix_catalog_test < tests/catalog/observability-schema-check.sql
 sql vectorix_catalog_test < tests/catalog/semantic-schema-check.sql
 docker exec "$prefix-postgres" psql -X -q -U postgres -d vectorix_catalog_test -v ON_ERROR_STOP=1 -f /catalog-tests/parent-context-schema-check.sql
@@ -139,5 +144,11 @@ export VECTOR_DATABASE_URL="postgresql://vectorix_runtime:catalog-vector-runtime
 export VECTOR_DATABASE_PROVISIONING_URL="postgresql://vectorix_indexer:catalog-vector-indexer@127.0.0.1:$vector_port/vectorix_catalog_vectors_test"
 export VECTOR_DATABASE_SCHEMA=vector_collections
 export VECTORIX_EMBEDDING_ALLOWED_ENDPOINTS=
-pnpm --filter api test:integration
-printf 'Fresh install, upgrade, repeat deployment, schema parity, core journeys, and RAG access tests passed.\n'
+if [[ "$suite" == all ]]; then
+    pnpm --filter api test:integration
+else
+    pnpm --filter api exec node --import tsx --test ../../tests/rag-reranking/search.test.mts
+fi
+pnpm --filter api exec tsc6 -p ../../tests/rag-reranking/tsconfig.json --noEmit
+pnpm --filter api exec node --import tsx --test ../../tests/rag-reranking/index.test.mts
+printf 'Fresh install, upgrade, repeat deployment, schema parity and selected %s journeys passed.\n' "$suite"

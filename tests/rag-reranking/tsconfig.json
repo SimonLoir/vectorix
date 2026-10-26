@@ -1,0 +1,11 @@
+{
+    "extends": "../../apps/api/tsconfig.json",
+    "compilerOptions": {
+        "rootDir": "../..",
+        "noEmit": true,
+        "tsBuildInfoFile": "../../apps/api/dist/reranking-tests.tsbuildinfo",
+        "declaration": false,
+        "declarationMap": false
+    },
+    "include": ["./**/*.ts", "./**/*.mts"]
+}

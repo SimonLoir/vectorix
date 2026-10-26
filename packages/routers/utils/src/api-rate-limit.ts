@@ -4,6 +4,7 @@ import { consumeRateLimit } from '@repo/queues/rate-limit';
 /** Request budgets for provider-related operations, never native usage or billing. */
 export const PROVIDER_OPERATIONS: ReadonlySet<string> = new Set([
     'admin.rag.indexing.search',
+    'admin.rag.reranking.search',
     'admin.rag.indexing.probe',
     'admin.rag.indexing.models',
 ]);

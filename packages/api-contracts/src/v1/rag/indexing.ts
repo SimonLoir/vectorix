@@ -1,4 +1,5 @@
 import { oc } from '@orpc/contract';
+import { searchInput, searchOutput } from './search-contract';
 import { z } from 'zod';
 import { id, page, success } from './common';
 import { documentSource } from './documents';
@@ -13,8 +14,6 @@ import {
     contentLanguage,
     documentMetadata,
     documentTags,
-    searchFilters,
-    searchResult,
 } from './indexing-types';
 
 const reference = z.object({ collectionId: id }).strict();
@@ -274,32 +273,8 @@ export const indexingContract = {
         ),
     search: oc
         .route({ method: 'POST', path: '/collections/{collectionId}/search' })
-        .input(
-            reference.extend({
-                query: z.string().trim().min(1).max(4000),
-                topK: z.number().int().min(1).max(50).default(10),
-                strategy: z
-                    .enum(['HYBRID', 'LEXICAL', 'VECTOR'])
-                    .default('HYBRID'),
-                filters: searchFilters,
-            })
-        )
-        .output(
-            z.object({
-                generationId: id,
-                model: z.string(),
-                strategy: z.enum(['HYBRID', 'LEXICAL', 'VECTOR']),
-                results: z.array(searchResult).max(50),
-                vectorUnderfilled: z.boolean(),
-                parentUnderfilled: z
-                    .boolean()
-                    .describe(
-                        'The bounded child candidate window yielded fewer distinct parents than requested; this does not establish corpus exhaustion.'
-                    )
-                    .optional(),
-                durationMs: z.number().nonnegative(),
-            })
-        ),
+        .input(searchInput)
+        .output(searchOutput),
     sourcePreview: oc
         .route({
             method: 'POST',

@@ -127,6 +127,12 @@ export function updateCredential(
                             organizationId: actor.organizationId,
                             credentialId: current.id,
                         },
+                    })) ||
+                    (await db.collectionRerankConfig.count({
+                        where: {
+                            organizationId: actor.organizationId,
+                            credentialId: current.id,
+                        },
                     })))
             )
                 throw new ORPCError('CONFLICT', {
@@ -208,6 +214,12 @@ export function deleteCredential(
                     },
                 })) ||
                 (await db.collectionConfigRevision.count({
+                    where: {
+                        organizationId: actor.organizationId,
+                        credentialId: credential.id,
+                    },
+                })) ||
+                (await db.collectionRerankConfig.count({
                     where: {
                         organizationId: actor.organizationId,
                         credentialId: credential.id,

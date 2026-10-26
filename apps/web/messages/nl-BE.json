@@ -202,7 +202,8 @@
             "ragCollection": "Collecties",
             "ragLibrary": "Documentbibliotheek",
             "ragAudit": "Cataloguslogboek",
-            "ragQuota": "Gebruik en quota"
+            "ragQuota": "Gebruik en quota",
+            "ragRerank": "Herrangschikking"
         },
         "actions": {
             "read": "Bekijken",
@@ -214,7 +215,8 @@
             "manageGrants": "Toegang beheren",
             "manageAll": "Alle collecties beheren",
             "readAll": "De hele bibliotheek lezen",
-            "write": "Toevoegen en bewerken"
+            "write": "Toevoegen en bewerken",
+            "use": "Gebruiken"
         }
     },
     "account": {
@@ -792,7 +794,8 @@
             "empty": "Geen acties om weer te geven.",
             "actor": "Actor: {type} · {id}",
             "target": "Doel: {id}",
-            "synchronizationAdopted": "Indexsynchronisatie overgenomen"
+            "synchronizationAdopted": "Indexsynchronisatie overgenomen",
+            "rerankingConfigured": "Herrangschikking ingesteld"
         },
         "keys": {
             "title": "Collectiebereik",
@@ -1503,6 +1506,66 @@
                 "INPUT": "Invoer",
                 "PROCESSING": "Verwerking",
                 "OTHER": "Overige"
+            }
+        },
+        "reranking": {
+            "title": "Optionele herrangschikking",
+            "description": "Orden gevonden passages opnieuw met een afzonderlijk model. De bestaande embeddings en de gepubliceerde index blijven ongewijzigd.",
+            "configure": "Herrangschikking instellen",
+            "loadFailed": "Het profiel voor herrangschikking kon niet worden geladen. Gewoon zoeken blijft beschikbaar.",
+            "enabled": "Beschikbaar op verzoek",
+            "disabled": "Uitgeschakeld",
+            "profileSummary": "{provider} · {model} · Maximaal {count, number} kandidaten · Revisie {revision}",
+            "bindings": {
+                "ORGANIZATION": "Gekoppeld aan de opgeslagen toegangsgegevens van de organisatie.",
+                "PLATFORM": "Gekoppeld aan de ingestelde toegangsgegevens van het platform.",
+                "UNBOUND": "Aan dit uitgeschakelde concept zijn geen toegangsgegevens gekoppeld."
+            },
+            "optInHint": "Elke zoekopdracht begint met herrangschikking uitgeschakeld. Het collectieprofiel inschakelen voert geen aanroep naar de aanbieder uit.",
+            "configureHint": "Kies een afzonderlijk model voor herrangschikking en een begrensde kandidatenselectie. Wijzigingen gelden voor volgende zoekopdrachten zonder de index opnieuw op te bouwen.",
+            "allow": "Optionele herrangschikking voor deze collectie toestaan",
+            "provider": "Aanbieder voor herrangschikking",
+            "model": "Model voor herrangschikking",
+            "candidatePool": "Maximumaantal kandidaatpassages",
+            "candidateHint": "Vóór de herrangschikking worden 1 tot 100 kandidaten opgehaald. Een kleinere selectie kan minder resultaten opleveren dan de gevraagde top K.",
+            "enableHint": "Bij het opslaan van een ingeschakeld profiel worden eerst de toegangsgegevens van de organisatie gekoppeld, en de platformstandaarden als er geen zijn ingesteld. Volgende zoekopdrachten met herrangschikking kunnen door de aanbieder worden aangerekend. Opslaan roept de aanbieder niet aan.",
+            "disabledDraftHint": "Een uitgeschakeld profiel kan zonder toegangsgegevens worden opgeslagen. Het kan pas worden gebruikt nadat een ingeschakeld profiel met succes is opgeslagen.",
+            "use": "Deze zoekopdracht herrangschikken",
+            "searchHint": "Gebruik {provider} · {model} na het ophalen. Deze keuze geldt alleen voor de volgende ingediende zoekopdracht.",
+            "availability": {
+                "loading": "Het optionele profiel voor herrangschikking wordt gecontroleerd. Gewoon zoeken is beschikbaar.",
+                "error": "Herrangschikking is tijdelijk niet beschikbaar. U kunt nog steeds gewoon zoeken.",
+                "disabled": "Herrangschikking is voor deze collectie uitgeschakeld. Een beheerder kan dit instellen in het collectieoverzicht.",
+                "denied": "Uw huidige rechten staan herrangschikking voor deze collectie niet toe.",
+                "notReady": "Publiceer een actieve index voordat u herrangschikking voor deze collectie gebruikt."
+            },
+            "billable": "Deze zoekopdracht stuurt de vraag en kandidaatpassages naar de ingestelde aanbieder voor herrangschikking en kan kosten veroorzaken.",
+            "compare": "Vergelijken met de oorspronkelijke rangschikking",
+            "compareHint": "Toon beide volgordes van dezelfde kandidatenselectie; dit voert geen tweede zoekopdracht uit.",
+            "runTitle": "Herrangschikt met {provider} · {model}",
+            "runSummary": "{reranked, number} passages herrangschikt uit {candidates, number} kandidaten (limiet {limit, number}) in {duration} ms.",
+            "scoreHint": "Scores voor herrangschikking zijn rangschikkingssignalen, geen betrouwbaarheidspercentages. De oorspronkelijke lexicale/vectorrangen en RRF-scores blijven afzonderlijk.",
+            "usage": "Door de aanbieder gemeld verbruik",
+            "providerInputTokens": "Invoertokens van de aanbieder",
+            "billedInputTokens": "Aangerekende invoertokens",
+            "billedSearchUnits": "Aangerekende zoekeenheden",
+            "unknown": "Niet gemeld",
+            "usageHint": "De gemelde eenheden zijn geen prijsraming. Niet gemeld betekent onbekend, niet nul.",
+            "comparison": "Resultaatvolgordes vergelijken",
+            "rerankedOrder": "Na herrangschikking",
+            "originalOrder": "Oorspronkelijke volgorde",
+            "comparisonHint": "Beide weergaven gebruiken dezelfde toegestane kandidaten, filters en gepubliceerde generatie.",
+            "score": "Score voor herrangschikking: {score}",
+            "underfilled": "De begrensde kandidatenselectie leverde minder resultaten op dan gevraagd. Dit betekent niet dat er in de volledige collectie geen andere overeenkomsten zijn.",
+            "failed": "Het verzoek kon niet worden voltooid. Controleer uw rechten, de instellingen en het beschikbare quotum en probeer opnieuw.",
+            "resultsUnavailable": "Deze herrangschikte resultaten zijn niet meer beschikbaar met het huidige profiel of de huidige rechten. Dien een nieuwe zoekopdracht in; gewoon zoeken blijft beschikbaar.",
+            "errors": {
+                "RERANK_DISABLED": "Herrangschikking is voor deze collectie uitgeschakeld. Vernieuw het profiel of zoek zonder herrangschikking.",
+                "RERANK_PROFILE_CHANGED": "Het profiel voor herrangschikking is gewijzigd. Controleer de huidige instellingen en dien een nieuwe zoekopdracht in.",
+                "RERANK_REQUEST_REPLAY": "Deze zoekpoging is al ingediend. Dien een nieuwe zoekopdracht in in plaats van de vorige poging opnieuw te gebruiken.",
+                "RERANK_CAPACITY": "Herrangschikking kan niet worden toegelaten binnen de huidige capaciteitslimieten. Probeer later opnieuw of vraag een beheerder de limieten te controleren.",
+                "RERANK_DAILY_LIMIT": "De dagelijkse limiet voor herrangschikking is bereikt. Zoek zonder herrangschikking of vraag een beheerder de limiet te controleren.",
+                "RERANK_INPUT_INVALID": "De zoekopties of filters zijn ongeldig. Controleer ze en dien een nieuwe zoekopdracht in."
             }
         }
     },

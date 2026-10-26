@@ -202,7 +202,8 @@
             "ragCollection": "Collections",
             "ragLibrary": "Bibliothèque de documents",
             "ragAudit": "Journal du catalogue",
-            "ragQuota": "Usage et quotas"
+            "ragQuota": "Usage et quotas",
+            "ragRerank": "Reclassement"
         },
         "actions": {
             "read": "Consulter",
@@ -214,7 +215,8 @@
             "manageGrants": "Gérer les accès",
             "manageAll": "Administrer toutes les collections",
             "readAll": "Lire toute la bibliothèque",
-            "write": "Ajouter et modifier"
+            "write": "Ajouter et modifier",
+            "use": "Utiliser"
         }
     },
     "account": {
@@ -792,7 +794,8 @@
             "empty": "Aucune action à afficher.",
             "actor": "Acteur : {type} · {id}",
             "target": "Cible : {id}",
-            "synchronizationAdopted": "Synchronisation de l’index reprise"
+            "synchronizationAdopted": "Synchronisation de l’index reprise",
+            "rerankingConfigured": "Reclassement configuré"
         },
         "keys": {
             "title": "Périmètre des collections",
@@ -1503,6 +1506,66 @@
                 "INPUT": "Entrée",
                 "PROCESSING": "Traitement",
                 "OTHER": "Autre"
+            }
+        },
+        "reranking": {
+            "title": "Reclassement facultatif",
+            "description": "Réordonnez les passages trouvés avec un modèle distinct. Les embeddings et l’index publié restent inchangés.",
+            "configure": "Configurer le reclassement",
+            "loadFailed": "Le profil de reclassement n’a pas pu être chargé. La recherche ordinaire reste disponible.",
+            "enabled": "Disponible sur demande",
+            "disabled": "Désactivé",
+            "profileSummary": "{provider} · {model} · Jusqu’à {count, number} candidats · Révision {revision}",
+            "bindings": {
+                "ORGANIZATION": "Lié aux identifiants enregistrés de l’organisation.",
+                "PLATFORM": "Lié aux identifiants configurés de la plateforme.",
+                "UNBOUND": "Aucun identifiant n’est lié à ce brouillon désactivé."
+            },
+            "optInHint": "Le reclassement est désactivé au début de chaque recherche. Activer le profil de la collection ne déclenche aucun appel au fournisseur.",
+            "configureHint": "Choisissez un modèle de reclassement distinct et une fenêtre de candidats limitée. Les changements s’appliquent aux prochaines recherches sans reconstruire l’index.",
+            "allow": "Autoriser le reclassement facultatif pour cette collection",
+            "provider": "Fournisseur de reclassement",
+            "model": "Modèle de reclassement",
+            "candidatePool": "Nombre maximal de passages candidats",
+            "candidateHint": "Entre 1 et 100 candidats sont recherchés avant le reclassement. Une fenêtre réduite peut produire moins de résultats que le top K demandé.",
+            "enableHint": "Enregistrer un profil activé lie d’abord les identifiants de l’organisation, puis ceux de la plateforme si aucun n’est configuré. Les recherches avec reclassement peuvent ensuite être facturées par le fournisseur. L’enregistrement n’appelle pas le fournisseur.",
+            "disabledDraftHint": "Un profil désactivé peut être enregistré sans identifiants. Il ne peut être utilisé qu’après l’enregistrement réussi d’un profil activé.",
+            "use": "Reclasser cette recherche",
+            "searchHint": "Utiliser {provider} · {model} après la recherche. Ce choix concerne uniquement la prochaine recherche envoyée.",
+            "availability": {
+                "loading": "Vérification du profil de reclassement facultatif. La recherche ordinaire est disponible.",
+                "error": "Le reclassement est temporairement indisponible. Vous pouvez toujours lancer une recherche ordinaire.",
+                "disabled": "Le reclassement est désactivé pour cette collection. Un administrateur peut le configurer dans la vue d’ensemble de la collection.",
+                "denied": "Vos droits actuels ne permettent pas le reclassement pour cette collection.",
+                "notReady": "Publiez un index actif avant d’utiliser le reclassement pour cette collection."
+            },
+            "billable": "Cette recherche transmet la question et les passages candidats au fournisseur de reclassement configuré et peut entraîner des frais.",
+            "compare": "Comparer avec le classement d’origine",
+            "compareHint": "Afficher les deux classements de la même fenêtre de candidats, sans lancer une deuxième recherche.",
+            "runTitle": "Reclassé avec {provider} · {model}",
+            "runSummary": "{reranked, number} passages reclassés parmi {candidates, number} candidats (limite : {limit, number}) en {duration} ms.",
+            "scoreHint": "Les scores de reclassement sont des indicateurs de classement, pas des pourcentages de confiance. Les rangs lexicaux/vectoriels et les scores RRF d’origine restent distincts.",
+            "usage": "Consommation rapportée par le fournisseur",
+            "providerInputTokens": "Tokens d’entrée du fournisseur",
+            "billedInputTokens": "Tokens d’entrée facturés",
+            "billedSearchUnits": "Unités de recherche facturées",
+            "unknown": "Non communiqué",
+            "usageHint": "Les unités rapportées ne sont pas une estimation du prix. Non communiqué signifie inconnu, pas zéro.",
+            "comparison": "Comparer l’ordre des résultats",
+            "rerankedOrder": "Après reclassement",
+            "originalOrder": "Classement d’origine",
+            "comparisonHint": "Les deux vues utilisent les mêmes candidats autorisés, les mêmes filtres et la même génération publiée.",
+            "score": "Score de reclassement : {score}",
+            "underfilled": "La fenêtre limitée de candidats a produit moins de résultats que demandé. Cela ne signifie pas que la collection entière ne contient pas d’autres correspondances.",
+            "failed": "La demande n’a pas pu aboutir. Vérifiez vos droits, la configuration et le quota disponible, puis réessayez.",
+            "resultsUnavailable": "Ces résultats reclassés ne sont plus disponibles avec le profil ou les droits actuels. Envoyez une nouvelle recherche ; la recherche ordinaire reste disponible.",
+            "errors": {
+                "RERANK_DISABLED": "Le reclassement est désactivé pour cette collection. Actualisez le profil ou lancez une recherche ordinaire.",
+                "RERANK_PROFILE_CHANGED": "Le profil de reclassement a changé. Vérifiez les réglages actuels et envoyez une nouvelle recherche.",
+                "RERANK_REQUEST_REPLAY": "Cette tentative de recherche a déjà été envoyée. Lancez une nouvelle recherche au lieu de réutiliser la tentative précédente.",
+                "RERANK_CAPACITY": "Le reclassement ne peut pas être accepté dans les limites de capacité actuelles. Réessayez plus tard ou demandez à un administrateur de vérifier les limites.",
+                "RERANK_DAILY_LIMIT": "La limite quotidienne de reclassement est atteinte. Lancez une recherche ordinaire ou demandez à un administrateur de vérifier la limite.",
+                "RERANK_INPUT_INVALID": "Les options ou les filtres de recherche ne sont pas valides. Vérifiez-les et envoyez une nouvelle recherche."
             }
         }
     },

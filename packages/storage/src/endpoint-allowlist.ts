@@ -12,7 +12,9 @@ type EndpointAllowlistVariables =
       }
     | {
           defaultVariable: EmbeddingDefaultVariable;
-          allowedVariable: 'VECTORIX_EMBEDDING_ALLOWED_ENDPOINTS';
+          allowedVariable:
+              | 'VECTORIX_EMBEDDING_ALLOWED_ENDPOINTS'
+              | 'VECTORIX_RERANKING_ALLOWED_ENDPOINTS';
       };
 
 export type EndpointAllowlistWarning = Readonly<{

@@ -29,7 +29,14 @@ export function rpc(
     );
 }
 
-function browser() {
+type TestBrowser = {
+    client: VectorixApiV1Client;
+    rag: VectorixApiV1Client['admin']['rag'];
+    headers: () => Record<string, string>;
+    post: (path: string, body: unknown) => ReturnType<Response['json']>;
+};
+
+function browser(): TestBrowser {
     const cookies = new Map<string, string>();
     const headers = () => ({
         origin: 'http://localhost:3000',
@@ -50,9 +57,32 @@ function browser() {
             const index = pair.indexOf('=');
             cookies.set(pair.slice(0, index), pair.slice(index + 1));
         }
-        const result = await response.json();
+        let result: unknown;
+        if (path === 'organization/create') {
+            const bytes = new Uint8Array(await response.arrayBuffer());
+            const mediaType = response.headers
+                .get('content-type')
+                ?.split(';')[0]
+                ?.trim()
+                .toLowerCase();
+            assert(
+                bytes.byteLength > 0,
+                JSON.stringify({
+                    stage: 'TEST_ORGANIZATION_CREATE',
+                    status: response.status,
+                    contentType:
+                        mediaType === 'application/json'
+                            ? 'JSON'
+                            : mediaType === 'text/plain'
+                              ? 'TEXT'
+                              : 'OTHER',
+                    bodyBytes: bytes.byteLength,
+                })
+            );
+            result = JSON.parse(new TextDecoder().decode(bytes));
+        } else result = await response.json();
         assert.ok(response.ok, `${path}: ${JSON.stringify(result)}`);
-        return result;
+        return result as Awaited<ReturnType<Response['json']>>;
     }
     return { client, rag: client.admin.rag, post, headers };
 }

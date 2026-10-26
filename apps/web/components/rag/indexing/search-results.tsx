@@ -3,6 +3,7 @@ import { useFormatter, useTranslations } from 'next-intl';
 import { Button } from '@repo/ui/button';
 import { useVectorixPermissions } from '@/contexts/vectorix-permissions';
 import { ChunkContent } from './chunk-content';
+import type { RerankedSearchResponse } from '../reranking/types';
 import type { SearchResponse, SearchResult } from './types';
 
 /** Preserve serving-generation labels and exact-version receipts for every result. */
@@ -11,12 +12,13 @@ export function SearchResults({
     activeGenerationId,
     onOpenSource,
 }: Readonly<{
-    response: SearchResponse;
+    response: SearchResponse | RerankedSearchResponse;
     activeGenerationId: string | null;
     onOpenSource: (result: SearchResult) => void;
 }>) {
     const tr = useTranslations('rag.indexing');
     const format = useFormatter();
+    const rerankTr = useTranslations('rag.reranking');
     const { canOperation } = useVectorixPermissions();
     return (
         <div className='space-y-4' aria-live='polite'>
@@ -79,6 +81,17 @@ export function SearchResults({
                                 }),
                             })}
                         </p>
+                        {'rerankScore' in result &&
+                            typeof result.rerankScore === 'number' && (
+                                <p className='text-sm font-medium text-primary dark:text-accent-foreground'>
+                                    {rerankTr('score', {
+                                        score: format.number(
+                                            result.rerankScore,
+                                            { maximumFractionDigits: 5 }
+                                        ),
+                                    })}
+                                </p>
+                            )}
                         {canOperation('admin.rag.indexing.sourcePreview') && (
                             <Button
                                 variant='outline'

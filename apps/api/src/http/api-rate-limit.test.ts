@@ -8,6 +8,7 @@ import {
     enforceApiRateLimit,
     MAX_API_RATE_LIMIT_PER_MINUTE,
     parseApiRateLimits,
+    PROVIDER_OPERATIONS,
     type ApiRateLimits,
 } from '@routers/utils/api-rate-limit';
 import type { RateLimitPolicy } from '@repo/queues/rate-limit';
@@ -263,4 +264,13 @@ void test('RPC and REST preserve 429 and Retry-After through the response-header
     });
     assert.equal(rpc.status, 429);
     assert.equal(rpc.headers.get('Retry-After'), '42');
+});
+
+void test('optional reranked search receives the same provider-request admission while metadata stays free of provider cost', () => {
+    assert(PROVIDER_OPERATIONS.has('admin.rag.reranking.search'));
+    for (const operation of ['profile', 'configure', 'usage'])
+        assert.equal(
+            PROVIDER_OPERATIONS.has(`admin.rag.reranking.${operation}`),
+            false
+        );
 });

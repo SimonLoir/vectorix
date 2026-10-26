@@ -1,3 +1,7 @@
+import { profileRerankingHandler } from './reranking/profile';
+import { configureRerankingHandler } from './reranking/configure';
+import { searchRerankingHandler } from './reranking/search';
+import { usageRerankingHandler } from './reranking/usage';
 import { sourcePreviewDocumentHandler } from './documents/sourcePreview';
 import { modelsIndexHandler } from './indexing/models';
 import { probeIndexHandler } from './indexing/probe';
@@ -63,6 +67,12 @@ export const ragRouter = authorized
     .prefix('/rag')
     .tag('RAG catalog')
     .router({
+        reranking: {
+            profile: profileRerankingHandler,
+            configure: configureRerankingHandler,
+            search: searchRerankingHandler,
+            usage: usageRerankingHandler,
+        },
         telemetry: { summary: telemetrySummaryHandler },
         operations: { overview: operationsOverviewHandler },
         indexing: {

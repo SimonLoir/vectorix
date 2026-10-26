@@ -333,3 +333,7 @@ Required validation:
 - Back up and restore the catalog and objects, then rebuild indexes; verify deletions and cleanup of obsolete generations. The first [isolated full-store restore acceptance slice](rag-restore-acceptance.md) is verified through restored dashboard access/search, fresh-Redis replay, rebuild and natural cleanup; [reference quality](rag-reference-quality.md) is verified separately, while [capacity acceptance](rag-capacity-acceptance.md) verifies a 2,000-child generation and dashboard journey; the full 100,000-child workload remains unmeasured.
 
 Hardware sizing, enabled models, and costs depend on hosting and available credentials. Confirm a usable local Ollama model before M3 and arrange provider credentials before the corresponding M5 live acceptance checks. These deployment prerequisites do not change the agreed functional scope.
+
+### Optional search enhancement: native reranking
+
+[Optional reranking](rag-reranking.md) is being delivered as an independent collection profile and an explicit search toggle, with same-pool comparison, native Cohere/Voyage adapters, current rights, durable limits and nullable provider usage. It does not alter the default ranking or require reindexing. Dashboard acceptance and hosted quality must be recorded separately; a controlled fixture is not a live hosted quality result. SDK/MCP publication and generated answers remain separate planned work requiring product decisions.
