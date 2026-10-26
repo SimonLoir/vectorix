@@ -202,7 +202,8 @@
             "ragCollection": "Collections",
             "ragLibrary": "Document library",
             "ragAudit": "Catalog audit",
-            "ragQuota": "Usage and quotas"
+            "ragQuota": "Usage and quotas",
+            "ragRerank": "Reranking"
         },
         "actions": {
             "read": "Read",
@@ -214,7 +215,8 @@
             "manageGrants": "Manage access",
             "manageAll": "Administer all collections",
             "readAll": "Read the entire library",
-            "write": "Add and edit"
+            "write": "Add and edit",
+            "use": "Use"
         }
     },
     "account": {
@@ -792,7 +794,8 @@
             "empty": "No actions to display.",
             "actor": "Actor: {type} · {id}",
             "target": "Target: {id}",
-            "synchronizationAdopted": "Index synchronization adopted"
+            "synchronizationAdopted": "Index synchronization adopted",
+            "rerankingConfigured": "Reranking configured"
         },
         "keys": {
             "title": "Collection scope",
@@ -1107,10 +1110,10 @@
                 "MODEL_UNSUPPORTED": "The model does not expose the required native embedding capability or preset.",
                 "MODEL_CHANGED": "The saved revision, model identity or supported capabilities changed. Reload and verify the profile before retrying.",
                 "DIMENSIONS_UNSUPPORTED": "The model does not support the requested vector dimensions.",
-                "PROVIDER_UNAVAILABLE": "The embedding service is unavailable. Try again after the service recovers.",
-                "PROVIDER_TIMEOUT": "The embedding operation exceeded its deadline.",
-                "PROVIDER_REJECTED": "The embedding service rejected the request. Check credentials and model input limits.",
-                "INVALID_PROVIDER_RESPONSE": "The embedding service returned an invalid or inconsistent response.",
+                "PROVIDER_UNAVAILABLE": "The configured provider is unavailable. Try again after the service recovers.",
+                "PROVIDER_TIMEOUT": "The provider operation exceeded its deadline.",
+                "PROVIDER_REJECTED": "The configured provider rejected the request. Check credentials and model input limits.",
+                "INVALID_PROVIDER_RESPONSE": "The configured provider returned an invalid or inconsistent response.",
                 "INPUT_TOO_LARGE": "The prepared text exceeds the model’s bounded context budget. Reduce chunk sizes or preparation.",
                 "VECTOR_UNAVAILABLE": "The vector database is unavailable.",
                 "VECTOR_BINDING_CHANGED": "The vector destination changed. The saved generation cannot be retargeted.",
@@ -1503,6 +1506,66 @@
                 "INPUT": "Input",
                 "PROCESSING": "Processing",
                 "OTHER": "Other"
+            }
+        },
+        "reranking": {
+            "title": "Optional reranking",
+            "description": "Reorder retrieved passages with a separate model. Existing embeddings and the published index stay unchanged.",
+            "configure": "Configure reranking",
+            "loadFailed": "The reranking profile could not be loaded. Ordinary search is still available.",
+            "enabled": "Available on request",
+            "disabled": "Disabled",
+            "profileSummary": "{provider} · {model} · Up to {count, number} candidates · Revision {revision}",
+            "bindings": {
+                "ORGANIZATION": "Bound to the organization’s saved credentials.",
+                "PLATFORM": "Bound to the platform’s configured credentials.",
+                "UNBOUND": "No credentials are bound to this disabled draft."
+            },
+            "optInHint": "Each search starts with reranking off. Enabling the collection profile does not trigger a provider call.",
+            "configureHint": "Choose a separate reranking model and a bounded candidate window. Changes apply to future searches without rebuilding the index.",
+            "allow": "Allow optional reranking for this collection",
+            "provider": "Reranking provider",
+            "model": "Reranking model",
+            "candidatePool": "Maximum candidate passages",
+            "candidateHint": "Between 1 and 100 candidates are retrieved before reranking. A smaller window can return fewer results than the requested top K.",
+            "enableHint": "Saving an enabled profile binds organization credentials first, then platform defaults when none are configured. Subsequent opted-in searches may be billed by the provider. Saving does not call the provider.",
+            "disabledDraftHint": "A disabled profile can be saved without credentials. It cannot be used until an enabled profile is saved successfully.",
+            "use": "Rerank this search",
+            "searchHint": "Use {provider} · {model} after retrieval. This applies only to the next submitted search.",
+            "availability": {
+                "loading": "Checking the optional reranking profile. Ordinary search is available.",
+                "error": "Reranking is temporarily unavailable. You can still run an ordinary search.",
+                "disabled": "Reranking is disabled for this collection. An administrator can configure it in the collection overview.",
+                "denied": "Your current access does not allow reranking for this collection.",
+                "notReady": "Publish an active index before using reranking for this collection."
+            },
+            "billable": "This search sends the question and candidate passages to the configured reranking provider and may incur charges.",
+            "compare": "Compare with the original ranking",
+            "compareHint": "Show both orders from the same candidate window; this does not run a second retrieval.",
+            "runTitle": "Reranked with {provider} · {model}",
+            "runSummary": "{reranked, number} passages reranked from {candidates, number} candidates (limit {limit, number}) in {duration} ms.",
+            "scoreHint": "Reranking scores are ranking signals, not confidence percentages. Original lexical/vector ranks and RRF scores remain separate.",
+            "usage": "Reported provider usage",
+            "providerInputTokens": "Provider input tokens",
+            "billedInputTokens": "Billed input tokens",
+            "billedSearchUnits": "Billed search units",
+            "unknown": "Not reported",
+            "usageHint": "Reported units are not a price estimate. Not reported means unknown, not zero.",
+            "comparison": "Compare result ordering",
+            "rerankedOrder": "Reranked order",
+            "originalOrder": "Original order",
+            "comparisonHint": "Both views use the same authorized candidates, filters and published generation.",
+            "score": "Reranking score: {score}",
+            "underfilled": "The bounded candidate window produced fewer results than requested. This does not establish that the entire collection has no further matches.",
+            "failed": "The request could not be completed. Check your access, configuration and available quota, then try again.",
+            "resultsUnavailable": "These reranked results are no longer available under the current profile or access. Submit a new search; ordinary search remains available.",
+            "errors": {
+                "RERANK_DISABLED": "Reranking is disabled for this collection. Refresh the profile or submit an ordinary search.",
+                "RERANK_PROFILE_CHANGED": "The reranking profile changed. Review the current settings and submit a new search.",
+                "RERANK_REQUEST_REPLAY": "This search attempt was already submitted. Submit a new search rather than reusing the previous attempt.",
+                "RERANK_CAPACITY": "Reranking cannot be admitted within the current capacity limits. Try again later or ask an administrator to review the limits.",
+                "RERANK_DAILY_LIMIT": "The daily reranking limit has been reached. Submit an ordinary search or ask an administrator to review the limit.",
+                "RERANK_INPUT_INVALID": "The search options or filters are invalid. Review them and submit a new search."
             }
         }
     },

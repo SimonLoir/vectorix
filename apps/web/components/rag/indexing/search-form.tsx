@@ -25,6 +25,7 @@ export function SearchForm({
     query,
     onQueryChange,
     collectionControl,
+    retrievalOptions,
     onSubmit,
 }: Readonly<{
     collectionId: string;
@@ -32,6 +33,7 @@ export function SearchForm({
     error: string | null;
     presentation?: 'panel' | 'home';
     collectionControl?: ReactNode;
+    retrievalOptions?: ReactNode;
     onSubmit: (event: FormEvent<HTMLFormElement>) => void;
 }> &
     SubmitState &
@@ -116,6 +118,7 @@ export function SearchForm({
                     className='mt-5 space-y-5'
                 >
                     {home && <SearchStrategyFields {...settings} />}
+                    {retrievalOptions}
                     <SearchFilterFields
                         collectionId={ready ? collectionId : ''}
                         fields={fields}

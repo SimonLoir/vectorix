@@ -3,6 +3,7 @@ import { Worker } from 'bullmq';
 import { connection, getQueues, QueueName, closeQueues } from '@repo/queues';
 import { prisma } from '@repo/db';
 import { processDocumentIngestions } from '@routers/rag/ingestion';
+import { processRerankCleanup } from '@routers/rag/reranking-cleanup';
 import { processDocumentCleanups } from '@routers/rag/cleanup';
 import {
     processCollectionIndexing,
@@ -56,7 +57,10 @@ await getQueues().documents.upsertJobScheduler(
 const indexingWorker = new Worker(
     QueueName.INDEXING,
     () =>
-        observations.scan('INDEXING', () => processCollectionIndexing(prisma)),
+        observations.scan('INDEXING', async () => {
+            await processRerankCleanup(prisma);
+            await processCollectionIndexing(prisma);
+        }),
     { connection, concurrency: 1 }
 );
 indexingWorker.on('error', () =>

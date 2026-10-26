@@ -61,9 +61,10 @@ INSERT INTO pg_temp.changed_old VALUES('foreign-temporary-owner');
 
 -- The sibling upgrade checker snapshots actual pre-migration pg_proc metadata
 -- and verifies the only change is proconfig. This fresh-install inventory
--- separately checks all 28 explicit signatures and their invoker/local paths.
+-- separately checks all 29 explicit signatures and their invoker/local paths.
 CREATE TEMP TABLE sql_path_expected (signature text PRIMARY KEY);
 INSERT INTO pg_temp.sql_path_expected VALUES
+    ('public.vectorix_rerank_config_immutable()'),
     ('public.vectorix_chunk_lexical()'),
     ('public.vectorix_embedding_work_update()'),
     ('public.vectorix_parent_candidate_delete()'),
@@ -102,7 +103,7 @@ BEGIN
     IF current_setting('search_path')<>'' THEN RAISE EXCEPTION 'Caller path is not empty'; END IF;
     SELECT count(*) INTO total FROM pg_catalog.pg_proc p JOIN pg_catalog.pg_namespace n ON n.oid=p.pronamespace
         WHERE n.nspname='public' AND p.proname LIKE 'vectorix\_%' ESCAPE '\';
-    IF total<>28 OR (SELECT count(*) FROM pg_temp.sql_path_expected)<>28 THEN RAISE EXCEPTION 'Wrong fixed function inventory'; END IF;
+    IF total<>29 OR (SELECT count(*) FROM pg_temp.sql_path_expected)<>29 THEN RAISE EXCEPTION 'Wrong fixed function inventory'; END IF;
     IF EXISTS (
         SELECT FROM pg_temp.sql_path_expected expected
         LEFT JOIN pg_catalog.pg_proc p ON p.oid=pg_catalog.to_regprocedure(expected.signature)
@@ -113,7 +114,7 @@ BEGIN
             OR p.proowner<>(SELECT oid FROM pg_catalog.pg_roles WHERE rolname=current_user)
             OR p.proacl IS NOT NULL
     ) THEN RAISE EXCEPTION 'Function-path migration changed more than the reviewed local setting'; END IF;
-    INSERT INTO pg_temp.sql_path_proofs VALUES('28 explicit invoker functions retain source and attributes');
+    INSERT INTO pg_temp.sql_path_proofs VALUES('29 explicit invoker functions retain source and attributes');
 END $$;
 
 DO $$

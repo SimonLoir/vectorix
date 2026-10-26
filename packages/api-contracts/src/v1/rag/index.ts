@@ -9,6 +9,7 @@ import { indexingContract } from './indexing';
 import { semanticQuotaView } from './semantic';
 import { operationsContract } from './operations';
 import { telemetryContract } from './telemetry';
+import { rerankingContract } from './reranking';
 export const quotaValues = z
     .object({
         collections: z.number().int().min(1).max(10_000),
@@ -20,6 +21,7 @@ export const quotaValues = z
     })
     .strict();
 export const ragContract = {
+    reranking: rerankingContract,
     operations: operationsContract,
     telemetry: telemetryContract,
     indexing: indexingContract,

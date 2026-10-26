@@ -50,6 +50,7 @@ model Credentials {
   selections     CredentialSelection[]
   locations      StorageLocation[]
   configurations CollectionConfigRevision[]
+  rerankConfigurations CollectionRerankConfig[]
 
   @@unique([organizationId, id])
   @@unique([organizationId, id, provider])
@@ -149,6 +150,7 @@ model VectorConnection {
 }
 
 model Collection {
+  rerankConfigurations CollectionRerankConfig[]
   id                    String       @id @default(uuid())
   organizationId        String
   organization          Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)

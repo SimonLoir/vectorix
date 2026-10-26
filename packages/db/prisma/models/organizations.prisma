@@ -31,6 +31,9 @@ model Organization {
   ragOperationalHours RagOperationalHour[]
   ragAuditLogs RagAuditLog[]
   documents Document[]
+  rerankAccounting OrganizationRerankAccounting?
+  rerankUsageDays RerankUsageDay[]
+  rerankRequests RerankRequest[]
 
   @@unique([slug])
   @@map("organization")

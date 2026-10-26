@@ -10,6 +10,11 @@ import {
     useCatalogPagination,
 } from './catalog-controls';
 
+const actionKeys: Readonly<Record<string, string>> = {
+    'collection.index.synchronization.adopted': 'synchronizationAdopted',
+    'collection.reranking.configure': 'rerankingConfigured',
+};
+
 export function RagAuditList() {
     const tr = useTranslations('rag');
     const { orpc } = useORPC();
@@ -38,9 +43,10 @@ export function RagAuditList() {
                             <li className='space-y-2 p-5' key={item.id}>
                                 <div className='flex flex-wrap justify-between gap-2'>
                                     <h2 className='font-medium'>
-                                        {item.action ===
-                                        'collection.index.synchronization.adopted'
-                                            ? tr('audit.synchronizationAdopted')
+                                        {actionKeys[item.action]
+                                            ? tr(
+                                                  `audit.${actionKeys[item.action]}`
+                                              )
                                             : item.action}
                                     </h2>
                                     <span className='text-sm text-muted-foreground'>

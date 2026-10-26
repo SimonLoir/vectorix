@@ -1,0 +1,91 @@
+// Optional reranking has immutable independent revisions. No embedding rebuild is required.
+model CollectionRerankConfig {
+  id String @id @default(uuid())
+  organizationId String
+  collectionId String
+  collection Collection @relation(fields: [organizationId, collectionId], references: [organizationId, id], onDelete: Cascade)
+  revision Int
+  enabled Boolean @default(false)
+  provider CredentialProvider
+  model String
+  candidatePool Int @default(50)
+  capabilityVersion String @default("native-rerank-v1")
+  credentialId String?
+  credentialRevision Int?
+  credential Credentials? @relation(fields: [organizationId, credentialId, provider], references: [organizationId, id, provider], onDelete: NoAction)
+  endpoint String?
+  createdAt DateTime @default(now())
+
+  @@unique([organizationId, collectionId, revision])
+  @@unique([organizationId, collectionId, id])
+}
+
+enum RerankRequestState {
+  ADMITTED
+  DISPATCHED
+  VALIDATED
+  FAILED
+  UNCERTAIN
+  SKIPPED
+}
+
+// No query, document content, response body or credential secret is retained here.
+// Collection/configuration/generation IDs are captured receipts, not authority or retention-blocking FKs.
+// Organization ownership preserves late usage settlement after physical collection cleanup.
+model RerankRequest {
+  id String @id @default(uuid())
+  organizationId String
+  collectionId String
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  configurationId String
+  provider CredentialProvider
+  generationId String
+  principalId String
+  requestId String
+  state RerankRequestState @default(ADMITTED)
+  admittedAt DateTime @default(now())
+  expiresAt DateTime
+  dispatchedAt DateTime?
+  dispatchDay DateTime? @db.Date
+  completedAt DateTime?
+  capacityReleasedAt DateTime?
+  candidateCount Int @default(0)
+  preparedInputBytes BigInt @default(0)
+  providerInputTokens BigInt?
+  billedInputTokens Float?
+  billedSearchUnits Float?
+  nativeDurationMicros BigInt?
+  errorCode String?
+
+  @@unique([organizationId, principalId, requestId])
+  @@index([organizationId, state, expiresAt])
+  @@index([expiresAt, id])
+}
+
+// Daily mandatory accounting survives individual collection deletion.
+model RerankUsageDay {
+  organizationId String
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  day DateTime @db.Date
+  provider CredentialProvider
+  dispatchedRequests BigInt @default(0)
+  dispatchedPreparedBytes BigInt @default(0)
+  validatedRequests BigInt @default(0)
+  validatedDocuments BigInt @default(0)
+  knownProviderInputTokens BigInt @default(0)
+  unknownProviderInputTokenRequests BigInt @default(0)
+  knownBilledInputTokens Float @default(0)
+  unknownBilledInputTokenRequests BigInt @default(0)
+  knownBilledSearchUnits Float @default(0)
+  unknownBilledSearchUnitRequests BigInt @default(0)
+  observedNativeDurationMicros BigInt @default(0)
+
+  @@id([organizationId, day, provider])
+  @@index([day])
+}
+
+model OrganizationRerankAccounting {
+  organizationId String @id
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  lockRevision BigInt @default(0)
+}

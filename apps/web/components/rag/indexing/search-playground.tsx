@@ -1,14 +1,15 @@
 'use client';
-import { useState, type ReactNode } from 'react';
+import type { ReactNode } from 'react';
 import { useTranslations } from 'next-intl';
-import { useORPC } from '@/hooks/use-orpc';
 import { useVectorixPermissions } from '@/contexts/vectorix-permissions';
-import { useIndexAction } from './index-state';
+import { useRerankProfile } from '../reranking/use-rerank-profile';
+import { RerankSearchOptions } from '../reranking/search-options';
+import { RerankedSearchResults } from '../reranking/search-results';
 import { SearchForm } from './search-form';
-import { filtersFromForm } from './search-filters';
+import { useSearchExecution } from './use-search-execution';
 import { SearchResults } from './search-results';
 import { SearchSource } from './search-source';
-import type { MetadataFields, SearchResponse, SearchResult } from './types';
+import type { MetadataFields } from './types';
 
 /** Reuse the exact search/source protocol; callers remount this workspace when collection authority changes. */
 export function SearchPlayground({
@@ -33,11 +34,15 @@ export function SearchPlayground({
     readinessMessage?: ReactNode;
 }>) {
     const tr = useTranslations('rag.indexing');
-    const { client } = useORPC();
+    const rerankTr = useTranslations('rag.reranking');
     const { canOperation } = useVectorixPermissions();
-    const action = useIndexAction();
-    const [response, setResponse] = useState<SearchResponse | null>(null);
-    const [source, setSource] = useState<SearchResult | null>(null);
+    const rerank = useRerankProfile(collectionId);
+    const execution = useSearchExecution({
+        collectionId,
+        fields,
+        ready,
+        rerank,
+    });
     return (
         <section
             className={
@@ -62,60 +67,52 @@ export function SearchPlayground({
                 collectionId={collectionId}
                 fields={fields}
                 ready={ready}
-                busy={action.busy}
-                error={action.error}
+                busy={execution.action.busy}
+                error={execution.action.error}
                 presentation={presentation}
                 query={query}
                 onQueryChange={onQueryChange}
                 collectionControl={collectionControl}
-                onSubmit={(event) => {
-                    event.preventDefault();
-                    if (
-                        !collectionId ||
-                        !ready ||
-                        !canOperation('admin.rag.indexing.search')
-                    )
-                        return;
-                    const data = new FormData(event.currentTarget);
-                    setResponse(null);
-                    setSource(null);
-                    void action.run(
-                        () => {
-                            const strategy = data.get('strategy');
-                            if (
-                                strategy !== 'HYBRID' &&
-                                strategy !== 'LEXICAL' &&
-                                strategy !== 'VECTOR'
-                            )
-                                throw new Error('Invalid strategy.');
-                            return client.admin.rag.indexing.search({
-                                collectionId,
-                                query: String(data.get('query')),
-                                strategy,
-                                topK: Number(data.get('topK')),
-                                filters: filtersFromForm(data, fields),
-                            });
-                        },
-                        setResponse,
-                        false
-                    );
-                }}
+                retrievalOptions={
+                    collectionId ? (
+                        <RerankSearchOptions
+                            key={`${rerank.key}:${ready}:${execution.optionsResetToken}`}
+                            availability={rerank.availability(ready)}
+                            provider={rerank.profile?.configuration?.provider}
+                            model={rerank.profile?.configuration?.model}
+                        />
+                    ) : undefined
+                }
+                onSubmit={execution.onSubmit}
             />
             {readinessMessage}
-            {response && (
-                <SearchResults
-                    response={response}
-                    activeGenerationId={activeGenerationId}
-                    onOpenSource={setSource}
-                />
+            {execution.resultsUnavailable && (
+                <p role='status' className='rounded-lg border p-3 text-sm'>
+                    {rerankTr('resultsUnavailable')}
+                </p>
             )}
-            {source && canOperation('admin.rag.indexing.sourcePreview') && (
-                <SearchSource
-                    collectionId={collectionId}
-                    result={source}
-                    onClose={() => setSource(null)}
-                />
-            )}
+            {execution.response &&
+                (execution.response.kind === 'reranked' ? (
+                    <RerankedSearchResults
+                        response={execution.response.value}
+                        activeGenerationId={activeGenerationId}
+                        onOpenSource={execution.openSource}
+                    />
+                ) : (
+                    <SearchResults
+                        response={execution.response.value}
+                        activeGenerationId={activeGenerationId}
+                        onOpenSource={execution.openSource}
+                    />
+                ))}
+            {execution.source &&
+                canOperation('admin.rag.indexing.sourcePreview') && (
+                    <SearchSource
+                        collectionId={collectionId}
+                        result={execution.source}
+                        onClose={execution.closeSource}
+                    />
+                )}
         </section>
     );
 }

@@ -10,7 +10,7 @@ import {
 } from './embedding-profile';
 import { generationVectorAdapter } from './generation-adapter';
 import { resolveIndexChunking } from './generation-profile';
-import { publicationFilters, type SearchFilters } from './filters';
+import { publicationFilters } from './filters';
 import { lexicalSearch } from './lexical';
 import { chunkDto } from './views';
 import { readProjectedChunks } from './chunk-projection';
@@ -26,13 +26,32 @@ import type {
     TelemetryOutcome,
 } from '../telemetry/types';
 
-type Input = {
-    collectionId: string;
-    query: string;
-    topK: number;
-    strategy: 'HYBRID' | 'LEXICAL' | 'VECTOR';
-    filters: SearchFilters;
-};
+import type {
+    SearchInput,
+    SearchScores,
+    SearchResponse,
+    SearchExecution,
+    SearchReranking,
+} from './search-types';
+import { searchProjectionIds, remainingSearchMs } from './search-reranking';
+import { rankSearchChildren } from './search-rerank-stage';
+
+/** Legacy search retains its existing result contract and never dispatches a reranker. */
+export async function searchCollection(
+    context: AuthorizedContext,
+    input: SearchInput
+): Promise<SearchResponse> {
+    return (await executeSearch(context, input)).response;
+}
+
+/** Share one retrieval/captured generation with the separately authorized opt-in operation. */
+export function searchCollectionWithReranking(
+    context: AuthorizedContext,
+    input: SearchInput,
+    reranking: SearchReranking
+): Promise<SearchExecution> {
+    return executeSearch(context, input, reranking);
+}
 
 /** Only exact, live catalog publications are eligible; the vector store never supplies authorization or canonical text. */
 function livePublications(
@@ -78,11 +97,12 @@ function livePublications(
  * then recheck grants/live publications after provider I/O. A failed required
  * branch is an explicit error, never a silently degraded hybrid response.
  */
-export async function searchCollection(
+async function executeSearch(
     context: AuthorizedContext,
-    input: Input
-) {
-    const startedAt = Date.now();
+    input: SearchInput,
+    reranking?: SearchReranking
+): Promise<SearchExecution> {
+    const startedAt = reranking?.startedAt ?? Date.now();
     const monotonicStart = performance.now();
     let execution: TelemetryExecution | undefined;
     let closePreflight: (() => void) | undefined,
@@ -96,10 +116,23 @@ export async function searchCollection(
         );
         const generation = await context.db.indexGeneration.findFirst({
             where: {
-                id: collection.activeGenerationId ?? '',
+                id:
+                    reranking?.generationId ??
+                    collection.activeGenerationId ??
+                    '',
                 organizationId: actor.organizationId,
                 collectionId: collection.id,
-                status: 'ACTIVE',
+                ...(reranking
+                    ? {
+                          OR: [
+                              { status: 'ACTIVE' as const },
+                              {
+                                  status: 'RETIRED' as const,
+                                  cleanupAfter: { gt: new Date() },
+                              },
+                          ],
+                      }
+                    : { status: 'ACTIVE' as const }),
             },
             include: { configuration: true },
         });
@@ -166,9 +199,11 @@ export async function searchCollection(
         if (publications.length > 5000) throw indexError('CHUNK_LIMIT');
         const publicationIds = publications.map((item) => item.id);
         const parentEnabled = generation.parentContextVersion !== null;
-        const candidateLimit = parentEnabled
-            ? Math.min(500, Math.max(200, input.topK * 10))
-            : Math.min(200, input.topK * 4);
+        const candidateLimit =
+            reranking?.candidateLimit ??
+            (parentEnabled
+                ? Math.min(500, Math.max(200, input.topK * 10))
+                : Math.min(200, input.topK * 4));
         closePreflight?.();
         const lexicalPromise =
             input.strategy === 'VECTOR' || !publicationIds.length
@@ -224,8 +259,17 @@ export async function searchCollection(
                     input.query,
                     {
                         preparation: generation.configuration.preparation,
-                        signal: AbortSignal.timeout(SEARCH_DEADLINE_MS),
-                        timeoutMs: Math.min(30_000, SEARCH_DEADLINE_MS),
+                        signal: AbortSignal.timeout(
+                            reranking
+                                ? remainingSearchMs(startedAt)
+                                : SEARCH_DEADLINE_MS
+                        ),
+                        timeoutMs: Math.min(
+                            30_000,
+                            reranking
+                                ? remainingSearchMs(startedAt)
+                                : SEARCH_DEADLINE_MS
+                        ),
                         numericObserver: execution?.nativeObserver,
                     }
                 )
@@ -248,20 +292,14 @@ export async function searchCollection(
             lexicalPromise,
             vectorPromise,
         ]);
-        closeFusion = execution?.phase('FUSION_HYDRATE');
+        // Opt-in candidate preparation is deliberately outside the bounded
+        // internal phase sample; native rerank wait must never enter it.
+        if (!reranking) closeFusion = execution?.phase('FUSION_HYDRATE');
         if (lexicalResult.status === 'rejected') throw lexicalResult.reason;
         if (vectorResult.status === 'rejected') throw vectorResult.reason;
         if (Date.now() - startedAt > SEARCH_DEADLINE_MS)
             throw indexError('PROVIDER_TIMEOUT');
-        const ranks = new Map<
-            string,
-            {
-                rrf: number;
-                lexicalRank: number | null;
-                vectorRank: number | null;
-                vectorDistance: number | null;
-            }
-        >();
+        const ranks = new Map<string, SearchScores>();
         for (const [index, row] of lexicalResult.value.entries())
             ranks.set(row.id, {
                 rrf: 1 / (60 + index + 1),
@@ -288,8 +326,8 @@ export async function searchCollection(
                 right.rrf - left.rrf || leftId.localeCompare(rightId)
         );
         await requireIndexRead(context, collection.id);
-        // Ranking never loads canonical text/provenance. Refresh temporal fences
-        // after provider I/O and hydrate only final unique parent representatives.
+        // Ranking never loads provenance. The opt-in provider stage separately
+        // hydrates a bounded child pool before final unique parent projection.
         const currentWhere = (): Prisma.IndexedDocumentWhereInput => ({
             AND: [
                 livePublications(
@@ -312,16 +350,46 @@ export async function searchCollection(
             select: { id: true, parentId: true, indexedDocumentId: true },
             take: candidateLimit * 2,
         });
+        let eligible = metadata;
+        let rerankScores: ReadonlyMap<string, number> = new Map();
+        let reranked = ranked;
+        let candidateCount = 0;
+        if (reranking) {
+            const scored = await rankSearchChildren(context, {
+                organizationId: actor.organizationId,
+                collectionId: collection.id,
+                generationId: generation.id,
+                ranked,
+                metadata,
+                parentEnabled,
+                publications: currentWhere,
+                reranking,
+            });
+            candidateCount = scored.candidateCount;
+            reranked = scored.ranked;
+            rerankScores = scored.scores;
+            eligible = scored.eligible;
+            closeFusion = execution?.phase('FUSION_HYDRATE');
+        }
         const selected = selectSearchRepresentatives(
-            ranked,
-            metadata,
+            reranked,
+            eligible,
             parentEnabled,
             input.topK
         );
+        const baseline = reranking?.compare
+            ? selectSearchRepresentatives(
+                  ranked.filter(([id]) => rerankScores.has(id)),
+                  eligible,
+                  parentEnabled,
+                  input.topK
+              )
+            : [];
+        const projectionIds = searchProjectionIds(selected, baseline);
         const chunks = await readProjectedChunks(context.db, {
             organizationId: actor.organizationId,
             generationId: generation.id,
-            ids: selected.map(([id]) => id),
+            ids: projectionIds,
             parentEnabled,
         });
         // The exact candidate/association/source fences are current again after
@@ -347,7 +415,7 @@ export async function searchCollection(
                 tags: true,
                 metadata: true,
             },
-            take: input.topK,
+            take: reranking ? projectionIds.length : input.topK,
         });
         await requireIndexRead(context, collection.id);
         const byId = new Map(chunks.map((chunk) => [chunk.id, chunk]));
@@ -356,36 +424,45 @@ export async function searchCollection(
         );
         if (Date.now() - startedAt >= SEARCH_DEADLINE_MS)
             throw indexError('PROVIDER_TIMEOUT');
-        const results = selected
-            .flatMap(([id, scores]) => {
-                const chunk = byId.get(id);
-                if (!chunk) return [];
-                const publication = byPublication.get(chunk.indexedDocumentId);
-                if (!publication) return [];
-                return [
-                    {
-                        ...chunkDto(chunk, publication),
-                        mediaType: publication.mediaType,
-                        tags: publication.tags,
-                        metadata: documentMetadata.parse(publication.metadata),
-                        scores,
-                        source: issueSourceReceipt({
-                            organizationId: actor.organizationId,
-                            collectionId: collection.id,
-                            generationId: generation.id,
-                            publicationId: publication.id,
-                            chunkId: chunk.id,
-                            versionId: publication.sourceVersionId,
-                            extractionId: publication.extractionId,
-                        }),
-                    },
-                ];
-            })
-            .slice(0, input.topK);
+        const resultRows = projectionIds.flatMap((id) => {
+            const scores = ranks.get(id);
+            if (!scores) return [];
+            const chunk = byId.get(id);
+            if (!chunk) return [];
+            const publication = byPublication.get(chunk.indexedDocumentId);
+            if (!publication) return [];
+            return [
+                {
+                    ...chunkDto(chunk, publication),
+                    mediaType: publication.mediaType,
+                    tags: publication.tags,
+                    metadata: documentMetadata.parse(publication.metadata),
+                    scores,
+                    source: issueSourceReceipt({
+                        organizationId: actor.organizationId,
+                        collectionId: collection.id,
+                        generationId: generation.id,
+                        publicationId: publication.id,
+                        chunkId: chunk.id,
+                        versionId: publication.sourceVersionId,
+                        extractionId: publication.extractionId,
+                    }),
+                },
+            ];
+        });
+        const rows = new Map(resultRows.map((row) => [row.id, row]));
+        const resultsFor = (order: typeof ranked) =>
+            order
+                .flatMap(([id]) => {
+                    const row = rows.get(id);
+                    return row ? [row] : [];
+                })
+                .slice(0, input.topK);
+        const results = resultsFor(selected);
         if (Date.now() - startedAt >= SEARCH_DEADLINE_MS)
             throw indexError('PROVIDER_TIMEOUT');
         outcome = 'SUCCESS';
-        return {
+        const response: SearchResponse = {
             generationId: generation.id,
             model: generation.configuration.model,
             strategy: input.strategy,
@@ -395,6 +472,27 @@ export async function searchCollection(
                 ? { parentUnderfilled: results.length < input.topK }
                 : {}),
             durationMs: Date.now() - startedAt,
+        };
+        const baselineResults = resultsFor(baseline);
+        return {
+            response,
+            rerankScores,
+            candidateCount,
+            rerankedCount: rerankScores.size,
+            ...(reranking?.compare
+                ? {
+                      comparison: {
+                          ...response,
+                          results: baselineResults,
+                          ...(parentEnabled
+                              ? {
+                                    parentUnderfilled:
+                                        baselineResults.length < input.topK,
+                                }
+                              : {}),
+                      },
+                  }
+                : {}),
         };
     } catch (error) {
         const safe = safeIndexError(error);

@@ -2,6 +2,7 @@
 import { useFormatter, useTranslations } from 'next-intl';
 import { Box, BrainCircuit, Hash, Layers3 } from 'lucide-react';
 import { ProfileSummary } from './profile-summary';
+import { RerankProfilePanel } from '../reranking/profile-panel';
 import type { Collection } from '../types';
 
 const strategyKeys = {
@@ -83,6 +84,7 @@ export function CollectionOverview({
             <p className='text-sm text-muted-foreground'>
                 {tr('indexing.rebuild.savedProfileHint')}
             </p>
+            <RerankProfilePanel collectionId={collection.id} />
             <details className='rounded-xl border bg-card p-5'>
                 <summary className='cursor-pointer font-medium text-primary dark:text-accent-foreground'>
                     {tr('collections.profileDetails')}

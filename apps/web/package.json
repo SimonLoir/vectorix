@@ -34,7 +34,8 @@
         "@tailwindcss/postcss": "^4.3.3",
         "next-themes": "^0.4.6",
         "@routers/utils": "workspace:*",
-        "@repo/embeddings": "workspace:*"
+        "@repo/embeddings": "workspace:*",
+        "@repo/reranking": "workspace:*"
     },
     "devDependencies": {
         "@repo/eslint-config": "workspace:*",

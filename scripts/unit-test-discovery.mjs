@@ -38,6 +38,12 @@ const OWN_RUNNERS = [
         files: /^packages\/embeddings\/tests\/[^/]+\.test\.ts$/u,
     },
     {
+        directory: 'packages/reranking',
+        name: 'test',
+        command: 'node --import tsx --test tests/*.test.ts',
+        files: /^packages\/reranking\/tests\/[^/]+\.test\.ts$/u,
+    },
+    {
         directory: 'packages/vector-store',
         name: 'test:native',
         command: 'bash tests/run.sh',

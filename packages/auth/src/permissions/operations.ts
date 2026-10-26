@@ -1,6 +1,14 @@
 import type { PermissionSet } from './catalogue';
 /** Unknown private operations fail closed. */
 export const operationPermissions: Record<string, PermissionSet> = {
+    'admin.rag.reranking.profile': {},
+    'admin.rag.reranking.configure': { ragCollection: ['update'] },
+    'admin.rag.reranking.search': {
+        ragCollection: ['read'],
+        ragLibrary: ['read'],
+        ragRerank: ['use'],
+    },
+    'admin.rag.reranking.usage': { ragQuota: ['read'] },
     'admin.rag.indexing.models': { ragCollection: ['manageDocuments'] },
     'admin.rag.indexing.trash': {},
     'admin.rag.indexing.probe': { ragCollection: ['manageDocuments'] },
