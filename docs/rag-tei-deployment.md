@@ -167,8 +167,8 @@ permit per candidate pair, so this limit must be at least the collection's
 candidate pool as well as fitting the reported client-batch limit. Vectorix
 checks both live limits before enabling or dispatching a profile. Other concurrent
 requests can still exhaust available permits and cause an explicit overload
-refusal. Physical batches remain limited to one, and CPU use remains bounded to
-four CPUs. TEI's inference-permit limit is distinct from Vectorix's organization
+refusal. The CPU backend imposes a physical batch limit of four pairs, and CPU use
+remains bounded to four CPUs. TEI's inference-permit limit is distinct from Vectorix's organization
 request concurrency quota.
 
 Start acceptance with short French and English passages and a small candidate
@@ -185,27 +185,49 @@ values or directly comparable scores across models. The optional native
 stays unknown; it is never replaced by zero or estimated from byte counts. Billed
 tokens and billed search units remain unknown for this adapter.
 
-## Planned acceptance and actual validation
+## Actual validation and repeat acceptance
 
-The deployment recipe is ready for a real CPU acceptance run. At this stage:
+Owned run `781ec6094ad2`, from source checkpoint `f13923bf`, used the exact pinned
+image and model above with four CPUs, an 8 GiB limit, UID/GID 1000, a read-only
+root filesystem and the reviewed private cache/tmpfs restrictions.
 
-| Check                                                                       | Status                     |
-| --------------------------------------------------------------------------- | -------------------------- |
-| Public image manifest, pinned model metadata and official CLI/source review | Complete, read-only checks |
-| Merged Compose configuration validation without reading `.env`              | Passed, closed environment |
-| Official image pull and public model download                               | NOT RUN                    |
-| Non-root model loading, health and real inference on this VM                | NOT RUN                    |
-| Dashboard configuration and search against this real runtime                | NOT RUN                    |
-| CPU latency, peak memory and ranking-quality evaluation                     | NOT RUN                    |
+| Check                                                                      | Actual result                                                                                                                                                      |
+| -------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Public metadata and official CLI/source review                             | Passed                                                                                                                                                             |
+| Merged Compose configuration without reading `.env`                        | Passed in a closed environment                                                                                                                                     |
+| Official image pull, public model download, non-root loading and health    | Passed; cold startup recorded 81.288 seconds                                                                                                                       |
+| Organization endpoint and collection enablement                            | Endpoint created through native curl without a key, verified in the UI; dashboard enablement saved the real metadata snapshot                                      |
+| Real reranked search with four candidates                                  | Native curl reported 542.198 ms reranking and 754 ms total search; dashboard observations were 536 ms in the Dutch playground and 513 ms on the French search home |
+| Usage                                                                      | Native input tokens: 409; billed input tokens and search units: null                                                                                               |
+| Exact source                                                               | Preview and native HTTP download passed; original size 2,048 bytes and SHA-256 `ec7e2086bed47651af1bdd76a1f8d22678db13fbda17e7c5b5ead04083cd74cf`                  |
+| Dashboard presentation                                                     | Playground/home comparisons, source states, English/French/Belgian Dutch controls, light/dark themes and a 390×844 mobile viewport checked                         |
+| Representative throughput, concurrency, GPU and ranking-quality benchmarks | NOT RUN                                                                                                                                                            |
 
-The acceptance journey should configure the real endpoint from the dashboard,
-index a small FR/EN corpus with the existing embedding service, explicitly enable
-reranking, and compare results over the same captured candidate pool. Check
-scores, exact-version source receipts, failure states and known/unknown usage.
-Automate any document upload or download through native HTTP with an authorized
-least-privilege API key; use the browser only for dashboard states. Record actual
+The container's cgroup memory peak was exactly `8,589,934,592` bytes (8 GiB),
+equal to its configured limit. At the end, cgroup memory was `1,812,332,544` bytes
+(about 1.69 GiB), and `OOMKilled` was false. These are cgroup observations, including
+warmup and cache effects, not process RSS measurements. Reaching the limit means
+8 GiB is not a capacity guarantee for other inputs or concurrent requests. The
+individual latency observations above establish a working small-corpus CPU
+journey, not a CPU/GPU comparison or a ranking-quality improvement.
+
+An earlier owned attempt reached real runtime readiness but the helper incorrectly
+expected patch version `1.9.0`; the pinned image actually reports `1.9.4`. The CPU
+backend also imposes a physical batch of four despite an earlier CLI value of
+one. The helper, Compose configuration and guide were corrected to the observed
+version/batch, and that attempt was fully cleaned before the successful fresh
+run. No automatic-truncation workaround was used.
+
+To repeat acceptance, configure the organization endpoint through authorized
+native HTTP/curl for automation, then verify it in the dashboard. Human operators
+can also use the dashboard endpoint form. Index a small FR/EN corpus with the
+existing embedding service, explicitly enable reranking from the collection UI,
+and compare results over the same captured candidate pool. Check scores,
+exact-version source receipts, failure states and known/unknown usage. Automate
+document uploads and downloads through native HTTP with authorized least-privilege
+API keys where supported, using native sessions for session-restricted operations;
+no files were uploaded or downloaded through browser automation. Record actual
 image/model identities, startup time, inference latency and memory observations.
-A successful smoke test alone does not establish a relevance or capacity gain.
 
 To stop only the optional runtime while preserving its model cache:
 
@@ -220,10 +242,11 @@ stored documents. The model cache can be reused on later starts.
 
 ## Official references
 
-- [TEI 1.9 CPU Dockerfile](https://github.com/huggingface/text-embeddings-inference/blob/v1.9.0/Dockerfile)
-- [TEI 1.9 runtime options](https://github.com/huggingface/text-embeddings-inference/blob/v1.9.0/router/src/main.rs)
-- [TEI model loading and startup limits](https://github.com/huggingface/text-embeddings-inference/blob/v1.9.0/router/src/lib.rs)
-- [TEI native reranking and candidate permits](https://github.com/huggingface/text-embeddings-inference/blob/v1.9.0/router/src/http/server.rs)
+- [TEI 1.9.4 CPU Dockerfile](https://github.com/huggingface/text-embeddings-inference/blob/v1.9.4/Dockerfile)
+- [TEI 1.9.4 runtime options](https://github.com/huggingface/text-embeddings-inference/blob/v1.9.4/router/src/main.rs)
+- [TEI model loading and startup limits](https://github.com/huggingface/text-embeddings-inference/blob/v1.9.4/router/src/lib.rs)
+- [TEI native reranking and candidate permits](https://github.com/huggingface/text-embeddings-inference/blob/v1.9.4/router/src/http/server.rs)
+- [TEI Candle CPU batch policy](https://github.com/huggingface/text-embeddings-inference/blob/v1.9.4/backends/candle/src/lib.rs)
 - [Intel MKL instruction-set dispatch controls](https://www.intel.com/content/www/us/en/docs/onemkl/developer-guide-linux/2024-1/instruction-set-specific-dispatch-on-intel-archs.html)
 - [Native adapter contract and validation](../packages/reranking/README.md)
 - [Optional reranking workflow](rag-reranking.md)

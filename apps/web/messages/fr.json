@@ -736,7 +736,7 @@
         },
         "credentials": {
             "title": "Intégrations",
-            "description": "Configurez le stockage et les fournisseurs d’embeddings de votre organisation.",
+            "description": "Configurez le stockage, les fournisseurs d’embeddings et le reclassement auto-hébergé de votre organisation.",
             "priority": "La configuration de l’organisation est prioritaire. En son absence, les valeurs de la plateforme sont utilisées si elles sont disponibles.",
             "fallback": "Une configuration invalide ne déclenche aucun repli. Les collections existantes conservent leur liaison enregistrée, même si vous activez d’autres credentials.",
             "unverified": "L’enregistrement des credentials ne teste ni la connexion ni la compatibilité du modèle. Vérifiez le profil d’embedding enregistré depuis une collection.",
@@ -1525,7 +1525,7 @@
                 "PLATFORM": "Lié aux identifiants configurés de la plateforme.",
                 "UNBOUND": "Aucun identifiant n’est lié à ce brouillon désactivé."
             },
-            "optInHint": "Le reclassement est désactivé au début de chaque recherche. Activer le profil de la collection ne déclenche aucun appel au fournisseur.",
+            "optInHint": "Le reclassement est désactivé au début de chaque recherche. Activer un profil ne lance aucune inférence ; TEI lit les métadonnées du runtime lors de l’enregistrement.",
             "configureHint": "Choisissez un modèle de reclassement distinct et une fenêtre de candidats limitée. Les changements s’appliquent aux prochaines recherches sans reconstruire l’index.",
             "allow": "Autoriser le reclassement facultatif pour cette collection",
             "provider": "Fournisseur de reclassement",

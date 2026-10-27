@@ -736,7 +736,7 @@
         },
         "credentials": {
             "title": "Integrations",
-            "description": "Configure storage and embedding providers for your organization.",
+            "description": "Configure storage, embedding providers, and self-hosted reranking for your organization.",
             "priority": "Organization configuration takes precedence. When absent, platform defaults are used if available.",
             "fallback": "Invalid configuration never triggers fallback. Existing collections retain their saved binding even when you activate other credentials.",
             "unverified": "Saving credentials does not test connectivity or model compatibility. Verify the saved embedding profile from a collection.",
@@ -1525,7 +1525,7 @@
                 "PLATFORM": "Bound to the platform’s configured credentials.",
                 "UNBOUND": "No credentials are bound to this disabled draft."
             },
-            "optInHint": "Each search starts with reranking off. Enabling the collection profile does not trigger a provider call.",
+            "optInHint": "Each search starts with reranking off. Enabling a profile performs no inference; TEI reads runtime metadata when you save it.",
             "configureHint": "Choose a separate reranking model and a bounded candidate window. Changes apply to future searches without rebuilding the index.",
             "allow": "Allow optional reranking for this collection",
             "provider": "Reranking provider",

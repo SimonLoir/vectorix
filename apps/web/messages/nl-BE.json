@@ -736,7 +736,7 @@
         },
         "credentials": {
             "title": "Integraties",
-            "description": "Configureer opslag en embeddingproviders voor je organisatie.",
+            "description": "Configureer opslag, embeddingproviders en zelfgehoste herrangschikking voor je organisatie.",
             "priority": "De organisatieconfiguratie heeft voorrang. Als die ontbreekt, worden beschikbare platformstandaarden gebruikt.",
             "fallback": "Een ongeldige configuratie valt nooit terug op de standaardinstellingen. Bestaande collecties behouden hun opgeslagen koppeling, ook wanneer je andere inloggegevens activeert.",
             "unverified": "Het opslaan van toegangsgegevens test de verbinding of modelcompatibiliteit niet. Controleer het opgeslagen embeddingprofiel vanuit een collectie.",
@@ -1525,7 +1525,7 @@
                 "PLATFORM": "Gekoppeld aan de ingestelde toegangsgegevens van het platform.",
                 "UNBOUND": "Aan dit uitgeschakelde concept zijn geen toegangsgegevens gekoppeld."
             },
-            "optInHint": "Elke zoekopdracht begint met herrangschikking uitgeschakeld. Het collectieprofiel inschakelen voert geen aanroep naar de aanbieder uit.",
+            "optInHint": "Elke zoekopdracht begint met herrangschikking uitgeschakeld. Een profiel inschakelen voert geen inferentie uit; TEI leest de runtimemetadata bij het opslaan.",
             "configureHint": "Kies een afzonderlijk model voor herrangschikking en een begrensde kandidatenselectie. Wijzigingen gelden voor volgende zoekopdrachten zonder de index opnieuw op te bouwen.",
             "allow": "Optionele herrangschikking voor deze collectie toestaan",
             "provider": "Aanbieder voor herrangschikking",

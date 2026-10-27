@@ -1,6 +1,6 @@
 # Optional native reranking
 
-Status: the hosted implementation is verified with isolated native integration tests and a controlled-provider dashboard journey at product checkpoint `ab289`. The additive TEI implementation is prepared in the current change; its real-runtime and dashboard validation remain pending. Hosted quality and paid-provider access remain unverified. Reranking remains off by default; exact-head CI and delivery are recorded in the pull request.
+Status: the hosted implementation is verified with isolated native integration tests and a controlled-provider dashboard journey at product checkpoint `ab289`. The additive TEI implementation is verified with a real GTE CPU dashboard journey at checkpoint `f13923bf`; see [TEI actual validation](#tei-extension-actual-validation). Hosted quality and paid-provider access remain unverified. Reranking remains off by default; exact-head CI and delivery are recorded in the pull request.
 
 A collection has a separate immutable reranking profile. Saving it does not rebuild embeddings. Administrators can select Cohere or Voyage with a reviewed native model, or TEI with the exact model deployed at an approved self-hosted endpoint. The candidate pool is bounded to 100 authorized children and must also fit the runtime limits; the supplied TEI deployment supports a pool of 32. A searcher must explicitly enable reranking for each request and hold `ragRerank.use`, collection reading and library reading. Existing API keys receive no new permissions.
 
@@ -53,7 +53,7 @@ Provider and pipeline tests use controlled native HTTP fixtures. They do not est
 
 Prerequisites: an authorized reader with `ragRerank.use`, an active collection, configured Cohere or Voyage credentials and an operator-approved endpoint. Save an enabled profile in collection settings, then explicitly select reranking in the search UI. Enable comparison to inspect the baseline within the same candidate pool. Verify separate relevance scores and reported/unknown usage, exact source preview and original receipts. Disable the toggle and confirm ordinary search remains unchanged. Revoke access or change the profile during a call and confirm the result is denied after usage settlement. The observations below cover the actual controlled-provider journey; the revocation and in-flight authority recipe remains automated coverage rather than a browser claim. Hosted quality remains unmeasured.
 
-### TEI dashboard recipe — pending
+### TEI dashboard recipe
 
 Use an isolated test organization, an available embedding service, an approved TEI root URL and the [pinned deployment prerequisites](rag-tei-deployment.md). Keep credentials and native capture files private. No document transfer should use browser automation.
 
@@ -83,6 +83,14 @@ Creation of an additional manually scoped test API key was refused by automatic 
 
 Cleanup reached `CLEANED`: four application/fixture processes terminated, five owned containers and four fresh volumes were removed, the existing Ollama cache was unchanged, helper gates were restored and private captures were retained. The owned browser tab was closed and the viewport reset.
 
-### TEI extension validation — pending
+### TEI extension actual validation
 
-The historical hosted results above do not validate TEI. Real image/model startup, enabled-profile metadata saving, TEI dashboard inference/comparison and exact-source verification are pending for this extension. Record their outcomes here and in the build log after the owned acceptance run. The [deployment guide](rag-tei-deployment.md#planned-acceptance-and-actual-validation) distinguishes configuration checks, real inference and unmeasured quality/capacity.
+Run `781ec6094ad2` at checkpoint `f13923bf` used the official pinned TEI CPU image with the pinned multilingual GTE model, reporting runtime `1.9.4`. Cold startup took 81.288 seconds under four CPUs and an 8 GiB limit. Native curl setup/upload and real Ollama 0.40.8/EmbeddingGemma indexing produced four children from the 2,048-byte TXT document at embedding revision 1. The organization endpoint used an explicitly null optional key.
+
+The Belgian Dutch dashboard saved enabled TEI reranking revision 1 with a pool of eight through metadata GET only. The playground returned four rows for a French query in 536 ms; French Home returned three rows from four candidates for an English query in 513 ms. Same-pool comparison, exact-source preview and the per-submit reset were observed. A supplemental native curl read returned three results with 542.198 ms native duration, 754 ms total and 409 reported input tokens; both billing fields stayed null, and the original's 2,048 bytes and SHA-256 matched the upload.
+
+English endpoint/configuration audit labels, the French 390×844 edit dialog and cancellation, dark Belgian Dutch and light French were exercised. The full isolated catalog passed 353 main cases and eight accounting cases; fresh and upgrade databases each passed 111 TEI constraint probes, with repeat/parity/restore checks. All 26 type tasks, 26 lint tasks, seven unit tasks and four production builds passed. Post-browser wording-only changes are tracked separately in the [build log](build-task-log.md).
+
+The warmup cgroup peak reached the 8 GiB limit without an observed OOM; steady usage was 1,812,332,544 bytes. This is not process RSS or a memory-sizing guarantee. The earlier helper patch-version mismatch was refused and its environment cleaned before this fresh run. The [open-source guide](rag-open-source-reranking.md#actual-validation) records the details and the [deployment guide](rag-tei-deployment.md) pins the runtime/model. Ranking quality, capacity and BGE/other-model execution remain unmeasured; hosted quality remains unverified. Optional-key and revocation checks were automated rather than browser security actions.
+
+No browser file transfer or key/role creation occurred. Normal logout, tab closure and viewport reset completed. Cleanup verified three terminated application processes, six removed owned containers, five removed fresh volumes, preserved Ollama cache, restored helper gates and private retained captures.
