@@ -107,7 +107,33 @@ export async function parentProvenanceTests(t: TestContext) {
                     expectedRevision: 1,
                     requestId: randomUUID(),
                 });
-                await scanParent(fixture, started.generationId, 6);
+                for (let pass = 0; pass < 50; pass++) {
+                    await scanParent(fixture, started.generationId, 1);
+                    const current = await f.owner.rag.indexing.status({
+                        collectionId: collection.id,
+                    });
+                    assert.notEqual(
+                        current.generations.find(
+                            (generation) =>
+                                generation.id === started.generationId
+                        )?.status,
+                        'FAILED',
+                        'The owned provenance generation failed before activation.'
+                    );
+                    const tasks = await f.owner.rag.indexing.tasks({
+                        collectionId: collection.id,
+                        limit: 100,
+                    });
+                    assert(
+                        tasks.items.every(
+                            (task) =>
+                                task.generationId !== started.generationId ||
+                                task.status !== 'FAILED'
+                        ),
+                        'An owned provenance task failed before activation.'
+                    );
+                    if (current.active?.id === started.generationId) break;
+                }
                 assert.equal(
                     (
                         await f.owner.rag.indexing.status({

@@ -1,9 +1,9 @@
 # Retrieval API for chatbot clients
 
-Status: **implementation and acceptance in progress for compatible API revision
-`1.24.0`**. This guide describes the contract being delivered; it is not a record
-of completed native or dashboard validation. The [build log](build-task-log.md)
-records the checks actually run.
+Status: **implemented in compatible API revision `1.24.0`**. The
+[actual validation](#actual-validation) below separates automated checks from the
+real local provider and dashboard journey. The [build log](build-task-log.md)
+records the delivery checks and any remaining CI status.
 
 The authenticated `retrieval` API supplies passages, exact citations and bounded
 neighboring context to an external application. The calling application owns
@@ -258,11 +258,68 @@ conversation storage.
   and [organization authorization](../packages/routers/utils/src/authorized.ts)
   remain shared with the existing API.
 
-Expected acceptance: configure a least-privilege key from the dashboard, inspect
+Repeat acceptance: configure a least-privilege key from the dashboard, inspect
 one published collection, search it through native HTTP, resolve a citation,
 expand context and resolve each neighbor's receipt. Verify canonical order,
 same publication/version/expiry, exact original bytes, denied foreign collection
 and revoked scope/issuer, and retained old-generation behavior. Exercise the
 delivered dashboard retrieval controls and their loading, error, empty and locale
 states. Record automated, controlled-provider and real native/browser results
-separately. Validation is pending while this slice is in progress.
+separately; the run below is one bounded smoke test, not a quality or capacity evaluation.
+
+## Actual validation
+
+The production browser artifacts came from checkpoint `2db7069c` on the dedicated
+branch. Owned run `22f6b3765675` used disposable application/vector `_test` databases,
+Redis, private RustFS storage, real workers and Ollama `0.40.8` with
+`embeddinggemma:latest`, 768 dimensions and verified local weight digest
+`85462619ee721b466c5927d109d4cb765861907d5417b9109caebc4e614679f1`.
+No developer `.env` or application database was used.
+
+Native curl created a synthetic account/organization, uploaded a 2,048-byte FR/EN
+TXT, and published four child passages with a Token Window profile. Its key had
+only `ragCollection.read`, `ragLibrary.read` and one collection's read scope. The
+new REST search returned three requested hits; context returned three ordered
+passages. All three passage receipts resolved to their own exact child, with the
+original expiry preserved. The existing authenticated original endpoint returned
+the exact 2,048 bytes, SHA-256
+`ec7e2086bed47651af1bdd76a1f8d22678db13fbda17e7c5b5ead04083cd74cf`.
+Key creation, uploads and original downloads used native HTTP only.
+
+The dashboard Home journey verified Hybrid search, Context/Source tabs, default
+neighbor counts, changes to two previous/no following passages, selection of a
+neighbor's own citation, exact version-1 source preview, and a Keyword search with
+no matches. EN, FR and nl-BE controls/citations were observed; keyboard ArrowRight
+selected the Source tab. The dark presentation was verified at the default
+1,280×720 viewport and at the mobile 390×844 breakpoint. The mobile dialog measured
+358×812 with internal scrolling and no document/dialog horizontal overflow.
+Closing/reopening the result reset neighbor controls to their defaults. Normal
+logout returned to sign-in. No browser file transfer, key creation or permission
+mutation was used.
+
+The owned environment is cleaned: three application processes stopped, five
+containers and four fresh volumes removed, and the existing read-only Ollama
+cache unchanged. Helper gates were restored; private HTTP captures remain local.
+The owned browser tab was closed and its viewport override reset.
+
+Automated coverage includes RPC/REST/OpenAPI parity, filters and parent-enabled
+results, read-only scoped keys, tenant pinning, malformed/expired receipts, strict
+context windows, grant revocation during a context read, scope revocation,
+retained generations, expired source holds and document detachment. A real DOCX
+fixture stores 70 source spans in one child and verifies 64-span database
+projection with explicit truncation, no parent row and no embedding call during
+citation/context reads. Revocation, expiry and rebuild cases are automated; no
+manual browser revocation or generation-cutover claim is made. Final matrix and
+exact-head CI outcomes are recorded in the build log and pull request.
+
+The final complete native catalog passes 364/364 main cases and 8/8 mandatory
+accounting cases, including fresh installation, upgrades, repeated migrations,
+schema parity and populated restoration.
+
+Frozen installation, Prisma generation, all 26 workspace type-check tasks, all 26
+lint tasks (non-blocking warnings), seven unit-test tasks including 251 API cases,
+and four production builds passed. API types/lint were repeated for the later
+test-only readiness correction; those changes do not alter the browser's pinned
+runtime. No database migration was needed. This small local smoke does not
+establish retrieval relevance, hosted-provider access, launch-scale throughput or
+chatbot answer quality.
