@@ -1621,6 +1621,33 @@
                 "provider": "Relevantiescore van de aanbieder",
                 "runtime": "Rangschikkingsscore van de runtime"
             }
+        },
+        "retrieval": {
+            "dialogTitle": "Passage, context en bron",
+            "tabsLabel": "Passage bekijken",
+            "contextTab": "Context",
+            "sourceTab": "Bron",
+            "openContext": "Omliggende context",
+            "contextHint": "Bekijk omliggende geïndexeerde passages uit dezelfde documentversie. Ze bieden context en zijn geen bijkomende gerangschikte resultaten. De teksten kunnen overlappen.",
+            "before": "Vorige passages",
+            "after": "Volgende passages",
+            "countOption": "{count, plural, =0 {Geen} one {# passage} other {# passages}}",
+            "receiptHint": "Als de bronverwijzing verlopen is of het document gewijzigd is, zoek dan opnieuw om een actuele bronverwijzing te krijgen.",
+            "contextSummary": "{count, plural, one {# geïndexeerde passage} other {# geïndexeerde passages}} · documentversie {version, number}",
+            "contextList": "Omliggende passages in volgorde",
+            "relations": {
+                "BEFORE": "Vorige passage",
+                "MATCH": "Gevonden passage",
+                "AFTER": "Volgende passage"
+            },
+            "passageNumber": "Passage {number, number}",
+            "selectedCitation": "Geselecteerde bronverwijzing",
+            "inspectCitation": "Bronverwijzing bekijken",
+            "citationTitle": "Exacte bronverwijzing",
+            "expiresAt": "De bronverwijzing verloopt op {date}. De toegangsrechten worden bij elke aanvraag opnieuw gecontroleerd.",
+            "identifiers": "Identificatie van de bronverwijzing",
+            "generation": "Indexgeneratie",
+            "chunk": "Passage-ID"
         }
     },
     "dashboard": {

@@ -4,7 +4,8 @@ import { Button } from '@repo/ui/button';
 import { useVectorixPermissions } from '@/contexts/vectorix-permissions';
 import { ChunkContent } from './chunk-content';
 import type { RerankedSearchResponse } from '../reranking/types';
-import type { SearchResponse, SearchResult } from './types';
+import type { SearchResponse } from './types';
+import type { OpenSearchSource } from './search-source';
 
 /** Preserve serving-generation labels and exact-version receipts for every result. */
 export function SearchResults({
@@ -14,9 +15,10 @@ export function SearchResults({
 }: Readonly<{
     response: SearchResponse | RerankedSearchResponse;
     activeGenerationId: string | null;
-    onOpenSource: (result: SearchResult) => void;
+    onOpenSource: OpenSearchSource;
 }>) {
     const tr = useTranslations('rag.indexing');
+    const retrievalTr = useTranslations('rag.retrieval');
     const format = useFormatter();
     const rerankTr = useTranslations('rag.reranking');
     const { canOperation } = useVectorixPermissions();
@@ -92,15 +94,33 @@ export function SearchResults({
                                     })}
                                 </p>
                             )}
-                        {canOperation('admin.rag.indexing.sourcePreview') && (
-                            <Button
-                                variant='outline'
-                                type='button'
-                                onClick={() => onOpenSource(result)}
-                            >
-                                {tr('openSource')}
-                            </Button>
-                        )}
+                        <div className='flex flex-wrap gap-2'>
+                            {canOperation(
+                                'admin.rag.indexing.sourcePreview'
+                            ) && (
+                                <Button
+                                    variant='outline'
+                                    type='button'
+                                    onClick={() =>
+                                        onOpenSource(result, 'source')
+                                    }
+                                >
+                                    {tr('openSource')}
+                                </Button>
+                            )}
+                            {canOperation('retrieval.context') &&
+                                canOperation('retrieval.citation') && (
+                                    <Button
+                                        variant='outline'
+                                        type='button'
+                                        onClick={() =>
+                                            onOpenSource(result, 'context')
+                                        }
+                                    >
+                                        {retrievalTr('openContext')}
+                                    </Button>
+                                )}
+                        </div>
                     </li>
                 ))}
             </ol>

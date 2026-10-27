@@ -32,7 +32,7 @@ void test('health, local playground and versioned OpenAPI expose the same suppor
         for (const path of Object.keys(spec.paths))
             assert.match(
                 path,
-                /^\/(health$|admin\/(organization|members|notifications|rag)(\/|$)|superadmin\/)/
+                /^\/(health$|admin\/(organization|members|notifications|rag)(\/|$)|superadmin\/|retrieval\/)/
             );
     }
     const current = API_VERSION_REGISTRY.find(
@@ -141,8 +141,8 @@ void test('supported contracts and runtime operations have identical paths and r
     for (const version of API_VERSION_REGISTRY) {
         const contract = operations(version.contract);
         assert.deepEqual(operations(version.router), contract);
-        for (const operation of Object.keys(contract).filter((key) =>
-            key.startsWith('admin.')
+        for (const operation of Object.keys(contract).filter(
+            (key) => key.startsWith('admin.') || key.startsWith('retrieval.')
         ))
             assert.ok(
                 Object.hasOwn(operationPermissions, operation),

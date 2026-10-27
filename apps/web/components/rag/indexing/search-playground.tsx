@@ -1,5 +1,5 @@
 'use client';
-import type { ReactNode } from 'react';
+import { useState, type ReactNode } from 'react';
 import { useTranslations } from 'next-intl';
 import { useVectorixPermissions } from '@/contexts/vectorix-permissions';
 import { useRerankProfile } from '../reranking/use-rerank-profile';
@@ -8,7 +8,11 @@ import { RerankedSearchResults } from '../reranking/search-results';
 import { SearchForm } from './search-form';
 import { useSearchExecution } from './use-search-execution';
 import { SearchResults } from './search-results';
-import { SearchSource } from './search-source';
+import {
+    SearchSource,
+    type SearchSourceTab,
+    type OpenSearchSource,
+} from './search-source';
 import type { MetadataFields } from './types';
 
 /** Reuse the exact search/source protocol; callers remount this workspace when collection authority changes. */
@@ -43,6 +47,12 @@ export function SearchPlayground({
         ready,
         rerank,
     });
+    const [initialSourceTab, setInitialSourceTab] =
+        useState<SearchSourceTab>('source');
+    const openSource: OpenSearchSource = (result, tab = 'source') => {
+        setInitialSourceTab(tab);
+        execution.openSource(result);
+    };
     return (
         <section
             className={
@@ -96,20 +106,24 @@ export function SearchPlayground({
                     <RerankedSearchResults
                         response={execution.response.value}
                         activeGenerationId={activeGenerationId}
-                        onOpenSource={execution.openSource}
+                        onOpenSource={openSource}
                     />
                 ) : (
                     <SearchResults
                         response={execution.response.value}
                         activeGenerationId={activeGenerationId}
-                        onOpenSource={execution.openSource}
+                        onOpenSource={openSource}
                     />
                 ))}
             {execution.source &&
-                canOperation('admin.rag.indexing.sourcePreview') && (
+                (canOperation('admin.rag.indexing.sourcePreview') ||
+                    (canOperation('retrieval.context') &&
+                        canOperation('retrieval.citation'))) && (
                     <SearchSource
+                        key={execution.source.source.receipt}
                         collectionId={collectionId}
                         result={execution.source}
+                        initialTab={initialSourceTab}
                         onClose={execution.closeSource}
                     />
                 )}

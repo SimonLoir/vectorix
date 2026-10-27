@@ -399,7 +399,7 @@ export async function voyageIndexingTests(t: TestContext) {
                     }
                 );
                 assert.equal(rest.status, 200);
-                assert.equal(rest.headers.get('Vectorix-API-Revision'), '23');
+                assert.equal(rest.headers.get('Vectorix-API-Revision'), '24');
                 assert.equal(
                     (await rest.json()).results[0].id,
                     result.results[0]!.id

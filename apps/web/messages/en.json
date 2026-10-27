@@ -1621,6 +1621,33 @@
                 "provider": "Provider relevance score",
                 "runtime": "Runtime ranking score"
             }
+        },
+        "retrieval": {
+            "dialogTitle": "Passage, context and source",
+            "tabsLabel": "Passage inspection",
+            "contextTab": "Context",
+            "sourceTab": "Source",
+            "openContext": "Surrounding context",
+            "contextHint": "Read neighboring indexed passages from the same document version. They provide context, not additional ranked matches, and their text may overlap.",
+            "before": "Previous passages",
+            "after": "Following passages",
+            "countOption": "{count, plural, =0 {None} one {# passage} other {# passages}}",
+            "receiptHint": "If the citation expired or the document changed, run a new search to get a current citation.",
+            "contextSummary": "{count, plural, one {# indexed passage} other {# indexed passages}} · document version {version, number}",
+            "contextList": "Ordered surrounding passages",
+            "relations": {
+                "BEFORE": "Previous passage",
+                "MATCH": "Matched passage",
+                "AFTER": "Following passage"
+            },
+            "passageNumber": "Passage {number, number}",
+            "selectedCitation": "Selected citation",
+            "inspectCitation": "Inspect citation",
+            "citationTitle": "Exact citation",
+            "expiresAt": "Citation expires {date}. Access is checked again for each request.",
+            "identifiers": "Citation identifiers",
+            "generation": "Index generation",
+            "chunk": "Passage ID"
         }
     },
     "dashboard": {

@@ -2,7 +2,7 @@
 import { useFormatter, useTranslations } from 'next-intl';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@repo/ui/tabs';
 import { SearchResults } from '../indexing/search-results';
-import type { SearchResult } from '../indexing/types';
+import type { OpenSearchSource } from '../indexing/search-source';
 import type { RerankedSearchResponse } from './types';
 
 /** Compare two orders of one bounded candidate pool while retaining each exact source receipt. */
@@ -13,7 +13,7 @@ export function RerankedSearchResults({
 }: Readonly<{
     response: RerankedSearchResponse;
     activeGenerationId: string | null;
-    onOpenSource: (result: SearchResult) => void;
+    onOpenSource: OpenSearchSource;
 }>) {
     const tr = useTranslations('rag.reranking');
     const format = useFormatter();

@@ -1,3 +1,4 @@
+import { retrievalTests } from './rag-tests/retrieval';
 import { rerankingSearchTests } from './rag-tests/reranking-search';
 import { teiRerankingTests } from './rag-tests/tei-reranking';
 import { after, test } from 'node:test';
@@ -73,6 +74,7 @@ void test('RAG catalog with real PostgreSQL and HTTP transports', async (t) => {
     await sourceHoldTests(t);
     await indexWorkerTests(t);
     await indexSearchTests(t);
+    await retrievalTests(t);
     await indexingOutboxTests(t);
     await indexRebuildTests(t);
     await cohereIndexingTests(t);
