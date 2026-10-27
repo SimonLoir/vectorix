@@ -31,6 +31,7 @@ model Organization {
   ragOperationalHours RagOperationalHour[]
   ragAuditLogs RagAuditLog[]
   documents Document[]
+  rerankEndpoints RerankEndpointCredential[]
   rerankAccounting OrganizationRerankAccounting?
   rerankUsageDays RerankUsageDay[]
   rerankRequests RerankRequest[]

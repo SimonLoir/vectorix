@@ -8,6 +8,11 @@ DO $$ BEGIN
     IF EXISTS (SELECT FROM "ApiKeyPrincipal") OR EXISTS (SELECT FROM "ApiKeyCollectionScope")
        OR EXISTS (SELECT FROM "CollectionMemberGrant") OR EXISTS (SELECT FROM "CollectionGroupGrant")
     THEN RAISE EXCEPTION 'Migration granted implicit RAG access'; END IF;
-    IF (SELECT count(*) FROM _prisma_migrations WHERE finished_at IS NOT NULL AND rolled_back_at IS NULL) <> 12
-    THEN RAISE EXCEPTION 'Expected exactly twelve applied migrations'; END IF;
+    IF EXISTS (SELECT FROM "RerankEndpointCredential")
+       OR EXISTS (SELECT FROM "CollectionRerankConfig" WHERE provider='TEI')
+    THEN RAISE EXCEPTION 'TEI expansion created implicit endpoint credentials or profiles'; END IF;
+    IF NOT ('TEI' = ANY(enum_range(NULL::"CredentialProvider")::text[]))
+    THEN RAISE EXCEPTION 'TEI provider label is missing'; END IF;
+    IF (SELECT count(*) FROM _prisma_migrations WHERE finished_at IS NOT NULL AND rolled_back_at IS NULL) <> 14
+    THEN RAISE EXCEPTION 'Expected exactly fourteen applied migrations'; END IF;
 END $$;

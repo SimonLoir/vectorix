@@ -6,6 +6,11 @@ import { normalizeCatalogMutationError } from '../mutation';
 import { rerankError } from './errors';
 import { rerankLimits, utcDay } from './limits';
 import type { RerankRun } from './accounting-types';
+import {
+    isRerankingProvider,
+    isHostedRerankingProvider,
+    supportsRerankConfiguration,
+} from './configuration';
 
 /** Current issuer, collection grants and profile revision are rechecked inside cost transactions. */
 export async function rerankAuthority(
@@ -28,9 +33,9 @@ export async function rerankAuthority(
     if (profile.revision !== expectedRevision)
         throw rerankError('RERANK_PROFILE_CHANGED');
     if (
-        (profile.provider !== 'COHERE' && profile.provider !== 'VOYAGE') ||
+        !isRerankingProvider(profile.provider) ||
         !profile.endpoint ||
-        profile.capabilityVersion !== 'native-rerank-v1'
+        !supportsRerankConfiguration(profile)
     )
         throw rerankError('CREDENTIALS_INVALID');
     return {
@@ -63,6 +68,7 @@ export async function claimRerankRequest(
         collectionId: string;
         requestId: string;
         expectedRerankRevision: number;
+        hostedOnly?: boolean;
     }
 ): Promise<RerankRun> {
     try {
@@ -73,6 +79,11 @@ export async function claimRerankRequest(
                 input.expectedRerankRevision,
                 db
             );
+            if (
+                input.hostedOnly &&
+                !isHostedRerankingProvider(profile.provider)
+            )
+                throw rerankError('PROFILE_UNSUPPORTED');
             const principalId = actor.keyId
                 ? `key:${actor.keyId}`
                 : `user:${actor.userId}`;

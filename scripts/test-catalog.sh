@@ -29,6 +29,7 @@ sql() { docker exec -i "$prefix-postgres" psql -U postgres -d "$1" -v ON_ERROR_S
 sql postgres <<< 'CREATE DATABASE vectorix_upgrade_test; CREATE DATABASE vectorix_catalog_test;'
 docker cp tests/catalog "$prefix-postgres:/catalog-tests"
 docker cp tests/rag-reranking/schema-check.sql "$prefix-postgres:/catalog-tests/reranking-schema-check.sql"
+docker cp tests/rag-reranking/tei-schema-check.sql "$prefix-postgres:/catalog-tests/tei-reranking-schema-check.sql"
 docker cp packages/db/prisma/migrations/20261031000000_sql_function_search_path/migration.sql "$prefix-postgres:/catalog-tests/sql-function-migration.sql"
 
 # Preserve pre-catalog and catalog data through the approved additive migrations.
@@ -68,6 +69,7 @@ docker exec "$prefix-postgres" psql -X -q -U postgres -d vectorix_upgrade_test -
 pnpm --filter @repo/db exec prisma migrate resolve --applied 20261031000000_sql_function_search_path
 for attempt in 1 2; do pnpm --filter @repo/db migrate:deploy; done
 sql vectorix_upgrade_test < tests/rag-reranking/schema-check.sql
+sql vectorix_upgrade_test < tests/rag-reranking/tei-schema-check.sql
 sql vectorix_upgrade_test < tests/catalog/observability-upgrade-check.sql
 sql vectorix_upgrade_test < tests/catalog/observability-schema-check.sql
 sql vectorix_upgrade_test < tests/catalog/lifecycle-upgrade-check.sql
@@ -85,6 +87,7 @@ pnpm --filter @repo/db exec prisma migrate diff --from-config-datasource --to-sc
 export DATABASE_URL="postgresql://postgres:catalog-test-password@127.0.0.1:$pg_port/vectorix_catalog_test"
 for attempt in 1 2; do pnpm --filter @repo/db migrate:deploy; done
 sql vectorix_catalog_test < tests/rag-reranking/schema-check.sql
+sql vectorix_catalog_test < tests/rag-reranking/tei-schema-check.sql
 sql vectorix_catalog_test < tests/catalog/observability-schema-check.sql
 sql vectorix_catalog_test < tests/catalog/semantic-schema-check.sql
 docker exec "$prefix-postgres" psql -X -q -U postgres -d vectorix_catalog_test -v ON_ERROR_STOP=1 -f /catalog-tests/parent-context-schema-check.sql

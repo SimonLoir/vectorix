@@ -1,0 +1,85 @@
+# Optional CPU reranker. Merge with docker-compose.yml and explicitly enable the reranking profile.
+services:
+    tei-cache-init:
+        profiles: ['reranking']
+        image: postgres:18-alpine@sha256:898c60cb390d1085bc97bdd6a1ae968757421df394b071848b52b1c09c89d6a5
+        user: '0:0'
+        entrypoint: ['/bin/sh', '-ec']
+        # Temporarily owning the volume root lets chmod work on repeat runs with CHOWN as the sole capability.
+        command:
+            ['chown 0:0 /data && chmod 0700 /data && chown 1000:1000 /data']
+        network_mode: none
+        read_only: true
+        cap_drop: ['ALL']
+        cap_add: ['CHOWN']
+        security_opt: ['no-new-privileges:true']
+        cpus: 0.25
+        mem_limit: 32m
+        pids_limit: 16
+        volumes:
+            - type: volume
+              source: tei-data
+              target: /data
+              volume:
+                  nocopy: true
+        restart: 'no'
+    tei:
+        profiles: ['reranking']
+        image: ghcr.io/huggingface/text-embeddings-inference:cpu-1.9@sha256:8419f533857b503ebf6ec292a95d4f1cf9c0464ac8b8abeef39518cf110e5726
+        platform: linux/amd64
+        depends_on:
+            tei-cache-init:
+                condition: service_completed_successfully
+        user: '1000:1000'
+        read_only: true
+        cap_drop: ['ALL']
+        security_opt: ['no-new-privileges:true']
+        cpus: 4
+        mem_limit: 8g
+        pids_limit: 128
+        environment:
+            HOME: /data
+            HF_HOME: /data/huggingface
+            HUGGINGFACE_HUB_CACHE: /data/huggingface/hub
+            MKL_ENABLE_INSTRUCTIONS: AVX2
+            RAYON_NUM_THREADS: '4'
+            OMP_NUM_THREADS: '4'
+            AUTO_TRUNCATE: 'false'
+        command:
+            - --model-id
+            - Alibaba-NLP/gte-multilingual-reranker-base
+            - --revision
+            - 8215cf04918ba6f7b6a62bb44238ce2953d8831c
+            - --dtype
+            - float32
+            - --port
+            - '8080'
+            - --tokenization-workers
+            - '2'
+            - --max-client-batch-size
+            - '32'
+            - --max-concurrent-requests
+            - '32'
+            - --max-batch-requests
+            - '4'
+            - --max-batch-tokens
+            - '8192'
+        ports: ['127.0.0.1:${VECTORIX_TEI_PORT:-8081}:8080']
+        volumes:
+            - type: volume
+              source: tei-data
+              target: /data
+              volume:
+                  nocopy: true
+        tmpfs:
+            - /tmp:rw,noexec,nosuid,size=256m,uid=1000,gid=1000,mode=0700
+        healthcheck:
+            test: ['CMD', 'curl', '-fsS', 'http://127.0.0.1:8080/health']
+            interval: 10s
+            timeout: 5s
+            retries: 6
+            start_period: 5m
+        stop_grace_period: 30s
+        restart: unless-stopped
+volumes:
+    tei-data:

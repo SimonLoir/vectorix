@@ -6,14 +6,22 @@ import {
     RERANKING_LIMITS,
     type RerankingInput,
 } from '../src/index';
-import { RERANKING_MODELS, listRerankingModels } from '../src/models';
+import {
+    RERANKING_MODELS,
+    listRerankingModels,
+    type RerankingModel,
+    type HostedRerankingProvider,
+} from '../src/models';
 import { errorCode, fixture, input, key, success } from './fixture';
 
 await test('reviewed browser-safe catalog is frozen and provider-specific', () => {
     assert(Object.isFrozen(RERANKING_MODELS));
     assert(
         RERANKING_MODELS.every(
-            (model) => Object.isFrozen(model) && model.contextTokens === 32_000
+            (model) =>
+                Object.isFrozen(model) &&
+                model.contextTokens ===
+                    (model.provider === 'TEI' ? 8192 : 32_000)
         )
     );
     assert.deepEqual(
@@ -26,7 +34,10 @@ await test('reviewed browser-safe catalog is frozen and provider-specific', () =
     );
 });
 
-for (const model of RERANKING_MODELS) {
+for (const model of RERANKING_MODELS.filter(
+    (entry): entry is RerankingModel & { provider: HostedRerankingProvider } =>
+        entry.provider !== 'TEI'
+)) {
     await test(`${model.provider} ${model.id} sends one exact native DTO and returns a complete stable ranking`, () =>
         fixture(model.provider, async (configuration, requests) => {
             const result = await rerank(configuration, {

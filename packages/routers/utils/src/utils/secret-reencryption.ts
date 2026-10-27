@@ -6,6 +6,7 @@ import {
     encrypt,
     needsReencryption,
     pushSubscriptionContext,
+    rerankEndpointSecretContext,
 } from './encryption';
 
 type CredentialField = 'accessKeyId' | 'secretAccessKey' | 'apiKey';
@@ -141,6 +142,45 @@ function pushColumn(db: PrismaClient): ReencryptionColumn {
     };
 }
 
+/** Keep business revision and timestamps intact while fencing concurrent endpoint edits by ciphertext and observed row state. */
+function rerankEndpointColumn(db: PrismaClient): ReencryptionColumn {
+    return {
+        name: 'rerankEndpointCredential',
+        fields: ['apiKey'],
+        load: async (after, take) => {
+            const rows = await db.rerankEndpointCredential.findMany({
+                ...reencryptionWindow(after, take),
+                orderBy: { id: 'asc' },
+                select: { id: true, organizationId: true, apiKey: true },
+            });
+            return rows.map((row) => ({
+                id: row.id,
+                values: { apiKey: row.apiKey },
+                context: () =>
+                    rerankEndpointSecretContext(row.organizationId, row.id),
+            }));
+        },
+        update: async (id, field, previous, next) => {
+            if (field !== 'apiKey') throw new Error('Unknown encrypted field.');
+            const row = await db.rerankEndpointCredential.findFirst({
+                where: { id, apiKey: previous },
+                select: { revision: true, updatedAt: true },
+            });
+            if (!row) return 0;
+            const result = await db.rerankEndpointCredential.updateMany({
+                where: {
+                    id,
+                    apiKey: previous,
+                    revision: row.revision,
+                    updatedAt: row.updatedAt,
+                },
+                data: { apiKey: next, updatedAt: row.updatedAt },
+            });
+            return result.count;
+        },
+    };
+}
+
 /** Every column that stores `encrypt()` output, with its row binding. */
 export function encryptedColumns(db: PrismaClient): ReencryptionColumn[] {
     return [
@@ -154,6 +194,7 @@ export function encryptedColumns(db: PrismaClient): ReencryptionColumn[] {
         credentialColumn(db, 'openAICredentials', ['apiKey']),
         credentialColumn(db, 'mistralCredentials', ['apiKey']),
         pushColumn(db),
+        rerankEndpointColumn(db),
     ];
 }
 

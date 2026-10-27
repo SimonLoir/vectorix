@@ -1,11 +1,21 @@
-import type { RerankingProvider } from './models';
+import type { RerankingProvider, HostedRerankingProvider } from './models';
+import type { TeiRuntimeSnapshot } from './tei-snapshot';
 export type { RerankingProvider } from './models';
 
-export type RerankingConfiguration = {
+export type RerankingConnection = {
     provider: RerankingProvider;
     endpoint: string;
-    apiKey: string;
+    apiKey?: string | null;
 };
+
+export type TeiProbeConfiguration = RerankingConnection & { provider: 'TEI' };
+
+export type RerankingConfiguration =
+    | (RerankingConnection & {
+          provider: HostedRerankingProvider;
+          apiKey: string;
+      })
+    | (TeiProbeConfiguration & { runtimeSnapshot: TeiRuntimeSnapshot });
 
 export type RerankingInput = {
     model: string;
@@ -22,8 +32,13 @@ export type RerankingInputStatistics = {
 
 export type RerankingOptions = {
     signal?: AbortSignal;
-    /** One deadline for the POST and the entire response; defaults to 15 seconds. */
+    /** One deadline for metadata, final admission, POST and the entire response; defaults to 15 seconds. */
     timeoutMs?: number;
+    /**
+     * Recheck current authority and persist dispatch intent immediately before sending candidate text.
+     * TEI metadata is checked first. Caller refusals propagate unchanged; metadata-only probes do not invoke this hook.
+     */
+    beforeInference?: () => Promise<void>;
 };
 
 export type RerankingUsage = {
@@ -42,6 +57,7 @@ export type RerankingResult = {
 export type RerankingErrorCode =
     | 'INVALID_CONFIGURATION'
     | 'MODEL_UNSUPPORTED'
+    | 'MODEL_CHANGED'
     | 'INPUT_TOO_LARGE'
     | 'PROVIDER_UNAVAILABLE'
     | 'PROVIDER_TIMEOUT'

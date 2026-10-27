@@ -736,7 +736,7 @@
         },
         "credentials": {
             "title": "Integrations",
-            "description": "Configure storage and embedding providers for your organization.",
+            "description": "Configure storage, embedding providers, and self-hosted reranking for your organization.",
             "priority": "Organization configuration takes precedence. When absent, platform defaults are used if available.",
             "fallback": "Invalid configuration never triggers fallback. Existing collections retain their saved binding even when you activate other credentials.",
             "unverified": "Saving credentials does not test connectivity or model compatibility. Verify the saved embedding profile from a collection.",
@@ -795,7 +795,11 @@
             "actor": "Actor: {type} · {id}",
             "target": "Target: {id}",
             "synchronizationAdopted": "Index synchronization adopted",
-            "rerankingConfigured": "Reranking configured"
+            "rerankingConfigured": "Reranking configured",
+            "rerankingEndpointCreated": "Reranking endpoint created",
+            "rerankingEndpointUpdated": "Reranking endpoint updated",
+            "rerankingEndpointActivated": "Reranking endpoint selected",
+            "rerankingEndpointDeleted": "Reranking endpoint deleted"
         },
         "keys": {
             "title": "Collection scope",
@@ -1107,14 +1111,14 @@
                 "PROFILE_UNSUPPORTED": "This saved model or chunking profile is not supported for indexing. Use Ollama, Cohere, Voyage, OpenAI or Mistral with document-structure, token-window or semantic children and an optional supported parent layout. Cohere, Voyage, OpenAI and Mistral require Generic input.",
                 "CREDENTIALS_INVALID": "The saved embedding credentials or approved endpoint are unavailable. Check the collection binding.",
                 "MODEL_NOT_FOUND": "The saved model was not found or is not available at the configured provider.",
-                "MODEL_UNSUPPORTED": "The model does not expose the required native embedding capability or preset.",
+                "MODEL_UNSUPPORTED": "The model does not expose the required native capability or preset.",
                 "MODEL_CHANGED": "The saved revision, model identity or supported capabilities changed. Reload and verify the profile before retrying.",
                 "DIMENSIONS_UNSUPPORTED": "The model does not support the requested vector dimensions.",
                 "PROVIDER_UNAVAILABLE": "The configured provider is unavailable. Try again after the service recovers.",
                 "PROVIDER_TIMEOUT": "The provider operation exceeded its deadline.",
                 "PROVIDER_REJECTED": "The configured provider rejected the request. Check credentials and model input limits.",
                 "INVALID_PROVIDER_RESPONSE": "The configured provider returned an invalid or inconsistent response.",
-                "INPUT_TOO_LARGE": "The prepared text exceeds the model’s bounded context budget. Reduce chunk sizes or preparation.",
+                "INPUT_TOO_LARGE": "The prepared input exceeds the runtime request or model limits. Reduce the question length, candidate pool or passage size.",
                 "VECTOR_UNAVAILABLE": "The vector database is unavailable.",
                 "VECTOR_BINDING_CHANGED": "The vector destination changed. The saved generation cannot be retargeted.",
                 "STORAGE_UNAVAILABLE": "Private source storage is unavailable.",
@@ -1521,7 +1525,7 @@
                 "PLATFORM": "Bound to the platform’s configured credentials.",
                 "UNBOUND": "No credentials are bound to this disabled draft."
             },
-            "optInHint": "Each search starts with reranking off. Enabling the collection profile does not trigger a provider call.",
+            "optInHint": "Each search starts with reranking off. Enabling a profile performs no inference; TEI reads runtime metadata when you save it.",
             "configureHint": "Choose a separate reranking model and a bounded candidate window. Changes apply to future searches without rebuilding the index.",
             "allow": "Allow optional reranking for this collection",
             "provider": "Reranking provider",
@@ -1536,10 +1540,10 @@
                 "loading": "Checking the optional reranking profile. Ordinary search is available.",
                 "error": "Reranking is temporarily unavailable. You can still run an ordinary search.",
                 "disabled": "Reranking is disabled for this collection. An administrator can configure it in the collection overview.",
-                "denied": "Your current access does not allow reranking for this collection.",
+                "denied": "Reranking is unavailable under the current profile or your current access.",
                 "notReady": "Publish an active index before using reranking for this collection."
             },
-            "billable": "This search sends the question and candidate passages to the configured reranking provider and may incur charges.",
+            "billable": "This sends the question and candidate passages to the configured runtime and uses its capacity. Provider charges may apply.",
             "compare": "Compare with the original ranking",
             "compareHint": "Show both orders from the same candidate window; this does not run a second retrieval.",
             "runTitle": "Reranked with {provider} · {model}",
@@ -1566,6 +1570,56 @@
                 "RERANK_CAPACITY": "Reranking cannot be admitted within the current capacity limits. Try again later or ask an administrator to review the limits.",
                 "RERANK_DAILY_LIMIT": "The daily reranking limit has been reached. Submit an ordinary search or ask an administrator to review the limit.",
                 "RERANK_INPUT_INVALID": "The search options or filters are invalid. Review them and submit a new search."
+            },
+            "endpoints": {
+                "views": "Integration types",
+                "providersTab": "Embeddings and storage",
+                "tab": "Self-hosted reranking",
+                "title": "Self-hosted reranking endpoints",
+                "description": "Configure a TEI runtime separately from embedding and storage credentials. Your collection chooses its deployed reranking model.",
+                "priority": "The selected organization endpoint takes precedence. Platform defaults apply only when no organization endpoint is configured for that runtime. Invalid organization settings never fall back.",
+                "bindingHint": "Saved collection revisions retain their endpoint binding. Rotate a key here; create and select another endpoint to change a referenced destination, then explicitly save a new collection reranking revision.",
+                "search": "Filter reranking endpoints",
+                "create": "Add reranking endpoint",
+                "edit": "Edit reranking endpoint",
+                "empty": "No organization reranking endpoint matches this filter. Platform defaults can apply when no endpoint is configured.",
+                "noKey": "Authentication: no API key configured",
+                "maskedKey": "Authentication: API key stored and masked",
+                "activateTitle": "Select reranking endpoint",
+                "activateDescription": "Select “{name}” for future reranking profile saves? Existing revisions keep their saved binding.",
+                "removeTitle": "Delete reranking endpoint",
+                "removeDescription": "Delete “{name}”? Referenced endpoints cannot be deleted; saved profiles keep their binding.",
+                "provider": "Hugging Face TEI (self-hosted)",
+                "formDescription": "Store the runtime destination and an optional encrypted API key. Saving this endpoint does not contact the runtime.",
+                "endpointHint": "Use the runtime root URL without credentials, query parameters or a fragment. The operator must approve the destination for reranking.",
+                "saveHint": "A blank key preserves the current secret when editing; removal is explicit. Runtime metadata is read only when you save an enabled TEI collection profile.",
+                "createAction": "Add endpoint",
+                "editAction": "Edit"
+            },
+            "selfHosted": {
+                "provider": "Hugging Face TEI (self-hosted)",
+                "modelHint": "Enter the model ID deployed by this TEI runtime. These local suggestions do not install or discover models; the enabled save checks the runtime’s reported model.",
+                "enableHint": "Saving an enabled TEI profile reads runtime metadata and stores the reported model identity and input/batch limits. It does not run inference. Your selected organization endpoint takes precedence over platform defaults.",
+                "manageEndpoints": "Manage self-hosted endpoints in Integrations",
+                "reading": "Reading metadata and saving…",
+                "save": "Read metadata and save"
+            },
+            "runtime": {
+                "title": "Saved runtime metadata",
+                "hint": "Reported by the runtime when this revision was enabled. This is a saved metadata snapshot, not a verified weight digest.",
+                "model": "Reported model ID",
+                "revision": "Reported model revision",
+                "modelType": "Reported model type",
+                "version": "Runtime version",
+                "dtype": "Model data type",
+                "inputLimit": "Maximum input tokens",
+                "batchLimit": "Maximum documents per client batch",
+                "protocol": "Protocol version"
+            },
+            "scoreKinds": {
+                "normalized": "Normalized cross-encoder score",
+                "provider": "Provider relevance score",
+                "runtime": "Runtime ranking score"
             }
         }
     },

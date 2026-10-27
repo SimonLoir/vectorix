@@ -736,7 +736,7 @@
         },
         "credentials": {
             "title": "Integraties",
-            "description": "Configureer opslag en embeddingproviders voor je organisatie.",
+            "description": "Configureer opslag, embeddingproviders en zelfgehoste herrangschikking voor je organisatie.",
             "priority": "De organisatieconfiguratie heeft voorrang. Als die ontbreekt, worden beschikbare platformstandaarden gebruikt.",
             "fallback": "Een ongeldige configuratie valt nooit terug op de standaardinstellingen. Bestaande collecties behouden hun opgeslagen koppeling, ook wanneer je andere inloggegevens activeert.",
             "unverified": "Het opslaan van toegangsgegevens test de verbinding of modelcompatibiliteit niet. Controleer het opgeslagen embeddingprofiel vanuit een collectie.",
@@ -795,7 +795,11 @@
             "actor": "Actor: {type} · {id}",
             "target": "Doel: {id}",
             "synchronizationAdopted": "Indexsynchronisatie overgenomen",
-            "rerankingConfigured": "Herrangschikking ingesteld"
+            "rerankingConfigured": "Herrangschikking ingesteld",
+            "rerankingEndpointCreated": "Eindpunt voor herrangschikking aangemaakt",
+            "rerankingEndpointUpdated": "Eindpunt voor herrangschikking bijgewerkt",
+            "rerankingEndpointActivated": "Eindpunt voor herrangschikking geselecteerd",
+            "rerankingEndpointDeleted": "Eindpunt voor herrangschikking verwijderd"
         },
         "keys": {
             "title": "Collectiebereik",
@@ -1107,14 +1111,14 @@
                 "PROFILE_UNSUPPORTED": "Dit opgeslagen model of opdelingsprofiel wordt niet ondersteund voor indexering. Gebruik Ollama, Cohere, Voyage, OpenAI of Mistral met onderliggende passages volgens documentstructuur, tokenvensters of semantische opdeling en eventueel een ondersteunde bovenliggende indeling. Cohere, Voyage, OpenAI en Mistral vereisen de preset Generiek.",
                 "CREDENTIALS_INVALID": "De opgeslagen embeddingtoegangsgegevens of goedgekeurde bestemming zijn niet beschikbaar. Controleer de profielkoppeling.",
                 "MODEL_NOT_FOUND": "Het opgeslagen model is niet gevonden of niet beschikbaar bij de ingestelde provider.",
-                "MODEL_UNSUPPORTED": "Het model biedt niet de vereiste native embeddingfunctie of voorinstelling.",
+                "MODEL_UNSUPPORTED": "Het model biedt niet de vereiste native functie of voorinstelling.",
                 "MODEL_CHANGED": "De opgeslagen revisie, modelidentiteit of ondersteunde mogelijkheden zijn gewijzigd. Herlaad en controleer het profiel voordat je het opnieuw probeert.",
                 "DIMENSIONS_UNSUPPORTED": "Het model ondersteunt de gevraagde vectordimensies niet.",
                 "PROVIDER_UNAVAILABLE": "De ingestelde aanbieder is niet beschikbaar. Probeer opnieuw zodra de service hersteld is.",
                 "PROVIDER_TIMEOUT": "De bewerking bij de aanbieder heeft de tijdslimiet overschreden.",
                 "PROVIDER_REJECTED": "De ingestelde aanbieder heeft de aanvraag geweigerd. Controleer de toegangsgegevens en invoerlimieten van het model.",
                 "INVALID_PROVIDER_RESPONSE": "De ingestelde aanbieder gaf een ongeldig of inconsistent antwoord.",
-                "INPUT_TOO_LARGE": "De voorbereide tekst overschrijdt het begrensde modelcontextbudget. Verklein de passages of voorbereiding.",
+                "INPUT_TOO_LARGE": "De voorbereide invoer overschrijdt de aanvraag- of modellimieten van de runtime. Verkort de vraag of verklein de kandidatenselectie of passages.",
                 "VECTOR_UNAVAILABLE": "De vectordatabase is niet beschikbaar.",
                 "VECTOR_BINDING_CHANGED": "De vectorbestemming is gewijzigd. De opgeslagen generatie kan niet worden omgeleid.",
                 "STORAGE_UNAVAILABLE": "De private bronopslag is niet beschikbaar.",
@@ -1521,7 +1525,7 @@
                 "PLATFORM": "Gekoppeld aan de ingestelde toegangsgegevens van het platform.",
                 "UNBOUND": "Aan dit uitgeschakelde concept zijn geen toegangsgegevens gekoppeld."
             },
-            "optInHint": "Elke zoekopdracht begint met herrangschikking uitgeschakeld. Het collectieprofiel inschakelen voert geen aanroep naar de aanbieder uit.",
+            "optInHint": "Elke zoekopdracht begint met herrangschikking uitgeschakeld. Een profiel inschakelen voert geen inferentie uit; TEI leest de runtimemetadata bij het opslaan.",
             "configureHint": "Kies een afzonderlijk model voor herrangschikking en een begrensde kandidatenselectie. Wijzigingen gelden voor volgende zoekopdrachten zonder de index opnieuw op te bouwen.",
             "allow": "Optionele herrangschikking voor deze collectie toestaan",
             "provider": "Aanbieder voor herrangschikking",
@@ -1536,10 +1540,10 @@
                 "loading": "Het optionele profiel voor herrangschikking wordt gecontroleerd. Gewoon zoeken is beschikbaar.",
                 "error": "Herrangschikking is tijdelijk niet beschikbaar. U kunt nog steeds gewoon zoeken.",
                 "disabled": "Herrangschikking is voor deze collectie uitgeschakeld. Een beheerder kan dit instellen in het collectieoverzicht.",
-                "denied": "Uw huidige rechten staan herrangschikking voor deze collectie niet toe.",
+                "denied": "Herrangschikking is niet beschikbaar met het huidige profiel of uw huidige rechten.",
                 "notReady": "Publiceer een actieve index voordat u herrangschikking voor deze collectie gebruikt."
             },
-            "billable": "Deze zoekopdracht stuurt de vraag en kandidaatpassages naar de ingestelde aanbieder voor herrangschikking en kan kosten veroorzaken.",
+            "billable": "Dit stuurt de vraag en kandidaatpassages naar de ingestelde runtime en gebruikt de capaciteit ervan. De aanbieder kan kosten aanrekenen.",
             "compare": "Vergelijken met de oorspronkelijke rangschikking",
             "compareHint": "Toon beide volgordes van dezelfde kandidatenselectie; dit voert geen tweede zoekopdracht uit.",
             "runTitle": "Herrangschikt met {provider} · {model}",
@@ -1566,6 +1570,56 @@
                 "RERANK_CAPACITY": "Herrangschikking kan niet worden toegelaten binnen de huidige capaciteitslimieten. Probeer later opnieuw of vraag een beheerder de limieten te controleren.",
                 "RERANK_DAILY_LIMIT": "De dagelijkse limiet voor herrangschikking is bereikt. Zoek zonder herrangschikking of vraag een beheerder de limiet te controleren.",
                 "RERANK_INPUT_INVALID": "De zoekopties of filters zijn ongeldig. Controleer ze en dien een nieuwe zoekopdracht in."
+            },
+            "endpoints": {
+                "views": "Integratietypes",
+                "providersTab": "Embeddings en opslag",
+                "tab": "Zelfgehoste herrangschikking",
+                "title": "Eindpunten voor zelfgehoste herrangschikking",
+                "description": "Configureer een TEI-runtime los van de toegangsgegevens voor embeddings en opslag. Uw collectie kiest het geïmplementeerde model voor herrangschikking.",
+                "priority": "Het geselecteerde eindpunt van de organisatie heeft voorrang. Platformstandaarden gelden alleen als voor die runtime geen eindpunt in de organisatie is ingesteld. Ongeldige organisatie-instellingen vallen nooit terug op het platform.",
+                "bindingHint": "Opgeslagen collectierevisies behouden hun eindpuntkoppeling. Roteer hier een sleutel; maak en selecteer een ander eindpunt om een gebruikte bestemming te wijzigen en sla daarna expliciet een nieuwe revisie voor herrangschikking op.",
+                "search": "Eindpunten voor herrangschikking filteren",
+                "create": "Eindpunt voor herrangschikking toevoegen",
+                "edit": "Eindpunt voor herrangschikking bewerken",
+                "empty": "Geen eindpunt voor herrangschikking van de organisatie komt overeen met dit filter. Platformstandaarden kunnen gelden als er geen eindpunt is ingesteld.",
+                "noKey": "Authenticatie: geen API-sleutel ingesteld",
+                "maskedKey": "Authenticatie: API-sleutel opgeslagen en gemaskeerd",
+                "activateTitle": "Eindpunt voor herrangschikking selecteren",
+                "activateDescription": "“{name}” selecteren voor toekomstige opgeslagen profielen voor herrangschikking? Bestaande revisies behouden hun opgeslagen koppeling.",
+                "removeTitle": "Eindpunt voor herrangschikking verwijderen",
+                "removeDescription": "“{name}” verwijderen? Gebruikte eindpunten kunnen niet worden verwijderd; opgeslagen profielen behouden hun koppeling.",
+                "provider": "Hugging Face TEI (zelfgehost)",
+                "formDescription": "Sla de runtimebestemming en een optionele versleutelde API-sleutel op. Dit eindpunt opslaan maakt geen verbinding met de runtime.",
+                "endpointHint": "Gebruik de root-URL van de runtime zonder toegangsgegevens, queryparameters of fragment. De beheerder moet de bestemming voor herrangschikking toestaan.",
+                "saveHint": "Bij bewerken behoudt een lege sleutel het huidige geheim; verwijderen gebeurt expliciet. Runtimemetadata worden alleen gelezen wanneer u een ingeschakeld TEI-profiel voor een collectie opslaat.",
+                "createAction": "Eindpunt toevoegen",
+                "editAction": "Bewerken"
+            },
+            "selfHosted": {
+                "provider": "Hugging Face TEI (zelfgehost)",
+                "modelHint": "Voer de model-ID in die deze TEI-runtime gebruikt. Deze lokale suggesties installeren of ontdekken geen modellen; bij het opslaan van een ingeschakeld profiel wordt het door de runtime gemelde model gecontroleerd.",
+                "enableHint": "Een ingeschakeld TEI-profiel opslaan leest runtimemetadata en bewaart de gemelde modelidentiteit en invoer-/batchlimieten. Dit voert geen inferentie uit. Het geselecteerde organisatie-eindpunt heeft voorrang op platformstandaarden.",
+                "manageEndpoints": "Zelfgehoste eindpunten beheren in Integraties",
+                "reading": "Metadata lezen en opslaan…",
+                "save": "Metadata lezen en opslaan"
+            },
+            "runtime": {
+                "title": "Opgeslagen runtimemetadata",
+                "hint": "Gemeld door de runtime toen deze revisie werd ingeschakeld. Dit is een opgeslagen momentopname van metadata, geen geverifieerde hash van de modelgewichten.",
+                "model": "Gemelde model-ID",
+                "revision": "Gemelde modelrevisie",
+                "modelType": "Gemeld modeltype",
+                "version": "Runtimeversie",
+                "dtype": "Gegevenstype van het model",
+                "inputLimit": "Maximumaantal invoertokens",
+                "batchLimit": "Maximumaantal documenten per clientbatch",
+                "protocol": "Protocolversie"
+            },
+            "scoreKinds": {
+                "normalized": "Genormaliseerde cross-encoderscore",
+                "provider": "Relevantiescore van de aanbieder",
+                "runtime": "Rangschikkingsscore van de runtime"
             }
         }
     },

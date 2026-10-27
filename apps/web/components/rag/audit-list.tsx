@@ -13,6 +13,10 @@ import {
 const actionKeys: Readonly<Record<string, string>> = {
     'collection.index.synchronization.adopted': 'synchronizationAdopted',
     'collection.reranking.configure': 'rerankingConfigured',
+    'reranking.endpoint.create': 'rerankingEndpointCreated',
+    'reranking.endpoint.update': 'rerankingEndpointUpdated',
+    'reranking.endpoint.activate': 'rerankingEndpointActivated',
+    'reranking.endpoint.delete': 'rerankingEndpointDeleted',
 };
 
 export function RagAuditList() {

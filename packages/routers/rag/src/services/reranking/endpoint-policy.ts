@@ -2,8 +2,14 @@ import { createEndpointAllowlist } from '@repo/storage/endpoint-allowlist';
 import type { RerankingProvider } from '@repo/reranking/models';
 import { rerankError } from './errors';
 
-function normalizeEndpoint(value: string) {
-    const url = new URL(value);
+/** Normalize a root native reranking destination without changing its authority. */
+export function normalizeRerankingEndpoint(value: string) {
+    let url: URL;
+    try {
+        url = new URL(value);
+    } catch {
+        throw rerankError('CREDENTIALS_INVALID');
+    }
     if (
         !['http:', 'https:'].includes(url.protocol) ||
         url.username ||
@@ -12,17 +18,21 @@ function normalizeEndpoint(value: string) {
         url.hash ||
         url.pathname !== '/'
     )
-        throw new Error('Invalid reranking destination.');
+        throw rerankError('CREDENTIALS_INVALID');
     return url.origin;
 }
 function endpoints(provider: RerankingProvider) {
     return createEndpointAllowlist({
         defaultVariable: `VECTORIX_DEFAULT_${provider}_ENDPOINT`,
         allowedVariable: 'VECTORIX_RERANKING_ALLOWED_ENDPOINTS',
-        normalize: normalizeEndpoint,
+        normalize: normalizeRerankingEndpoint,
     });
 }
-const policies = { COHERE: endpoints('COHERE'), VOYAGE: endpoints('VOYAGE') };
+const policies = {
+    COHERE: endpoints('COHERE'),
+    VOYAGE: endpoints('VOYAGE'),
+    TEI: endpoints('TEI'),
+};
 
 /** Exact fixed-provider operator allowlists are re-read before external dispatch. */
 export function assertRerankingEndpoint(

@@ -4,7 +4,7 @@ import { createServer, type ServerResponse } from 'node:http';
 import type {
     RerankingConfiguration,
     RerankingInput,
-    RerankingProvider,
+    HostedRerankingProvider,
 } from '../src/index';
 import { RerankingError } from '../src/index';
 
@@ -27,7 +27,11 @@ export type Respond = (
     request: RecordedRequest
 ) => void;
 
-export function success(provider: RerankingProvider, model: string, count = 3) {
+export function success(
+    provider: HostedRerankingProvider,
+    model: string,
+    count = 3
+) {
     const results = Array.from({ length: count }, (_, index) => ({
         index,
         ['relevance_score']: index === 1 ? 0.8 : 0.5,
@@ -39,7 +43,7 @@ export function success(provider: RerankingProvider, model: string, count = 3) {
 
 /** Each test owns its server and all sockets; no external provider or environment is used. */
 export async function fixture(
-    provider: RerankingProvider,
+    provider: HostedRerankingProvider,
     run: (
         configuration: RerankingConfiguration,
         requests: RecordedRequest[]
