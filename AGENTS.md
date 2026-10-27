@@ -39,6 +39,7 @@ Vectorix is a multi-tenant application foundation. Preserve its reusable authent
 - Share S3/embedding allowlist parsing through the dependency-free storage helper while preserving their distinct URL normalizers. Cache only the latest configuration of each fixed policy, skip malformed entries independently, and limit operator diagnostics to variable names and entry indexes.
 - Reuse `@routers/rag/access` for collection and library authorization. Check current membership, organization permissions, member/group grants, and API-key issuer/scopes before accessing content. Global catalog administration does not implicitly grant collection reading. Keep audit writes and catalog mutations in the same transaction.
 - Recheck current preview management capabilities after hydration before returning staged generations. Retained read permission does not preserve a revoked management grant or authorize an unpublished candidate.
+- Keep external retrieval on the shared search and exact-source lease services. Context expansion is limited to canonical CHILD neighbors in the same immutable publication; each derived citation preserves the original receipt deadline and never grants access independently of current authorization.
 
 ## Database and schemas
 

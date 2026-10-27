@@ -15,9 +15,7 @@ type RerankAccess = Readonly<{
     available: boolean;
     profile: RerankProfile | undefined;
 }>;
-type SearchInput = Parameters<
-    VectorixApiV1Client['admin']['rag']['indexing']['search']
->[0];
+type SearchInput = Parameters<VectorixApiV1Client['retrieval']['search']>[0];
 
 function searchInput(
     data: FormData,
@@ -50,7 +48,7 @@ async function dispatchSearch(
     if (!data.has('rerank'))
         return {
             kind: 'ordinary',
-            value: await client.admin.rag.indexing.search(input),
+            value: await client.retrieval.search(input),
         };
     if (!rerank.available || !rerank.profile)
         throw new Error('Reranking is unavailable.');
@@ -108,7 +106,7 @@ export function useSearchExecution({
             !collectionId ||
             !ready ||
             action.busy ||
-            !canOperation('admin.rag.indexing.search')
+            !canOperation('retrieval.search')
         )
             return;
         const data = new FormData(event.currentTarget);

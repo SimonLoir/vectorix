@@ -274,3 +274,9 @@ void test('optional reranked search receives the same provider-request admission
             false
         );
 });
+
+void test('retrieval search shares provider admission while citation and context remain application reads', () => {
+    assert(PROVIDER_OPERATIONS.has('retrieval.search'));
+    assert.equal(PROVIDER_OPERATIONS.has('retrieval.citation'), false);
+    assert.equal(PROVIDER_OPERATIONS.has('retrieval.context'), false);
+});

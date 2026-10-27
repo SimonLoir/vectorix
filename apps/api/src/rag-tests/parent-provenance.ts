@@ -9,11 +9,12 @@ import { fixture as f } from './fixtures';
 import { createParentFixture, scanParent } from './parent-fixtures';
 
 /** A tiny deterministic stored-ZIP fixture supplies real OOXML without adding a runtime ZIP dependency. */
-function paragraphDocument() {
-    const paragraphs = Array.from(
+export function paragraphDocument(
+    paragraphs: readonly string[] = Array.from(
         { length: 70 },
         (_, index) => `Forêt forest source ${index}.`
-    );
+    )
+) {
     const entries = [
         [
             '[Content_Types].xml',

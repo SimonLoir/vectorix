@@ -2,7 +2,7 @@ import { implement } from '@orpc/server';
 import { v1Contract } from '@repo/api-contracts/v1';
 import type { ApiContext } from '@routers/utils/base';
 import { authorized } from '@routers/utils/authorized';
-import { ragRouter } from '@routers/rag';
+import { ragRouter, retrievalRouter } from '@routers/rag';
 import { organizationRouter } from '@routers/organizations';
 import { adminMembersRouter } from '@routers/members';
 import { notificationsRouter } from '@routers/notifications';
@@ -17,6 +17,7 @@ export const router = implement(v1Contract)
     .$context<ApiContext>()
     .router({
         ...systemV1Router,
+        retrieval: retrievalRouter,
         superadmin: superAdminRouter,
         admin: authorized.prefix('/admin').router({
             rag: ragRouter,

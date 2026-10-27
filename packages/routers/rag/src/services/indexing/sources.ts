@@ -1,101 +1,12 @@
 import type { AuthorizedContext } from '@routers/utils/authorized';
-import type { Prisma } from '@repo/db';
 import { readObject, StorageError } from '@repo/storage';
 import { decodeStoredExtraction } from '@repo/documents';
 import { MAX_DOCUMENT_BYTES } from '@repo/api-contracts/v1/rag/documents';
-import { runSerializableTransaction } from '@routers/utils/transactions';
 import { boundStorage, contentHash } from '../documents/storage';
-import { requireIndexRead } from './access';
-import { verifySourceReceipt, type SourceReceipt } from './receipts';
-import { renewSourceHold } from './source-holds';
 import { indexError, safeIndexError } from './errors';
 import { SOURCE_IO_ALLOWANCE_MS } from './source-retention';
-
-async function exactSource(
-    context: AuthorizedContext,
-    receipt: SourceReceipt,
-    db: Prisma.TransactionClient = context.db
-) {
-    await requireIndexRead(context, receipt.collectionId, db);
-    const publication = await db.indexedDocument.findFirst({
-        where: {
-            id: receipt.publicationId,
-            organizationId: receipt.organizationId,
-            collectionId: receipt.collectionId,
-            generationId: receipt.generationId,
-            sourceVersionId: receipt.versionId,
-            extractionId: receipt.extractionId,
-            status: { in: ['PUBLISHED', 'RETIRED'] },
-            generation: { status: { in: ['ACTIVE', 'RETIRED'] } },
-            sourceVersion: {
-                discardedAt: null,
-                contentState: 'AVAILABLE',
-                document: {
-                    deletedAt: null,
-                    collections: {
-                        some: {
-                            organizationId: receipt.organizationId,
-                            collectionId: receipt.collectionId,
-                        },
-                    },
-                },
-            },
-            extraction: { discardedAt: null },
-            sourceHold: {
-                OR: [
-                    { state: 'LIVE' },
-                    { state: 'RETIRED', retainUntil: { gt: new Date() } },
-                ],
-            },
-            chunks: {
-                some: {
-                    id: receipt.chunkId,
-                    kind: 'CHILD',
-                    organizationId: receipt.organizationId,
-                },
-            },
-        },
-        include: {
-            sourceVersion: true,
-            extraction: true,
-            chunks: {
-                where: { id: receipt.chunkId, kind: 'CHILD' },
-                take: 1,
-                select: { sourceSpans: true },
-            },
-        },
-    });
-    if (!publication) throw indexError('SOURCE_UNAVAILABLE');
-    return publication;
-}
-
-async function beginSource(
-    context: AuthorizedContext,
-    input: { collectionId: string; receipt: string }
-) {
-    const { actor } = await requireIndexRead(context, input.collectionId);
-    const receipt = verifySourceReceipt(
-        input.receipt,
-        actor.organizationId,
-        input.collectionId
-    );
-    const publication = await runSerializableTransaction(
-        context.db,
-        async (db) => {
-            const result = await exactSource(context, receipt, db);
-            if (
-                !(await renewSourceHold(db, {
-                    organizationId: actor.organizationId,
-                    indexedDocumentId: result.id,
-                    retainUntil: new Date(Date.now() + SOURCE_IO_ALLOWANCE_MS),
-                }))
-            )
-                throw indexError('SOURCE_UNAVAILABLE');
-            return result;
-        }
-    );
-    return { receipt, publication, startedAt: Date.now() };
-}
+import { beginSourceLease, completeSourceLease } from './source-lease';
+import { readSourceChunks } from './source-projection';
 
 /** Serve the immutable indexed version, even while the library publishes a replacement; recheck grants after private I/O. */
 export async function previewIndexedSource(
@@ -108,10 +19,8 @@ export async function previewIndexedSource(
     }
 ) {
     try {
-        const { receipt, publication, startedAt } = await beginSource(
-            context,
-            input
-        );
+        const lease = await beginSourceLease(context, input);
+        const { receipt, publication, startedAt } = lease;
         const bytes = await readObject(
             await boundStorage(
                 context.db,
@@ -125,7 +34,12 @@ export async function previewIndexedSource(
             bytes,
             publication.extractorVersion
         );
-        const spans = publication.chunks[0]?.sourceSpans;
+        const projected = await readSourceChunks(context.db, lease, {
+            before: 0,
+            after: 0,
+            includeText: false,
+        });
+        const spans = projected[0]?.sourceSpans;
         const first = Array.isArray(spans) ? spans[0] : null;
         const firstSource =
             typeof first === 'object' && first !== null && 'source' in first
@@ -152,12 +66,7 @@ export async function previewIndexedSource(
             end--;
         if (Date.now() - startedAt > SOURCE_IO_ALLOWANCE_MS)
             throw indexError('SOURCE_UNAVAILABLE');
-        verifySourceReceipt(
-            input.receipt,
-            receipt.organizationId,
-            receipt.collectionId
-        );
-        await exactSource(context, receipt);
+        await completeSourceLease(context, lease);
         return {
             documentName: publication.fileName,
             version: publication.sourceVersion.version,
@@ -188,10 +97,8 @@ export async function downloadIndexedOriginal(
     }
 ) {
     try {
-        const { receipt, publication, startedAt } = await beginSource(
-            context,
-            input
-        );
+        const lease = await beginSourceLease(context, input);
+        const { receipt, publication, startedAt } = lease;
         const version = publication.sourceVersion;
         const bytes = await readObject(
             await boundStorage(
@@ -207,12 +114,7 @@ export async function downloadIndexedOriginal(
             Date.now() - startedAt > SOURCE_IO_ALLOWANCE_MS
         )
             throw indexError('SOURCE_UNAVAILABLE');
-        verifySourceReceipt(
-            input.receipt,
-            receipt.organizationId,
-            receipt.collectionId
-        );
-        await exactSource(context, receipt);
+        await completeSourceLease(context, lease);
         return new File([new Uint8Array(bytes)], publication.fileName, {
             type: 'application/octet-stream',
         });

@@ -52,6 +52,25 @@ export function issueSourceReceipt(
     };
 }
 
+/**
+ * Derive provenance for an already-authorized same-publication CHILD. Call only
+ * after hydration and final source guards; all bindings and both original dates
+ * remain unchanged, so following neighbors cannot perpetually renew a citation.
+ */
+export function deriveSourceReceipt(source: SourceReceipt, chunkId: string) {
+    const payload = receiptPayload.parse({ ...source, chunkId });
+    if (payload.expiresAt <= Date.now() || payload.issuedAt > Date.now())
+        throw indexError('SOURCE_UNAVAILABLE');
+    const body = Buffer.from(JSON.stringify(payload)).toString('base64url');
+    const signature = createHmac('sha256', key())
+        .update(body)
+        .digest('base64url');
+    return {
+        receipt: `${body}.${signature}`,
+        expiresAt: new Date(payload.expiresAt),
+    };
+}
+
 /** Constant-time MAC verification precedes parsing; malformed, expired and cross-collection receipts fail identically. */
 export function verifySourceReceipt(
     receipt: string,

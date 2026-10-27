@@ -1621,6 +1621,33 @@
                 "provider": "Score de pertinence du fournisseur",
                 "runtime": "Score de classement du runtime"
             }
+        },
+        "retrieval": {
+            "dialogTitle": "Passage, contexte et source",
+            "tabsLabel": "Inspection du passage",
+            "contextTab": "Contexte",
+            "sourceTab": "Source",
+            "openContext": "Contexte autour du passage",
+            "contextHint": "Consultez les passages indexés voisins de la même version du document. Ils fournissent du contexte, sans être des résultats classés supplémentaires, et leurs textes peuvent se chevaucher.",
+            "before": "Passages précédents",
+            "after": "Passages suivants",
+            "countOption": "{count, plural, =0 {Aucun} one {# passage} other {# passages}}",
+            "receiptHint": "Si la citation a expiré ou si le document a changé, relancez une recherche pour obtenir une citation actuelle.",
+            "contextSummary": "{count, plural, one {# passage indexé} other {# passages indexés}} · version du document {version, number}",
+            "contextList": "Passages voisins dans leur ordre",
+            "relations": {
+                "BEFORE": "Passage précédent",
+                "MATCH": "Passage trouvé",
+                "AFTER": "Passage suivant"
+            },
+            "passageNumber": "Passage {number, number}",
+            "selectedCitation": "Citation sélectionnée",
+            "inspectCitation": "Inspecter la citation",
+            "citationTitle": "Citation exacte",
+            "expiresAt": "La citation expire le {date}. Les droits sont revérifiés à chaque requête.",
+            "identifiers": "Identifiants de la citation",
+            "generation": "Génération de l’index",
+            "chunk": "Identifiant du passage"
         }
     },
     "dashboard": {

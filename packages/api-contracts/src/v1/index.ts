@@ -9,8 +9,13 @@ import { adminOrganizationsV1Contract } from './organizations/admin';
 import { adminMembersV1Contract } from './members/admin';
 import { adminNotificationsV1Contract } from './notifications';
 import { ragContract } from './rag';
+import { retrievalContract } from './retrieval';
 export const v1Contract = {
     ...systemV1Contract,
+    retrieval: oc
+        .prefix('/retrieval')
+        .tag('Retrieval')
+        .router(retrievalContract),
     superadmin: oc
         .prefix('/superadmin')
         .tag('Administration')

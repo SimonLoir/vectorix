@@ -165,3 +165,5 @@ export const ragRouter = authorized
         quota: getQuota,
         audit: listAudit,
     });
+
+export { retrievalRouter } from './retrieval';
