@@ -1,5 +1,5 @@
 import { CatalogPage } from '@/components/rag/catalog-page';
-import { CredentialsManager } from '@/components/rag/credentials/credentials-manager';
+import { IntegrationsTabs } from '@/components/rag/credentials/integrations-tabs';
 export default function IntegrationsPage() {
     return (
         <CatalogPage
@@ -7,7 +7,7 @@ export default function IntegrationsPage() {
             descriptionKey='credentials.description'
             operation='admin.rag.credentials.list'
         >
-            <CredentialsManager />
+            <IntegrationsTabs />
         </CatalogPage>
     );
 }

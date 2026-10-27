@@ -1,9 +1,6 @@
 import { z } from 'zod';
-import {
-    RerankingError,
-    type RerankingProvider,
-    type RerankingResult,
-} from './types';
+import { RerankingError, type RerankingResult } from './types';
+import type { HostedRerankingProvider } from './models';
 
 const tokens = z.number().int().nonnegative().max(Number.MAX_SAFE_INTEGER);
 const billedUnits = z.number().nonnegative().max(Number.MAX_SAFE_INTEGER);
@@ -34,7 +31,7 @@ const voyageResponse = z.object({
 
 /** Full cardinality is mandatory; a partial or malformed answer never becomes a ranking. */
 export function parseRerankingResponse(
-    provider: RerankingProvider,
+    provider: HostedRerankingProvider,
     model: string,
     count: number,
     response: unknown

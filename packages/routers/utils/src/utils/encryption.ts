@@ -109,6 +109,14 @@ export function credentialSecretContext(
     return `vectorix:credential:${organizationId}:${credentialId}:${field}`;
 }
 
+/** Binds a self-hosted reranking secret to its organization and endpoint row, separate from legacy credentials. */
+export function rerankEndpointSecretContext(
+    organizationId: string,
+    endpointId: string
+): string {
+    return `vectorix:rerank-endpoint:${organizationId}:${endpointId}:apiKey`;
+}
+
 /** Binds an encrypted push subscription to its organization and endpoint hash. */
 export function pushSubscriptionContext(
     organizationId: string,

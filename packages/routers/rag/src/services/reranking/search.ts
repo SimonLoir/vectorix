@@ -3,6 +3,7 @@ import {
     rerank,
     RERANKING_LIMITS,
     validateRerankingInput,
+    rerankingScoreKind,
     type RerankingResult,
 } from '@repo/reranking';
 import { searchCollectionWithReranking } from '../indexing/search';
@@ -20,6 +21,8 @@ import {
 } from './accounting';
 import { resolveRerankConfiguration } from './configuration';
 import { safeRerankError } from './errors';
+import { rerankingContract } from '@repo/api-contracts/v1/rag/reranking';
+import { extendedRerankSearchOutput } from '@repo/api-contracts/v1/rag/reranking-extended';
 
 type RerankedSearchInput = SearchInput & {
     requestId: string;
@@ -42,9 +45,10 @@ function failureCode(error: ReturnType<typeof safeRerankError>) {
  * second retrieval. Validated usage settles before any post-I/O authority denial;
  * a settlement failure must never be relabeled as an unvalidated native failure.
  */
-export async function searchWithReranking(
+async function searchWithRerankingInternal(
     context: AuthorizedContext,
-    input: RerankedSearchInput
+    input: RerankedSearchInput,
+    extended: boolean
 ) {
     const startedAt = Date.now();
     // Public search caps count characters; native reranking caps UTF-8 bytes.
@@ -60,6 +64,7 @@ export async function searchWithReranking(
             collectionId: input.collectionId,
             requestId: input.requestId,
             expectedRerankRevision: input.expectedRerankRevision,
+            hostedOnly: !extended,
         });
     } catch (error) {
         throw safeRerankError(error);
@@ -124,11 +129,6 @@ async function searchClaimed(
                     );
                     await assertCurrent();
                     await context.admitProviderRequest?.();
-                    await admitRerankDispatch(context, captured, statistics);
-                    dispatched = true;
-                    // The durable intent precedes I/O. Recheck the exact child
-                    // publications after admission, immediately before sending.
-                    await assertCurrent();
                     await recheckRerankAuthority(context, captured);
                     const remaining = remainingMs();
                     nativeResult = await rerank(configuration, payload, {
@@ -137,6 +137,35 @@ async function searchClaimed(
                             RERANKING_LIMITS.timeoutMs,
                             remaining
                         ),
+                        beforeInference: async () => {
+                            // TEI metadata may have awaited external I/O. Recheck
+                            // content, grants and the live endpoint policy again
+                            // before admitting or transmitting candidate texts.
+                            await assertCurrent();
+                            await recheckRerankAuthority(context, captured);
+                            const current = await resolveRerankConfiguration(
+                                context,
+                                captured
+                            );
+                            if (
+                                current.provider !== configuration.provider ||
+                                current.endpoint !== configuration.endpoint ||
+                                current.apiKey !== configuration.apiKey
+                            )
+                                throw indexError(
+                                    'CREDENTIALS_INVALID',
+                                    'CONFLICT'
+                                );
+                            await admitRerankDispatch(
+                                context,
+                                captured,
+                                statistics
+                            );
+                            dispatched = true;
+                            await assertCurrent();
+                            await recheckRerankAuthority(context, captured);
+                            remainingSearchMs(startedAt);
+                        },
                     });
                     await settleRerankValidated(
                         context.db,
@@ -177,6 +206,7 @@ async function searchClaimed(
                 revision: captured.profile.revision,
                 provider: captured.profile.provider,
                 model: captured.profile.model,
+                scoreKind: rerankingScoreKind(captured.profile.provider),
                 candidateLimit: captured.profile.candidatePool,
                 candidateCount: execution.candidateCount,
                 rerankedCount: execution.rerankedCount,
@@ -196,4 +226,24 @@ async function searchClaimed(
     } catch (error) {
         throw safeRerankError(error);
     }
+}
+
+/** Frozen hosted-only output mapping preserves revision-22 validators and refuses TEI before the cost claim. */
+export async function searchWithReranking(
+    context: AuthorizedContext,
+    input: RerankedSearchInput
+) {
+    return rerankingContract.search['~orpc'].outputSchema!.parse(
+        await searchWithRerankingInternal(context, input, false)
+    );
+}
+
+/** Extended clients receive explicit engine and score-kind metadata from the same authorized pipeline. */
+export async function searchWithExtendedReranking(
+    context: AuthorizedContext,
+    input: RerankedSearchInput
+) {
+    return extendedRerankSearchOutput.parse(
+        await searchWithRerankingInternal(context, input, true)
+    );
 }

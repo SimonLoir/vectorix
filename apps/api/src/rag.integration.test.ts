@@ -1,4 +1,5 @@
 import { rerankingSearchTests } from './rag-tests/reranking-search';
+import { teiRerankingTests } from './rag-tests/tei-reranking';
 import { after, test } from 'node:test';
 import { setup, cleanup } from './rag-tests/fixtures';
 import { credentialTests } from './rag-tests/credentials';
@@ -108,5 +109,6 @@ void test('RAG catalog with real PostgreSQL and HTTP transports', async (t) => {
     await telemetryRuntimeTests(t);
     await telemetryLimitTests(t);
     await rerankingSearchTests(t);
+    await teiRerankingTests(t);
     await apiRateLimitTests(t);
 });

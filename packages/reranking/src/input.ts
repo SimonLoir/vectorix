@@ -1,4 +1,4 @@
-import { RERANKING_LIMITS, listRerankingModels } from './models';
+import { RERANKING_LIMITS, supportsRerankingModel } from './models';
 import {
     RerankingError,
     type RerankingInput,
@@ -11,12 +11,9 @@ export function prepareRerankingInput(
     provider: RerankingProvider,
     input: RerankingInput
 ) {
-    if (provider !== 'COHERE' && provider !== 'VOYAGE')
+    if (provider !== 'COHERE' && provider !== 'VOYAGE' && provider !== 'TEI')
         throw new RerankingError('INVALID_CONFIGURATION');
-    if (
-        !input ||
-        !listRerankingModels(provider).some((model) => model.id === input.model)
-    )
+    if (!input || !supportsRerankingModel(provider, input.model))
         throw new RerankingError('MODEL_UNSUPPORTED');
     if (
         typeof input.query !== 'string' ||
@@ -58,14 +55,22 @@ export function prepareRerankingInput(
                   ['top_n']: documents.length,
                   ['max_tokens_per_doc']: 24_000,
               }
-            : {
-                  model,
-                  query: input.query,
-                  documents,
-                  ['top_k']: documents.length,
-                  ['return_documents']: false,
-                  truncation: false,
-              };
+            : provider === 'VOYAGE'
+              ? {
+                    model,
+                    query: input.query,
+                    documents,
+                    ['top_k']: documents.length,
+                    ['return_documents']: false,
+                    truncation: false,
+                }
+              : {
+                    query: input.query,
+                    texts: documents,
+                    truncate: false,
+                    ['raw_scores']: false,
+                    ['return_text']: false,
+                };
     const encoded = JSON.stringify(body);
     const serializedRequestBytes = encoder.encode(encoded).byteLength;
     if (serializedRequestBytes > RERANKING_LIMITS.requestBytes)

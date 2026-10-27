@@ -9,9 +9,10 @@ export function useRerankProfile(collectionId: string) {
     const { orpc } = useORPC();
     const { canOperation } = useVectorixPermissions();
     const allowed =
-        Boolean(collectionId) && canOperation('admin.rag.reranking.profile');
+        Boolean(collectionId) &&
+        canOperation('admin.rag.reranking.extended.profile');
     const query = useQuery({
-        ...orpc.admin.rag.reranking.profile.queryOptions({
+        ...orpc.admin.rag.reranking.extended.profile.queryOptions({
             input: { collectionId },
         }),
         enabled: allowed,
@@ -25,7 +26,7 @@ export function useRerankProfile(collectionId: string) {
         profile?.enabled &&
         profile.configuration &&
         profile.canUse &&
-        canOperation('admin.rag.reranking.search')
+        canOperation('admin.rag.reranking.extended.search')
     );
     const key = [profile?.revision ?? 'none', available, query.isError].join(
         ':'

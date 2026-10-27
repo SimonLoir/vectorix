@@ -1547,3 +1547,14 @@ The successful run completes fresh/upgrade/repeated migrations, schema parity an
 - [x] Complete owned browser-run cleanup: four processes terminated, five containers and four fresh volumes removed, cached Ollama unchanged, helper gates restored and private captures retained. Close the owned tab and reset the viewport. See [the actual validation and its limits](rag-reranking.md#actual-validation).
 - [x] Pass the final production web build after the provider-neutral wording corrections. The browser remains attributed to `ab289`; no wording-only browser rerun is claimed.
 - [x] Complete independent final source/evidence review with no actionable finding and publish [PR #103](https://github.com/SimonLoir/vectorix/pull/103). Exact-head catalog and six-image CI are pending at publication; their results and any authorized merge are recorded in the PR. Real hosted quality/billing stays unverified and reranking off by default.
+
+## Open-source reranking through native TEI
+
+- [x] Inspect native TEI and Xinference primary sources and choose TEI as the first extensible runtime; preserve revision-22 public DTOs.
+- [x] Prepare [the architecture and schema proposal](rag-open-source-reranking.md), additive extended/endpoint contracts and relevant Prisma files on `codex/open-source-reranking`.
+- [x] Complete independent schema/SQL review, manually generate the two-part additive migration and validate/generate Prisma with an unreachable synthetic URL; no application database is opened.
+- [x] Implement endpoint management, immutable runtime binding and collection/home/playground journeys with EN/FR/nl-BE UI; actual browser acceptance remains pending.
+- [x] Pass frozen dependency installation, Prisma validation/generation, all 26 type-check tasks, all 26 lint tasks (existing warnings), unit tests and all four production builds. Rebuild web after the final lint-only conditional cleanup; preserve both Next declarations. Parse nine Mermaid diagrams and check 292 local links across ten documents.
+- [x] Pass 111 new TEI constraints on each fresh/upgraded disposable database, repeat deployments, schema parity and populated restore checks; full API catalog remains in progress.
+- [ ] Validate native protocols, isolation, permissions, concurrent mutations, usage, metadata drift and old/new public contracts on disposable stores.
+- [ ] Record actual browser and real model evidence, builds, exact-head CI and PR delivery without overstating protocol fixtures as quality measurements.

@@ -11,6 +11,10 @@ type EndpointAllowlistVariables =
           allowedVariable: 'VECTORIX_S3_ALLOWED_ENDPOINTS';
       }
     | {
+          defaultVariable: 'VECTORIX_DEFAULT_TEI_ENDPOINT';
+          allowedVariable: 'VECTORIX_RERANKING_ALLOWED_ENDPOINTS';
+      }
+    | {
           defaultVariable: EmbeddingDefaultVariable;
           allowedVariable:
               | 'VECTORIX_EMBEDDING_ALLOWED_ENDPOINTS'

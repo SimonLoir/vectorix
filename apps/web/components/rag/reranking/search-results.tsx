@@ -54,6 +54,15 @@ export function RerankedSearchResults({
                         {tr('underfilled')}
                     </p>
                 )}
+                <p className='text-sm font-medium'>
+                    {tr(
+                        run.scoreKind === 'normalized_cross_encoder'
+                            ? 'scoreKinds.normalized'
+                            : run.scoreKind === 'provider_relevance'
+                              ? 'scoreKinds.provider'
+                              : 'scoreKinds.runtime'
+                    )}
+                </p>
                 <p className='text-xs text-muted-foreground'>
                     {tr('scoreHint')}
                 </p>

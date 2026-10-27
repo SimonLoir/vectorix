@@ -14,7 +14,7 @@ export function indexTelemetryTags(
         chunkingStrategy: ChunkingStrategy;
     }
 ): TelemetryTags | null {
-    if (profile.provider === 'S3') return null;
+    if (profile.provider === 'S3' || profile.provider === 'TEI') return null;
     return {
         organizationId,
         provider: profile.provider,

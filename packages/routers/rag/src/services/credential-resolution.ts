@@ -1,6 +1,7 @@
 import { ORPCError } from '@orpc/server';
 import type { Prisma } from '@repo/db';
 import { credentialData } from '@repo/api-contracts/v1/rag/credentials';
+import { embeddingProvider } from '@repo/api-contracts/v1/rag/common';
 import { credentialInclude, decryptCredential } from './credential-data';
 
 type Provider = typeof credentialData._output.provider;
@@ -85,6 +86,11 @@ export async function resolveCollectionCredential(
         },
     });
     if (!configuration) throw new ORPCError('NOT_FOUND');
+    const supported = embeddingProvider.safeParse(configuration.provider);
+    if (!supported.success)
+        throw new ORPCError('CONFLICT', {
+            message: 'The saved embedding provider is unsupported.',
+        });
     let resolved;
     if (configuration.credentialId) {
         const credential = await db.credentials.findFirst({
@@ -106,7 +112,7 @@ export async function resolveCollectionCredential(
             data: decryptCredential(credential),
         };
     } else {
-        resolved = platformCredential(configuration.provider);
+        resolved = platformCredential(supported.data);
     }
     if (resolved.data.endpoint !== configuration.endpoint)
         throw new ORPCError('CONFLICT', {

@@ -34,3 +34,5 @@ commands against application data. No acceptance result is claimed until that
 catalog run completes.
 
 For a focused repair pass, `VECTORIX_CATALOG_TEST_SUITE=reranking pnpm test:catalog` retains the same owned infrastructure, migration, restore, constraint and accounting checks but substitutes the dedicated HTTP journey for the full existing API matrix. It is not a full catalog acceptance result. CI and ordinary `pnpm test:catalog` keep the complete matrix.
+
+`tei-schema-check.sql` adds 111 transaction-local constraint probes for native TEI profiles and separate endpoint credentials. The full and focused HTTP entries both run `apps/api/src/rag-tests/tei-reranking.ts`: 15 subtests cover endpoint CRUD/encryption/key rotation, organization and session boundaries, current scopes, metadata/permit drift, revocation during metadata I/O, immutable bindings, usage and legacy contract refusal. Its controlled scores prove protocol and accounting behavior, not actual model quality.

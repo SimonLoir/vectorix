@@ -141,7 +141,7 @@ async function executeSearch(
             input.strategy === 'LEXICAL'
                 ? 'NONE'
                 : generation.configuration.provider;
-        if (provider !== 'S3') {
+        if (provider !== 'S3' && provider !== 'TEI') {
             execution = getRagTelemetry(context.db).start(
                 {
                     organizationId: actor.organizationId,

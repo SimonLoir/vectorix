@@ -5,6 +5,8 @@ import { consumeRateLimit } from '@repo/queues/rate-limit';
 export const PROVIDER_OPERATIONS: ReadonlySet<string> = new Set([
     'admin.rag.indexing.search',
     'admin.rag.reranking.search',
+    'admin.rag.reranking.extended.search',
+    'admin.rag.reranking.extended.configure',
     'admin.rag.indexing.probe',
     'admin.rag.indexing.models',
 ]);

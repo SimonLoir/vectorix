@@ -6,6 +6,7 @@ import { Button } from '@repo/ui/button';
 import { useVectorixPermissions } from '@/contexts/vectorix-permissions';
 import { useRerankProfile } from './use-rerank-profile';
 import { RerankProfileDialog } from './profile-dialog';
+import { RuntimeSnapshot } from './runtime-snapshot';
 
 /** Reranking is configured independently of embeddings and does not require an index rebuild. */
 export function RerankProfilePanel({
@@ -19,7 +20,8 @@ export function RerankProfilePanel({
     const [editing, setEditing] = useState(false);
     if (!allowed) return null;
     const canManage =
-        profile?.canManage && canOperation('admin.rag.reranking.configure');
+        profile?.canManage &&
+        canOperation('admin.rag.reranking.extended.configure');
     return (
         <section className='space-y-4 rounded-xl border bg-card p-5'>
             <div className='flex flex-wrap items-start justify-between gap-3'>
@@ -80,6 +82,11 @@ export function RerankProfilePanel({
                                 `bindings.${profile.configuration.bindingSource}`
                             )}
                         </p>
+                    )}
+                    {profile.configuration?.runtimeSnapshot && (
+                        <RuntimeSnapshot
+                            snapshot={profile.configuration.runtimeSnapshot}
+                        />
                     )}
                     <p className='text-xs text-muted-foreground'>
                         {tr('optInHint')}

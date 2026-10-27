@@ -1,8 +1,8 @@
 # Optional native reranking
 
-Status: implemented and verified with isolated native integration tests and a controlled-provider dashboard journey at product checkpoint `ab289`. Hosted quality and paid-provider access remain unverified. Reranking remains off by default; exact-head CI and delivery are recorded in the pull request.
+Status: the hosted implementation is verified with isolated native integration tests and a controlled-provider dashboard journey at product checkpoint `ab289`. The additive TEI implementation is prepared in the current change; its real-runtime and dashboard validation remain pending. Hosted quality and paid-provider access remain unverified. Reranking remains off by default; exact-head CI and delivery are recorded in the pull request.
 
-A collection has a separate immutable reranking profile. Saving it does not rebuild embeddings. Administrators can select Cohere or Voyage, a reviewed native model and a candidate pool of up to 100 authorized children. A searcher must explicitly enable reranking for each request and hold `ragRerank.use`, collection reading and library reading. Existing API keys receive no new permissions.
+A collection has a separate immutable reranking profile. Saving it does not rebuild embeddings. Administrators can select Cohere or Voyage with a reviewed native model, or TEI with the exact model deployed at an approved self-hosted endpoint. The candidate pool is bounded to 100 authorized children and must also fit the runtime limits; the supplied TEI deployment supports a pool of 32. A searcher must explicitly enable reranking for each request and hold `ragRerank.use`, collection reading and library reading. Existing API keys receive no new permissions.
 
 ```mermaid
 flowchart LR
@@ -16,9 +16,19 @@ flowchart LR
     Check --> Results[Parent deduplication and exact source receipts]
 ```
 
-The new API operation is separate from legacy search. Each accepted submission consumes the reranking and comparison selections, including failed attempts; the next search is ordinary unless explicitly selected again. Comparison uses the same captured candidate pool. Reranking does not send parent context, filenames or metadata to the provider. Scores are provider relevance scores, not confidence estimates. A candidate pool smaller than topK may return fewer results; it never expands silently.
+The new API operation is separate from legacy search. Each accepted submission consumes the reranking and comparison selections, including failed attempts; the next search is ordinary unless explicitly selected again. Comparison uses the same captured candidate pool. Reranking does not send parent context, filenames or metadata to the provider. Scores remain separate from retrieval scores: hosted adapters return provider relevance and TEI returns normalized cross-encoder scores. Neither is a confidence estimate. A candidate pool smaller than topK may return fewer results; it never expands silently.
 
-Organization credentials precede complete platform defaults. An enabled revision saves the credential identity and destination; secret rotation is allowed, destination retargeting is refused. Only exact operator-approved root URLs from `VECTORIX_RERANKING_ALLOWED_ENDPOINTS` or the corresponding `VECTORIX_DEFAULT_COHERE_ENDPOINT` / `VECTORIX_DEFAULT_VOYAGE_ENDPOINT` can receive requests. The embedding and reranking allowlists are distinct.
+Organization credentials precede complete platform defaults. An enabled revision saves the credential identity and destination; secret rotation is allowed, destination retargeting is refused. Only exact operator-approved root URLs from `VECTORIX_RERANKING_ALLOWED_ENDPOINTS` or the corresponding `VECTORIX_DEFAULT_COHERE_ENDPOINT`, `VECTORIX_DEFAULT_VOYAGE_ENDPOINT` or `VECTORIX_DEFAULT_TEI_ENDPOINT` can receive requests. The embedding and reranking allowlists are distinct.
+
+## Additive self-hosted TEI support
+
+Compatible API revision `1.23.0` adds `rag.reranking.extended.{profile,configure,search,usage}` with open engine identifiers and `rag.reranking.endpoints.{list,create,update,activate,remove}`. The revision-22 hosted operations retain their closed DTOs and reject a selected TEI profile before cost work; they do not receive an unknown nested provider. The separate endpoint inventory leaves existing S3/embedding credential contracts unchanged.
+
+Self-hosted endpoint keys are optional, encrypted and masked in responses. Organization endpoints precede a complete platform fallback; invalid or inactive organization configuration fails explicitly. An enabled revision retains its endpoint row and destination, permits secret rotation and prevents retargeting or deleting a referenced destination. See the [pinned optional CPU deployment](rag-tei-deployment.md) for startup, allowlisting and the distinction between host and Compose-network URLs.
+
+Saving an enabled TEI profile explicitly reads `/info` outside the database transaction, then rechecks the session, collection grant, current profile and credential revision before saving the immutable reported snapshot. Saving a disabled draft performs no metadata request. TEI serves one model per endpoint: Vectorix cannot select another deployment model by changing a label. Reported model revisions and runtime snapshots are not verified weight digests.
+
+During an explicit reranked search, the native adapter checks live metadata against the saved snapshot before inference. Its `beforeInference` boundary rechecks current authority, exact child publications, credentials, destination policy and the saved profile before sending candidate text. Metadata and inference share the bounded native deadline. A changed runtime, invalid response, overload or timeout is an explicit failure, with no retry or substitution; ordinary search stays independent.
 
 The request ledger reserves capacity before query embedding and rejects retained request UUID replay. It records no query or document content. Default organization limits are 500 dispatch intents per UTC day, 256 MiB prepared query/document bytes per day, four concurrent requests and 5,000 retained receipts. Dispatch intent is not proof of wire transmission or billing. Failed or ambiguous dispatches retain debit; there is no retry or fallback. Reported token/billing fields remain independently nullable. Validated late usage settles before access denial. A mandatory settlement failure returns an error and leaves an uncertain durable dispatch for operator diagnosis.
 
@@ -33,13 +43,26 @@ Provider and pipeline tests use controlled native HTTP fixtures. They do not est
 - `packages/reranking/src/index.ts`: bounded native protocols, pure input validation and reported usage.
 - `packages/routers/rag/src/services/reranking/`: profile, admission, settlement, search and maintenance.
 - `packages/routers/rag/src/services/indexing/search.ts`: shared retrieval and exact source hydration.
-- `packages/api-contracts/src/v1/rag/reranking.ts`: additive revision-22 operations.
+- `packages/api-contracts/src/v1/rag/reranking.ts`: frozen revision-22 hosted operations.
+- `packages/api-contracts/src/v1/rag/reranking-extended.ts`: additive open-engine and self-hosted endpoint operations.
+- `packages/routers/rag/src/services/reranking/{endpoint-data,endpoints,configuration,profile}.ts`: encrypted endpoint inventory, retained bindings and metadata-save rechecks.
 - `apps/web/components/rag/reranking/`: collection configuration and search opt-in.
 - `packages/db/prisma/models/rag-reranking.prisma`: durable revisions, requests and usage.
 
 ## Acceptance recipe
 
 Prerequisites: an authorized reader with `ragRerank.use`, an active collection, configured Cohere or Voyage credentials and an operator-approved endpoint. Save an enabled profile in collection settings, then explicitly select reranking in the search UI. Enable comparison to inspect the baseline within the same candidate pool. Verify separate relevance scores and reported/unknown usage, exact source preview and original receipts. Disable the toggle and confirm ordinary search remains unchanged. Revoke access or change the profile during a call and confirm the result is denied after usage settlement. The observations below cover the actual controlled-provider journey; the revocation and in-flight authority recipe remains automated coverage rather than a browser claim. Hosted quality remains unmeasured.
+
+### TEI dashboard recipe — pending
+
+Use an isolated test organization, an available embedding service, an approved TEI root URL and the [pinned deployment prerequisites](rag-tei-deployment.md). Keep credentials and native capture files private. No document transfer should use browser automation.
+
+1. Create the collection in the dashboard. Upload a small FR/EN TXT document with native HTTP, attach it from the document library, verify the saved embedding model and build the first active generation. Keep its generation ID for comparison.
+2. In Integrations, open **Reranking endpoints**, create the TEI destination with no key for the local private deployment, then confirm the masked/no-key state and explicit active selection. The existing embedding credential forms remain unchanged.
+3. In the collection's reranking dialog, select TEI, enter the exact deployed model ID and a pool within its reported client/concurrency limits. Enable and save; check the explicit metadata-read action and reported identity/limits. Confirm the embedding revision and generation did not change.
+4. Run ordinary search first. Then explicitly select reranking and same-pool comparison in the collection playground and dashboard home. Check separate normalized scores, bounded baseline/reranked results, exact-version source preview and retained parent context. Unknown billing must remain unknown. Use native HTTP for the original source and compare its hash with the upload.
+5. Submit another search without selecting reranking again. Confirm both request-local flags reset after success or failure and that ordinary search still uses the same generation. Disable the profile and confirm ordinary search remains usable. Inspect the configuration audit events.
+6. Verify English, French and Belgian Dutch, keyboard access, a narrow mobile viewport, error recovery and normal logout. Record actual runtime/model metadata and measurements separately from automated authorization, revocation and compatibility cases; a smoke test does not establish quality or capacity gains.
 
 ## Actual validation
 
@@ -59,3 +82,7 @@ The first controlled Voyage responses omitted mandatory `object`/`model` fields 
 Creation of an additional manually scoped test API key was refused by automatic approval review before a key was created. That manual check is **NOT_RUN**; corresponding automated scoped-key tests passed. No browser permission-revocation, cross-organization, console-cleanliness, hosted quality or actual billing claim is made.
 
 Cleanup reached `CLEANED`: four application/fixture processes terminated, five owned containers and four fresh volumes were removed, the existing Ollama cache was unchanged, helper gates were restored and private captures were retained. The owned browser tab was closed and the viewport reset.
+
+### TEI extension validation — pending
+
+The historical hosted results above do not validate TEI. Real image/model startup, enabled-profile metadata saving, TEI dashboard inference/comparison and exact-source verification are pending for this extension. Record their outcomes here and in the build log after the owned acceptance run. The [deployment guide](rag-tei-deployment.md#planned-acceptance-and-actual-validation) distinguishes configuration checks, real inference and unmeasured quality/capacity.

@@ -2,33 +2,43 @@ import { Buffer } from 'node:buffer';
 import { RERANKING_LIMITS } from './models';
 import {
     RerankingError,
-    type RerankingConfiguration,
+    type RerankingConnection,
     type RerankingOptions,
 } from './types';
 
 /** Operator destination allowlisting belongs to the caller, as for hosted embeddings. */
-export function configurationUrl(configuration: RerankingConfiguration): URL {
+export function configurationUrl(configuration: RerankingConnection): URL {
     try {
         const url = new URL(configuration.endpoint);
+        const apiKey = configuration.apiKey;
+        const absentKey = apiKey === null || apiKey === undefined;
+        const validKey =
+            typeof apiKey === 'string' &&
+            apiKey.trim().length > 0 &&
+            apiKey.length <= 8192 &&
+            [...apiKey].every(
+                (character) => character >= ' ' && character !== '\u007F'
+            );
         if (
             (configuration.provider !== 'COHERE' &&
-                configuration.provider !== 'VOYAGE') ||
+                configuration.provider !== 'VOYAGE' &&
+                configuration.provider !== 'TEI') ||
             (url.protocol !== 'http:' && url.protocol !== 'https:') ||
             url.username ||
             url.password ||
             url.search ||
             url.hash ||
             url.pathname !== '/' ||
-            typeof configuration.apiKey !== 'string' ||
-            !configuration.apiKey.trim() ||
-            configuration.apiKey.length > 8192 ||
-            [...configuration.apiKey].some(
-                (character) => character < ' ' || character === '\u007F'
-            )
+            (configuration.provider !== 'TEI' && absentKey) ||
+            (!absentKey && !validKey)
         )
             throw new RerankingError('INVALID_CONFIGURATION');
         return new URL(
-            configuration.provider === 'COHERE' ? 'v2/rerank' : 'v1/rerank',
+            configuration.provider === 'COHERE'
+                ? 'v2/rerank'
+                : configuration.provider === 'VOYAGE'
+                  ? 'v1/rerank'
+                  : 'rerank',
             url
         );
     } catch {
@@ -116,22 +126,29 @@ async function boundedJson(response: Response): Promise<unknown> {
     }
 }
 
-/** Dispatches exactly one POST; redirects, HTTP errors and response bodies never escape. */
+/** Dispatches exactly one bounded GET or POST; redirects, HTTP errors and response bodies never escape. */
 export async function requestJson(
     url: URL,
-    apiKey: string,
-    encoded: string,
+    apiKey: string | null | undefined,
+    encoded: string | undefined,
     signal: AbortSignal
-): Promise<unknown> {
-    if (Buffer.byteLength(encoded, 'utf8') > RERANKING_LIMITS.requestBytes)
+): Promise<{ data: unknown; headers: Headers }> {
+    if (
+        encoded !== undefined &&
+        Buffer.byteLength(encoded, 'utf8') > RERANKING_LIMITS.requestBytes
+    )
         throw new RerankingError('INPUT_TOO_LARGE');
     try {
         signal.throwIfAborted();
         const response = await fetch(url, {
-            method: 'POST',
+            method: encoded === undefined ? 'GET' : 'POST',
             headers: {
-                Authorization: `Bearer ${apiKey}`,
-                'Content-Type': 'application/json',
+                ...(apiKey === undefined || apiKey === null
+                    ? {}
+                    : { Authorization: `Bearer ${apiKey}` }),
+                ...(encoded === undefined
+                    ? {}
+                    : { 'Content-Type': 'application/json' }),
             },
             body: encoded,
             signal,
@@ -145,7 +162,7 @@ export async function requestJson(
                     : 'PROVIDER_REJECTED'
             );
         }
-        return await boundedJson(response);
+        return { data: await boundedJson(response), headers: response.headers };
     } catch (error) {
         if (signal.aborted) throw new RerankingError('PROVIDER_TIMEOUT');
         if (error instanceof RerankingError) throw error;

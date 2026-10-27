@@ -56,7 +56,7 @@ async function dispatchSearch(
         throw new Error('Reranking is unavailable.');
     return {
         kind: 'reranked',
-        value: await client.admin.rag.reranking.search({
+        value: await client.admin.rag.reranking.extended.search({
             ...input,
             requestId: crypto.randomUUID(),
             expectedRerankRevision: rerank.profile.revision,
@@ -112,7 +112,7 @@ export function useSearchExecution({
         )
             return;
         const data = new FormData(event.currentTarget);
-        // Consume one explicit paid intent before resetting only the opt-in controls.
+        // Consume one explicit reranking intent before resetting only the opt-in controls.
         setOptionsResetToken((token) => token + 1);
         setResponse(null);
         setSource(null);

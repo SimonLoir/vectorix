@@ -1,3 +1,12 @@
+import { profileExtendedRerankingHandler } from './reranking/extended/profile';
+import { configureExtendedRerankingHandler } from './reranking/extended/configure';
+import { searchExtendedRerankingHandler } from './reranking/extended/search';
+import { usageExtendedRerankingHandler } from './reranking/extended/usage';
+import { listRerankEndpointsHandler } from './reranking/endpoints/list';
+import { createRerankEndpointHandler } from './reranking/endpoints/create';
+import { updateRerankEndpointHandler } from './reranking/endpoints/update';
+import { activateRerankEndpointHandler } from './reranking/endpoints/activate';
+import { removeRerankEndpointHandler } from './reranking/endpoints/remove';
 import { profileRerankingHandler } from './reranking/profile';
 import { configureRerankingHandler } from './reranking/configure';
 import { searchRerankingHandler } from './reranking/search';
@@ -68,6 +77,19 @@ export const ragRouter = authorized
     .tag('RAG catalog')
     .router({
         reranking: {
+            extended: {
+                profile: profileExtendedRerankingHandler,
+                configure: configureExtendedRerankingHandler,
+                search: searchExtendedRerankingHandler,
+                usage: usageExtendedRerankingHandler,
+            },
+            endpoints: {
+                list: listRerankEndpointsHandler,
+                create: createRerankEndpointHandler,
+                update: updateRerankEndpointHandler,
+                activate: activateRerankEndpointHandler,
+                remove: removeRerankEndpointHandler,
+            },
             profile: profileRerankingHandler,
             configure: configureRerankingHandler,
             search: searchRerankingHandler,

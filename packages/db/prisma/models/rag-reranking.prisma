@@ -13,6 +13,9 @@ model CollectionRerankConfig {
   credentialId String?
   credentialRevision Int?
   credential Credentials? @relation(fields: [organizationId, credentialId, provider], references: [organizationId, id, provider], onDelete: NoAction)
+  selfHostedCredentialId String?
+  selfHostedCredential RerankEndpointCredential? @relation(fields: [organizationId, selfHostedCredentialId, provider], references: [organizationId, id, provider], onDelete: NoAction)
+  runtimeSnapshot Json?
   endpoint String?
   createdAt DateTime @default(now())
 
@@ -88,4 +91,25 @@ model OrganizationRerankAccounting {
   organizationId String @id
   organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
   lockRevision BigInt @default(0)
+}
+
+// Separate from legacy Credentials so older public credential contracts remain closed.
+// apiKey is nullable AES-256-GCM ciphertext bound to organization/id/field.
+model RerankEndpointCredential {
+  id String @id @default(uuid())
+  organizationId String
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  provider CredentialProvider
+  name String
+  revision Int @default(1)
+  endpoint String
+  apiKey String?
+  active Boolean @default(false)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  configurations CollectionRerankConfig[]
+
+  @@unique([organizationId, id, provider])
+  @@unique([organizationId, provider, name])
+  @@index([organizationId, createdAt, id])
 }
