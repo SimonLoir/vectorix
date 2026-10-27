@@ -25,7 +25,9 @@ Vectorix does not build or publish it.
 | CPU / memory limits         | 4 CPUs / 8 GiB                                                            |
 | Client batch limit          | 32 candidate pairs                                                        |
 | Live inference permits      | 32 pairs across requests                                                  |
-| Physical inference batch    | 1 pair, at most 8,192 tokens                                              |
+| Physical inference batch    | Up to 4 pairs, at most 8,192 tokens                                       |
+
+The pinned image reports runtime version `1.9.4`; the `cpu-1.9` tag is not a patch-version identity. The CPU backend reports a maximum physical batch of four pairs.
 
 The public [GTE model card](https://huggingface.co/Alibaba-NLP/gte-multilingual-reranker-base)
 declares Apache-2.0, 306 million parameters, multilingual support and an 8,192-token

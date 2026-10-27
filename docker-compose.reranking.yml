@@ -61,7 +61,7 @@ services:
             - --max-concurrent-requests
             - '32'
             - --max-batch-requests
-            - '1'
+            - '4'
             - --max-batch-tokens
             - '8192'
         ports: ['127.0.0.1:${VECTORIX_TEI_PORT:-8081}:8080']
