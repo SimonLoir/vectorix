@@ -66,7 +66,10 @@ ALTER TABLE "CollectionRerankConfig" ADD CONSTRAINT "rerank_config_valid" CHECK 
             )
             OR (
                 "provider" = 'TEI' AND "capabilityVersion" = 'native-tei-v1'
-                AND "model" ~ '^[A-Za-z0-9][A-Za-z0-9._/-]{0,199}$'
+                -- Match native bounded labels, including local paths and version suffixes.
+                -- PostgreSQL text excludes NUL; the remaining exclusions match JS whitespace/C0/DEL.
+                AND length("model") BETWEEN 1 AND 200
+                AND "model" !~ U&'[\0001-\0020\007F\00A0\1680\2000-\200A\2028\2029\202F\205F\3000\FEFF]'
                 AND "credentialId" IS NULL
                 AND (("selfHostedCredentialId" IS NULL AND "credentialRevision" IS NULL)
                   OR ("selfHostedCredentialId" IS NOT NULL AND "credentialRevision" >= 1))

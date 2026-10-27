@@ -68,7 +68,7 @@ SELECT pg_temp.tei_config('{"id":"tei-schema-platform","revision":4,"selfHostedC
 SELECT pg_temp.tei_config('{"id":"tei-schema-disabled","revision":5,"enabled":false,"selfHostedCredentialId":null,"credentialRevision":null,"endpoint":null,"runtimeSnapshot":null,"candidatePool":1}');
 SELECT pg_temp.tei_config(jsonb_build_object('id','tei-schema-null-revision','revision',6,'runtimeSnapshot',"runtimeSnapshot"||'{"modelRevision":null}')) FROM "CollectionRerankConfig" WHERE id='tei-schema-config';
 SELECT pg_temp.tei_config(jsonb_build_object('id','tei-schema-max-pool','revision',7,'candidatePool',100,'runtimeSnapshot',"runtimeSnapshot"||'{"maxClientBatchSize":100000,"maxInputLength":10000000}')) FROM "CollectionRerankConfig" WHERE id='tei-schema-config';
-SELECT pg_temp.tei_config(jsonb_build_object('id','tei-schema-custom-model','revision',8,'model','custom/deployment-v2','runtimeSnapshot',"runtimeSnapshot"||'{"modelId":"custom/deployment-v2"}')) FROM "CollectionRerankConfig" WHERE id='tei-schema-config';
+SELECT pg_temp.tei_config(jsonb_build_object('id','tei-schema-custom-model','revision',8,'model','/data/custom/model:v2@revision','runtimeSnapshot',"runtimeSnapshot"||'{"modelId":"/data/custom/model:v2@revision"}')) FROM "CollectionRerankConfig" WHERE id='tei-schema-config';
 INSERT INTO tei_schema_proofs VALUES ('original hosted configurations accepted'),('TEI platform binding accepted'),('disabled unbound TEI needs no snapshot'),('reported revision may be explicitly unknown'),('pool and reported limits accept their upper bounds'),('bounded custom deployment identifiers accepted');
 
 DO $$ DECLARE change jsonb; ordinal integer := 0; BEGIN

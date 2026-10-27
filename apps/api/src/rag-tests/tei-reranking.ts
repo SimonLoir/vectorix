@@ -701,27 +701,31 @@ export async function teiRerankingTests(t: TestContext) {
                         ],
                     });
                 scopedApi = rpc(() => ({ 'x-api-key': key.key })).admin.rag;
-                const managerKey =
-                    await f.owner.client.admin.organization.apiKeys.create({
-                        name: 'Sessionless endpoint manager refusal',
+                // Native key issuance deliberately excludes credential management.
+                // Exercise that refusal, then use the real read/rerank key to
+                // verify fail-closed endpoint routes; their session guard remains
+                // defense in depth, not permission delegated to a fabricated key.
+                await assert.rejects(
+                    f.owner.client.admin.organization.apiKeys.create({
+                        name: 'Nondelegable endpoint management refusal',
                         permissions: { ragCredentials: ['read', 'manage'] },
                         collectionScopes: [],
-                    });
-                const manager = rpc(() => ({ 'x-api-key': managerKey.key }))
-                    .admin.rag;
+                    }),
+                    { code: 'BAD_REQUEST' }
+                );
                 const before = {
                     info: native.state.infoCalls,
                     post: native.state.calls.length,
                 };
                 await assert.rejects(
-                    manager.reranking.endpoints.list({
+                    scopedApi.reranking.endpoints.list({
                         query: '',
                         offset: 0,
                         limit: 10,
                     })
                 );
                 await assert.rejects(
-                    manager.reranking.endpoints.create({
+                    scopedApi.reranking.endpoints.create({
                         name: 'Sessionless endpoint',
                         provider: 'TEI',
                         endpoint: native.endpoint,
@@ -730,7 +734,7 @@ export async function teiRerankingTests(t: TestContext) {
                     })
                 );
                 await assert.rejects(
-                    manager.reranking.endpoints.update({
+                    scopedApi.reranking.endpoints.update({
                         id: endpoint.id,
                         expectedRevision: endpoint.revision,
                         name: endpoint.name,
@@ -738,13 +742,13 @@ export async function teiRerankingTests(t: TestContext) {
                     })
                 );
                 await assert.rejects(
-                    manager.reranking.endpoints.activate({
+                    scopedApi.reranking.endpoints.activate({
                         id: endpoint.id,
                         expectedRevision: endpoint.revision,
                     })
                 );
                 await assert.rejects(
-                    manager.reranking.endpoints.remove({
+                    scopedApi.reranking.endpoints.remove({
                         id: endpoint.id,
                         expectedRevision: endpoint.revision,
                     })
@@ -952,7 +956,7 @@ export async function teiRerankingTests(t: TestContext) {
                 const before = native.state.infoCalls;
                 const latch = semanticLatch();
                 native.state.beforeInfo = latch.block;
-                native.state.model = 'custom/operator-reranker-v2';
+                native.state.model = '/data/custom/model:v2@revision';
                 const save = {
                     collectionId,
                     expectedRevision: revision,
