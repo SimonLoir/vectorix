@@ -14,12 +14,16 @@ export function CatalogPage({
 }: Readonly<{
     titleKey: string;
     descriptionKey: string;
-    operation: string;
+    operation: string | readonly string[];
     children: ReactNode;
 }>) {
     const tr = useTranslations('rag');
     const { isPending, isError, errorKey, canOperation, refresh } =
         useVectorixPermissions();
+    const allowed =
+        typeof operation === 'string'
+            ? canOperation(operation)
+            : operation.some(canOperation);
     return (
         <DashboardPage className='space-y-6'>
             <header className='vectorix-catalog-header'>
@@ -40,7 +44,7 @@ export function CatalogPage({
                 />
             ) : isPending ? (
                 <p role='status'>{tr('page.permissionLoading')}</p>
-            ) : canOperation(operation) ? (
+            ) : allowed ? (
                 children
             ) : (
                 <RequestErrorState errorKey='permission' onRetry={refresh} />

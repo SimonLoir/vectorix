@@ -89,7 +89,7 @@ test('the versioned policy snapshot remains the independently reviewed version 6
 
 test('real configs in every lint workspace preserve exactly 111 live legacy checks, core rules and globals', async (t) => {
     const found = projects();
-    assert.equal(found.length, 26);
+    assert.equal(found.length, 28);
     for (const project of found) {
         await t.test(project.name, async () => {
             const sourceDirectory = path.join(

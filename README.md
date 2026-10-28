@@ -286,6 +286,10 @@ Implement changes on a dedicated `codex/*` branch and open a pull request agains
 - [Parent context](docs/rag-parent-context.md): saved parent layout, child-only indexing, bounded context retrieval, rollout requirements and M6c acceptance.
 - [Build and validation log](docs/build-task-log.md): completed template work and recorded checks.
 
+## Application and MCP clients
+
+The [client integration guide](docs/rag-client-integrations.md) describes the typed `@vectorix/client` package and the local `@vectorix/mcp` stdio server, with dashboard configuration templates, scoped read keys and exact-source retrieval. This slice supplies local package artifacts; npm publication and remote MCP HTTP authentication remain pending.
+
 ## Optional reranking
 
 Collection settings can expose an optional Cohere or Voyage reranking profile independently of embeddings. Searchers explicitly opt in per request; ordinary search is unchanged when it is off. Organization credentials precede complete platform defaults, and destinations require the separate reranking allowlist. Existing API keys need explicit `ragRerank.use` reissue by an authorized issuer. See [configuration, limits, usage and acceptance](docs/rag-reranking.md). Hosted quality and real billing remain unverified until test credentials are configured; no default is enabled automatically. Self-hosted open-source rerankers can use the native TEI adapter through a separate endpoint in Integrations. The [TEI guide](docs/rag-open-source-reranking.md) documents model identity, optional authentication, deployment limits and the additive API contracts.

@@ -1,0 +1,51 @@
+{
+    "name": "@vectorix/client",
+    "version": "0.1.0",
+    "description": "Typed API-key client for Vectorix API 1.24 and later compatible revisions",
+    "type": "module",
+    "main": "./dist/index.js",
+    "types": "./dist/index.d.ts",
+    "exports": {
+        ".": {
+            "types": "./dist/index.d.ts",
+            "import": "./dist/index.js",
+            "default": "./dist/index.js"
+        }
+    },
+    "files": [
+        "dist",
+        "README.md"
+    ],
+    "sideEffects": false,
+    "engines": {
+        "node": ">=24 <25"
+    },
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/SimonLoir/vectorix.git",
+        "directory": "packages/client"
+    },
+    "scripts": {
+        "build": "tsdown",
+        "check-types": "tsc6 -p tsconfig.json --noEmit",
+        "lint": "eslint",
+        "test": "node --import tsx --test tests/*.test.ts"
+    },
+    "dependencies": {
+        "@orpc/client": "^1.16.0",
+        "@orpc/contract": "^1.16.0",
+        "zod": "^4.6.5",
+        "@opentelemetry/api": "^1.10.0"
+    },
+    "devDependencies": {
+        "@repo/api-contracts": "workspace:*",
+        "@repo/eslint-config": "workspace:*",
+        "@repo/typescript-config": "workspace:*",
+        "@types/node": "^26.6.2",
+        "eslint": "^10.11.0",
+        "tsdown": "0.23.1",
+        "tsx": "^4.23.15",
+        "typescript": "npm:@typescript/typescript6@6.0.2"
+    },
+    "license": "Apache-2.0"
+}

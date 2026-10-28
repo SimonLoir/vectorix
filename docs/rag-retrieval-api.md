@@ -241,6 +241,10 @@ construction, model token budgeting, answer policy and displaying citations to
 the exact passages used. This API supplies no language-model generation or chat
 conversation storage.
 
+The standalone [TypeScript and local MCP clients](rag-client-integrations.md)
+provide packaged consumers and dashboard configuration for this API. npm
+publication and remote MCP HTTP remain separate follow-ups.
+
 ## Implementation and acceptance
 
 - Contract: [retrieval.ts](../packages/api-contracts/src/v1/retrieval.ts), reusing

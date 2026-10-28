@@ -189,12 +189,24 @@ void test('alternate runner patterns and script names match the actual isolated 
             'test',
             'node --import tsx --test tests/*.test.ts'
         );
+        owner(
+            'packages/client',
+            'test',
+            'node --import tsx --test tests/*.test.ts'
+        );
+        owner(
+            'packages/mcp',
+            'test',
+            'pnpm --filter @vectorix/client build && node --import tsx --test tests/*.test.ts'
+        );
         owner('packages/vector-store', 'test:native', 'bash tests/run.sh');
         for (const path of [
             'packages/chunking/tests/new.test.ts',
             'packages/config/tests/runtime-config.test.ts',
             'packages/embeddings/tests/new.test.ts',
             'packages/reranking/tests/new.test.ts',
+            'packages/client/tests/transport.test.ts',
+            'packages/mcp/tests/stdio.test.ts',
             'packages/vector-store/tests/adapter.test.ts',
         ])
             write(

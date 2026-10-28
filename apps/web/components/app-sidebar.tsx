@@ -50,7 +50,7 @@ const navigation = [
         href: '/dashboard/settings/integrations',
         label: 'integrations',
         icon: Plug,
-        operation: 'admin.rag.credentials.list',
+        operation: ['admin.rag.credentials.list', 'retrieval.search'],
     },
     {
         href: '/dashboard/settings/groups',
@@ -108,6 +108,13 @@ export function AppSidebar({
     const t = useTranslations('navUser');
     const nav = useTranslations('dashboard.navigation');
     const { canOperation, can } = useVectorixPermissions();
+    const operationAllowed = (
+        operation: string | readonly string[] | undefined
+    ) =>
+        !operation ||
+        (typeof operation === 'string'
+            ? canOperation(operation)
+            : operation.some(canOperation));
     return (
         <Sidebar>
             <SidebarHeader>
@@ -130,8 +137,7 @@ export function AppSidebar({
                     {navigation
                         .filter(
                             (item) =>
-                                (!item.operation ||
-                                    canOperation(item.operation)) &&
+                                operationAllowed(item.operation) &&
                                 (!item.permission || can(item.permission))
                         )
                         .map((item) => (
