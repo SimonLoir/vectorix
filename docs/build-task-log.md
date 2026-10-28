@@ -1645,4 +1645,14 @@ retained read-only and helper gates are restored. The actual recipe and remainin
 publication/HTTP follow-ups are in [client integrations](rag-client-integrations.md).
 
 Final documentation pass: nine changed documentation files, nine Mermaid diagrams
-and 317 local file links pass; the post-acceptance delta is documentation only.
+and 317 local file links pass; the post-acceptance delta is documentation and build-prerequisite scheduling only.
+
+The first PR CI exposed a clean-checkout ordering bug: MCP type/lint checks
+resolved the published SDK exports before its `dist` declarations existed.
+`turbo.json` now orders the SDK build before those MCP tasks; direct package
+validation documents the same prerequisite. Moving the SDK artifacts aside
+reproduces the clean state. Uncached validation then passes all 28 type checks
+plus the SDK build (29 tasks); lint also passes with the prerequisite. This
+changes build scheduling only; the native-tested runtime implementation is
+unchanged. The obsolete first image run is cancelled and final-head CI must
+rerun all checks before merge.

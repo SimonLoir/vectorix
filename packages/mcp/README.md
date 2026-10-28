@@ -134,6 +134,7 @@ stdio traffic or the process environment when credentials/documents are private.
 ## Validation
 
 ```sh
+pnpm --filter @vectorix/client build
 pnpm --filter @vectorix/mcp check-types
 pnpm --filter @vectorix/mcp lint
 pnpm --filter @vectorix/mcp test

@@ -252,5 +252,8 @@ synthetic captures remain protected. The desktop proof SHA-256 is
 `6c322438aebce648c221d1571c1ab93160b4e7806ba6c44b2b8d159c5e525284`.
 This small-corpus journey is functional evidence, not hosted-provider quality,
 launch-scale capacity, npm publication or third-party MCP-host compatibility.
+A clean-checkout CI failure identified the missing SDK build before MCP type/lint
+validation. The explicit Turbo prerequisites now pass an uncached no-SDK-dist
+check (28 type checks plus one SDK build); the runtime implementation is unchanged.
 Exact-head CI and delivery are recorded in the pull request and
 [build log](build-task-log.md).

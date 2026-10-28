@@ -28,6 +28,12 @@
         "dev": {
             "cache": false,
             "persistent": true
+        },
+        "@vectorix/mcp#check-types": {
+            "dependsOn": ["^build", "^check-types"]
+        },
+        "@vectorix/mcp#lint": {
+            "dependsOn": ["^build"]
         }
     }
 }
