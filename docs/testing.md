@@ -19,7 +19,7 @@ flowchart LR
 - The API test script first runs eleven hermetic discovery regressions, then [`scripts/unit-tests.mjs`](../scripts/unit-tests.mjs) runs regular `*.test.ts(x)` source files under `apps/` and `packages/` with `tsx --test`. Its focused [discovery helper](../scripts/unit-test-discovery.mjs) skips:
     - integration suites (file names containing `integration`), which `test:integration` and `pnpm test:catalog` run against disposable services;
     - the explicitly registered Vitest test, after checking its package's actual test command;
-    - tests covered by the exact `OWN_RUNNERS` patterns and commands (`config`, `chunking`, `embeddings`, `vector-store`), whose own scripts run them;
+    - tests covered by the exact `OWN_RUNNERS` patterns and commands (`config`, `chunking`, `embeddings`, `reranking`, `client`, `mcp`, `vector-store`), whose own scripts run them;
     - symlinks, generated/build directories, and fixture-data directories named `fixtures` or `__fixtures__`.
 - `node scripts/unit-tests.mjs --list` prints the discovered files.
 - `pnpm test:coverage` runs the hermetic checks and the same API-owned discovery with Node's built-in coverage report (`--experimental-test-coverage`). It does not measure the separate chunking, embedding or Vitest runners. The report is informational; there is no threshold yet.
@@ -28,6 +28,20 @@ flowchart LR
 To add a Node unit test, create a regular `*.test.ts` or `*.test.tsx` source file outside the reserved data/build directories. Comments and string fixtures containing `from 'vitest'` remain Node tests. Classification parses TypeScript syntax without executing source: a real static import/export or literal `import()`/`require()` dependency on Vitest requires a registered owner. An unknown Vitest test fails discovery clearly instead of silently disappearing. Register its exact package test command before adding it to the ownership map.
 
 A new test inside an alternate-runner package must match that runner's actual pattern. Moving a test outside the pattern or changing the package command fails discovery until ownership is updated. File and directory symlinks are not followed, including aliases to native or integration suites. The eleven [hermetic tests](../scripts/unit-test-discovery.test.mjs) exercise these boundaries using temporary trees; their synthetic source is only parsed, never executed.
+
+## Client artifacts
+
+The `@vectorix/client` and `@vectorix/mcp` unit commands have explicit owners in
+source discovery. The MCP command first builds its public SDK dependency, then
+uses the official MCP client against a real stdio child and a controlled API.
+These tests do not establish real provider or database connectivity.
+
+`pnpm test:clients:pack` builds and packs both local artifacts, installs them with
+scripts disabled in fresh temporary consumers, and
+checks NodeNext declarations, SDK runtime transport and the packaged MCP CLI's
+tool discovery. It publishes nothing and starts no application database or
+provider. The catalog CI workflow runs it explicitly. The [client integration
+guide](rag-client-integrations.md) records live/dashboard acceptance separately.
 
 ## Separate suites
 

@@ -4,8 +4,8 @@ export default function IntegrationsPage() {
     return (
         <CatalogPage
             titleKey='credentials.title'
-            descriptionKey='credentials.description'
-            operation='admin.rag.credentials.list'
+            descriptionKey='clients.pageDescription'
+            operation={['admin.rag.credentials.list', 'retrieval.search']}
         >
             <IntegrationsTabs />
         </CatalogPage>

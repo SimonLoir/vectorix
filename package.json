@@ -31,7 +31,8 @@
         "test:interruption:guards": "bash scripts/test-interruption-guards.sh",
         "test:s3-outage:guards": "bash scripts/test-s3-outage-guards.sh",
         "test:queues": "bash scripts/test-redis.sh",
-        "test:reranking:guards": "node tests/acceptance/reranking/evaluate.test.mjs"
+        "test:reranking:guards": "node tests/acceptance/reranking/evaluate.test.mjs",
+        "test:clients:pack": "node scripts/test-client-packages.mjs"
     },
     "devDependencies": {
         "@dotenvx/dotenvx": "^2.38.2",

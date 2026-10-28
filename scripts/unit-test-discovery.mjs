@@ -20,6 +20,19 @@ const TEST_FILE = /\.test\.tsx?$/u;
 // the actual script and the paths it covers instead of skipping whole packages.
 const OWN_RUNNERS = [
     {
+        directory: 'packages/client',
+        name: 'test',
+        command: 'node --import tsx --test tests/*.test.ts',
+        files: /^packages\/client\/tests\/[^/]+\.test\.ts$/u,
+    },
+    {
+        directory: 'packages/mcp',
+        name: 'test',
+        command:
+            'pnpm --filter @vectorix/client build && node --import tsx --test tests/*.test.ts',
+        files: /^packages\/mcp\/tests\/[^/]+\.test\.ts$/u,
+    },
+    {
         directory: 'packages/config',
         name: 'test',
         command: 'tsx --test tests/*.test.ts',

@@ -1581,3 +1581,42 @@ Final local acceptance: the complete third catalog run passes **364/364** main c
 Real acceptance at runtime checkpoint `2db7069c`, owned run `22f6b3765675`: native curl plus a key limited to `ragCollection.read`, `ragLibrary.read` and one collection read scope verifies three search results, three ordered context passages, three exact neighbor citations with unchanged expiry, and the exact 2,048-byte original SHA-256. Real Ollama `0.40.8` / EmbeddingGemma 768 publishes four children. Browser Home verifies EN/FR/nl-BE context/citation/source labels, defaults and two-previous/no-following controls, neighbor citation selection, version-1 preview, empty lexical results, keyboard tab navigation, normal logout and a dark 390×844 mobile dialog without horizontal overflow. Revocation, expiry and generation cutover remain automated assertions; no browser security mutation or file transfer occurs. See [the actual recipe and limits](rag-retrieval-api.md#actual-validation).
 
 Owned cleanup is confirmed: zero live application processes/resources/fresh volumes; three processes stopped, five containers and four fresh volumes removed; the existing read-only Ollama cache is unchanged, gates restored, private captures retained, owned tab closed and viewport reset. The French desktop proof is retained locally with SHA-256 `9003bc78b38a12bcc7e67ff3ba832ffc0c6c7e3fcd441c6f8bd6880b358b0cf5`. The primary checkout's existing admin declaration and local main ref are preserved. The final documentation and test-only readiness change do not alter the pinned browser runtime; no additional production build is required. Local Docker image testing is not repeated because container definitions/dependencies are unchanged; exact-head PR CI validates all six images.
+
+## Issue 51: TypeScript client and local MCP integration
+
+Status: **in progress** on `codex/sdk-mcp-clients`. Scope: standalone local SDK
+artifacts, three read-only MCP stdio tools, and dashboard configuration templates.
+npm publication and Streamable HTTP remain explicit follow-ups, so this slice
+does not close the entire issue. No schema or API-contract revision is required.
+
+- [x] Triage open issues against implementation evidence and product decisions.
+- [x] Implement `packages/client` transport, stable public types and unit checks.
+- [x] Implement `packages/mcp` bounded stdio tools and official-client checks.
+- [x] Add localized, permission-aware dashboard client configuration.
+- [x] Prove packed artifacts in a fresh external consumer.
+- [x] Run type checks, lint, unit checks, production builds and relevant integration checks.
+- [ ] Verify dashboard and real local-model retrieval using native file transfers.
+- [ ] Open a PR, verify CI and deliver through the authorized squash/merge workflow.
+
+Entry points and flow: `packages/client/src` wraps the public v1 contract and
+RPC transport; `packages/mcp/src/cli.ts` owns the local protocol lifecycle and
+`server.ts` maps tools to existing collection/retrieval operations. The dashboard
+uses Integrations → Clients. [Setup and the acceptance recipe](rag-client-integrations.md)
+separate local distribution from planned publication and remote transport.
+
+Automated validation before the native checkpoint: frozen installation and dummy
+Prisma generation pass; 28 type tasks, 28 lint tasks, nine uncached unit tasks
+and six production build tasks pass. The API-owned units include the five new
+dashboard/template regressions. The client has 11 transport checks; MCP has 19
+checks, including modern and legacy official-client stdio exchanges. The fresh
+external test compiles strict NodeNext declarations, exercises SDK transport and
+starts an independently installed MCP-only artifact. It detected and corrected
+an unpublished SDK runtime dependency and the missing public OpenTelemetry type
+dependency before delivery. The catalog passes 364 cases plus eight mandatory
+accounting cases, including fresh migrations, upgrades, repeat deployment, schema
+parity and populated restore. The shared lint-policy test now covers 28
+workspaces while preserving all 111 live legacy checks. Eight documentation files,
+eight Mermaid diagrams and 301 local links pass. No new migration was created.
+
+Issue #50 is closed as already implemented by PRs #103/#104; default reranking
+remains off and hosted-provider quality is still unverified.

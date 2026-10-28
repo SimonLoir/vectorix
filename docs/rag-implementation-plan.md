@@ -336,7 +336,7 @@ Hardware sizing, enabled models, and costs depend on hosting and available crede
 
 ### Optional search enhancement: native reranking
 
-[Optional reranking](rag-reranking.md) is implemented as an independent collection profile and an explicit one-search toggle, with same-pool comparison, native Cohere/Voyage adapters, current rights, durable limits and nullable provider usage. Isolated integration checks and the controlled-provider dashboard journey are recorded in [its actual validation](rag-reranking.md#actual-validation). It does not alter the default ranking or require reindexing. Hosted quality and paid-provider access remain unverified; a controlled fixture is not a live hosted quality result. The current additive TEI slice introduces separate self-hosted endpoint credentials, an immutable reported runtime snapshot and open-engine operations in compatible API revision `1.23.0`; the revision-22 hosted contracts stay closed and unchanged. The [TEI deployment guide](rag-tei-deployment.md) pins an optional CPU runtime/model and documents organization-first endpoint resolution. Enabled-profile saving reads metadata outside its transaction and rechecks authority/binding before saving; search rechecks authority and exact sources after live metadata and immediately before inference. A real TEI/GTE CPU journey now verifies dashboard profile saving, Home/playground same-pool comparison and exact-source access; its measured limits and the repeat recipe are recorded in the [extension validation](rag-reranking.md#tei-extension-actual-validation). This small-corpus smoke does not establish quality or launch-scale capacity. The [frozen FR/EN evaluation runner](rag-reranking-evaluation.md) is available for explicit later measurement. SDK/MCP publication and generated answers remain separate planned work requiring product decisions.
+[Optional reranking](rag-reranking.md) is implemented as an independent collection profile and an explicit one-search toggle, with same-pool comparison, native Cohere/Voyage adapters, current rights, durable limits and nullable provider usage. Isolated integration checks and the controlled-provider dashboard journey are recorded in [its actual validation](rag-reranking.md#actual-validation). It does not alter the default ranking or require reindexing. Hosted quality and paid-provider access remain unverified; a controlled fixture is not a live hosted quality result. The current additive TEI slice introduces separate self-hosted endpoint credentials, an immutable reported runtime snapshot and open-engine operations in compatible API revision `1.23.0`; the revision-22 hosted contracts stay closed and unchanged. The [TEI deployment guide](rag-tei-deployment.md) pins an optional CPU runtime/model and documents organization-first endpoint resolution. Enabled-profile saving reads metadata outside its transaction and rechecks authority/binding before saving; search rechecks authority and exact sources after live metadata and immediately before inference. A real TEI/GTE CPU journey now verifies dashboard profile saving, Home/playground same-pool comparison and exact-source access; its measured limits and the repeat recipe are recorded in the [extension validation](rag-reranking.md#tei-extension-actual-validation). This small-corpus smoke does not establish quality or launch-scale capacity. The [frozen FR/EN evaluation runner](rag-reranking-evaluation.md) is available for explicit later measurement. SDK/MCP publication and generated answers remain separate planned work requiring product decisions. The local client integration slice is tracked below.
 
 ### External retrieval integration: chatbot clients
 
@@ -361,3 +361,17 @@ recorded in [actual validation](rag-retrieval-api.md#actual-validation). The gui
 describes the repeatable search → context → exact citation flow and its measured
 validation boundaries. SDK/MCP publication, chat history and generated answers remain
 separate planned work.
+
+### External client packages: TypeScript and local MCP
+
+The [client integration slice](rag-client-integrations.md) packages the stable API
+major-1 contract as a standalone TypeScript client and adds a read-only MCP stdio
+process. Dashboard templates supply the public API origin, organization pin and
+selected readable collection without creating credentials. Both consumers reuse
+current API-key issuer permissions, explicit scopes and exact-source receipts.
+The tools list collections, search and resolve bounded source context; ingestion
+remains session-only. This slice is in progress until its recorded acceptance.
+
+Local artifacts are the initial distribution path. npm publication and remote MCP
+HTTP authentication remain separate follow-ups within issue #51; generated
+answers, chat history and the launch-scale capacity target remain unchanged.
