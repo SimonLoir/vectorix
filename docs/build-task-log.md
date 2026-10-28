@@ -1584,7 +1584,7 @@ Owned cleanup is confirmed: zero live application processes/resources/fresh volu
 
 ## Issue 51: TypeScript client and local MCP integration
 
-Status: **in progress** on `codex/sdk-mcp-clients`. Scope: standalone local SDK
+Status: **implemented and locally validated** on `codex/sdk-mcp-clients`. Scope: standalone local SDK
 artifacts, three read-only MCP stdio tools, and dashboard configuration templates.
 npm publication and Streamable HTTP remain explicit follow-ups, so this slice
 does not close the entire issue. No schema or API-contract revision is required.
@@ -1595,8 +1595,8 @@ does not close the entire issue. No schema or API-contract revision is required.
 - [x] Add localized, permission-aware dashboard client configuration.
 - [x] Prove packed artifacts in a fresh external consumer.
 - [x] Run type checks, lint, unit checks, production builds and relevant integration checks.
-- [ ] Verify dashboard and real local-model retrieval using native file transfers.
-- [ ] Open a PR, verify CI and deliver through the authorized squash/merge workflow.
+- [x] Verify dashboard and real local-model retrieval using native file transfers.
+- [x] Prepare PR scope and record local acceptance; exact-head CI and delivery are tracked in PR metadata.
 
 Entry points and flow: `packages/client/src` wraps the public v1 contract and
 RPC transport; `packages/mcp/src/cli.ts` owns the local protocol lifecycle and
@@ -1604,7 +1604,7 @@ RPC transport; `packages/mcp/src/cli.ts` owns the local protocol lifecycle and
 uses Integrations → Clients. [Setup and the acceptance recipe](rag-client-integrations.md)
 separate local distribution from planned publication and remote transport.
 
-Automated validation before the native checkpoint: frozen installation and dummy
+Automated validation before the native checkpoint: frozen installation and
 Prisma generation pass; 28 type tasks, 28 lint tasks, nine uncached unit tasks
 and six production build tasks pass. The API-owned units include the five new
 dashboard/template regressions. The client has 11 transport checks; MCP has 19
@@ -1620,3 +1620,29 @@ eight Mermaid diagrams and 301 local links pass. No new migration was created.
 
 Issue #50 is closed as already implemented by PRs #103/#104; default reranking
 remains off and hosted-provider quality is still unverified.
+
+Native acceptance at runtime checkpoint `8f5461b`: owned run `bf16c571cbe2`
+uses real Ollama 0.40.8 / EmbeddingGemma 768 with the previously verified local
+weight digest. Native curl uploads the 2,048-byte TXT and publishes four children;
+a one-collection read-only key drives the real SDK and modern MCP clients. Both
+return three Hybrid results and three context passages with exact citations and
+unchanged source expiry. Wrong organization pin, unknown collection and local
+allowlist refusals pass; actual scope revocation remains catalog evidence. The
+compiled client SHA-256 is `b89c56f3938393819da8bc4d3e674c1cac61b80cd151655e24b6a2558857c721`;
+the CLI is `545592bd3be0df24667f09cddeb83156d10428c847912eec8743a9c1666de491`.
+
+Browser acceptance verifies Integrations → Clients, disabled/enabled copy,
+server-filtered/empty selection, actual instance parameters, both successful
+copies, native Right-key tab navigation, setup help and reactive EN/FR/nl-BE.
+Dark desktop and mobile 390×844 pass without page-wide overflow; the 358×388
+selector fits and code scrolls internally. Owner-session browser acceptance is
+complete; direct read-only-member browser admission and live grant revocation
+were not run. Native transfers only; no browser key, role or provider mutation.
+Logout returns to sign-in, NL-BE and viewport are restored, and tab 83 is closed.
+All three own process identities are dead; no run-labeled containers/volumes
+remain after removal of five containers/four fresh volumes. The model cache is
+retained read-only and helper gates are restored. The actual recipe and remaining
+publication/HTTP follow-ups are in [client integrations](rag-client-integrations.md).
+
+Final documentation pass: nine changed documentation files, nine Mermaid diagrams
+and 317 local file links pass; the post-acceptance delta is documentation only.

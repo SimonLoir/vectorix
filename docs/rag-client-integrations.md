@@ -1,6 +1,6 @@
 # TypeScript and local MCP clients
 
-Status: implementation in progress for the first usable slice of issue #51.
+Status: implemented and locally verified as the first usable slice of issue #51.
 This slice distributes local package artifacts; it does not publish to npm or
 start a remote MCP HTTP service. See [actual validation](#actual-validation)
 for the checks that have actually run.
@@ -205,7 +205,52 @@ Hybrid/Vector calls; Lexical alone does not establish provider connectivity.
 
 ## Actual validation
 
-Pending. Record automated package/transport checks, fresh-consumer packaging,
-dashboard observations and live-provider checks separately in this document and
-the [build log](build-task-log.md). A mocked API proves client behavior, not live
-retrieval or model quality.
+The runtime checkpoint is `8f5461b55c76c2aa1dc959030c99c744f1546ea4`.
+Frozen installation, Prisma generation, all 28 type tasks, all 28 lint tasks,
+nine uncached unit tasks and six production build tasks pass. The client has
+11 transport checks; MCP has 19 checks, including real modern and legacy
+stdio clients against a controlled HTTP fixture. Five dashboard/template
+regressions cover organization selection, copy guards and literal escaping.
+The catalog passes 364 cases plus eight mandatory-accounting cases, including
+real permission/isolation, upgrade, restore and exact-source behavior. The
+fresh external packaging command compiles strict NodeNext declarations,
+executes SDK transport and discovers tools from an independently installed
+MCP-only artifact. These controlled checks do not establish provider quality.
+
+Owned native run `bf16c571cbe2` uses fresh application/vector `_test` databases,
+Redis, private RustFS storage, real workers and Ollama `0.40.8`, with
+`embeddinggemma:latest`, 768 dimensions and verified local weight digest
+`85462619ee721b466c5927d109d4cb765861907d5417b9109caebc4e614679f1`.
+Native curl creates the synthetic organization, uploads a 2,048-byte FR/EN TXT
+and publishes four Token Window children. Its key has only library/collection
+read permissions and one explicit collection read scope. The real SDK and
+modern MCP stdio journey each return three Hybrid results and three neighboring
+context passages, resolving exact citations with unchanged receipt expiry and
+publication/document/version identity. An incorrect organization pin is refused
+with `409/CONFLICT`; an unknown collection and a locally excluded collection
+are refused. The unknown-ID check is not presented as a scope-revocation test;
+real scope/issuer revocation belongs to the catalog tests.
+
+The actual dashboard journey uses the synthetic owner session: Integrations →
+Clients, disabled copy before selection, bounded collection filtering and its
+empty state, authorized selection, current API origin/organization/collection
+in both key-free templates, successful copy feedback, native keyboard tab
+navigation and access/setup help. English, French and Belgian Dutch headings,
+labels and examples react to language changes. Dark desktop and a 390×844 mobile
+viewport pass: page width is 375 CSS pixels, the code area scrolls internally
+(309-pixel viewport for 558-pixel content), and the collection dialog is
+358×388 pixels. Direct read-only-member browser admission and live permission
+revocation were not exercised; their API authorization and selection/copy guards
+are covered by the automated checks. No browser upload, download or credential
+mutation was used. Normal Logout returns to sign-in; the initial NL-BE preference
+and default viewport are restored and the temporary tab is closed.
+
+All three owned processes are stopped, the five containers and four fresh
+volumes are removed, and the read-only model-cache volume is retained. Helper
+gates are restored. No developer `.env` or application database is used; private
+synthetic captures remain protected. The desktop proof SHA-256 is
+`6c322438aebce648c221d1571c1ab93160b4e7806ba6c44b2b8d159c5e525284`.
+This small-corpus journey is functional evidence, not hosted-provider quality,
+launch-scale capacity, npm publication or third-party MCP-host compatibility.
+Exact-head CI and delivery are recorded in the pull request and
+[build log](build-task-log.md).

@@ -370,7 +370,7 @@ process. Dashboard templates supply the public API origin, organization pin and
 selected readable collection without creating credentials. Both consumers reuse
 current API-key issuer permissions, explicit scopes and exact-source receipts.
 The tools list collections, search and resolve bounded source context; ingestion
-remains session-only. This slice is in progress until its recorded acceptance.
+remains session-only. This slice is implemented with the recorded local-package, native and dashboard acceptance.
 
 Local artifacts are the initial distribution path. npm publication and remote MCP
 HTTP authentication remain separate follow-ups within issue #51; generated

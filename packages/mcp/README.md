@@ -13,7 +13,7 @@ The API must support major 1, compatible revision 24 or later. An organization
 API key needs `ragCollection.read`, `ragLibrary.read`, current issuer membership
 and read scopes for the intended collections. Server-side grants, suspension,
 issuer roles and scopes remain authoritative on every call. The local collection
-allowlist can only remove access. See [retrieval access and exact sources](../../docs/rag-retrieval-api.md).
+allowlist can only remove access. See [retrieval access and exact sources](https://github.com/SimonLoir/vectorix/blob/main/docs/rag-retrieval-api.md).
 
 ## Build and configure
 
@@ -150,7 +150,7 @@ receipts and expiry, input restrictions, sanitized denial and mismatched version
 Pure checks cover configuration, concurrency, output size and total deadlines.
 These controlled checks do not establish live provider behavior or a particular
 MCP host integration. Live API and clean packaged-consumer evidence is recorded
-separately in the [build log](../../docs/build-task-log.md).
+separately in the [build log](https://github.com/SimonLoir/vectorix/blob/main/docs/build-task-log.md).
 
 Primary protocol references: [official v2 serving entry](https://ts.sdk.modelcontextprotocol.io/v2/api/@modelcontextprotocol/server/server/serveStdio.html),
 [stdio transport](https://ts.sdk.modelcontextprotocol.io/v2/serving/stdio.html),
