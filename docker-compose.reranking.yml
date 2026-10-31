@@ -25,7 +25,7 @@ services:
         restart: 'no'
     tei:
         profiles: ['reranking']
-        image: ghcr.io/huggingface/text-embeddings-inference:cpu-1.9@sha256:8419f533857b503ebf6ec292a95d4f1cf9c0464ac8b8abeef39518cf110e5726
+        image: ghcr.io/huggingface/text-embeddings-inference:cpu-1.9@sha256:2538ea1c9640d3763b15af668039d24172d063b42337b0c27796fc2be180c78d
         platform: linux/amd64
         depends_on:
             tei-cache-init:
