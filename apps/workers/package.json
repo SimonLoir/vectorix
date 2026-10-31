@@ -28,7 +28,7 @@
         "@routers/rag": "workspace:*",
         "@routers/utils": "workspace:*",
         "better-auth": "1.7.12",
-        "bullmq": "^5.81.5",
+        "bullmq": "^6.5.0",
         "nodemailer": "^10.0.10",
         "pg": "^8.23.0",
         "pino": "^10.3.1",
