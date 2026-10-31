@@ -32,11 +32,11 @@
         "@types/node": "^26.6.2"
     },
     "dependencies": {
-        "@better-auth/api-key": "1.7.12",
-        "@better-auth/passkey": "1.7.12",
+        "@better-auth/api-key": "1.7.14",
+        "@better-auth/passkey": "1.7.14",
         "@repo/db": "workspace:*",
         "@repo/emails": "workspace:*",
-        "better-auth": "1.7.12",
+        "better-auth": "1.7.14",
         "@repo/i18n": "workspace:*",
         "@repo/queues": "workspace:*"
     }

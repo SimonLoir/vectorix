@@ -25,8 +25,8 @@
         "@types/react": "19.3.0"
     },
     "dependencies": {
-        "nodemailer": "^10.0.10",
+        "nodemailer": "^10.2.1",
         "react": "19.3.1",
-        "resend": "^6.28.1"
+        "resend": "^6.35.0"
     }
 }
