@@ -21,7 +21,7 @@
         "@types/node": "^26.6.2"
     },
     "dependencies": {
-        "bullmq": "^5.81.5",
+        "bullmq": "^6.5.0",
         "ioredis": "6.0.0"
     }
 }
