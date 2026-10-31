@@ -2,7 +2,7 @@
 services:
     tei-cache-init:
         profiles: ['reranking']
-        image: postgres:18-alpine@sha256:898c60cb390d1085bc97bdd6a1ae968757421df394b071848b52b1c09c89d6a5
+        image: postgres:18-alpine@sha256:10a5c69a83035ab5239f5620d708520e8b28f5aa1f2b20143e6024532edadfb5
         user: '0:0'
         entrypoint: ['/bin/sh', '-ec']
         # Temporarily owning the volume root lets chmod work on repeat runs with CHOWN as the sole capability.
