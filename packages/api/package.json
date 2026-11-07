@@ -23,7 +23,7 @@
         "@types/node": "^26.6.2"
     },
     "dependencies": {
-        "@orpc/server": "^1.16.0",
+        "@orpc/server": "^1.16.1",
         "@repo/api-contracts": "workspace:*",
         "@routers/members": "workspace:*",
         "@routers/notifications": "workspace:*",
