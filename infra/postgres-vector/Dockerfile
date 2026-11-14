@@ -1,6 +1,6 @@
 # syntax=docker/dockerfile:1.7
 # Upstream release archives are checksum-verified; build tools stay in this stage.
-FROM postgres:18.6-bookworm@sha256:bbf83594798e144bff365a9c191c5d779f181fb3135902064ab8ff11918020fc AS extensions
+FROM postgres:18.6-bookworm@sha256:f1ea2a1a4fb7b68d4836be1fdcb8a6466a89b072158bf9d97663600538c294c5 AS extensions
 ARG TARGETARCH
 RUN apt-get update && apt-get install -y --no-install-recommends \
     ca-certificates curl unzip build-essential postgresql-server-dev-18 \
@@ -22,7 +22,7 @@ RUN case "$TARGETARCH" in \
     && unzip -q vectorscale.zip \
     && dpkg-deb -x "pgvectorscale-postgresql-18_0.9.1-Linux_${TARGETARCH}.deb" /extensions
 
-FROM postgres:18.6-bookworm@sha256:bbf83594798e144bff365a9c191c5d779f181fb3135902064ab8ff11918020fc
+FROM postgres:18.6-bookworm@sha256:f1ea2a1a4fb7b68d4836be1fdcb8a6466a89b072158bf9d97663600538c294c5
 COPY --from=extensions /extensions/usr/lib/postgresql/18/ /usr/lib/postgresql/18/
 COPY --from=extensions /extensions/usr/share/postgresql/18/ /usr/share/postgresql/18/
 COPY infra/postgres-vector/10-vector-store.sql /docker-entrypoint-initdb.d/10-vector-store.sql
