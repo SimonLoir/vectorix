@@ -51,12 +51,12 @@
         "@repo/emails": "workspace:*",
         "@repo/eslint-config": "workspace:*",
         "@repo/typescript-config": "workspace:*",
-        "@types/node": "^26.6.2",
+        "@types/node": "^26.6.6",
         "@types/pg": "^8.23.1",
-        "eslint": "^10.11.0",
+        "eslint": "^10.14.0",
         "tsx": "^4.23.15",
         "typescript": "npm:@typescript/typescript6@6.0.2",
-        "vite": "^8.3.5",
-        "@scalar/api-reference": "1.75.1"
+        "vite": "^8.3.8",
+        "@scalar/api-reference": "1.78.0"
     }
 }

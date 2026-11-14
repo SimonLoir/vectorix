@@ -44,9 +44,9 @@
         "@repo/eslint-config": "workspace:*",
         "@repo/typescript-config": "workspace:*",
         "@types/react": "19.3.0",
-        "eslint": "^10.11.0",
+        "eslint": "^10.14.0",
         "typescript": "npm:@typescript/typescript6@6.0.2",
-        "@types/node": "^26.6.2"
+        "@types/node": "^26.6.6"
     },
     "dependencies": {
         "@radix-ui/react-alert-dialog": "^1.1.23",
