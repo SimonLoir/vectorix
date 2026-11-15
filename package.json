@@ -36,8 +36,8 @@
     },
     "devDependencies": {
         "@dotenvx/dotenvx": "^2.38.2",
-        "turbo": "^2.11.10",
-        "prettier": "^3.9.8",
+        "turbo": "^2.11.11",
+        "prettier": "^3.10.1",
         "typescript": "npm:@typescript/typescript6@6.0.2"
     }
 }

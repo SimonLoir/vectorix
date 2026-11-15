@@ -28,10 +28,10 @@
     "devDependencies": {
         "@repo/eslint-config": "workspace:*",
         "@repo/typescript-config": "workspace:*",
-        "eslint": "^10.11.0",
+        "eslint": "^10.14.0",
         "typescript": "npm:@typescript/typescript6@6.0.2",
-        "vitest": "^5.0.1",
-        "@types/node": "^26.6.2"
+        "vitest": "^5.1.0",
+        "@types/node": "^26.6.6"
     },
     "dependencies": {
         "@orpc/server": "^1.16.0",
