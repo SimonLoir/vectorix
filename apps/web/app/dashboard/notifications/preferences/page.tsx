@@ -10,18 +10,13 @@ import { NotificationPreferences } from '@/components/notifications/notification
 /** Personal channel choices for the active organization, outside the account page. */
 export default function NotificationPreferencesPage() {
     const t = useTranslations('notifications');
-    const breadcrumbs = useTranslations('breadcrumbs');
     const { data: session, isPending } = useAuth().useSession();
     const organizationId = session?.session.activeOrganizationId;
 
     return (
         <DashboardPage className='space-y-6'>
             <BreadCrumbs
-                breadcrumbs={[
-                    { title: breadcrumbs('dashboard'), url: '/dashboard' },
-                    { title: t('title'), url: '/dashboard/notifications' },
-                    { title: t('preferences.title') },
-                ]}
+                breadcrumbs={[{ title: t('preferences.title') }]}
             />
             {isPending ? <PaddedSpinner /> : null}
             {session && organizationId ? (

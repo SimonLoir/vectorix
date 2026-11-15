@@ -11,6 +11,7 @@
         "check-types": "next typegen && tsc6 --noEmit"
     },
     "dependencies": {
+        "geist": "1.9.2",
         "@hookform/resolvers": "^6.0.0",
         "@orpc/client": "^1.16.0",
         "@orpc/tanstack-query": "^1.16.0",

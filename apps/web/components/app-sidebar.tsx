@@ -3,101 +3,33 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 import {
-    Home,
-    Database,
-    FileText,
-    Plug,
-    UsersRound,
-    Gauge,
-    ListChecks,
-    ScrollText,
-    Users,
-    Shield,
-    Bell,
-    UserRound,
-    KeyRound,
-    Layers,
-} from 'lucide-react';
-import {
     Sidebar,
     SidebarContent,
     SidebarFooter,
+    SidebarGroup,
+    SidebarGroupContent,
+    SidebarGroupLabel,
     SidebarHeader,
     SidebarMenu,
-    SidebarMenuItem,
     SidebarMenuButton,
+    SidebarMenuItem,
+    SidebarRail,
 } from '@repo/ui/sidebar';
 import { TeamSwitcher } from '@repo/dashboard-core/components/team-switcher';
 import { NavUser } from '@repo/dashboard-core/components/nav-user';
 import { useAuth } from '@repo/dashboard-core/hooks/use-auth';
 import { LanguageSwitcher } from '@/components/language-switcher';
-import { useVectorixPermissions } from '@/contexts/vectorix-permissions';
-const navigation = [
-    { href: '/dashboard', label: 'home', icon: Home },
-    {
-        href: '/dashboard/collections',
-        label: 'collections',
-        icon: Database,
-        operation: 'admin.rag.collections.list',
-    },
-    {
-        href: '/dashboard/documents',
-        label: 'documents',
-        icon: FileText,
-        operation: 'admin.rag.documents.list',
-    },
-    {
-        href: '/dashboard/settings/integrations',
-        label: 'integrations',
-        icon: Plug,
-        operation: ['admin.rag.credentials.list', 'retrieval.search'],
-    },
-    {
-        href: '/dashboard/settings/groups',
-        label: 'groups',
-        icon: UsersRound,
-        operation: 'admin.rag.groups.list',
-    },
-    {
-        href: '/dashboard/settings/usage',
-        label: 'usage',
-        icon: Gauge,
-        operation: 'admin.rag.quota',
-    },
-    {
-        href: '/dashboard/settings/audit',
-        label: 'audit',
-        icon: ScrollText,
-        operation: 'admin.rag.audit',
-    },
-    {
-        href: '/dashboard/settings/operations',
-        label: 'operations',
-        icon: ListChecks,
-        operation: 'admin.rag.operations.overview',
-    },
-    { href: '/dashboard/account', label: 'account', icon: UserRound },
-    { href: '/dashboard/notifications', label: 'notifications', icon: Bell },
-    {
-        href: '/dashboard/settings/members',
-        label: 'members',
-        icon: Users,
-        operation: 'admin.members.get',
-    },
-    {
-        href: '/dashboard/settings/roles',
-        label: 'roles',
-        icon: Shield,
-        permission: { ac: ['read'] },
-    },
-    {
-        href: '/dashboard/account/api-keys',
-        label: 'apiKeys',
-        icon: KeyRound,
-        operation: 'admin.organization.apiKeys.list',
-    },
-    { href: '/dashboard/settings/licenses', label: 'licenses', icon: Layers },
-];
+import { BrandMark } from '@/components/shell/brand-mark';
+import {
+    matchNavigationItem,
+    navigationGroups,
+} from '@/components/shell/navigation';
+import { useVisibleNavigation } from '@/components/shell/use-visible-navigation';
+
+/**
+ * Dashboard sidebar grouped by intent: workspace, library, organization and
+ * platform. Personal destinations live in the user menu and command palette.
+ */
 export function AppSidebar({
     allowOrganizationCreation,
 }: {
@@ -107,22 +39,20 @@ export function AppSidebar({
     const pathname = usePathname();
     const t = useTranslations('navUser');
     const nav = useTranslations('dashboard.navigation');
-    const { canOperation, can } = useVectorixPermissions();
-    const operationAllowed = (
-        operation: string | readonly string[] | undefined
-    ) =>
-        !operation ||
-        (typeof operation === 'string'
-            ? canOperation(operation)
-            : operation.some(canOperation));
+    const items = useVisibleNavigation();
+    const active = matchNavigationItem(pathname);
+
     return (
-        <Sidebar>
-            <SidebarHeader>
+        <Sidebar collapsible='icon'>
+            <SidebarHeader className='gap-3'>
                 <Link
                     href='/dashboard'
-                    className='px-3 py-4 text-xl font-semibold tracking-tight'
+                    className='flex h-9 items-center gap-2.5 rounded-md px-2 text-[15px] font-semibold tracking-tight outline-none focus-visible:ring-2 focus-visible:ring-sidebar-ring group-data-[collapsible=icon]:px-0'
                 >
-                    Vectorix
+                    <BrandMark className='size-6 shrink-0' />
+                    <span className='group-data-[collapsible=icon]:hidden'>
+                        Vectorix
+                    </span>
                 </Link>
                 <TeamSwitcher
                     allowOrganizationCreation={allowOrganizationCreation}
@@ -133,33 +63,43 @@ export function AppSidebar({
                 />
             </SidebarHeader>
             <SidebarContent>
-                <SidebarMenu className='p-2'>
-                    {navigation
-                        .filter(
-                            (item) =>
-                                operationAllowed(item.operation) &&
-                                (!item.permission || can(item.permission))
-                        )
-                        .map((item) => (
-                            <SidebarMenuItem key={item.href}>
-                                <SidebarMenuButton
-                                    asChild
-                                    isActive={
-                                        pathname === item.href ||
-                                        (item.href !== '/dashboard' &&
-                                            pathname.startsWith(
-                                                `${item.href}/`
-                                            ))
-                                    }
-                                >
-                                    <Link href={item.href}>
-                                        <item.icon />
-                                        <span>{nav(item.label)}</span>
-                                    </Link>
-                                </SidebarMenuButton>
-                            </SidebarMenuItem>
-                        ))}
-                </SidebarMenu>
+                {navigationGroups.map((group) => {
+                    const groupItems = items.filter(
+                        (item) => item.group === group
+                    );
+                    if (groupItems.length === 0) return null;
+                    return (
+                        <SidebarGroup key={group} className='py-1'>
+                            {group === 'workspace' ? null : (
+                                <SidebarGroupLabel>
+                                    {nav(`sections.${group}`)}
+                                </SidebarGroupLabel>
+                            )}
+                            <SidebarGroupContent>
+                                <SidebarMenu>
+                                    {groupItems.map((item) => (
+                                        <SidebarMenuItem key={item.href}>
+                                            <SidebarMenuButton
+                                                asChild
+                                                isActive={
+                                                    active?.href === item.href
+                                                }
+                                                tooltip={nav(item.label)}
+                                            >
+                                                <Link href={item.href}>
+                                                    <item.icon aria-hidden='true' />
+                                                    <span>
+                                                        {nav(item.label)}
+                                                    </span>
+                                                </Link>
+                                            </SidebarMenuButton>
+                                        </SidebarMenuItem>
+                                    ))}
+                                </SidebarMenu>
+                            </SidebarGroupContent>
+                        </SidebarGroup>
+                    );
+                })}
             </SidebarContent>
             <SidebarFooter>
                 {session && (
@@ -180,6 +120,7 @@ export function AppSidebar({
                     />
                 )}
             </SidebarFooter>
+            <SidebarRail />
         </Sidebar>
     );
 }

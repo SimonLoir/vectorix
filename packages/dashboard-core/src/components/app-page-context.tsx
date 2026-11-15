@@ -36,14 +36,23 @@ export const useAppPageContext = () => {
     return ctx;
 };
 
+/**
+ * Publishes page-specific breadcrumbs to the application shell while mounted.
+ * Shells decide how to combine them with route-derived crumbs; the web
+ * dashboard appends them after its navigation trail (for example a collection
+ * name). The crumbs are cleared on unmount so they never outlive their page.
+ */
 export const BreadCrumbs = ({
     breadcrumbs,
 }: Readonly<{ breadcrumbs: Breadcrumb[] }>) => {
     const { setBreadcrumbs } = useAppPageContext();
+    // Callers usually pass inline arrays; compare by content to avoid update loops.
+    const key = JSON.stringify(breadcrumbs);
 
     useEffect(() => {
-        setBreadcrumbs(breadcrumbs);
-    }, [breadcrumbs, setBreadcrumbs]);
+        setBreadcrumbs(JSON.parse(key) as Breadcrumb[]);
+        return () => setBreadcrumbs([]);
+    }, [key, setBreadcrumbs]);
 
     return null;
 };

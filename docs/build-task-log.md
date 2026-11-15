@@ -1656,3 +1656,24 @@ plus the SDK build (29 tasks); lint also passes with the prerequisite. This
 changes build scheduling only; the native-tested runtime implementation is
 unchanged. The obsolete first image run is cancelled and final-head CI must
 rerun all checks before merge.
+
+## UI/UX overhaul, part 1: design foundations and dashboard shell
+
+Agreed direction: a sober professional tool (neutral surfaces, single indigo accent, first-class dark mode, Geist typography) across web and admin, with grouped navigation, a ⌘K command palette and a breadcrumb header. Delivered in several PRs; this one covers foundations, the web shell and authentication pages. The admin console (part 2) and per-area web page redesigns (part 3+) are planned, not implemented.
+
+- [x] Shared design tokens in `packages/ui/src/styles/theme.css` (`@repo/ui/styles/theme.css`), light and dark, including semantic and chart tones. The web app imports it; the former body-scoped palette in `apps/web/app/dashboard.css` is removed.
+- [x] Self-hosted Geist Sans/Mono through the exact-version `geist` package and `next/font/local` (`apps/web/app/layout.tsx`); no runtime font CDN.
+- [x] `Command` primitives on `cmdk` 1.1.1 in `packages/ui/src/command.tsx`, with a keyword-only, accent-insensitive substring filter.
+- [x] Single navigation map in `apps/web/components/shell/navigation.ts`, shared by the sidebar, header trail and palette. Visibility is filtered by `useVisibleNavigation`; pages and API operations still enforce authorization.
+- [x] Grouped, icon-collapsible sidebar (`apps/web/components/app-sidebar.tsx`): Workspace, Library, Organization, Platform. Account and notifications move to the user menu, bell and palette.
+- [x] Sticky header (`apps/web/components/shell/app-header.tsx`) with a route-derived trail. `BreadCrumbs` from `@repo/dashboard-core` now publishes trailing detail crumbs only, compares by content and clears on unmount, so crumbs no longer outlive their page.
+- [x] ⌘K / Ctrl+K palette (`apps/web/components/shell/command-palette.tsx`): permitted pages, theme actions, and collections/documents from the existing organization-scoped list endpoints (`limit` 5, debounced, only while open, only with the matching list operation). Loading, error and empty states are explicit.
+- [x] Authentication pages share `apps/web/components/shell/auth-layout.tsx` (form column plus a brand panel from `lg`); the four `@repo/dashboard-core` auth forms lose their duplicated card and decorative aside.
+- [x] English, French and Belgian Dutch messages for navigation sections, palette and authentication panel. The Home entry is relabelled Search to match the search-first home.
+
+Validation performed on November 15, 2026:
+
+- `pnpm turbo run check-types lint --filter=web --filter=@repo/ui --filter=@repo/dashboard-core`: passed (only pre-existing warnings).
+- `pnpm test`: passed. `pnpm --filter web build`: passed.
+- Browser verification with headless Chromium against a local stack (`docker compose`, migrations, API and web dev servers), light and dark at 1440×900, plus 390×844 for the collections page: sign-in, search home, members, collections; ⌘K opened with Ctrl+K, "acc" filtered to My account, Enter navigated to `/dashboard/account`. No console errors. The test account and organization were created through native HTTP.
+- Not run: admin app (unchanged in this PR), `pnpm test:docker`, `pnpm test:catalog`.

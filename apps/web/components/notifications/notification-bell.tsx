@@ -26,18 +26,18 @@ export function NotificationBell() {
             <Popover.Trigger asChild>
                 <Button
                     type='button'
-                    variant='outline'
+                    variant='ghost'
                     size='icon'
                     aria-label={label}
                     title={label}
                     aria-busy={countPending}
-                    className='relative'
+                    className='relative size-8'
                 >
                     <BellIcon aria-hidden='true' />
                     {unreadCount > 0 ? (
                         <span
                             aria-hidden='true'
-                            className='absolute -top-1.5 -right-1.5 flex min-w-5 items-center justify-center rounded-full bg-destructive px-1 text-[10px] font-semibold leading-5 text-white shadow-sm'
+                            className='absolute -top-0.5 -right-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-primary px-1 text-[10px] font-semibold leading-4 text-primary-foreground ring-2 ring-background'
                         >
                             {unreadCount > 99 ? '99+' : unreadCount}
                         </span>

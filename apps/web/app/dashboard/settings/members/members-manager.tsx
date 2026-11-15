@@ -17,7 +17,6 @@ import { MembersTable } from './components/members-table';
 import InvitationLine from './components/invitation-line';
 import { Separator } from '@repo/ui/separator';
 import { useTranslations } from 'next-intl';
-import { BreadCrumbs } from '@repo/dashboard-core/components/app-page-context';
 import { useQuery } from '@tanstack/react-query';
 import { useORPC } from '@/hooks/use-orpc';
 import { useVectorixPermissions } from '@/contexts/vectorix-permissions';
@@ -66,7 +65,6 @@ export function MembersManager({
         ),
     });
     const t = useTranslations('members');
-    const tBc = useTranslations('breadcrumbs');
 
     if (isPending || sessionPending)
         return (
@@ -112,20 +110,10 @@ export function MembersManager({
     return (
         <Container className='space-y-6'>
             {!embedded && (
-                <>
-                    {' '}
-                    <BreadCrumbs
-                        breadcrumbs={[
-                            { title: tBc('dashboard'), url: '/dashboard' },
-                            { title: tBc('organization') },
-                            { title: tBc('members') },
-                        ]}
-                    />
-                    <div>
-                        <PageTitle>{t('title')}</PageTitle>
-                        <PageDescription>{t('description')}</PageDescription>
-                    </div>
-                </>
+                <div>
+                    <PageTitle>{t('title')}</PageTitle>
+                    <PageDescription>{t('description')}</PageDescription>
+                </div>
             )}
             <div className='space-y-4'>
                 <div>

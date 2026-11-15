@@ -1684,10 +1684,9 @@
     },
     "dashboard": {
         "navigation": {
-            "home": "Home",
+            "home": "Search",
             "collections": "Collections",
             "integrations": "Integrations",
-            "groups": "Groups",
             "usage": "Usage and quotas",
             "audit": "Catalog audit",
             "account": "My account",
@@ -1697,7 +1696,15 @@
             "apiKeys": "API keys",
             "licenses": "Licenses",
             "documents": "Documents",
-            "operations": "Operations"
+            "operations": "Operations",
+            "sections": {
+                "workspace": "Workspace",
+                "library": "Library",
+                "organization": "Organization",
+                "platform": "Platform",
+                "personal": "Personal"
+            },
+            "groups": "Groups"
         },
         "home": {
             "eyebrow": "WORKSPACE",
@@ -1709,6 +1716,23 @@
             "organizationTitle": "Organization",
             "organization": "Team members, invitations, and roles.",
             "licenses": "Features enabled for your organization."
+        },
+        "commandPalette": {
+            "title": "Command palette",
+            "description": "Search pages, collections and documents, or run an action.",
+            "placeholder": "Search pages, collections, documents…",
+            "trigger": "Search or jump to…",
+            "empty": "No results.",
+            "loading": "Searching…",
+            "searchError": "Search is unavailable right now.",
+            "noMatches": "No matches.",
+            "theme": "Theme: {theme}",
+            "groups": {
+                "pages": "Pages",
+                "collections": "Collections",
+                "documents": "Documents",
+                "preferences": "Preferences"
+            }
         }
     },
     "emailOwnership": {
@@ -1865,5 +1889,24 @@
         "light": "Light",
         "dark": "Dark",
         "system": "System"
+    },
+    "authLayout": {
+        "panelLabel": "About Vectorix",
+        "headline": "Grounded answers from your own documents.",
+        "summary": "Vectorix indexes your organization’s documents and serves retrieval with exact, verifiable citations.",
+        "highlights": {
+            "citations": {
+                "title": "Exact citations",
+                "body": "Every result links back to the precise source span."
+            },
+            "isolation": {
+                "title": "Organization isolation",
+                "body": "Collections, keys and grants stay scoped to your organization."
+            },
+            "versions": {
+                "title": "Versioned indexes",
+                "body": "Publish, audit and roll forward index generations safely."
+            }
+        }
     }
 }

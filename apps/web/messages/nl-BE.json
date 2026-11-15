@@ -1684,10 +1684,9 @@
     },
     "dashboard": {
         "navigation": {
-            "home": "Start",
+            "home": "Zoeken",
             "collections": "Collecties",
             "integrations": "Integraties",
-            "groups": "Groepen",
             "usage": "Gebruik en quota",
             "audit": "Cataloguslogboek",
             "account": "Mijn account",
@@ -1697,7 +1696,15 @@
             "apiKeys": "API-sleutels",
             "licenses": "Licenties",
             "documents": "Documenten",
-            "operations": "Operaties"
+            "operations": "Operaties",
+            "sections": {
+                "workspace": "Werkruimte",
+                "library": "Bibliotheek",
+                "organization": "Organisatie",
+                "platform": "Platform",
+                "personal": "Persoonlijk"
+            },
+            "groups": "Groepen"
         },
         "home": {
             "eyebrow": "WERKRUIMTE",
@@ -1709,6 +1716,23 @@
             "organizationTitle": "Organisatie",
             "organization": "Teamleden, uitnodigingen en rollen.",
             "licenses": "Ingeschakelde functies voor je organisatie."
+        },
+        "commandPalette": {
+            "title": "Opdrachtenpalet",
+            "description": "Zoek pagina’s, collecties en documenten, of voer een actie uit.",
+            "placeholder": "Zoek pagina’s, collecties, documenten…",
+            "trigger": "Zoeken of ga naar…",
+            "empty": "Geen resultaten.",
+            "loading": "Bezig met zoeken…",
+            "searchError": "Zoeken is momenteel niet beschikbaar.",
+            "noMatches": "Geen overeenkomsten.",
+            "theme": "Thema: {theme}",
+            "groups": {
+                "pages": "Pagina’s",
+                "collections": "Collecties",
+                "documents": "Documenten",
+                "preferences": "Voorkeuren"
+            }
         }
     },
     "emailOwnership": {
@@ -1865,5 +1889,24 @@
         "light": "Licht",
         "dark": "Donker",
         "system": "Systeem"
+    },
+    "authLayout": {
+        "panelLabel": "Over Vectorix",
+        "headline": "Onderbouwde antwoorden uit uw eigen documenten.",
+        "summary": "Vectorix indexeert de documenten van uw organisatie en levert zoekresultaten met exacte, controleerbare bronvermeldingen.",
+        "highlights": {
+            "citations": {
+                "title": "Exacte bronvermeldingen",
+                "body": "Elk resultaat verwijst naar de precieze passage in de bron."
+            },
+            "isolation": {
+                "title": "Isolatie per organisatie",
+                "body": "Collecties, sleutels en toegangsrechten blijven binnen uw organisatie."
+            },
+            "versions": {
+                "title": "Geversioneerde indexen",
+                "body": "Publiceer, controleer en ontwikkel indexgeneraties veilig verder."
+            }
+        }
     }
 }

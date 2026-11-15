@@ -4,7 +4,7 @@ import {
     emailOwnershipCallback,
     isEmailVerificationToken,
 } from '@repo/dashboard-core/lib/email-ownership';
-import { LanguageSwitcher } from '@/components/language-switcher';
+import { AuthLayout } from '@/components/shell/auth-layout';
 import { VerifyEmail } from './verify-email';
 
 export const metadata: Metadata = {
@@ -33,17 +33,12 @@ export default async function VerifyEmailPage({
         .update(callback ?? '')
         .digest('hex');
     return (
-        <main className='bg-muted flex min-h-svh flex-col items-center justify-center p-6 md:p-10'>
-            <div className='absolute top-4 right-4'>
-                <LanguageSwitcher />
-            </div>
-            <div className='w-full max-w-lg'>
-                <VerifyEmail
-                    key={linkIdentity}
-                    token={token}
-                    returnTo={callback ?? '/dashboard/account'}
-                />
-            </div>
-        </main>
+        <AuthLayout width='md' as='main'>
+            <VerifyEmail
+                key={linkIdentity}
+                token={token}
+                returnTo={callback ?? '/dashboard/account'}
+            />
+        </AuthLayout>
     );
 }

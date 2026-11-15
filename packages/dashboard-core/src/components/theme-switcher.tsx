@@ -20,7 +20,10 @@ const choices = [
 /** Keep the trigger independent of the browser theme to preserve server hydration. */
 export function ThemeSwitcher({
     labels,
+    iconOnly = false,
 }: Readonly<{
+    /** Render a compact square trigger; the label stays available to assistive tech. */
+    iconOnly?: boolean;
     labels: Readonly<{
         appearance: string;
         light: string;
@@ -35,14 +38,18 @@ export function ThemeSwitcher({
                 <Button
                     type='button'
                     variant='ghost'
-                    size='sm'
+                    size={iconOnly ? 'icon' : 'sm'}
+                    className={iconOnly ? 'size-8' : undefined}
                     aria-label={labels.appearance}
+                    title={iconOnly ? labels.appearance : undefined}
                     disabled={Boolean(forcedTheme)}
                 >
                     <SunMoon className='size-4' aria-hidden />
-                    <span className='hidden sm:inline'>
-                        {labels.appearance}
-                    </span>
+                    {iconOnly ? null : (
+                        <span className='hidden sm:inline'>
+                            {labels.appearance}
+                        </span>
+                    )}
                 </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align='end'>
