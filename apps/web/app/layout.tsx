@@ -1,4 +1,6 @@
 import type { Metadata } from 'next';
+import { GeistSans } from 'geist/font/sans';
+import { GeistMono } from 'geist/font/mono';
 import './globals.css';
 import { ThemeProvider } from '@repo/dashboard-core/components/theme-provider';
 import { Toaster } from '@repo/ui/sonner';
@@ -26,7 +28,10 @@ export default function RootLayout({
     children: React.ReactNode;
 }>) {
     return (
-        <html suppressHydrationWarning>
+        <html
+            suppressHydrationWarning
+            className={`${GeistSans.variable} ${GeistMono.variable}`}
+        >
             <body>
                 <ThemeProvider
                     attribute='class'

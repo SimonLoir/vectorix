@@ -1,17 +1,13 @@
 import { AppPageProvider } from '@repo/dashboard-core/components/app-page-context';
-import {
-    SidebarInset,
-    SidebarProvider,
-    SidebarTrigger,
-} from '@repo/ui/sidebar';
+import { SidebarInset, SidebarProvider } from '@repo/ui/sidebar';
 import { isOrganizationCreationAllowed } from '@repo/auth/organization-creation';
 import { AppSidebar } from '@/components/app-sidebar';
 import { VectorixPermissionsProvider } from '@/contexts/vectorix-permissions';
 import { NotificationProvider } from '@/components/notifications/notification-provider';
-import { NotificationBell } from '@/components/notifications/notification-bell';
 import { DashboardQueryScope } from '@/components/dashboard-query-scope';
 import { PwaRegistration } from '@/components/pwa-registration';
-import { ThemeSwitcher } from '@/components/theme-switcher';
+import { AppHeader } from '@/components/shell/app-header';
+import { CommandPaletteProvider } from '@/components/shell/command-palette';
 export default function DashboardLayout({
     children,
 }: Readonly<{ children: React.ReactNode }>) {
@@ -21,21 +17,17 @@ export default function DashboardLayout({
                 <AppPageProvider>
                     <NotificationProvider>
                         <PwaRegistration />
-                        <SidebarProvider data-vectorix-dashboard>
-                            <AppSidebar
-                                allowOrganizationCreation={isOrganizationCreationAllowed()}
-                            />
-                            <SidebarInset className='min-w-0 bg-muted/20'>
-                                <header className='flex h-16 items-center justify-between border-b px-6'>
-                                    <SidebarTrigger />
-                                    <div className='flex items-center gap-2'>
-                                        <ThemeSwitcher />
-                                        <NotificationBell />
-                                    </div>
-                                </header>
-                                {children}
-                            </SidebarInset>
-                        </SidebarProvider>
+                        <CommandPaletteProvider>
+                            <SidebarProvider data-vectorix-dashboard>
+                                <AppSidebar
+                                    allowOrganizationCreation={isOrganizationCreationAllowed()}
+                                />
+                                <SidebarInset className='min-w-0'>
+                                    <AppHeader />
+                                    {children}
+                                </SidebarInset>
+                            </SidebarProvider>
+                        </CommandPaletteProvider>
                     </NotificationProvider>
                 </AppPageProvider>
             </VectorixPermissionsProvider>

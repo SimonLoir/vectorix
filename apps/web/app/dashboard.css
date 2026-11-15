@@ -1,186 +1,72 @@
-/* The body scope includes Radix portals and disappears with dashboard navigation. */
-body:has([data-vectorix-dashboard]) {
-    --background: #f5f8fc;
-    --card: #ffffff;
-    --popover: #ffffff;
-    --foreground: #172337;
-    --card-foreground: #172337;
-    --popover-foreground: #172337;
-    --primary: #245bd4;
-    --primary-foreground: #ffffff;
-    --secondary: #eef2f7;
-    --secondary-foreground: #2454a8;
-    --muted: #f1f4f8;
-    --muted-foreground: #5d6b7e;
-    --accent: #e5f5f3;
-    --accent-foreground: #17645f;
-    --border: #dfe5ee;
-    --input: #8494aa;
-    --ring: #3578c3;
-    --sidebar: #f8fafc;
-    --sidebar-foreground: #34445a;
-    --sidebar-primary: #245bd4;
-    --sidebar-primary-foreground: #ffffff;
-    --sidebar-accent: #eaf0ff;
-    --sidebar-accent-foreground: #2454a8;
-    --sidebar-border: #dfe5ee;
-    --sidebar-ring: #3578c3;
-}
-
 /*
- * Dark palette: the historical neutral `.dark` surfaces, text and borders from
- * globals.css, repeated here because the light block above sets them on body,
- * plus a royal blue accent (white text on buttons, a lighter tint for the
- * active sidebar entry) and vivid semantic tones.
+ * Dashboard-specific component polish. Colors come exclusively from the shared
+ * tokens in `@repo/ui/styles/theme.css`; this file only adjusts weight, spacing
+ * and state treatment for markup that lives in the web application.
  */
-.dark body:has([data-vectorix-dashboard]) {
-    --background: oklch(0.145 0 0);
-    --foreground: oklch(0.985 0 0);
-    --card: oklch(0.205 0 0);
-    --card-foreground: oklch(0.985 0 0);
-    --popover: oklch(0.205 0 0);
-    --popover-foreground: oklch(0.985 0 0);
-    --primary: #2f6fed;
-    --primary-foreground: #ffffff;
-    --secondary: oklch(0.269 0 0);
-    --secondary-foreground: oklch(0.985 0 0);
-    --muted: oklch(0.269 0 0);
-    --muted-foreground: oklch(0.708 0 0);
-    --accent: #153d3a;
-    --accent-foreground: #8de0d1;
-    --border: oklch(1 0 0 / 10%);
-    --input: oklch(1 0 0 / 15%);
-    --ring: #2f6fed;
-    --info: #38bdf8;
-    --success: #34d399;
-    --warning: #fbbf24;
-    --danger: #fb7185;
-    --sidebar: oklch(0.205 0 0);
-    --sidebar-foreground: oklch(0.985 0 0);
-    --sidebar-primary: #8fb4ff;
-    --sidebar-primary-foreground: #0d1d38;
-    --sidebar-accent: #172447;
-    --sidebar-accent-foreground: #a8c4ff;
-    --sidebar-border: oklch(1 0 0 / 10%);
-    --sidebar-ring: #2f6fed;
-}
 
-/* Keep component changes local to Vectorix rather than altering shared UI packages. */
-body:has([data-vectorix-dashboard]) [data-vectorix-page] h1 {
-    font-weight: 700;
+[data-vectorix-page] h1 {
+    font-weight: 600;
     line-height: 1.2;
-    letter-spacing: -0.035em;
+    letter-spacing: -0.025em;
 }
 
-body:has([data-vectorix-dashboard]) [data-slot='card-title'] {
-    font-weight: 650;
+[data-slot='card-title'] {
+    font-weight: 600;
     line-height: 1.35;
 }
 
-body:has([data-vectorix-dashboard]) [data-slot='button'] {
-    font-weight: 600;
-}
-
-body:has([data-vectorix-dashboard])
-    [data-slot='sidebar-menu-button'][data-active='true'] {
-    background: var(--sidebar-accent);
-    color: var(--sidebar-primary);
-    font-weight: 650;
-    box-shadow: inset 3px 0 0 var(--sidebar-primary);
-}
-
-body:has([data-vectorix-dashboard])
-    [data-slot='tabs-trigger'][data-state='active'] {
-    border-color: color-mix(in srgb, var(--info) 25%, transparent);
-    background: var(--card);
-    color: var(--info);
-    font-weight: 650;
+[data-slot='button'] {
+    font-weight: 500;
 }
 
 @media (min-width: 1280px) {
-    body:has([data-vectorix-dashboard])
-        [data-responsive-table='true']
-        [data-slot='table-header'] {
+    [data-responsive-table='true'] [data-slot='table-header'] {
         background: var(--muted);
     }
 
-    body:has([data-vectorix-dashboard])
-        [data-responsive-table='true']
-        [data-slot='table-head'] {
+    [data-responsive-table='true'] [data-slot='table-head'] {
         color: var(--muted-foreground);
         font-size: 0.75rem;
-        font-weight: 650;
+        font-weight: 500;
+        letter-spacing: 0.01em;
     }
 
-    body:has([data-vectorix-dashboard])
-        [data-responsive-table='true']
+    [data-responsive-table='true']
         [data-slot='table-row'][data-state='selected'] {
         background: var(--accent);
     }
 }
 
-/* Color belongs to the dashboard shell, including its dialogs and nested workspaces. */
-body:has([data-vectorix-dashboard]) .vectorix-catalog-header {
-    position: relative;
-    overflow: hidden;
-    border: 1px solid var(--border);
-    border-radius: 1rem;
-    padding: 1.25rem;
-    background:
-        linear-gradient(
-            115deg,
-            color-mix(in srgb, var(--primary) 7%, transparent),
-            transparent 68%
-        ),
-        var(--card);
+/* Page headers are plain typography; the shell header carries navigation context. */
+.vectorix-catalog-header {
+    padding-bottom: 0.25rem;
 }
 
-body:has([data-vectorix-dashboard]) .vectorix-icon-tile {
-    background: color-mix(in srgb, var(--primary) 10%, var(--card));
-    color: var(--primary);
-}
-
-body:has([data-vectorix-dashboard])
-    .vectorix-fact-card[data-tone='teal']
-    .vectorix-icon-tile {
+.vectorix-icon-tile {
     background: var(--accent);
     color: var(--accent-foreground);
 }
 
-body:has([data-vectorix-dashboard]) .vectorix-collection-card {
-    border-top: 3px solid color-mix(in srgb, var(--primary) 65%, var(--border));
-    box-shadow: 0 2px 5px rgb(23 35 55 / 3%);
+.vectorix-fact-card[data-tone='teal'] .vectorix-icon-tile {
+    background: color-mix(in oklch, var(--chart-2) 14%, var(--card));
+    color: var(--chart-2);
 }
 
-body:has([data-vectorix-dashboard]) .vectorix-collection-card:hover {
-    border-color: color-mix(in srgb, var(--primary) 55%, var(--border));
-    background: color-mix(in srgb, var(--primary) 3%, var(--card));
+.vectorix-collection-card {
+    box-shadow: var(--shadow-elevated);
 }
 
-body:has([data-vectorix-dashboard]) .vectorix-collection-heading {
-    background:
-        linear-gradient(
-            105deg,
-            color-mix(in srgb, var(--primary) 4%, transparent),
-            transparent 75%
-        ),
-        var(--card);
+.vectorix-collection-card:hover {
+    border-color: color-mix(in oklch, var(--primary) 40%, var(--border));
 }
 
-.dark body:has([data-vectorix-dashboard]) .vectorix-icon-tile {
-    color: #a8c4ff;
-}
-
-@media (min-width: 640px) {
-    body:has([data-vectorix-dashboard]) .vectorix-catalog-header {
-        padding: 1.5rem;
-    }
+.vectorix-collection-heading {
+    background: var(--card);
 }
 
 @media (prefers-reduced-motion: no-preference) {
-    body:has([data-vectorix-dashboard]) .vectorix-collection-card {
+    .vectorix-collection-card {
         transition:
-            background-color 150ms ease,
             border-color 150ms ease,
             box-shadow 150ms ease;
     }

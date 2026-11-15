@@ -183,10 +183,7 @@ export function InvitationReview({
     return (
         <DashboardPage className='space-y-6'>
             <BreadCrumbs
-                breadcrumbs={[
-                    { title: bc('dashboard'), url: '/dashboard' },
-                    { title: bc('acceptInvitation') },
-                ]}
+                breadcrumbs={[{ title: bc('acceptInvitation') }]}
             />
             <h1 className='text-2xl font-semibold'>{t('reviewTitle')}</h1>
             <div className='max-w-xl space-y-4'>

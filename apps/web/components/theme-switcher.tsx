@@ -8,6 +8,7 @@ export function ThemeSwitcher() {
     const tr = useTranslations('appearance');
     return (
         <SharedThemeSwitcher
+            iconOnly
             labels={{
                 appearance: tr('label'),
                 light: tr('light'),

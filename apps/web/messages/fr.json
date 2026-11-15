@@ -1684,10 +1684,9 @@
     },
     "dashboard": {
         "navigation": {
-            "home": "Accueil",
+            "home": "Recherche",
             "collections": "Collections",
             "integrations": "Intégrations",
-            "groups": "Groupes",
             "usage": "Usage et quotas",
             "audit": "Journal du catalogue",
             "account": "Mon compte",
@@ -1697,7 +1696,15 @@
             "apiKeys": "Clés API",
             "licenses": "Licences",
             "documents": "Documents",
-            "operations": "Opérations"
+            "operations": "Opérations",
+            "sections": {
+                "workspace": "Espace de travail",
+                "library": "Bibliothèque",
+                "organization": "Organisation",
+                "platform": "Plateforme",
+                "personal": "Personnel"
+            },
+            "groups": "Groupes"
         },
         "home": {
             "eyebrow": "ESPACE DE TRAVAIL",
@@ -1709,6 +1716,23 @@
             "organizationTitle": "Organisation",
             "organization": "Membres, invitations et rôles de votre équipe.",
             "licenses": "Fonctionnalités activées pour votre organisation."
+        },
+        "commandPalette": {
+            "title": "Palette de commandes",
+            "description": "Recherchez des pages, collections et documents, ou lancez une action.",
+            "placeholder": "Rechercher pages, collections, documents…",
+            "trigger": "Rechercher ou aller à…",
+            "empty": "Aucun résultat.",
+            "loading": "Recherche…",
+            "searchError": "La recherche est indisponible pour le moment.",
+            "noMatches": "Aucune correspondance.",
+            "theme": "Thème : {theme}",
+            "groups": {
+                "pages": "Pages",
+                "collections": "Collections",
+                "documents": "Documents",
+                "preferences": "Préférences"
+            }
         }
     },
     "emailOwnership": {
@@ -1865,5 +1889,24 @@
         "light": "Clair",
         "dark": "Sombre",
         "system": "Système"
+    },
+    "authLayout": {
+        "panelLabel": "À propos de Vectorix",
+        "headline": "Des réponses fondées sur vos propres documents.",
+        "summary": "Vectorix indexe les documents de votre organisation et fournit une recherche avec des citations exactes et vérifiables.",
+        "highlights": {
+            "citations": {
+                "title": "Citations exactes",
+                "body": "Chaque résultat renvoie au passage source précis."
+            },
+            "isolation": {
+                "title": "Isolation par organisation",
+                "body": "Collections, clés et accès restent limités à votre organisation."
+            },
+            "versions": {
+                "title": "Index versionnés",
+                "body": "Publiez, auditez et faites évoluer les générations d’index en toute sécurité."
+            }
+        }
     }
 }

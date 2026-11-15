@@ -4,7 +4,6 @@ import Link from 'next/link';
 import { Settings2Icon } from 'lucide-react';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { useTranslations } from 'next-intl';
-import { BreadCrumbs } from '@repo/dashboard-core/components/app-page-context';
 import PageDescription from '@repo/dashboard-core/components/page-description';
 import PageTitle from '@repo/dashboard-core/components/page-title';
 import { Button } from '@repo/ui/button';
@@ -34,7 +33,6 @@ function parseSource(value: string | null): NotificationSourceFilter {
 
 export default function NotificationsPage() {
     const t = useTranslations('notifications');
-    const breadcrumbs = useTranslations('breadcrumbs');
     const router = useRouter();
     const pathname = usePathname();
     const searchParams = useSearchParams();
@@ -59,12 +57,6 @@ export default function NotificationsPage() {
 
     return (
         <DashboardPage className='space-y-6'>
-            <BreadCrumbs
-                breadcrumbs={[
-                    { title: breadcrumbs('dashboard'), url: '/dashboard' },
-                    { title: t('title') },
-                ]}
-            />
             <div className='flex flex-wrap items-start justify-between gap-3'>
                 <div>
                     <PageTitle>{t('title')}</PageTitle>

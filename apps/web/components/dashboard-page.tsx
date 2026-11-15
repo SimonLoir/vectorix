@@ -12,7 +12,7 @@ export default function DashboardPage({
         <main
             data-vectorix-page
             className={cn(
-                'mx-auto w-full max-w-[1600px] flex-1 p-4 sm:p-6 [--editor-sticky-top:4rem] group-has-data-[collapsible=icon]/sidebar-wrapper:[--editor-sticky-top:3rem]',
+                'mx-auto w-full max-w-[1400px] flex-1 px-4 py-6 sm:px-6 lg:px-8 lg:py-8',
                 className
             )}
         >
