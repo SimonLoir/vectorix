@@ -65,7 +65,7 @@ services:
             retries: 30
             start_period: 20s
     s3-init:
-        image: amazon/aws-cli:2.38.3@sha256:efe32e825cf203652eaca3e7e94679580274e7d567c39270aaa36a5144737108
+        image: amazon/aws-cli:2.41.0@sha256:c5d442efed03350a3c3d7a42b23f42a8e7b76acf5dbb4b021f2641bcd36680ea
         depends_on:
             rustfs:
                 condition: service_healthy
